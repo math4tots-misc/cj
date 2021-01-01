@@ -1,7 +1,14 @@
 package crossj.cj;
 
 public abstract class CJIRExpression extends CJIRNode<CJAstExpression> {
-    CJIRExpression(CJAstExpression ast) {
+    private final CJIRType type;
+
+    CJIRExpression(CJAstExpression ast, CJIRType type) {
         super(ast);
+        this.type = type;
+    }
+
+    public final CJIRType getType() {
+        return type;
     }
 }

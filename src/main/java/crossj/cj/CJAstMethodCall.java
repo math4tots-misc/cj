@@ -26,4 +26,9 @@ public final class CJAstMethodCall extends CJAstExpression {
     public List<CJAstExpression> getArgs() {
         return args;
     }
+
+    @Override
+    public <R, A> R accept(CJAstExpressionVisitor<R, A> visitor, A a) {
+        return visitor.visitMethodCall(this, a);
+    }
 }

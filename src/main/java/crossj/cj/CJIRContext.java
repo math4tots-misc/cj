@@ -66,5 +66,6 @@ public final class CJIRContext {
     public void runAllPasses() {
         new CJPass01(this).run();
         new CJPass02(this).run();
+        new CJPass03(this).run();
     }
 }

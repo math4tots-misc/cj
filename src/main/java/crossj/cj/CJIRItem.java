@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 
@@ -64,5 +65,14 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public Map<String, CJIRTypeParameter> getTypeParameterMap() {
         return typeParameterMap;
+    }
+
+    public CJIRBinding getBinding(List<CJIRType> args) {
+        Assert.equals(typeParameters.size(), args.size());
+        var binding = new CJIRBinding();
+        for (int i = 0; i < args.size(); i++) {
+            binding.put(typeParameters.get(i).getName(), args.get(i));
+        }
+        return binding;
     }
 }

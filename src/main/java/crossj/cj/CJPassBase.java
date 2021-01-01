@@ -1,10 +1,12 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.Optional;
 
 abstract class CJPassBase {
     protected final CJIRContext ctx;
     protected CJIRLocalContext lctx = null;
+    private CJIRLocalContext lctxPushed = null;
 
     CJPassBase(CJIRContext ctx) {
         this.ctx = ctx;
@@ -18,5 +20,17 @@ abstract class CJPassBase {
     }
 
     void handleItem(CJIRItem item) {
+    }
+
+    void enterMethod(CJIRMethod method) {
+        Assert.equals(lctxPushed, null);
+        lctxPushed = lctx;
+        lctx = new CJIRLocalContext(lctxPushed.getGlobal(), lctxPushed.getItem(), Optional.of(method));
+    }
+
+    void exitMethod() {
+        Assert.that(lctxPushed != null);
+        lctx = lctxPushed;
+        lctxPushed = null;
     }
 }

@@ -13,8 +13,16 @@ public final class CJIRLocalContext {
         this.method = method;
     }
 
+    public CJIRContext getGlobal() {
+        return global;
+    }
+
     public CJIRItem getItem() {
         return item;
+    }
+
+    public Optional<CJIRMethod> getMethod() {
+        return method;
     }
 
     CJIRItem getTraitItem(String shortName, CJMark... marks) {

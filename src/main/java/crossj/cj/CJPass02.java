@@ -28,8 +28,8 @@ public final class CJPass02 extends CJPassBase {
             var trait = evalTraitExpression(traitDeclarationAst.getTrait());
             var traitDeclaration = new CJIRTraitDeclaration(traitDeclarationAst, trait);
             for (var conditionAst : traitDeclarationAst.getConditions()) {
-                var typeParameter = getVariable(conditionAst.getVariableName(), conditionAst.getMark());
-                var condition = new CJIRTypeCondition(conditionAst, typeParameter);
+                var variable = getVariable(conditionAst.getVariableName(), conditionAst.getMark());
+                var condition = new CJIRTypeCondition(conditionAst, variable);
                 traitDeclaration.getConditions().add(condition);
             }
             item.getTraitDeclarations().add(traitDeclaration);
@@ -39,7 +39,7 @@ public final class CJPass02 extends CJPassBase {
     private CJIRTrait evalTraitExpression(CJAstTraitExpression texpr) {
         var traitItem = lctx.getTraitItem(texpr.getName(), texpr.getMark());
         var args = texpr.getArgs().map(te -> evalTypeExpression(te));
-        checkArgc(traitItem, texpr, args);
+        checkArgc(texpr.getMark(), traitItem, args);
         return new CJIRTrait(traitItem, args);
     }
 
@@ -53,23 +53,23 @@ public final class CJPass02 extends CJPassBase {
         }
         var typeItem = lctx.getTypeItem(texpr.getName(), texpr.getMark());
         var args = texpr.getArgs().map(te -> evalTypeExpression(te));
-        checkArgc(typeItem, texpr, args);
+        checkArgc(texpr.getMark(), typeItem, args);
         return new CJIRClassType(typeItem, args);
     }
 
-    private CJIRTypeParameter getVariable(String shortName, CJMark... marks) {
+    private CJIRVariableType getVariable(String shortName, CJMark... marks) {
         var typeParameter = lctx.getItem().getTypeParameterMap().getOrNull(shortName);
         if (typeParameter == null) {
             throw CJError.of(shortName + " is not a variable", marks);
         }
-        return typeParameter;
+        return new CJIRVariableType(typeParameter);
     }
 
-    private void checkArgc(CJIRItem item, CJAstTraitOrTypeExpression texpr, List<CJIRType> args) {
+    private void checkArgc(CJMark mark, CJIRItem item, List<CJIRType> args) {
         var expected = item.getTypeParameters().size();
         var actual = args.size();
         if (expected != actual) {
-            throw CJError.of("Expected " + expected + " type args but got " + actual, texpr.getMark(), item.getMark());
+            throw CJError.of("Expected " + expected + " type args but got " + actual, mark, item.getMark());
         }
     }
 }
