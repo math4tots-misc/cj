@@ -4,9 +4,11 @@ import crossj.base.List;
 
 public final class CJIRVariableType implements CJIRType {
     private final CJIRTypeParameter declaration;
+    private final List<CJIRTrait> additionalTraits;
 
-    CJIRVariableType(CJIRTypeParameter declaration) {
+    CJIRVariableType(CJIRTypeParameter declaration, List<CJIRTrait> additionalTraits) {
         this.declaration = declaration;
+        this.additionalTraits = additionalTraits;
     }
 
     public String getName() {
@@ -15,7 +17,22 @@ public final class CJIRVariableType implements CJIRType {
 
     @Override
     public List<CJIRTrait> getTraits(CJMark... marks) {
-        return declaration.getTraits();
+        return List.join(declaration.getTraits(), additionalTraits);
+    }
+
+    @Override
+    public CJIRMethodRef findMethodOrNull(String shortName) {
+        for (var trait : getTraits()) {
+            var methodRef = trait.findMethodOrNull(shortName);
+            if (methodRef != null) {
+                return methodRef;
+            }
+        }
+        return null;
+    }
+
+    public List<CJIRTrait> getAdditionalTraits() {
+        return additionalTraits;
     }
 
     @Override

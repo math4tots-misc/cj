@@ -28,8 +28,8 @@ public final class CJPass02 extends CJPassBase {
             var trait = evalTraitExpression(traitDeclarationAst.getTrait());
             var traitDeclaration = new CJIRTraitDeclaration(traitDeclarationAst, trait);
             for (var conditionAst : traitDeclarationAst.getConditions()) {
-                var variable = getVariable(conditionAst.getVariableName(), conditionAst.getMark());
-                var condition = new CJIRTypeCondition(conditionAst, variable);
+                var typeParameter = getVariable(conditionAst.getVariableName(), conditionAst.getMark());
+                var condition = new CJIRTypeCondition(conditionAst, typeParameter);
                 traitDeclaration.getConditions().add(condition);
             }
             item.getTraitDeclarations().add(traitDeclaration);
@@ -49,7 +49,7 @@ public final class CJPass02 extends CJPassBase {
             if (texpr.getArgs().size() != 0) {
                 throw CJError.of("type variables cannot accept arguments", texpr.getMark());
             }
-            return new CJIRVariableType(typeParameter);
+            return new CJIRVariableType(typeParameter, List.of());
         }
         var typeItem = lctx.getTypeItem(texpr.getName(), texpr.getMark());
         var args = texpr.getArgs().map(te -> evalTypeExpression(te));
@@ -57,12 +57,12 @@ public final class CJPass02 extends CJPassBase {
         return new CJIRClassType(typeItem, args);
     }
 
-    private CJIRVariableType getVariable(String shortName, CJMark... marks) {
+    private CJIRTypeParameter getVariable(String shortName, CJMark... marks) {
         var typeParameter = lctx.getItem().getTypeParameterMap().getOrNull(shortName);
         if (typeParameter == null) {
             throw CJError.of(shortName + " is not a variable", marks);
         }
-        return new CJIRVariableType(typeParameter);
+        return typeParameter;
     }
 
     private void checkArgc(CJMark mark, CJIRItem item, List<CJIRType> args) {

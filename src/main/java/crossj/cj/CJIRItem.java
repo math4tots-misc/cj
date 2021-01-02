@@ -11,6 +11,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final List<CJIRItemMember<?>> members = List.of();
     private final Map<String, String> shortNameMap;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
+    private final Map<String, CJIRMethod> methodMap = Map.of();
 
     CJIRItem(CJAstItemDefinition ast) {
         super(ast);
@@ -74,5 +75,22 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             binding.put(typeParameters.get(i).getName(), args.get(i));
         }
         return binding;
+    }
+
+    /**
+     * Gets the CJIRMethod directly declared in this item.
+     * @param shortName
+     * @return
+     */
+    public CJIRMethod getMethodOrNull(String shortName) {
+        if (!methodMap.containsKey(shortName)) {
+            for (var member : members) {
+                if (member instanceof CJIRMethod && member.getName().equals(shortName)) {
+                    methodMap.put(shortName, (CJIRMethod) member);
+                    break;
+                }
+            }
+        }
+        return methodMap.get(shortName);
     }
 }

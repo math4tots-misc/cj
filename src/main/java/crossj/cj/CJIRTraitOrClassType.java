@@ -19,4 +19,18 @@ abstract class CJIRTraitOrClassType {
         // TODO: Filter out disqualified traits based on type
         return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBindings(), marks));
     }
+
+    public CJIRMethodRef findMethodOrNull(String shortName) {
+        var method = getItem().getMethodOrNull(shortName);
+        if (method != null) {
+            return new CJIRMethodRef(this, method);
+        }
+        for (var trait : getTraits()) {
+            var methodRef = trait.findMethodOrNull(shortName);
+            if (methodRef != null) {
+                return methodRef;
+            }
+        }
+        return null;
+    }
 }

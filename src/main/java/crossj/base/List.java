@@ -277,4 +277,13 @@ public final class List<T> implements XIterable<T>, Comparable<List<T>> {
     public List<T> clone() {
         return new List<>(new ArrayList<>(list));
     }
+
+    @SafeVarargs
+    public static <T> List<T> join(XIterable<T>... iterables) {
+        var ret = List.<T>of();
+        for (var iterable : iterables) {
+            ret.addAll(iterable);
+        }
+        return ret;
+    }
 }

@@ -3,16 +3,16 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRTypeCondition extends CJIRNode<CJAstTypeCondition> {
-    private final CJIRVariableType variable;
+    private final CJIRTypeParameter typeParameter;
     private final List<CJIRTrait> traits = List.of();
 
-    CJIRTypeCondition(CJAstTypeCondition ast, CJIRVariableType variable) {
+    CJIRTypeCondition(CJAstTypeCondition ast, CJIRTypeParameter typeParameter) {
         super(ast);
-        this.variable = variable;
+        this.typeParameter = typeParameter;
     }
 
-    public CJIRVariableType getVariable() {
-        return variable;
+    public CJIRTypeParameter getTypeParameter() {
+        return typeParameter;
     }
 
     public List<CJIRTrait> getTraits() {

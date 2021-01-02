@@ -25,7 +25,7 @@ public final class CJPass03 extends CJPassBaseEx {
             if (memberAst instanceof CJAstMethodDefinition) {
                 var methodAst = (CJAstMethodDefinition) memberAst;
                 var conditions = methodAst.getConditions().map(condition -> new CJIRTypeCondition(condition,
-                        getVariable(condition.getVariableName(), condition.getMark())));
+                        getTypeParameter(condition.getVariableName(), condition.getMark())));
                 var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
                 var method = new CJIRMethod(methodAst, conditions, typeParameters);
 
@@ -33,17 +33,17 @@ public final class CJPass03 extends CJPassBaseEx {
 
                 for (var typeParameter : typeParameters) {
                     var typeParameterAst = typeParameter.getAst();
-                    typeParameter.getTraits().addAll(typeParameterAst.getTraits().map(this::evalTraitExpression));
+                    typeParameter.getTraits().addAll(typeParameterAst.getTraits().map(lctx::evalTraitExpression));
                 }
 
                 var parameters = method.getParameters();
                 for (var parameterAst : methodAst.getParameters()) {
-                    var type = evalTypeExpression(parameterAst.getType());
+                    var type = lctx.evalTypeExpression(parameterAst.getType());
                     var parameter = new CJIRParameter(parameterAst, type);
                     parameters.add(parameter);
                 }
 
-                var returnType = evalTypeExpression(methodAst.getReturnType());
+                var returnType = lctx.evalTypeExpression(methodAst.getReturnType());
                 method.setReturnType(returnType);
 
                 exitMethod();
@@ -53,7 +53,7 @@ public final class CJPass03 extends CJPassBaseEx {
         }
     }
 
-    private CJIRVariableType getVariable(String shortName, CJMark... marks) {
+    private CJIRTypeParameter getTypeParameter(String shortName, CJMark... marks) {
         var typeParameter = lctx.getItem().getTypeParameterMap().getOrNull(shortName);
         if (typeParameter == null && lctx.getMethod().isPresent()) {
             typeParameter = lctx.getMethod().get().getTypeParameterMap().getOrNull(shortName);
@@ -61,7 +61,7 @@ public final class CJPass03 extends CJPassBaseEx {
         if (typeParameter == null) {
             throw CJError.of(shortName + " is not a variable", marks);
         }
-        return new CJIRVariableType(typeParameter);
+        return typeParameter;
     }
 
     /**
@@ -72,14 +72,14 @@ public final class CJPass03 extends CJPassBaseEx {
         for (var typeParameter : item.getTypeParameters()) {
             var mark = typeParameter.getMark();
             for (var trait : typeParameter.getTraits()) {
-                checkTrait(mark, trait);
+                ctx.checkTrait(trait, mark);
             }
         }
         for (var traitDeclaration : item.getTraitDeclarations()) {
             for (var condition : traitDeclaration.getConditions()) {
                 var mark = condition.getMark();
                 for (var trait : condition.getTraits()) {
-                    checkTrait(mark, trait);
+                    ctx.checkTrait(trait, mark);
                 }
             }
         }
