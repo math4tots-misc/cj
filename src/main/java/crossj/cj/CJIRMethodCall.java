@@ -4,15 +4,15 @@ import crossj.base.List;
 
 public final class CJIRMethodCall extends CJIRExpression {
     private final CJIRType owner;
-    private final CJIRMethod method;
+    private final CJIRMethodRef methodRef;
     private final List<CJIRType> typeArgs;
     private final List<CJIRExpression> args;
 
-    public CJIRMethodCall(CJAstExpression ast, CJIRType type, CJIRType owner, CJIRMethod method,
+    public CJIRMethodCall(CJAstExpression ast, CJIRType type, CJIRType owner, CJIRMethodRef methodRef,
             List<CJIRType> typeArgs, List<CJIRExpression> args) {
         super(ast, type);
         this.owner = owner;
-        this.method = method;
+        this.methodRef = methodRef;
         this.typeArgs = typeArgs;
         this.args = args;
     }
@@ -21,8 +21,12 @@ public final class CJIRMethodCall extends CJIRExpression {
         return owner;
     }
 
-    public CJIRMethod getMethod() {
-        return method;
+    public CJIRMethodRef getMethodRef() {
+        return methodRef;
+    }
+
+    public String getName() {
+        return methodRef.getName();
     }
 
     public List<CJIRType> getTypeArgs() {

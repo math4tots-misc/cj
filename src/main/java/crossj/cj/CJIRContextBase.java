@@ -11,12 +11,12 @@ public abstract class CJIRContextBase {
      */
     void checkItemArgs(CJIRItem item, List<CJIRType> args, CJMark... marks) {
         checkItemArgc(item, args, marks);
-        var bindings = item.getBinding(args);
+        var binding = item.getBinding(args);
         var typeParameters = item.getTypeParameters();
         for (int i = 0; i < args.size(); i++) {
             var typeParameter = typeParameters.get(i);
             var arg = args.get(i);
-            for (var subtrait : typeParameter.getTraits().map(t -> t.apply(bindings))) {
+            for (var subtrait : typeParameter.getTraits().map(t -> t.apply(binding, marks))) {
                 if (!implementsTrait(arg, subtrait)) {
                     throw CJError.of(arg + " does not implement required trait " + subtrait, marks);
                 }
@@ -26,6 +26,30 @@ public abstract class CJIRContextBase {
 
     void checkItemArgc(CJIRItem item, List<CJIRType> args, CJMark... marks) {
         var expected = item.getTypeParameters().size();
+        var actual = args.size();
+        if (expected != actual) {
+            throw CJError.of("Expected " + expected + " type args but got " + actual, marks);
+        }
+    }
+
+    CJIRReifiedMethodRef checkMethodTypeArgs(CJIRMethodRef methodRef, List<CJIRType> args, CJMark... marks) {
+        checkMethodTypeArgc(methodRef, args, marks);
+        var binding = methodRef.getBinding(args);
+        var typeParameters = methodRef.getMethod().getTypeParameters();
+        for (int i = 0; i < args.size(); i++) {
+            var typeParameter = typeParameters.get(i);
+            var arg = args.get(i);
+            for (var subtrait : typeParameter.getTraits().map(t -> t.apply(binding, marks))) {
+                if (!implementsTrait(arg, subtrait)) {
+                    throw CJError.of(arg + " does not implement required trait " + subtrait, marks);
+                }
+            }
+        }
+        return new CJIRReifiedMethodRef(methodRef, args, binding);
+    }
+
+    private void checkMethodTypeArgc(CJIRMethodRef methodRef, List<CJIRType> args, CJMark... marks) {
+        var expected = methodRef.getMethod().getTypeParameters().size();
         var actual = args.size();
         if (expected != actual) {
             throw CJError.of("Expected " + expected + " type args but got " + actual, marks);

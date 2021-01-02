@@ -8,7 +8,7 @@ abstract class CJIRTraitOrClassType {
     public abstract CJIRItem getItem();
     public abstract List<CJIRType> getArgs();
 
-    public CJIRBinding getBindings() {
+    public CJIRBinding getBinding() {
         if (bindings == null) {
             bindings = getItem().getBinding(getArgs());
         }
@@ -17,7 +17,7 @@ abstract class CJIRTraitOrClassType {
 
     public List<CJIRTrait> getTraits(CJMark... marks) {
         // TODO: Filter out disqualified traits based on type
-        return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBindings(), marks));
+        return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBinding(), marks));
     }
 
     public CJIRMethodRef findMethodOrNull(String shortName) {

@@ -39,7 +39,7 @@ public final class CJPass04 extends CJPassBaseEx {
         return evalExpressionEx(expression, Optional.of(type));
     }
 
-    private CJIRExpression evalExpressionEx(CJAstExpression expression, Optional<CJIRType> type) {
+    private CJIRExpression evalExpressionEx(CJAstExpression expression, Optional<CJIRType> a) {
         var ir = expression.accept(new CJAstExpressionVisitor<CJIRExpression, Optional<CJIRType>>() {
 
             @Override
@@ -88,17 +88,36 @@ public final class CJPass04 extends CJPassBaseEx {
                     var owner = lctx.evalTypeExpression(ownerAst);
                     var methodRef = owner.findMethod(e.getName());
                     var typeArgs = e.getTypeArgs().map(lctx::evalTypeExpression);
+                    var reifiedMethodRef = ctx.checkMethodTypeArgs(methodRef, typeArgs, e.getMark());
+                    var parameterTypes = reifiedMethodRef.getParameterTypes();
+                    var argAsts = e.getArgs();
+                    checkArgc(parameterTypes, argAsts, e.getMark());
+                    var args = List.<CJIRExpression>of();
+                    for (int i = 0; i < parameterTypes.size(); i++) {
+                        var parameterType = parameterTypes.get(i);
+                        var argAst = argAsts.get(i);
+                        args.add(evalExpressionWithType(argAst, parameterType));
+                    }
+                    var returnType = reifiedMethodRef.getReturnType();
+                    return new CJIRMethodCall(e, returnType, owner, methodRef, typeArgs, args);
                 }
-                throw CJError.of("TODO evalExpression-visitMethodCall", e.getMark());
             }
-        }, type);
-        if (type.isPresent()) {
-            var expectedType = type.get();
+        }, a);
+        if (a.isPresent()) {
+            var expectedType = a.get();
             var actualType = ir.getType();
             if (!expectedType.equals(actualType)) {
                 throw CJError.of("Expected " + expectedType + " but got " + actualType, expression.getMark());
             }
         }
         return ir;
+    }
+
+    private void checkArgc(List<CJIRType> parameterTypes, List<CJAstExpression> exprs, CJMark mark) {
+        var expected = parameterTypes.size();
+        var actual = exprs.size();
+        if (expected != actual) {
+            throw CJError.of("Expected " + expected + " args but got " + actual, mark);
+        }
     }
 }

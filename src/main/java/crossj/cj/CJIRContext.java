@@ -79,6 +79,7 @@ public final class CJIRContext extends CJIRContextBase {
         new CJPass01(this).run();
         new CJPass02(this).run();
         new CJPass03(this).run();
+        new CJPass04(this).run();
     }
 
     @Override

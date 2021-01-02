@@ -23,7 +23,7 @@ public final class CJIRTrait extends CJIRTraitOrClassType {
     }
 
     @Override
-    public CJIRBinding getBindings() {
+    public CJIRBinding getBinding() {
         if (binding == null) {
             binding = item.getBinding(args);
         }
