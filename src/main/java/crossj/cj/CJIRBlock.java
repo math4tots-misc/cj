@@ -13,4 +13,9 @@ public final class CJIRBlock extends CJIRExpression {
     public List<CJIRExpression> getExpressions() {
         return expressions;
     }
+
+    @Override
+    public <R, A> R accept(CJIRExpressionVisitor<R, A> visitor, A a) {
+        return visitor.visitBlock(this, a);
+    }
 }

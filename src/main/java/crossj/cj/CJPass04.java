@@ -31,10 +31,6 @@ public final class CJPass04 extends CJPassBaseEx {
         method.setBody(body);
     }
 
-    private CJIRExpression evalExpression(CJAstExpression expression) {
-        return evalExpressionEx(expression, Optional.empty());
-    }
-
     private CJIRExpression evalExpressionWithType(CJAstExpression expression, CJIRType type) {
         return evalExpressionEx(expression, Optional.of(type));
     }

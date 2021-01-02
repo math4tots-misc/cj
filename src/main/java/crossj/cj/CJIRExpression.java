@@ -11,4 +11,6 @@ public abstract class CJIRExpression extends CJIRNode<CJAstExpression> {
     public final CJIRType getType() {
         return type;
     }
+
+    public abstract <R, A> R accept(CJIRExpressionVisitor<R, A> visitor, A a);
 }
