@@ -35,6 +35,12 @@ public final class CJIRBinding {
                 }
                 return newType;
             }
+
+            @Override
+            public CJIRType visitSelf(CJIRSelfType t, Void a) {
+                // TODO: Reconsider if this is the correct behavior
+                return t;
+            }
         }, null);
     }
 }

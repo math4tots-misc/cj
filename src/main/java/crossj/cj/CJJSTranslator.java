@@ -262,6 +262,11 @@ public final class CJJSTranslator {
                     return translateItemLevelTypeVariable(t.getName());
                 }
             }
+
+            @Override
+            public String visitSelf(CJIRSelfType t, Void a) {
+                return "this";
+            }
         }, null);
     }
 }

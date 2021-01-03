@@ -9,11 +9,17 @@ public final class CJIRLocalContext extends CJIRContextBase {
     private final CJIRItem item;
     private final Optional<CJIRMethod> method;
     private final Map<String, CJIRVariableType> typeVariableCache = Map.of();
+    private final CJIRTrait selfTrait;
 
     CJIRLocalContext(CJIRContext global, CJIRItem item, Optional<CJIRMethod> method) {
         this.global = global;
         this.item = item;
         this.method = method;
+        if (item.isTrait()) {
+            selfTrait = new CJIRTrait(item, item.getTypeParameters().map(tp -> getTypeVariable(tp.getName())));
+        } else {
+            selfTrait = null;
+        }
     }
 
     public CJIRContext getGlobal() {
@@ -52,7 +58,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return item;
     }
 
-    CJIRClassType evalClassTypeExpression(CJAstTypeExpression typeExpression) {
+    private CJIRClassType evalClassTypeExpression(CJAstTypeExpression typeExpression) {
         var item = getTypeItem(typeExpression.getName(), typeExpression.getMark());
         var args = typeExpression.getArgs().map(te -> evalTypeExpression(te));
         checkItemArgs(item, args, typeExpression.getMark());
@@ -62,9 +68,20 @@ public final class CJIRLocalContext extends CJIRContextBase {
     CJIRType evalTypeExpression(CJAstTypeExpression typeExpression) {
         var typeVariable = getTypeVariableOrNull(typeExpression.getName(), typeExpression.getMark());
         if (typeVariable != null) {
+            assertNoTypeArgs(typeExpression);
             return typeVariable;
         }
+        if (typeExpression.getName().equals("Self")) {
+            assertNoTypeArgs(typeExpression);
+            return new CJIRSelfType(selfTrait);
+        }
         return evalClassTypeExpression(typeExpression);
+    }
+
+    private void assertNoTypeArgs(CJAstTypeExpression typeExpression) {
+        if (typeExpression.getArgs().size() > 0) {
+            throw CJError.of("Self type and type variables may not have type arguments", typeExpression.getMark());
+        }
     }
 
     CJIRTrait evalTraitExpression(CJAstTraitExpression traitExpression) {
@@ -74,7 +91,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return new CJIRTrait(traitItem, args);
     }
 
-    CJIRVariableType getTypeVariable(String shortName, CJMark... marks) {
+    private CJIRVariableType getTypeVariable(String shortName, CJMark... marks) {
         var type = getTypeVariableOrNull(shortName, marks);
         if (type == null) {
             throw CJError.of(shortName + " is not a type variable ", marks);
@@ -82,7 +99,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return type;
     }
 
-    CJIRVariableType getTypeVariableOrNull(String shortName, CJMark... marks) {
+    private CJIRVariableType getTypeVariableOrNull(String shortName, CJMark... marks) {
         if (!typeVariableCache.containsKey(shortName)) {
             typeVariableCache.put(shortName, getTypeVariableWithoutCacheOrNull(shortName, marks));
         }
