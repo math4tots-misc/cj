@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Optional;
 import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Str;
@@ -118,8 +119,8 @@ final class CJPass05 extends CJPassBaseEx {
         }
     }
 
-    private static CJIRBinding bindMethodWithDummyVars(CJIRMethodRef methodRef) {
-        return methodRef.getBinding(getDummyVars(methodRef.getMethod().getTypeParameters().size()).map(x -> x));
+    private static CJIRBinding bindMethodWithDummyVars(CJIRClassType selfType, CJIRMethodRef methodRef) {
+        return methodRef.getBinding(Optional.of(selfType), getDummyVars(methodRef.getMethod().getTypeParameters().size()).map(x -> x));
     }
 
     private static final class Signature {
@@ -129,7 +130,7 @@ final class CJPass05 extends CJPassBaseEx {
         private final CJIRType returnType;
 
         static Signature fromMethodRef(CJIRMethodRef methodRef, CJIRClassType selfType) {
-            var binding = bindMethodWithDummyVars(methodRef);
+            var binding = bindMethodWithDummyVars(selfType, methodRef);
             var parameterTypes = methodRef.getMethod().getParameters()
                     .map(p -> substitute(p.getVariableType(), binding, selfType));
             var returnType = substitute(methodRef.getMethod().getReturnType(), binding, selfType);

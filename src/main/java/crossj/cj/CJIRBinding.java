@@ -4,12 +4,12 @@ import crossj.base.Map;
 import crossj.base.Optional;
 
 public final class CJIRBinding {
+    private final Optional<CJIRType> selfType;
     private final Map<String, CJIRType> map;
-    private final Optional<CJIRClassType> selfType;
 
-    CJIRBinding(Map<String, CJIRType> map, Optional<CJIRClassType> selfType) {
-        this.map = map;
+    CJIRBinding(Optional<CJIRType> selfType, Map<String, CJIRType> map) {
         this.selfType = selfType;
+        this.map = map;
     }
 
     void put(String key, CJIRType type) {

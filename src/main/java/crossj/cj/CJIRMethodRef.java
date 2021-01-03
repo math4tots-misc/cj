@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.List;
+import crossj.base.Optional;
 
 /**
  * CJIRMethod together with the CJIRTraitOrClassType that contains the method's
@@ -32,13 +33,13 @@ public final class CJIRMethodRef {
         return method.getMark();
     }
 
-    public CJIRBinding getBinding(List<CJIRType> args) {
+    public CJIRBinding getBinding(Optional<CJIRType> selfType, List<CJIRType> args) {
         var typeParameters = method.getTypeParameters();
         Assert.equals(typeParameters.size(), args.size());
         var binding = owner.getBinding();
         for (int i = 0; i < args.size(); i++) {
             binding.put(typeParameters.get(i).getName(), args.get(i));
         }
-        return binding;
+        return new CJIRBinding(selfType, binding.getMap());
     }
 }
