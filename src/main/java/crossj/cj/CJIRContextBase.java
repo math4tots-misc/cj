@@ -1,8 +1,27 @@
 package crossj.cj;
 
+import crossj.base.Func1;
 import crossj.base.List;
+import crossj.base.Set;
 
 public abstract class CJIRContextBase {
+
+    static void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
+        var stack = item.toTraitOrClassType().getTraits();
+        var seenTraits = Set.of(item.getFullName());
+        seenTraits.addAll(stack.map(t -> t.getItem().getFullName()));
+        while (stack.size() > 0) {
+            var trait = stack.pop();
+            f.apply(trait);
+            for (var subtrait : trait.getTraits()) {
+                var subtraitName = subtrait.getItem().getFullName();
+                if (!seenTraits.contains(subtraitName)) {
+                    seenTraits.add(subtraitName);
+                    stack.add(subtrait);
+                }
+            }
+        }
+    }
 
     abstract CJIRContext getGlobal();
 

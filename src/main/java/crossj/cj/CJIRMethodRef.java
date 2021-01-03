@@ -28,6 +28,10 @@ public final class CJIRMethodRef {
         return method.getName();
     }
 
+    public CJMark getMark() {
+        return method.getMark();
+    }
+
     public CJIRBinding getBinding(List<CJIRType> args) {
         var typeParameters = method.getTypeParameters();
         Assert.equals(typeParameters.size(), args.size());

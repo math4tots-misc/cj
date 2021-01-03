@@ -1,5 +1,5 @@
 package cj
 
-trait Iterable[T] {
+native class Iterator[T] : Iterable[T] {
     def iter(self: Self): Iterator[T]
 }

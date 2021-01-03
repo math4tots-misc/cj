@@ -39,4 +39,15 @@ abstract class CJIRTraitOrClassType {
     public final String toString() {
         return getItem().getFullName() + (getArgs().isEmpty() ? "" : "[" + Str.join(",", getArgs()) + "]");
     }
+
+    public final List<CJIRMethodRef> getMethodRefs() {
+        var ret = List.<CJIRMethodRef>of();
+        for (var member : getItem().getMembers()) {
+            if (member instanceof CJIRMethod) {
+                var method = (CJIRMethod) member;
+                ret.add(new CJIRMethodRef(this, method));
+            }
+        }
+        return ret;
+    }
 }

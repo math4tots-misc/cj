@@ -3,6 +3,8 @@ package crossj.cj;
 import crossj.base.Repr;
 
 public final class CJMark implements Repr {
+    private static final CJMark builtin = new CJMark("<builtin>", 1, 1);
+
     public final String filename;
     public final int line;
     public final int column;
@@ -29,5 +31,9 @@ public final class CJMark implements Repr {
     @Override
     public String toString() {
         return "in " + filename + " on " + line + ":" + column;
+    }
+
+    public static CJMark getBuiltin() {
+        return builtin;
     }
 }

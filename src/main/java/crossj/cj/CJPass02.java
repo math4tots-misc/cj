@@ -10,7 +10,7 @@ import crossj.base.List;
  * TODO: verify trait constraints
  * (currently, only type argument count is checked)
  */
-public final class CJPass02 extends CJPassBase {
+final class CJPass02 extends CJPassBase {
     CJPass02(CJIRContext ctx) {
         super(ctx);
     }

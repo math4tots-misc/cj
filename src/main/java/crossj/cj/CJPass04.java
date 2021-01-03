@@ -9,7 +9,7 @@ import crossj.base.Optional;
  *
  * Resolve expressions
  */
-public final class CJPass04 extends CJPassBaseEx {
+final class CJPass04 extends CJPassBaseEx {
     private final List<Map<String, CJIRLocalVariableDeclaration>> locals = List.of();
 
     CJPass04(CJIRContext ctx) {

@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.Func1;
 import crossj.base.Optional;
 
 abstract class CJPassBase {
@@ -32,5 +33,9 @@ abstract class CJPassBase {
         Assert.that(lctxPushed != null);
         lctx = lctxPushed;
         lctxPushed = null;
+    }
+
+    void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
+        CJIRContextBase.walkTraits(item, f);
     }
 }

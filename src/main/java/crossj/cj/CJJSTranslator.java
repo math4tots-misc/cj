@@ -78,8 +78,8 @@ public final class CJJSTranslator {
             var params = trait.getItem().getTypeParameters();
             var args = trait.getArgs();
             for (int i = 0; i < args.size(); i++) {
-                var typeMethodName = translateTraitLevelTypeVariableNameWithTraitName(
-                    trait.getItem().getFullName(), params.get(i).getName());
+                var typeMethodName = translateTraitLevelTypeVariableNameWithTraitName(trait.getItem().getFullName(),
+                        params.get(i).getName());
                 out.append(itemMetaClassName + ".prototype." + typeMethodName + "=function(){\n");
                 out.append("return " + translator.translateType(args.get(i)) + ";\n");
                 out.append("}\n");
@@ -109,20 +109,7 @@ public final class CJJSTranslator {
     }
 
     private static void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
-        var stack = item.toTraitOrClassType().getTraits();
-        var seenTraits = Set.of(item.getFullName());
-        seenTraits.addAll(stack.map(t -> t.getItem().getFullName()));
-        while (stack.size() > 0) {
-            var trait = stack.pop();
-            f.apply(trait);
-            for (var subtrait : trait.getTraits()) {
-                var subtraitName = subtrait.getItem().getFullName();
-                if (!seenTraits.contains(subtraitName)) {
-                    seenTraits.add(subtraitName);
-                    stack.add(subtrait);
-                }
-            }
-        }
+        CJIRContextBase.walkTraits(item, f);
     }
 
     private static void translateItem(StringBuilder out, CJJSContext ctx, CJIRItem item) {
@@ -169,11 +156,8 @@ public final class CJJSTranslator {
     }
 
     private String translateItemLevelTypeVariable(String variableName) {
-        if (item.isTrait()) {
-            return "this." + translateTraitLevelTypeVariableName(variableName) + "()";
-        } else {
-            return translateMethodLevelTypeVariable(variableName);
-        }
+        return item.isTrait() ? "this." + translateTraitLevelTypeVariableName(variableName) + "()"
+                : "this." + translateMethodLevelTypeVariable(variableName);
     }
 
     private void emitItem() {

@@ -43,4 +43,8 @@ public final class CJIRBinding {
             }
         }, null);
     }
+
+    public Map<String, CJIRType> getMap() {
+        return map;
+    }
 }

@@ -6,7 +6,7 @@ package crossj.cj;
  * - Checks type parameter traits and trait declarations, and <br/>
  * - Materializes methods
  */
-public final class CJPass03 extends CJPassBaseEx {
+final class CJPass03 extends CJPassBaseEx {
     CJPass03(CJIRContext ctx) {
         super(ctx);
     }

@@ -5,7 +5,7 @@ package crossj.cj;
  *
  * Create type parameter ir for each item
  */
-final class CJPass01 extends CJPassBase {
+class CJPass01 extends CJPassBase {
     CJPass01(CJIRContext ctx) {
         super(ctx);
     }

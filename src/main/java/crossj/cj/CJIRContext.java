@@ -10,7 +10,7 @@ import crossj.base.Set;
 public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.Never", "cj.Bool", "cj.Char", "cj.Int",
-            "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable");
+            "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable", "cj.Iterator");
 
     /**
      * Source roots to search for cj files.
@@ -94,6 +94,7 @@ public final class CJIRContext extends CJIRContextBase {
         new CJPass02(this).run();
         new CJPass03(this).run();
         new CJPass04(this).run();
+        new CJPass05(this).run();
     }
 
     @Override
