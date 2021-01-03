@@ -73,6 +73,10 @@ public final class List<T> implements XIterable<T>, Comparable<List<T>> {
         return list.size();
     }
 
+    public boolean isEmpty() {
+        return list.isEmpty();
+    }
+
     public T get(int i) {
         return list.get(i);
     }
@@ -276,6 +280,24 @@ public final class List<T> implements XIterable<T>, Comparable<List<T>> {
 
     public List<T> clone() {
         return new List<>(new ArrayList<>(list));
+    }
+
+    public boolean all(Func1<Boolean, T> f) {
+        for (var t : list) {
+            if (!f.apply(t)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean any(Func1<Boolean, T> f) {
+        for (var t : list) {
+            if (f.apply(t)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SafeVarargs

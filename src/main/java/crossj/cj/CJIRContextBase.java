@@ -120,6 +120,10 @@ public abstract class CJIRContextBase {
         return getGlobal().getBoolType();
     }
 
+    CJIRType getCharType() {
+        return getGlobal().getCharType();
+    }
+
     CJIRType getIntType() {
         return getGlobal().getIntType();
     }

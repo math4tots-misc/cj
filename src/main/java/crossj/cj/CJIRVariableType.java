@@ -20,6 +20,14 @@ public final class CJIRVariableType implements CJIRType {
         return List.join(declaration.getTraits(), additionalTraits);
     }
 
+    public boolean isItemLevel() {
+        return declaration.isItemLevel();
+    }
+
+    public boolean isMethodLevel() {
+        return declaration.isMethodLevel();
+    }
+
     @Override
     public CJIRMethodRef findMethodOrNull(String shortName) {
         for (var trait : getTraits()) {

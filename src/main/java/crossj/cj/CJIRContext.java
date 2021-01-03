@@ -20,6 +20,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRItem listItem = null;
     private CJIRType unitType = null;
     private CJIRType boolType = null;
+    private CJIRType charType = null;
     private CJIRType intType = null;
     private CJIRType doubleType = null;
     private CJIRType stringType = null;
@@ -121,6 +122,14 @@ public final class CJIRContext extends CJIRContextBase {
             boolType = getTypeWithArgs("cj.Bool", List.of());
         }
         return boolType;
+    }
+
+    @Override
+    CJIRType getCharType() {
+        if (charType == null) {
+            charType = getTypeWithArgs("cj.Char", List.of());
+        }
+        return charType;
     }
 
     @Override

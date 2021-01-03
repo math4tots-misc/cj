@@ -1,0 +1,2 @@
+class MC$cj$List {
+}

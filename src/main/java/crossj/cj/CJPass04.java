@@ -41,21 +41,18 @@ public final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitLiteral(CJAstLiteral e, Optional<CJIRType> a) {
                 switch (e.getKind()) {
-                    case Unit: {
-                        return new CJIRLiteral(e, ctx.getUnitType(), e.getRawText());
-                    }
-                    case Bool: {
-                        return new CJIRLiteral(e, ctx.getBoolType(), e.getRawText());
-                    }
-                    case Int: {
-                        return new CJIRLiteral(e, ctx.getIntType(), e.getRawText());
-                    }
-                    case Double: {
-                        return new CJIRLiteral(e, ctx.getDoubleType(), e.getRawText());
-                    }
-                    case String: {
-                        return new CJIRLiteral(e, ctx.getStringType(), e.getRawText());
-                    }
+                    case Unit:
+                        return new CJIRLiteral(e, ctx.getUnitType(), e.getKind(), e.getRawText());
+                    case Bool:
+                        return new CJIRLiteral(e, ctx.getBoolType(), e.getKind(), e.getRawText());
+                    case Char:
+                        return new CJIRLiteral(e, ctx.getCharType(), e.getKind(), e.getRawText());
+                    case Int:
+                        return new CJIRLiteral(e, ctx.getIntType(), e.getKind(), e.getRawText());
+                    case Double:
+                        return new CJIRLiteral(e, ctx.getDoubleType(), e.getKind(), e.getRawText());
+                    case String:
+                        return new CJIRLiteral(e, ctx.getStringType(), e.getKind(), e.getRawText());
                 }
                 throw CJError.of("TODO evalExpression-visitBlock", e.getMark());
             }
@@ -64,7 +61,7 @@ public final class CJPass04 extends CJPassBaseEx {
             public CJIRExpression visitBlock(CJAstBlock e, Optional<CJIRType> a) {
                 var exprs = e.getExpressions();
                 if (exprs.size() == 0) {
-                    return new CJIRLiteral(e, ctx.getUnitType(), "");
+                    return new CJIRLiteral(e, ctx.getUnitType(), CJIRLiteralKind.Unit, "");
                 }
                 var newExprs = List.<CJIRExpression>of();
                 for (int i = 0; i + 1 < exprs.size(); i++) {

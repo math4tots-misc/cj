@@ -13,4 +13,11 @@ public abstract class CJIRExpression extends CJIRNode<CJAstExpression> {
     }
 
     public abstract <R, A> R accept(CJIRExpressionVisitor<R, A> visitor, A a);
+
+    /**
+     * If true, introduces a free var into the surrounding scope.
+     */
+    public boolean introducesFreeVar() {
+        return false;
+    }
 }

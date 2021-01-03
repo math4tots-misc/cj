@@ -16,4 +16,12 @@ public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
     public List<CJIRTrait> getTraits() {
         return traits;
     }
+
+    public boolean isItemLevel() {
+        return ast.isItemLevel();
+    }
+
+    public boolean isMethodLevel() {
+        return ast.isMethodLevel();
+    }
 }
