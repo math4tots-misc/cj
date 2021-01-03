@@ -22,4 +22,13 @@ public final class CJIRSelfType implements CJIRType {
     public CJIRMethodRef findMethodOrNull(String shortName) {
         return selfTrait.findMethodOrNull(shortName);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CJIRSelfType)) {
+            return false;
+        }
+        var other = (CJIRSelfType) obj;
+        return selfTrait.equals(other.selfTrait);
+    }
 }

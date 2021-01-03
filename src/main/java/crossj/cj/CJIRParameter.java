@@ -1,6 +1,6 @@
 package crossj.cj;
 
-public final class CJIRParameter extends CJIRNode<CJAstParameter> {
+public final class CJIRParameter extends CJIRNode<CJAstParameter> implements CJIRLocalVariableDeclaration {
     private final CJIRType type;
 
     CJIRParameter(CJAstParameter ast, CJIRType type) {
@@ -8,11 +8,18 @@ public final class CJIRParameter extends CJIRNode<CJAstParameter> {
         this.type = type;
     }
 
+    @Override
+    public boolean isMutable() {
+        return ast.isMutable();
+    }
+
+    @Override
     public String getName() {
         return ast.getName();
     }
 
-    public CJIRType getType() {
+    @Override
+    public CJIRType getVariableType() {
         return type;
     }
 }

@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.base.Str;
 
 abstract class CJIRTraitOrClassType {
     private CJIRBinding bindings = null;
@@ -32,5 +33,10 @@ abstract class CJIRTraitOrClassType {
             }
         }
         return null;
+    }
+
+    @Override
+    public final String toString() {
+        return getItem().getFullName() + (getArgs().isEmpty() ? "" : "[" + Str.join(",", getArgs()) + "]");
     }
 }

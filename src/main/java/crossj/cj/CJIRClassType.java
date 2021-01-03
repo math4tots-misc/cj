@@ -1,7 +1,6 @@
 package crossj.cj;
 
 import crossj.base.List;
-import crossj.base.Str;
 
 public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRType {
     private final CJIRItem item;
@@ -24,11 +23,6 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     @Override
     public CJIRMethodRef findMethodOrNull(String shortName) {
         return super.findMethodOrNull(shortName);
-    }
-
-    @Override
-    public String toString() {
-        return item.getFullName() + (args.isEmpty() ? "" : "[" + Str.join(",", args) + "]");
     }
 
     @Override

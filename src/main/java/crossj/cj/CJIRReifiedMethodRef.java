@@ -29,7 +29,7 @@ public final class CJIRReifiedMethodRef {
     }
 
     public List<CJIRType> getParameterTypes() {
-        return methodRef.getMethod().getParameters().map(p -> p.getType().apply(binding));
+        return methodRef.getMethod().getParameters().map(p -> p.getVariableType().apply(binding));
     }
 
     public CJIRType getReturnType() {

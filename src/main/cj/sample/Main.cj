@@ -4,6 +4,11 @@ import cj.IO
 
 class Main {
     def main() = {
-        IO.printString("Hello world!")
+        IO.println[String]("Hello world!")
+
+        {
+            val x = 12
+            IO.println[Int](x)
+        }
     }
 }

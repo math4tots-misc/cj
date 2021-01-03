@@ -1,4 +1,5 @@
 package cj
 
-native class String {
+native class String: ToString {
+    def toString(self: Self): String
 }

@@ -19,7 +19,7 @@ public final class CJJSTranslator {
         out.append("\"use strict\"\n");
         emitPrelude(out);
         translateItems(out, irctx, jsctx);
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>(){
+        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
             @Override
             public Void visitMain(CJIRRunModeMain m, Void a) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
@@ -235,6 +235,27 @@ public final class CJJSTranslator {
                     return new CJJSBlob(lines, owner + "." + methodName + "(" + Str.join(",", allArgs) + ")", false);
                 }
             }
+
+            @Override
+            public CJJSBlob visitVariableDeclaration(CJIRVariableDeclaration e, Void a) {
+                var prefix = e.isMutable() ? "let " : "const ";
+                var inner = translateExpression(e.getExpression());
+                var lines = inner.getLines();
+                lines.add(prefix + translateTarget(e.getTarget()) + "=" + inner.getExpression() + ";\n");
+                return new CJJSBlob(lines, "null", true);
+            }
+
+            @Override
+            public CJJSBlob visitVariableAccess(CJIRVariableAccess e, Void a) {
+                return CJJSBlob.inline(translateLocalVariableName(e.getDeclaration().getName()), true);
+            }
+
+            @Override
+            public CJJSBlob visitAssignment(CJIRAssignment e, Void a) {
+                return new CJJSBlob(
+                        List.of(translateTarget(e.getTarget()) + "=" + translateExpression(e.getExpression()) + ";\n"),
+                        "null", true);
+            }
         }, null);
     }
 
@@ -266,6 +287,16 @@ public final class CJJSTranslator {
             @Override
             public String visitSelf(CJIRSelfType t, Void a) {
                 return "this";
+            }
+        }, null);
+    }
+
+    private String translateTarget(CJIRAssignmentTarget target) {
+        return target.accept(new CJIRAssignmentTargetVisitor<String, Void>() {
+
+            @Override
+            public String visitName(CJIRNameAssignmentTarget t, Void a) {
+                return translateLocalVariableName(t.getName());
             }
         }, null);
     }

@@ -4,6 +4,8 @@ import crossj.base.List;
 import crossj.base.Optional;
 
 public final class CJParser {
+    private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
+
     public static CJAstItemDefinition parseString(String path, String string) {
         var tokens = CJLexer.lex(string).get();
         var parser = new CJParser(path, tokens);
@@ -340,15 +342,84 @@ public final class CJParser {
     }
 
     private CJAstParameter parseParameter() {
+        var mutable = consume(CJToken.KW_VAR);
         var mark = getMark();
         var name = parseId();
         expect(':');
         var type = parseTypeExpression();
-        return new CJAstParameter(mark, name, type);
+        return new CJAstParameter(mark, mutable, name, type);
     }
 
     private CJAstExpression parseExpression() {
-        return parseAtomExpression();
+        return parseExpressionWithPrecedence(0);
+    }
+
+    private CJAstExpression parseExpressionWithPrecedence(int precedence) {
+        var expr = parseAtomExpression();
+        var tokenPrecedence = getTokenPrecedence(peek().type);
+        while (tokenPrecedence >= precedence) {
+            var opMark = getMark();
+            switch (peek().type) {
+                case '=': {
+                    next();
+                    var valexpr = parseExpression();
+                    var target = expressionToTarget(expr);
+                    expr = new CJAstAssignment(opMark, target, valexpr);
+                    break;
+                }
+                default:
+                    throw ekind("expression operator (TODO)");
+            }
+            tokenPrecedence = getTokenPrecedence(peek().type);
+        }
+        return expr;
+    }
+
+    private static int getTokenPrecedence(int tokenType) {
+        // mostly follows Python, except uses Rust style '?'
+        switch (tokenType) {
+            case '=':
+                return 20;
+            case CJToken.KW_OR:
+                return 40;
+            case CJToken.KW_AND:
+                return 50;
+            case '<':
+            case '>':
+            case CJToken.EQ:
+            case CJToken.NE:
+            case CJToken.GE:
+            case CJToken.LE:
+            case CJToken.KW_IS:
+            case CJToken.KW_IN:
+            case CJToken.KW_NOT:
+                return 60;
+            case '|':
+                return 70;
+            case '^':
+                return 80;
+            case '&':
+                return 90;
+            case CJToken.LSHIFT:
+            case CJToken.RSHIFT:
+            case CJToken.RSHIFTU:
+                return 100;
+            case '+':
+            case '-':
+                return 110;
+            case '*':
+            case '/':
+            case '%':
+            case CJToken.TRUNCDIV:
+                return 120;
+            case CJToken.POWER:
+                return 130;
+            case '.':
+            case '?':
+                return 140;
+            default:
+                return -1;
+        }
     }
 
     private CJAstExpression parseAtomExpression() {
@@ -384,6 +455,19 @@ public final class CJParser {
                 var args = parseArgs();
                 return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
             }
+            case CJToken.ID:
+                return new CJAstVariableAccess(getMark(), parseId());
+            case CJToken.KW_VAL:
+            case CJToken.KW_VAR: {
+                var mutable = next().type == CJToken.KW_VAR;
+                var mark = getMark();
+                var target = expressionToTarget(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                var declaredType = consume(':') ? Optional.of(parseTypeExpression())
+                        : Optional.<CJAstTypeExpression>empty();
+                expect('=');
+                var expression = parseExpression();
+                return new CJAstVariableDeclaration(mark, mutable, target, declaredType, expression);
+            }
         }
         throw ekind("expression");
     }
@@ -411,5 +495,45 @@ public final class CJParser {
             expectDelimiters();
         }
         return new CJAstBlock(mark, exprs);
+    }
+
+    private CJAstAssignmentTarget expressionToTarget(CJAstExpression expression) {
+        return expression.accept(new CJAstExpressionVisitor<CJAstAssignmentTarget, Void>() {
+
+            @Override
+            public CJAstAssignmentTarget visitLiteral(CJAstLiteral e, Void a) {
+                return invalid();
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitBlock(CJAstBlock e, Void a) {
+                return invalid();
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitMethodCall(CJAstMethodCall e, Void a) {
+                return invalid();
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitVariableDeclaration(CJAstVariableDeclaration e, Void a) {
+                return invalid();
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitVariableAccess(CJAstVariableAccess e, Void a) {
+                return new CJAstNameAssignmentTarget(e.getMark(), e.getName());
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitAssignment(CJAstAssignment e, Void a) {
+                return invalid();
+            }
+
+            private CJAstAssignmentTarget invalid() {
+                throw CJError.of("Expected assignment target but got " + expression.getClass().getName(),
+                        expression.getMark());
+            }
+        }, null);
     }
 }

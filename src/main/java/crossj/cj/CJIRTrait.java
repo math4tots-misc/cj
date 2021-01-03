@@ -1,7 +1,6 @@
 package crossj.cj;
 
 import crossj.base.List;
-import crossj.base.Str;
 
 public final class CJIRTrait extends CJIRTraitOrClassType {
     private final CJIRItem item;
@@ -28,11 +27,6 @@ public final class CJIRTrait extends CJIRTraitOrClassType {
             binding = item.getBinding(args);
         }
         return binding;
-    }
-
-    @Override
-    public String toString() {
-        return item.getFullName() + "[" + Str.join(",", getArgs()) + "]";
     }
 
     public CJIRTrait apply(CJIRBinding binding, CJMark... marks) {

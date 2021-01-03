@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.base.Map;
 import crossj.base.Optional;
 
 /**
@@ -9,6 +10,8 @@ import crossj.base.Optional;
  * Resolve expressions
  */
 public final class CJPass04 extends CJPassBaseEx {
+    private final List<Map<String, CJIRLocalVariableDeclaration>> locals = List.of();
+
     CJPass04(CJIRContext ctx) {
         super(ctx);
     }
@@ -22,13 +25,57 @@ public final class CJPass04 extends CJPassBaseEx {
         }
     }
 
+    private void enterScope() {
+        locals.add(Map.of());
+    }
+
+    private void exitScope() {
+        locals.pop();
+    }
+
+    private CJIRLocalVariableDeclaration findLocalOrNull(String shortName) {
+        for (int i = locals.size() - 1; i >= 0; i--) {
+            var decl = locals.get(i).getOrNull(shortName);
+            if (decl != null) {
+                return decl;
+            }
+        }
+        return null;
+    }
+
+    private CJIRLocalVariableDeclaration findLocal(String shortName, CJMark... marks) {
+        var decl = findLocalOrNull(shortName);
+        if (decl == null) {
+            throw CJError.of("Variable " + shortName + " not found", marks);
+        }
+        return decl;
+    }
+
+    private void declareLocal(CJIRLocalVariableDeclaration decl) {
+        var name = decl.getName();
+        var map = locals.last();
+        if (map.containsKey(name)) {
+            throw CJError.of("Variable " + name + " declared again", decl.getMark(), map.get(name).getMark());
+        }
+        map.put(name, decl);
+    }
+
     private void handleMethod(CJIRMethod method) {
         if (method.getAst().getBody().isEmpty()) {
             return;
         }
         var bodyAst = method.getAst().getBody().get();
+        enterScope();
+        for (var parameter : method.getParameters()) {
+            declareLocal(parameter);
+        }
         var body = evalExpressionWithType(bodyAst, method.getReturnType());
+        exitScope();
         method.setBody(body);
+    }
+
+    private CJIRExpression evalExpression(CJAstExpression expression) {
+        return evalExpressionEx(expression, Optional.empty());
     }
 
     private CJIRExpression evalExpressionWithType(CJAstExpression expression, CJIRType type) {
@@ -95,6 +142,35 @@ public final class CJPass04 extends CJPassBaseEx {
                     return new CJIRMethodCall(e, returnType, owner, methodRef, typeArgs, args);
                 }
             }
+
+            @Override
+            public CJIRExpression visitVariableDeclaration(CJAstVariableDeclaration e, Optional<CJIRType> a) {
+                CJIRType expressionType;
+                CJIRExpression expression;
+                if (e.getDeclaredType().isPresent()) {
+                    expressionType = lctx.evalTypeExpression(e.getDeclaredType().get());
+                    expression = evalExpressionWithType(e.getExpression(), expressionType);
+                } else {
+                    expression = evalExpression(e.getExpression());
+                    expressionType = expression.getType();
+                }
+                var target = evalDeclarableTarget(e.getTarget(), e.isMutable(), expressionType);
+                var decl = new CJIRVariableDeclaration(e, ctx.getUnitType(), e.isMutable(), target, expression);
+                declareTarget(target);
+                return decl;
+            }
+
+            @Override
+            public CJIRExpression visitVariableAccess(CJAstVariableAccess e, Optional<CJIRType> a) {
+                return new CJIRVariableAccess(e, findLocal(e.getName(), e.getMark()));
+            }
+
+            @Override
+            public CJIRExpression visitAssignment(CJAstAssignment e, Optional<CJIRType> a) {
+                var target = evalAssignableTarget(e.getTarget());
+                var expr = evalExpressionWithType(e.getExpression(), target.getTargetType());
+                return new CJIRAssignment(e, target.getTargetType(), target, expr);
+            }
         }, a);
         if (a.isPresent()) {
             var expectedType = a.get();
@@ -104,6 +180,39 @@ public final class CJPass04 extends CJPassBaseEx {
             }
         }
         return ir;
+    }
+
+    private CJIRAssignmentTarget evalDeclarableTarget(CJAstAssignmentTarget target, boolean mutable, CJIRType type) {
+        return target.accept(new CJAstAssignmentTargetVisitor<CJIRAssignmentTarget, Void>() {
+            @Override
+            public CJIRAssignmentTarget visitName(CJAstNameAssignmentTarget t, Void a) {
+                return new CJIRNameAssignmentTarget(t, mutable, t.getName(), type);
+            }
+        }, null);
+    }
+
+    private void declareTarget(CJIRAssignmentTarget target) {
+        target.accept(new CJIRAssignmentTargetVisitor<Void, Void>() {
+            @Override
+            public Void visitName(CJIRNameAssignmentTarget t, Void a) {
+                declareLocal(t);
+                return null;
+            }
+        }, null);
+    }
+
+    private CJIRAssignmentTarget evalAssignableTarget(CJAstAssignmentTarget target) {
+        return target.accept(new CJAstAssignmentTargetVisitor<CJIRAssignmentTarget, Void>(){
+            @Override
+            public CJIRAssignmentTarget visitName(CJAstNameAssignmentTarget t, Void a) {
+                var name = t.getName();
+                var decl = findLocal(name, t.getMark());
+                if (!decl.isMutable()) {
+                    throw CJError.of(name + " is not mutable", decl.getMark());
+                }
+                return new CJIRNameAssignmentTarget(t, true, name, decl.getVariableType());
+            }
+        }, null);
     }
 
     private void checkArgc(List<CJIRType> parameterTypes, List<CJAstExpression> exprs, CJMark mark) {

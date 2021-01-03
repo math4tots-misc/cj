@@ -1,4 +1,4 @@
 package cj
 
-native class Int {
+native class Int: Repr {
 }

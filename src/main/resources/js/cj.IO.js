@@ -1,5 +1,5 @@
 class MC$cj$IO {
-    M$printString(s) {
-        console.log(s);
+    M$println(TV$T, t) {
+        console.log(TV$T.M$toString(t));
     }
 }
