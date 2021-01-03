@@ -43,10 +43,12 @@ public final class CJPass03 extends CJPassBaseEx {
                     parameters.add(parameter);
                 }
 
-                var returnType = lctx.evalTypeExpression(methodAst.getReturnType());
+                var returnType = methodAst.getReturnType().map(lctx::evalTypeExpression).getOrElseDo(lctx::getUnitType);
                 method.setReturnType(returnType);
 
                 exitMethod();
+
+                item.getMembers().add(method);
             } else {
                 throw CJError.of("TODO: materializeMethods " + memberAst.getClass().getName(), memberAst.getMark());
             }

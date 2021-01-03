@@ -4,9 +4,14 @@ import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Repr;
 import crossj.base.Set;
 
 public final class CJIRContext extends CJIRContextBase {
+
+    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.Never", "cj.Bool", "cj.Char", "cj.Int",
+            "cj.Double", "cj.String");
+
     /**
      * Source roots to search for cj files.
      */
@@ -30,6 +35,10 @@ public final class CJIRContext extends CJIRContextBase {
         return this;
     }
 
+    public List<String> getSourceRoots() {
+        return sourceRoots;
+    }
+
     private CJIRItem _forceLoadItem(String name, CJMark... marks) {
         var relpath = name.replace(".", FS.getSeparator()) + ".cj";
         for (var sourceRoot : sourceRoots) {
@@ -39,7 +48,7 @@ public final class CJIRContext extends CJIRContextBase {
                 return new CJIRItem(CJParser.parseString(path, data));
             }
         }
-        throw CJError.of("Item " + name + " not found", marks);
+        throw CJError.of("Item " + Repr.of(name) + " not found", marks);
     }
 
     public CJIRItem forceLoadItem(String name, CJMark... marks) {
@@ -51,9 +60,9 @@ public final class CJIRContext extends CJIRContextBase {
         return itemMap.getOrInsert(name, () -> _forceLoadItem(name, marks));
     }
 
-    public void loadItemsRec(List<String> names) {
+    public void loadItemsRec(List<String> names, CJMark... marks) {
         var seen = Set.fromIterable(names);
-        var stack = names.map(name -> loadItem(name));
+        var stack = names.map(name -> loadItem(name, marks));
         while (stack.size() > 0) {
             var item = stack.pop();
             for (var imp : item.getAst().getImports()) {
@@ -66,15 +75,19 @@ public final class CJIRContext extends CJIRContextBase {
         }
     }
 
+    public void loadAutoImportItems() {
+        loadItemsRec(autoImportItemNames);
+    }
+
     public List<CJIRItem> getAllLoadedItems() {
-        return itemMap.values().list();
+        return List.sortedBy(itemMap.values().list(), (a, b) -> a.getFullName().compareTo(b.getFullName()));
     }
 
     /**
      * Run all analysis passes
      *
-     * Call this once loadItemsRec has been called on all items you want
-     * included in the program.
+     * Call this once loadItemsRec has been called on all items you want included in
+     * the program.
      */
     public void runAllPasses() {
         new CJPass01(this).run();

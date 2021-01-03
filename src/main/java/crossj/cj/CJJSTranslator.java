@@ -1,27 +1,85 @@
 package crossj.cj;
 
+import crossj.base.FS;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Str;
 
 public final class CJJSTranslator {
+    private static final String jsroot = FS.join("src", "main", "resources", "js");
+    private final StringBuilder out;
     private final CJJSContext ctx;
-    private final CJIRItem currentItem;
+    private final CJIRItem item;
+    private final CJIRClassType selfType;
 
-    CJJSTranslator(CJJSContext ctx, CJIRItem currentItem) {
-        this.ctx = ctx;
-        this.currentItem = currentItem;
+    public static String translate(CJIRContext irctx, CJIRRunMode runMode) {
+        var out = new StringBuilder();
+        var jsctx = new CJJSContext();
+        out.append("(function(){\n");
+        out.append("\"use strict\"\n");
+        emitPrelude(out);
+        translateItems(out, irctx, jsctx);
+        runMode.accept(new CJIRRunModeVisitor<Void, Void>(){
+            @Override
+            public Void visitMain(CJIRRunModeMain m, Void a) {
+                var mainClass = translateItemMetaObjectName(m.getMainClass());
+                out.append(mainClass + "." + translateMethodName("main") + "();\n");
+                return null;
+            }
+        }, null);
+        out.append("})();\n");
+        return out.toString();
     }
 
-    private String translateMethodName(String methodName) {
+    private static void emitPrelude(StringBuilder out) {
+        var path = FS.join(jsroot, "prelude.js");
+        out.append(IO.readFile(path));
+    }
+
+    private static void translateItems(StringBuilder out, CJIRContext irctx, CJJSContext jsctx) {
+        var items = irctx.getAllLoadedItems();
+
+        // emit meta classes (i.e. class MC$* { .. })
+        for (var item : items) {
+            translateItem(out, jsctx, item);
+        }
+
+        // emit meta objects (i.e. const MO$* = MC$*)
+        // traits and items with type parameters will not have meta objects.
+        for (var item : items) {
+            if (!item.isTrait() && item.getTypeParameters().isEmpty()) {
+                var itemName = item.getFullName();
+                out.append("const " + translateItemMetaObjectName(itemName) + "=new "
+                        + translateItemMetaClassName(itemName) + "();\n");
+            }
+        }
+    }
+
+    private static void translateItem(StringBuilder out, CJJSContext ctx, CJIRItem item) {
+        new CJJSTranslator(out, ctx, item).emitItem();
+    }
+
+    CJJSTranslator(StringBuilder out, CJJSContext ctx, CJIRItem item) {
+        this.out = out;
+        this.ctx = ctx;
+        this.item = item;
+        if (item.isTrait()) {
+            selfType = null;
+        } else {
+            selfType = new CJIRClassType(item, item.getTypeParameters().map(tp -> new CJIRVariableType(tp, List.of())));
+        }
+    }
+
+    private static String translateMethodName(String methodName) {
         return "M$" + methodName;
     }
 
-    private String translateItemMetaClassName(String itemName) {
-        return "MC$" + itemName;
+    private static String translateItemMetaClassName(String itemName) {
+        return "MC$" + itemName.replace(".", "$");
     }
 
-    private String translateItemMetaObjectName(String itemName) {
-        return "MO$" + itemName;
+    private static String translateItemMetaObjectName(String itemName) {
+        return "MO$" + itemName.replace(".", "$");
     }
 
     private String translateMethodLevelTypeVariable(String variableName) {
@@ -29,18 +87,69 @@ public final class CJJSTranslator {
     }
 
     private String translateTraitLevelTypeVariableName(String variableName) {
-        return "TV$" + currentItem.getFullName().replace(".", "$") + "$" + variableName;
+        return "TV$" + item.getFullName().replace(".", "$") + "$" + variableName;
+    }
+
+    private String translateLocalVariableName(String variableName) {
+        return "L$" + variableName;
     }
 
     private String translateItemLevelTypeVariable(String variableName) {
-        if (currentItem.isTrait()) {
+        if (item.isTrait()) {
             return "this." + translateTraitLevelTypeVariableName(variableName) + "()";
         } else {
             return translateMethodLevelTypeVariable(variableName);
         }
     }
 
-    CJJSBlob translateExpression(CJIRExpression expression) {
+    private void emitItem() {
+        if (item.isNative()) {
+            out.append(IO.readFile(FS.join(jsroot, item.getFullName() + ".js")));
+        } else {
+            emitMetaClass();
+        }
+    }
+
+    private void emitMetaClass() {
+        var metaClassName = translateItemMetaClassName(item.getFullName());
+        out.append("class " + metaClassName + "{\n");
+        if (!item.isTrait() && item.getTypeParameters().size() > 0) {
+            var args = item.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
+            out.append("constructor(" + Str.join(",", args) + "){\n");
+            for (var arg : args) {
+                out.append("this." + arg + "=" + arg + ";\n");
+            }
+            out.append("}\n");
+        }
+        for (var member : item.getMembers()) {
+            if (member instanceof CJIRMethod) {
+                var method = (CJIRMethod) member;
+                if (method.getBody().isPresent()) {
+                    var methodName = translateMethodName(method.getName());
+                    var typeArgNames = method.getTypeParameters()
+                            .map(p -> translateMethodLevelTypeVariable(p.getName()));
+                    var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
+                    var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
+                    out.append(methodName + "(" + Str.join(",", allArgNames) + "){\n");
+                    var body = translateExpression(method.getBody().get());
+                    for (var line : body.getLines()) {
+                        out.append(line);
+                    }
+                    if (method.getReturnType().isUnitType()) {
+                        if (!body.isPure()) {
+                            out.append(body.getExpression() + ";\n");
+                        }
+                    } else {
+                        out.append("return " + body.getExpression() + ";\n");
+                    }
+                    out.append("}\n");
+                }
+            }
+        }
+        out.append("}\n");
+    }
+
+    private CJJSBlob translateExpression(CJIRExpression expression) {
         return expression.accept(new CJIRExpressionVisitor<CJJSBlob, Void>() {
 
             @Override
@@ -88,22 +197,22 @@ public final class CJJSTranslator {
                 var returns = !e.getType().toString().equals("cj.Unit");
                 var tmpvar = returns ? ctx.newTempVarName() : "";
                 var lines = List.of(returns ? "let " + tmpvar + ";" : "");
-                lines.add("{");
+                lines.add("{\n");
                 for (int i = 0; i + 1 < exprs.size(); i++) {
                     var blob = translateExpression(exprs.get(i));
                     lines.addAll(blob.getLines());
                     if (!blob.isPure()) {
-                        lines.add(blob.getExpression() + ";");
+                        lines.add(blob.getExpression() + ";\n");
                     }
                 }
                 var last = translateExpression(exprs.last());
                 lines.addAll(last.getLines());
                 if (returns) {
-                    lines.add(tmpvar + "=" + last.getExpression());
+                    lines.add(tmpvar + "=" + last.getExpression() + ";\n");
                 } else if (!last.isPure()) {
-                    lines.add(last.getExpression());
+                    lines.add(last.getExpression() + ";\n");
                 }
-                lines.add("}");
+                lines.add("}\n");
                 return new CJJSBlob(lines, tmpvar, true);
             }
 
@@ -129,13 +238,15 @@ public final class CJJSTranslator {
         }, null);
     }
 
-    String translateType(CJIRType type) {
+    private String translateType(CJIRType type) {
         return type.accept(new CJIRTypeVisitor<String, Void>() {
 
             @Override
             public String visitClass(CJIRClassType t, Void a) {
                 if (t.getArgs().isEmpty()) {
                     return translateItemMetaObjectName(t.getItem().getFullName());
+                } else if (selfType != null && selfType.equals(t)) {
+                    return "this";
                 } else {
                     var metaClassName = translateItemMetaClassName(t.getItem().getFullName());
                     var args = Str.join(",", t.getArgs().map(arg -> translateType(arg)));

@@ -29,6 +29,6 @@ public final class CJError extends RuntimeException {
 
     @Override
     public String toString() {
-        return message + Str.join("", marks.map(m -> "\n" + m.repr()));
+        return message + Str.join("", marks.map(m -> "\n" + m));
     }
 }

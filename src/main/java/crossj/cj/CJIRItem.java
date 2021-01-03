@@ -18,6 +18,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         this.fullName = ast.getPackageName() + "." + ast.getShortName();
 
         shortNameMap = Map.of();
+        for (var autoImportName : CJIRContext.autoImportItemNames) {
+            var shortName = autoImportName.substring(autoImportName.lastIndexOf('.') + 1);
+            shortNameMap.put(shortName, autoImportName);
+        }
         for (var imp : ast.getImports()) {
             shortNameMap.put(imp.getAlias(), imp.getFullName());
         }
@@ -34,6 +38,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public boolean isTrait() {
         return getKind() == CJIRItemKind.Trait;
+    }
+
+    public boolean isNative() {
+        return getModifiers().contains(CJIRModifier.Native);
     }
 
     public String getPackageName() {

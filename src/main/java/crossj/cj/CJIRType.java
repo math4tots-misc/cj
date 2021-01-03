@@ -20,9 +20,17 @@ public interface CJIRType {
 
     default CJIRMethodRef findMethod(String shortName, CJMark... marks) {
         var methodRef = findMethodOrNull(shortName);
-        if (methodRef != null) {
+        if (methodRef == null) {
             throw CJError.of("Method " + shortName + " not found in " + this, marks);
         }
         return methodRef;
+    }
+
+    default boolean isUnitType() {
+        return toString().equals("cj.Unit");
+    }
+
+    default boolean isNeverType() {
+        return toString().equals("cj.Never");
     }
 }

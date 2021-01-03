@@ -79,7 +79,7 @@ public final class CJPass04 extends CJPassBaseEx {
                 } else {
                     var ownerAst = e.getOwner().get();
                     var owner = lctx.evalTypeExpression(ownerAst);
-                    var methodRef = owner.findMethod(e.getName());
+                    var methodRef = owner.findMethod(e.getName(), e.getMark());
                     var typeArgs = e.getTypeArgs().map(lctx::evalTypeExpression);
                     var reifiedMethodRef = ctx.checkMethodTypeArgs(methodRef, typeArgs, e.getMark());
                     var parameterTypes = reifiedMethodRef.getParameterTypes();

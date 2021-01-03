@@ -6,6 +6,19 @@ public abstract class CJIRContextBase {
 
     abstract CJIRContext getGlobal();
 
+    public void validateMainItem(CJIRItem item, CJMark... marks) {
+        if (item.getTypeParameters().size() > 0) {
+            throw CJError.of("Items with type parameters may not be run as main", marks);
+        }
+        var method = item.getMethodOrNull("main");
+        if (method == null) {
+            throw CJError.of(item.getFullName() + " does not have a main method", item.getMark());
+        }
+        if (method.getTypeParameters().size() > 0 || method.getParameters().size() > 0) {
+            throw CJError.of("Main methods cannot have type or value parameters", method.getMark());
+        }
+    }
+
     /**
      * Checks that the given type arguments are valid for the given item.
      */

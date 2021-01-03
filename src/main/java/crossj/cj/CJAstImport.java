@@ -13,6 +13,6 @@ public final class CJAstImport extends CJAstNode {
     }
 
     public String getAlias() {
-        return fullName.substring(fullName.lastIndexOf('.'));
+        return fullName.substring(fullName.lastIndexOf('.') + 1);
     }
 }

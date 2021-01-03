@@ -1,7 +1,415 @@
 package crossj.cj;
 
+import crossj.base.List;
+import crossj.base.Optional;
+
 public final class CJParser {
     public static CJAstItemDefinition parseString(String path, String string) {
-        throw CJError.of("TODO: CJParser.parseString");
+        var tokens = CJLexer.lex(string).get();
+        var parser = new CJParser(path, tokens);
+        return parser.parseTranslationUnit();
+    }
+
+    private final String path;
+    private final List<CJToken> tokens;
+    private int i = 0;
+
+    private CJParser(String path, List<CJToken> tokens) {
+        this.path = path;
+        this.tokens = tokens;
+    }
+
+    private CJMark getMark() {
+        return CJMark.fromToken(path, peek());
+    }
+
+    private CJToken peek() {
+        return tokens.get(i);
+    }
+
+    private CJToken next() {
+        return tokens.get(i++);
+    }
+
+    private boolean at(int type) {
+        return peek().type == type;
+    }
+
+    private boolean atOffset(int type, int offset) {
+        var j = i + offset;
+        return j < tokens.size() && tokens.get(j).type == type;
+    }
+
+    private CJToken expect(int type) {
+        if (!at(type)) {
+            throw etype(type);
+        }
+        return next();
+    }
+
+    private boolean consume(int type) {
+        if (at(type)) {
+            next();
+            return true;
+        }
+        return false;
+    }
+
+    private CJError etype(int type) {
+        return ekind(CJToken.typeToString(type));
+    }
+
+    private CJError ekind(String kind) {
+        return CJError.of("Expected " + kind + " but got " + CJToken.typeToString(peek().type), getMark());
+    }
+
+    private void expectDelimiters() {
+        if (!at(';') && !at('}') && !at('\n')) {
+            throw ekind("delimiter");
+        }
+        skipDelimiters();
+    }
+
+    private void skipDelimiters() {
+        while (at(';') || at('\n')) {
+            next();
+        }
+    }
+
+    private String parseId() {
+        return expect(CJToken.ID).text;
+    }
+
+    private String parseTypeId() {
+        return expect(CJToken.TYPE_ID).text;
+    }
+
+    private Optional<String> parseComment() {
+        if (at(CJToken.COMMENT)) {
+            var ret = Optional.of(expect(CJToken.COMMENT).text);
+            expectDelimiters();
+            return ret;
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private List<CJIRModifier> parseModifiers() {
+        var modifiers = List.<CJIRModifier>of();
+        var repeat = true;
+        while (repeat) {
+            switch (peek().type) {
+                case CJToken.KW_NATIVE: {
+                    next();
+                    modifiers.add(CJIRModifier.Native);
+                    break;
+                }
+                case CJToken.KW_STATIC: {
+                    next();
+                    modifiers.add(CJIRModifier.Static);
+                    break;
+                }
+                case CJToken.KW_PUBLIC: {
+                    next();
+                    modifiers.add(CJIRModifier.Public);
+                    break;
+                }
+                case CJToken.KW_PRIVATE: {
+                    next();
+                    modifiers.add(CJIRModifier.Private);
+                    break;
+                }
+                default: {
+                    repeat = false;
+                }
+            }
+        }
+        return modifiers;
+    }
+
+    private CJIRItemKind parseItemKind() {
+        switch (peek().type) {
+            case CJToken.KW_CLASS:
+                next();
+                return CJIRItemKind.Class;
+            case CJToken.KW_UNION:
+                next();
+                return CJIRItemKind.Union;
+            case CJToken.KW_TRAIT:
+                next();
+                return CJIRItemKind.Trait;
+        }
+        throw ekind("class, union or trait");
+    }
+
+    private String parsePackageName() {
+        var sb = new StringBuilder();
+        sb.append(parseId());
+        while (at('.') && atOffset(CJToken.ID, 1)) {
+            expect('.');
+            sb.append('.');
+            sb.append(parseId());
+        }
+        return sb.toString();
+    }
+
+    private String parseFullItemName() {
+        var packageName = parsePackageName();
+        expect('.');
+        return packageName + "." + parseTypeId();
+    }
+
+    private CJAstItemDefinition parseTranslationUnit() {
+        expect(CJToken.KW_PACKAGE);
+        var packageName = parsePackageName();
+        expectDelimiters();
+        var imports = List.<CJAstImport>of();
+        while (at(CJToken.KW_IMPORT)) {
+            imports.add(parseImport());
+        }
+        var comment = parseComment();
+        var modifiers = parseModifiers();
+        var kind = parseItemKind();
+        var mark = getMark();
+        var shortName = parseTypeId();
+        var typeParameters = parseTypeParameters(true);
+        var traitDeclarations = parseTraitDeclarations();
+        skipDelimiters();
+        expect('{');
+        skipDelimiters();
+        var members = List.<CJAstItemMemberDefinition>of();
+        while (!consume('}')) {
+            members.add(parseItemMember());
+        }
+        skipDelimiters();
+        if (!at(CJToken.EOF)) {
+            throw ekind("EOF");
+        }
+        return new CJAstItemDefinition(mark, packageName, imports, comment, modifiers, kind, shortName, typeParameters,
+                traitDeclarations, members);
+    }
+
+    private List<CJAstTypeParameter> parseTypeParameters(boolean itemLevel) {
+        var parameters = List.<CJAstTypeParameter>of();
+        if (consume('[')) {
+            while (!consume(']')) {
+                parameters.add(parseTypeParameter(itemLevel));
+                if (!consume(',')) {
+                    expect(']');
+                    break;
+                }
+            }
+        }
+        return parameters;
+    }
+
+    private CJAstTypeParameter parseTypeParameter(boolean itemLevel) {
+        var mark = getMark();
+        var name = parseTypeId();
+        var traits = List.<CJAstTraitExpression>of();
+        if (consume(':')) {
+            traits.add(parseTraitExpression());
+        }
+        return new CJAstTypeParameter(mark, itemLevel, name, traits);
+    }
+
+    private CJAstTraitExpression parseTraitExpression() {
+        var mark = getMark();
+        var name = parseTypeId();
+        var args = parseTypeArgs();
+        return new CJAstTraitExpression(mark, name, args);
+    }
+
+    private CJAstTypeExpression parseTypeExpression() {
+        var mark = getMark();
+        var name = parseTypeId();
+        var args = parseTypeArgs();
+        return new CJAstTypeExpression(mark, name, args);
+    }
+
+    private List<CJAstTypeExpression> parseTypeArgs() {
+        var args = List.<CJAstTypeExpression>of();
+        if (consume('[')) {
+            while (!consume(']')) {
+                args.add(parseTypeExpression());
+                if (!consume(',')) {
+                    expect(']');
+                    break;
+                }
+            }
+        }
+        return args;
+    }
+
+    private CJAstImport parseImport() {
+        expect(CJToken.KW_IMPORT);
+        var mark = getMark();
+        var fullName = parseFullItemName();
+        expectDelimiters();
+        return new CJAstImport(mark, fullName);
+    }
+
+    private List<CJAstTraitDeclaration> parseTraitDeclarations() {
+        var declarations = List.<CJAstTraitDeclaration>of();
+        skipDelimiters();
+        if (consume(':')) {
+            skipDelimiters();
+            declarations.add(parseTraitDeclaration());
+            skipDelimiters();
+            while (consume(',')) {
+                declarations.add(parseTraitDeclaration());
+                skipDelimiters();
+            }
+        }
+        return declarations;
+    }
+
+    private CJAstTraitDeclaration parseTraitDeclaration() {
+        var mark = getMark();
+        var trait = parseTraitExpression();
+        var conditions = List.<CJAstTypeCondition>of();
+        if (consume(CJToken.KW_IF)) {
+            conditions.add(parseTypeCondition());
+            while (consume(CJToken.KW_AND)) {
+                conditions.add(parseTypeCondition());
+            }
+        }
+        return new CJAstTraitDeclaration(mark, trait, conditions);
+    }
+
+    private CJAstTypeCondition parseTypeCondition() {
+        var mark = getMark();
+        var variableName = parseTypeId();
+        var traits = List.<CJAstTraitExpression>of();
+        expect(':');
+        traits.add(parseTraitExpression());
+        while (consume('&')) {
+            traits.add(parseTraitExpression());
+        }
+        return new CJAstTypeCondition(mark, variableName, traits);
+    }
+
+    private CJAstItemMemberDefinition parseItemMember() {
+        var modifiers = parseModifiers();
+        switch (peek().type) {
+            case CJToken.KW_VAL:
+            case CJToken.KW_VAR: {
+                throw CJError.of("TODO parseItemMember field", getMark());
+            }
+            case CJToken.KW_IF:
+            case CJToken.KW_DEF: {
+                return parseMethod(modifiers);
+            }
+        }
+        throw ekind("val, var, def or if");
+    }
+
+    private CJAstMethodDefinition parseMethod(List<CJIRModifier> modifiers) {
+        var conditions = List.<CJAstTypeCondition>of();
+        if (consume(CJToken.KW_IF)) {
+            conditions.add(parseTypeCondition());
+            while (consume(CJToken.KW_AND)) {
+                conditions.add(parseTypeCondition());
+            }
+        }
+        skipDelimiters();
+        modifiers.addAll(parseModifiers());
+        expect(CJToken.KW_DEF);
+        var mark = getMark();
+        var name = parseId();
+        var typeParameters = parseTypeParameters(false);
+        var parameters = parseParameters();
+        var returnType = consume(':') ? Optional.of(parseTypeExpression()) : Optional.<CJAstTypeExpression>empty();
+        var body = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
+        expectDelimiters();
+        return new CJAstMethodDefinition(mark, conditions, modifiers, name, typeParameters, parameters, returnType,
+                body);
+    }
+
+    private List<CJAstParameter> parseParameters() {
+        expect('(');
+        var list = List.<CJAstParameter>of();
+        while (!consume(')')) {
+            list.add(parseParameter());
+            if (!consume(',')) {
+                expect(')');
+                break;
+            }
+        }
+        return list;
+    }
+
+    private CJAstParameter parseParameter() {
+        var mark = getMark();
+        var name = parseId();
+        expect(':');
+        var type = parseTypeExpression();
+        return new CJAstParameter(mark, name, type);
+    }
+
+    private CJAstExpression parseExpression() {
+        return parseAtomExpression();
+    }
+
+    private CJAstExpression parseAtomExpression() {
+        switch (peek().type) {
+            case '{':
+                return parseBlock();
+            case '(': {
+                var mark = getMark();
+                if (consume(')')) {
+                    return new CJAstLiteral(mark, CJIRLiteralKind.Unit, "()");
+                } else {
+                    var inner = parseExpression();
+                    expect(')');
+                    return inner;
+                }
+            }
+            case CJToken.KW_TRUE:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.Bool, "true");
+            case CJToken.KW_FALSE:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.Bool, "false");
+            case CJToken.INT:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.Int, next().text);
+            case CJToken.DOUBLE:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.Double, next().text);
+            case CJToken.STRING:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.String, next().text);
+            case CJToken.TYPE_ID: {
+                var owner = parseTypeExpression();
+                expect('.');
+                var mark = getMark();
+                var name = parseId();
+                var typeArgs = parseTypeArgs();
+                var args = parseArgs();
+                return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
+            }
+        }
+        throw ekind("expression");
+    }
+
+    private List<CJAstExpression> parseArgs() {
+        var list = List.<CJAstExpression>of();
+        expect('(');
+        while (!consume(')')) {
+            list.add(parseExpression());
+            if (!consume(',')) {
+                expect(')');
+                break;
+            }
+        }
+        return list;
+    }
+
+    private CJAstBlock parseBlock() {
+        var mark = getMark();
+        expect('{');
+        skipDelimiters();
+        var exprs = List.<CJAstExpression>of();
+        while (!consume('}')) {
+            exprs.add(parseExpression());
+            expectDelimiters();
+        }
+        return new CJAstBlock(mark, exprs);
     }
 }

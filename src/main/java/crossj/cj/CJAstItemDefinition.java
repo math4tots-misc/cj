@@ -1,10 +1,12 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.base.Optional;
 
 public final class CJAstItemDefinition extends CJAstNode {
     private final String packageName;
     private final List<CJAstImport> imports;
+    private final Optional<String> comment;
     private final List<CJIRModifier> modifiers;
     private final CJIRItemKind kind;
     private final String shortName;
@@ -16,6 +18,7 @@ public final class CJAstItemDefinition extends CJAstNode {
             CJMark mark,
             String packageName,
             List<CJAstImport> imports,
+            Optional<String> comment,
             List<CJIRModifier> modifiers,
             CJIRItemKind kind,
             String shortName,
@@ -25,6 +28,7 @@ public final class CJAstItemDefinition extends CJAstNode {
         super(mark);
         this.packageName = packageName;
         this.imports = imports;
+        this.comment = comment;
         this.modifiers = modifiers;
         this.kind = kind;
         this.shortName = shortName;
@@ -39,6 +43,10 @@ public final class CJAstItemDefinition extends CJAstNode {
 
     public List<CJAstImport> getImports() {
         return imports;
+    }
+
+    public Optional<String> getComment() {
+        return comment;
     }
 
     public List<CJIRModifier> getModifiers() {

@@ -7,12 +7,12 @@ public final class CJAstMethodDefinition extends CJAstItemMemberDefinition {
     private final List<CJAstTypeCondition> conditions;
     private final List<CJAstTypeParameter> typeParameters;
     private final List<CJAstParameter> parameters;
-    private final CJAstTypeExpression returnType;
+    private final Optional<CJAstTypeExpression> returnType;
     private final Optional<CJAstExpression> body;
 
     public CJAstMethodDefinition(CJMark mark, List<CJAstTypeCondition> conditions, List<CJIRModifier> modifiers,
             String name, List<CJAstTypeParameter> typeParameters, List<CJAstParameter> parameters,
-            CJAstTypeExpression returnType, Optional<CJAstExpression> body) {
+            Optional<CJAstTypeExpression> returnType, Optional<CJAstExpression> body) {
         super(mark, modifiers, name);
         this.conditions = conditions;
         this.typeParameters = typeParameters;
@@ -33,7 +33,7 @@ public final class CJAstMethodDefinition extends CJAstItemMemberDefinition {
         return parameters;
     }
 
-    public CJAstTypeExpression getReturnType() {
+    public Optional<CJAstTypeExpression> getReturnType() {
         return returnType;
     }
 
