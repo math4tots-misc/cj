@@ -69,10 +69,11 @@ final class CJPass05 extends CJPassBaseEx {
             var signature = Signature.fromMethodRef(methodRef, classType);
             var entry = map.getOrNull(name);
             if (entry != null && !entry.getSignature().equals(signature)) {
-                throw CJError.of("Conflicting method definitions for " + name + " ("
-                        + entry.getOwner().getItem().getFullName() + " -> " + entry.getSignature() + " vs "
-                        + methodRef.getOwner().getItem().getFullName() + " -> " + signature + ")", entry.getMark(),
-                        methodRef.getMark());
+                throw CJError.of(
+                        "Conflicting method definitions for " + classType.getItem().getFullName() + "." + name + " ("
+                                + entry.getOwner().getItem().getFullName() + " -> " + entry.getSignature() + " vs "
+                                + methodRef.getOwner().getItem().getFullName() + " -> " + signature + ")",
+                        entry.getMark(), methodRef.getMark());
             }
             if (entry == null || !entry.hasBody()) {
                 map.put(name, new MethodEntry(methodRef.getMark(), type, name, signature,
