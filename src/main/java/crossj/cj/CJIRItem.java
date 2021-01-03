@@ -101,4 +101,9 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         }
         return methodMap.get(shortName);
     }
+
+    public CJIRTraitOrClassType toTraitOrClassType() {
+        List<CJIRType> args = typeParameters.map(tp -> new CJIRVariableType(tp, List.of()));
+        return isTrait() ? new CJIRTrait(this, args) : new CJIRClassType(this, args);
+    }
 }

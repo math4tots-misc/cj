@@ -1,8 +1,10 @@
 package crossj.cj;
 
 import crossj.base.FS;
+import crossj.base.Func1;
 import crossj.base.IO;
 import crossj.base.List;
+import crossj.base.Set;
 import crossj.base.Str;
 
 public final class CJJSTranslator {
@@ -44,6 +46,20 @@ public final class CJJSTranslator {
             translateItem(out, jsctx, item);
         }
 
+        // add methods that allow traits to access their type variables
+        for (var item : items) {
+            if (!item.isTrait()) {
+                addTypeVariableMethods(out, jsctx, item);
+            }
+        }
+
+        // inherit trait methods
+        for (var item : items) {
+            if (!item.isTrait()) {
+                inheritMethods(out, item);
+            }
+        }
+
         // emit meta objects (i.e. const MO$* = MC$*)
         // traits and items with type parameters will not have meta objects.
         for (var item : items) {
@@ -51,6 +67,60 @@ public final class CJJSTranslator {
                 var itemName = item.getFullName();
                 out.append("const " + translateItemMetaObjectName(itemName) + "=new "
                         + translateItemMetaClassName(itemName) + "();\n");
+            }
+        }
+    }
+
+    private static void addTypeVariableMethods(StringBuilder out, CJJSContext jsctx, CJIRItem item) {
+        var itemMetaClassName = translateItemMetaClassName(item.getFullName());
+        var translator = new CJJSTranslator(out, jsctx, item);
+        walkTraits(item, trait -> {
+            var params = trait.getItem().getTypeParameters();
+            var args = trait.getArgs();
+            for (int i = 0; i < args.size(); i++) {
+                var typeMethodName = translateTraitLevelTypeVariableNameWithTraitName(
+                    trait.getItem().getFullName(), params.get(i).getName());
+                out.append(itemMetaClassName + ".prototype." + typeMethodName + "=function(){\n");
+                out.append("return " + translator.translateType(args.get(i)) + ";\n");
+                out.append("}\n");
+            }
+            return null;
+        });
+    }
+
+    private static void inheritMethods(StringBuilder out, CJIRItem item) {
+        var itemMetaClassName = translateItemMetaClassName(item.getFullName());
+        var seenMethods = Set.fromIterable(item.getMembers().map(m -> m.getName()));
+        walkTraits(item, trait -> {
+            var traitMetaClassName = translateItemMetaClassName(trait.getItem().getFullName());
+            for (var member : trait.getItem().getMembers()) {
+                if (member instanceof CJIRMethod && !seenMethods.contains(member.getName())) {
+                    var method = (CJIRMethod) member;
+                    if (method.getBody().isPresent()) {
+                        seenMethods.add(method.getName());
+                        var jsMethodName = translateMethodName(method.getName());
+                        out.append(itemMetaClassName + ".prototype." + jsMethodName + "=" + traitMetaClassName
+                                + ".prototype." + jsMethodName + ";\n");
+                    }
+                }
+            }
+            return null;
+        });
+    }
+
+    private static void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
+        var stack = item.toTraitOrClassType().getTraits();
+        var seenTraits = Set.of(item.getFullName());
+        seenTraits.addAll(stack.map(t -> t.getItem().getFullName()));
+        while (stack.size() > 0) {
+            var trait = stack.pop();
+            f.apply(trait);
+            for (var subtrait : trait.getTraits()) {
+                var subtraitName = subtrait.getItem().getFullName();
+                if (!seenTraits.contains(subtraitName)) {
+                    seenTraits.add(subtraitName);
+                    stack.add(subtrait);
+                }
             }
         }
     }
@@ -82,15 +152,19 @@ public final class CJJSTranslator {
         return "MO$" + itemName.replace(".", "$");
     }
 
-    private String translateMethodLevelTypeVariable(String variableName) {
+    private static String translateMethodLevelTypeVariable(String variableName) {
         return "TV$" + variableName;
     }
 
     private String translateTraitLevelTypeVariableName(String variableName) {
-        return "TV$" + item.getFullName().replace(".", "$") + "$" + variableName;
+        return translateTraitLevelTypeVariableNameWithTraitName(item.getFullName(), variableName);
     }
 
-    private String translateLocalVariableName(String variableName) {
+    private static String translateTraitLevelTypeVariableNameWithTraitName(String traitName, String variableName) {
+        return "TV$" + traitName.replace(".", "$") + "$" + variableName;
+    }
+
+    private static String translateLocalVariableName(String variableName) {
         return "L$" + variableName;
     }
 
