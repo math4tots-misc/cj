@@ -276,13 +276,11 @@ public final class CJJSTranslator {
 
             @Override
             public CJJSBlob visitMethodCall(CJIRMethodCall e, Void a) {
-                var owner = translateType(e.getOwner());
                 var typeArgs = e.getTypeArgs().map(CJJSTranslator.this::translateType);
                 var args = e.getArgs().map(CJJSTranslator.this::translateExpression);
-                var methodName = translateMethodName(e.getName());
                 if (args.all(arg -> arg.isSimple())) {
                     var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                    return CJJSBlob.inline(owner + "." + methodName + "(" + Str.join(",", allArgs) + ")", false);
+                    return joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
                 } else {
                     args = args.map(arg -> arg.toPure(ctx));
                     var lines = List.<String>of();
@@ -290,7 +288,22 @@ public final class CJJSTranslator {
                         lines.addAll(arg.getLines());
                     }
                     var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                    return new CJJSBlob(lines, owner + "." + methodName + "(" + Str.join(",", allArgs) + ")", false);
+                    return joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
+                }
+            }
+
+            private CJJSBlob joinMethodCall(CJIRType owner, CJIRMethodRef methodRef, List<String> allArgs) {
+                var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
+                switch (fullMethodName) {
+                    case "cj.Int.__add":
+                        return CJJSBlob.inline("((" + Str.join("+", allArgs) + ")|0)", false);
+                    case "cj.Int.__mul":
+                        return CJJSBlob.inline("((" + Str.join("*", allArgs) + ")|0)", false);
+                    case "cj.Int.__sub":
+                        return CJJSBlob.inline("((" + Str.join("-", allArgs) + ")|0)", false);
+                    default:
+                        return CJJSBlob.inline(translateType(owner) + "." + translateMethodName(methodRef.getName())
+                                + "(" + Str.join(",", allArgs) + ")", false);
                 }
             }
 

@@ -31,4 +31,9 @@ public final class CJIRSelfType implements CJIRType {
         var other = (CJIRSelfType) obj;
         return selfTrait.equals(other.selfTrait);
     }
+
+    @Override
+    public String toString() {
+        return "Self";
+    }
 }

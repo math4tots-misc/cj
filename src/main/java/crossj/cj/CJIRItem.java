@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Optional;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final String fullName;
@@ -78,15 +79,17 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public CJIRBinding getBinding(List<CJIRType> args) {
         Assert.equals(typeParameters.size(), args.size());
-        var binding = new CJIRBinding();
+        var map = Map.<String, CJIRType>of();
         for (int i = 0; i < args.size(); i++) {
-            binding.put(typeParameters.get(i).getName(), args.get(i));
+            map.put(typeParameters.get(i).getName(), args.get(i));
         }
-        return binding;
+        var selfType = isTrait() ? Optional.<CJIRClassType>empty() : Optional.of(new CJIRClassType(this, args));
+        return new CJIRBinding(map, selfType);
     }
 
     /**
      * Gets the CJIRMethod directly declared in this item.
+     *
      * @param shortName
      * @return
      */
@@ -99,7 +102,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
                 }
             }
         }
-        return methodMap.get(shortName);
+        return methodMap.getOrNull(shortName);
     }
 
     public CJIRTraitOrClassType toTraitOrClassType() {

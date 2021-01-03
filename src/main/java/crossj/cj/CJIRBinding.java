@@ -1,12 +1,19 @@
 package crossj.cj;
 
 import crossj.base.Map;
+import crossj.base.Optional;
 
 public final class CJIRBinding {
-    private final Map<String, CJIRType> map = Map.of();
+    private final Map<String, CJIRType> map;
+    private final Optional<CJIRClassType> selfType;
 
-    void put(String name, CJIRType newType) {
-        map.put(name, newType);
+    CJIRBinding(Map<String, CJIRType> map, Optional<CJIRClassType> selfType) {
+        this.map = map;
+        this.selfType = selfType;
+    }
+
+    void put(String key, CJIRType type) {
+        map.put(key, type);
     }
 
     /**
@@ -39,7 +46,7 @@ public final class CJIRBinding {
             @Override
             public CJIRType visitSelf(CJIRSelfType t, Void a) {
                 // TODO: Reconsider if this is the correct behavior
-                return t;
+                return selfType.isPresent() ? selfType.get() : t;
             }
         }, null);
     }
