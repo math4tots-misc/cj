@@ -51,4 +51,8 @@ abstract class CJIRTraitOrClassType {
         }
         return ret;
     }
+
+    public final boolean isTrait() {
+        return getItem().isTrait();
+    }
 }

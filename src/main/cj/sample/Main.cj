@@ -24,5 +24,13 @@ class Main {
                 case three(s) = ()
             }
         }
+
+        IO.println("foo: " + Self.foo(SampleUnion.two(76, 2)))
+    }
+
+    def foo(u: SampleUnion): Int = union u {
+        case one(a) = a
+        case two(a, b) = a * b
+        case three(s) = s.size()
     }
 }

@@ -9,16 +9,17 @@ public final class CJIRLocalContext extends CJIRContextBase {
     private final CJIRItem item;
     private final Optional<CJIRMethod> method;
     private final Map<String, CJIRVariableType> typeVariableCache = Map.of();
-    private final CJIRTrait selfTrait;
+    private final CJIRType selfType;
 
     CJIRLocalContext(CJIRContext global, CJIRItem item, Optional<CJIRMethod> method) {
         this.global = global;
         this.item = item;
         this.method = method;
         if (item.isTrait()) {
-            selfTrait = new CJIRTrait(item, item.getTypeParameters().map(tp -> getTypeVariable(tp.getName())));
+            selfType = new CJIRSelfType(
+                    new CJIRTrait(item, item.getTypeParameters().map(tp -> getTypeVariable(tp.getName()))));
         } else {
-            selfTrait = null;
+            selfType = new CJIRClassType(item, item.getTypeParameters().map(tp -> getTypeVariable(tp.getName())));
         }
     }
 
@@ -73,7 +74,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         }
         if (typeExpression.getName().equals("Self")) {
             assertNoTypeArgs(typeExpression);
-            return new CJIRSelfType(selfTrait);
+            return selfType;
         }
         return evalClassTypeExpression(typeExpression);
     }
