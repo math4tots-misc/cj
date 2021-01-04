@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
 
@@ -377,6 +378,116 @@ public final class CJParser {
                     expr = new CJAstAssignment(opMark, target, valexpr);
                     break;
                 }
+                case '+':
+                case '-':
+                case '*':
+                case '/':
+                case '%':
+                case '<':
+                case '>':
+                case '|':
+                case '^':
+                case '&':
+                case CJToken.LSHIFT:
+                case CJToken.RSHIFT:
+                case CJToken.RSHIFTU:
+                case CJToken.POWER:
+                case CJToken.TRUNCDIV:
+                case CJToken.EQ:
+                case CJToken.NE:
+                case CJToken.LE:
+                case CJToken.GE:
+                case CJToken.KW_IN:
+                case CJToken.KW_NOT: {
+                    String methodName = null;
+                    boolean logicalNot = false;
+                    boolean rightAssociative = false;
+                    boolean swap = false;
+                    var mark = getMark();
+                    switch (next().type) {
+                        case '+':
+                            methodName = "__add";
+                            break;
+                        case '-':
+                            methodName = "__sub";
+                            break;
+                        case '*':
+                            methodName = "__mul";
+                            break;
+                        case '/':
+                            methodName = "__div";
+                            break;
+                        case '%':
+                            methodName = "__rem";
+                            break;
+                        case '<':
+                            methodName = "__lt";
+                            break;
+                        case '>':
+                            methodName = "__gt";
+                            break;
+                        case '|':
+                            methodName = "__or";
+                            break;
+                        case '^':
+                            methodName = "__xor";
+                            break;
+                        case '&':
+                            methodName = "__and";
+                            break;
+                        case CJToken.LSHIFT:
+                            methodName = "__lshift";
+                            break;
+                        case CJToken.RSHIFT:
+                            methodName = "__rshift";
+                            break;
+                        case CJToken.RSHIFTU:
+                            methodName = "__rshiftu";
+                            break;
+                        case CJToken.POWER:
+                            methodName = "__pow";
+                            rightAssociative = true;
+                            break;
+                        case CJToken.TRUNCDIV:
+                            methodName = "__truncdiv";
+                            break;
+                        case CJToken.EQ:
+                            methodName = "__eq";
+                            break;
+                        case CJToken.NE:
+                            methodName = "__eq";
+                            logicalNot = true;
+                            break;
+                        case CJToken.LE:
+                            methodName = "__le";
+                            break;
+                        case CJToken.GE:
+                            methodName = "__ge";
+                            break;
+                        case CJToken.KW_IN:
+                            methodName = "__contains";
+                            swap = true;
+                            break;
+                        case CJToken.KW_NOT:
+                            expect(CJToken.KW_IN);
+                            methodName = "__contains";
+                            logicalNot = true;
+                            swap = true;
+                            break;
+                    }
+                    Assert.that(methodName != null);
+                    var rhs = parseExpressionWithPrecedence(rightAssociative ? tokenPrecedence : tokenPrecedence + 1);
+                    if (swap) {
+                        var tmp = rhs;
+                        rhs = expr;
+                        expr = tmp;
+                    }
+                    expr = new CJAstMethodCall(mark, Optional.empty(), methodName, List.of(), List.of(expr, rhs));
+                    if (logicalNot) {
+                        expr = new CJAstLogicalNot(mark, expr);
+                    }
+                    break;
+                }
                 default:
                     throw ekind("expression operator (TODO)");
             }
@@ -540,6 +651,11 @@ public final class CJParser {
 
             @Override
             public CJAstAssignmentTarget visitAssignment(CJAstAssignment e, Void a) {
+                return invalid();
+            }
+
+            @Override
+            public CJAstAssignmentTarget visitLogicalNot(CJAstLogicalNot e, Void a) {
                 return invalid();
             }
 

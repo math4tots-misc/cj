@@ -8,6 +8,7 @@ class Main {
 
         IO.println(Int.__add(4, 17))
         IO.println((4).__add(71))
+        IO.println(4 + 71)
 
         {
             val x = 12

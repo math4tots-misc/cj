@@ -269,6 +269,12 @@ final class CJPass04 extends CJPassBaseEx {
                 var expr = evalExpressionWithType(e.getExpression(), target.getTargetType());
                 return new CJIRAssignment(e, target.getTargetType(), target, expr);
             }
+
+            @Override
+            public CJIRExpression visitLogicalNot(CJAstLogicalNot e, Optional<CJIRType> a) {
+                var inner = evalExpressionWithType(e.getInner(), ctx.getBoolType());
+                return new CJIRLogicalNot(e, ctx.getBoolType(), inner);
+            }
         }, a);
         if (a.isPresent()) {
             var expectedType = a.get();

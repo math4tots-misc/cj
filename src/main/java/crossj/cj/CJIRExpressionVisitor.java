@@ -7,4 +7,5 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitVariableDeclaration(CJIRVariableDeclaration e, A a);
     public abstract R visitVariableAccess(CJIRVariableAccess e, A a);
     public abstract R visitAssignment(CJIRAssignment e, A a);
+    public abstract R visitLogicalNot(CJIRLogicalNot e, A a);
 }

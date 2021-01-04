@@ -327,6 +327,12 @@ public final class CJJSTranslator {
                         List.of(translateTarget(e.getTarget()) + "=" + translateExpression(e.getExpression()) + ";\n"),
                         "null", true);
             }
+
+            @Override
+            public CJJSBlob visitLogicalNot(CJIRLogicalNot e, Void a) {
+                var inner = translateExpression(e.getInner());
+                return new CJJSBlob(inner.getLines(), "(!" + inner.getExpression() + ")", inner.isPure());
+            }
         }, null);
     }
 
