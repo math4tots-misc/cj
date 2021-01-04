@@ -3,6 +3,8 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.base.Tuple3;
+import crossj.base.Tuple4;
 
 public final class CJParser {
     private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
@@ -299,12 +301,31 @@ public final class CJParser {
             case CJToken.KW_VAR: {
                 throw CJError.of("TODO parseItemMember field", getMark());
             }
+            case CJToken.KW_CASE:
+                return parseCaseDefinition(modifiers);
             case CJToken.KW_IF:
-            case CJToken.KW_DEF: {
+            case CJToken.KW_DEF:
                 return parseMethod(modifiers);
-            }
         }
         throw ekind("val, var, def or if");
+    }
+
+    private CJAstCaseDefinition parseCaseDefinition(List<CJIRModifier> modifiers) {
+        expect(CJToken.KW_CASE);
+        var mark = getMark();
+        var name = parseId();
+        var types = List.<CJAstTypeExpression>of();
+        if (consume('(')) {
+            while (!consume(')')) {
+                types.add(parseTypeExpression());
+                if (!consume(',')) {
+                    expect(')');
+                    break;
+                }
+            }
+        }
+        expectDelimiters();
+        return new CJAstCaseDefinition(mark, modifiers, name, types);
     }
 
     private CJAstMethodDefinition parseMethod(List<CJIRModifier> modifiers) {
@@ -592,6 +613,45 @@ public final class CJParser {
                 var expression = parseExpression();
                 return new CJAstVariableDeclaration(mark, mutable, target, declaredType, expression);
             }
+            case CJToken.KW_UNION: {
+                var mark = getMark();
+                next();
+                var target = parseExpression();
+                expect('{');
+                skipDelimiters();
+                var cases = List.<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, CJAstExpression>>of();
+                while (!at('}') && !at(CJToken.KW_DEFAULT)) {
+                    var caseMark = getMark();
+                    expect(CJToken.KW_CASE);
+                    var caseName = parseId();
+                    var decls = List.<Tuple3<CJMark, Boolean, String>>of();
+                    if (consume('(')) {
+                        while (!consume(')')) {
+                            var mutable = consume(CJToken.KW_VAR);
+                            var varMark = getMark();
+                            var varName = parseId();
+                            decls.add(Tuple3.of(varMark, mutable, varName));
+                            if (!consume(',')) {
+                                expect(')');
+                                break;
+                            }
+                        }
+                    }
+                    expect('=');
+                    var body = parseExpression();
+                    cases.add(Tuple4.of(caseMark, caseName, decls, body));
+                    expectDelimiters();
+                }
+                Optional<CJAstExpression> fallback;
+                if (consume(CJToken.KW_DEFAULT)) {
+                    expect('=');
+                    fallback = Optional.of(parseExpression());
+                } else {
+                    fallback = Optional.empty();
+                }
+                expect('}');
+                return new CJAstUnion(mark, target, cases, fallback);
+            }
         }
         throw ekind("expression");
     }
@@ -622,47 +682,12 @@ public final class CJParser {
     }
 
     private CJAstAssignmentTarget expressionToTarget(CJAstExpression expression) {
-        return expression.accept(new CJAstExpressionVisitor<CJAstAssignmentTarget, Void>() {
-
-            @Override
-            public CJAstAssignmentTarget visitLiteral(CJAstLiteral e, Void a) {
-                return invalid();
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitBlock(CJAstBlock e, Void a) {
-                return invalid();
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitMethodCall(CJAstMethodCall e, Void a) {
-                return invalid();
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitVariableDeclaration(CJAstVariableDeclaration e, Void a) {
-                return invalid();
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitVariableAccess(CJAstVariableAccess e, Void a) {
-                return new CJAstNameAssignmentTarget(e.getMark(), e.getName());
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitAssignment(CJAstAssignment e, Void a) {
-                return invalid();
-            }
-
-            @Override
-            public CJAstAssignmentTarget visitLogicalNot(CJAstLogicalNot e, Void a) {
-                return invalid();
-            }
-
-            private CJAstAssignmentTarget invalid() {
-                throw CJError.of("Expected assignment target but got " + expression.getClass().getName(),
-                        expression.getMark());
-            }
-        }, null);
+        if (expression instanceof CJAstVariableAccess) {
+            var e = (CJAstVariableAccess) expression;
+            return new CJAstNameAssignmentTarget(e.getMark(), e.getName());
+        } else {
+            throw CJError.of("Expected assignment target but got " + expression.getClass().getName(),
+                    expression.getMark());
+        }
     }
 }

@@ -8,7 +8,8 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
-    private final List<CJIRItemMember<?>> members = List.of();
+    private final List<CJIRMethod> methods = List.of();
+    private final List<CJIRCase> cases;
     private final Map<String, String> shortNameMap;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private final Map<String, CJIRMethod> methodMap = Map.of();
@@ -16,6 +17,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     CJIRItem(CJAstItemDefinition ast) {
         super(ast);
         this.fullName = ast.getPackageName() + "." + ast.getShortName();
+        this.cases = ast.getKind() == CJIRItemKind.Union ? List.of() : null;
 
         shortNameMap = Map.of();
         for (var autoImportName : CJIRContext.autoImportItemNames) {
@@ -64,8 +66,15 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         return traitDeclarations;
     }
 
-    public List<CJIRItemMember<?>> getMembers() {
-        return members;
+    public List<CJIRMethod> getMethods() {
+        return methods;
+    }
+
+    public List<CJIRCase> getCases() {
+        if (cases == null) {
+            throw new NullPointerException();
+        }
+        return cases;
     }
 
     public Map<String, String> getShortNameMap() {
@@ -98,9 +107,9 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
      */
     public CJIRMethod getMethodOrNull(String shortName) {
         if (!methodMap.containsKey(shortName)) {
-            for (var member : members) {
-                if (member instanceof CJIRMethod && member.getName().equals(shortName)) {
-                    methodMap.put(shortName, (CJIRMethod) member);
+            for (var method : methods) {
+                if (method.getName().equals(shortName)) {
+                    methodMap.put(shortName, method);
                     break;
                 }
             }

@@ -4,7 +4,10 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
+import crossj.base.Pair;
+import crossj.base.Range;
 import crossj.base.Tuple3;
+import crossj.base.Tuple4;
 
 /**
  * Pass 4
@@ -20,7 +23,7 @@ final class CJPass04 extends CJPassBaseEx {
 
     @Override
     void handleItem(CJIRItem item) {
-        for (var member : item.getMembers()) {
+        for (var member : item.getMethods()) {
             if (member instanceof CJIRMethod) {
                 handleMethod((CJIRMethod) member);
             }
@@ -108,6 +111,7 @@ final class CJPass04 extends CJPassBaseEx {
 
             @Override
             public CJIRExpression visitBlock(CJAstBlock e, Optional<CJIRType> a) {
+                enterScope();
                 var exprs = e.getExpressions();
                 if (exprs.size() == 0) {
                     return new CJIRLiteral(e, ctx.getUnitType(), CJIRLiteralKind.Unit, "");
@@ -117,6 +121,7 @@ final class CJPass04 extends CJPassBaseEx {
                     newExprs.add(evalExpressionWithType(exprs.get(i), ctx.getUnitType()));
                 }
                 newExprs.add(evalExpressionWithType(exprs.last(), a.get()));
+                exitScope();
 
                 return new CJIRBlock(e, newExprs.last().getType(), newExprs);
             }
@@ -274,6 +279,82 @@ final class CJPass04 extends CJPassBaseEx {
             public CJIRExpression visitLogicalNot(CJAstLogicalNot e, Optional<CJIRType> a) {
                 var inner = evalExpressionWithType(e.getInner(), ctx.getBoolType());
                 return new CJIRLogicalNot(e, ctx.getBoolType(), inner);
+            }
+
+            @Override
+            public CJIRExpression visitUnion(CJAstUnion e, Optional<CJIRType> a) {
+                var target = evalExpression(e.getTarget());
+                if (!target.getType().isUnionType()) {
+                    throw CJError.of(target.getType() + " is not a union type", target.getMark());
+                }
+                var type = (CJIRClassType) target.getType();
+                var bindings = type.getBindingWithSelfType(type);
+                var casesByTag = type.getItem().getCases();
+                var caseNamesByTag = casesByTag.map(defn -> defn.getName());
+                var caseTypesByTag = casesByTag.map(defn -> defn.getTypes().map(bindings::apply));
+                var caseTagsByName = Map
+                        .fromIterable(Range.upto(casesByTag.size()).map(i -> Pair.of(caseNamesByTag.get(i), i)));
+                var sieve = Range.upto(caseTypesByTag.size()).map(i -> false).list();
+                var cases = List.<Tuple4<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, CJIRExpression>>of();
+                for (var caseAst : e.getCases()) {
+                    var caseMark = caseAst.get1();
+                    var caseName = caseAst.get2();
+                    var caseVars = caseAst.get3();
+                    var caseBody = caseAst.get4();
+                    var tag = caseTagsByName.getOrNull(caseName);
+                    if (sieve.get(tag)) {
+                        throw CJError.of("Duplicate entry for " + caseName, caseMark);
+                    }
+                    sieve.set(tag, true);
+                    if (tag == null) {
+                        throw CJError.of(caseName + " is not a case in " + type, caseMark);
+                    }
+                    var caseDefn = casesByTag.get(tag);
+                    if (caseDefn.getTypes().size() != caseVars.size()) {
+                        throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
+                                + caseVars.size(), caseMark);
+                    }
+                    var caseTypes = caseDefn.getTypes().map(bindings::apply);
+                    var vars = Range.upto(caseTypes.size()).map(i -> {
+                        var varAst = caseVars.get(i);
+                        var varMark = varAst.get1();
+                        var mutable = varAst.get2();
+                        var varName = varAst.get3();
+                        var varType = caseTypes.get(i);
+                        return new CJIRAdHocVariableDeclaration(varMark, mutable, varName, varType);
+                    }).list();
+                    enterScope();
+                    vars.forEach(t -> declareLocal(t));
+                    var body = evalExpressionEx(caseBody, a);
+                    exitScope();
+                    if (a.isEmpty()) {
+                        a = Optional.of(body.getType());
+                    }
+                    cases.add(Tuple4.of(caseMark, caseDefn, vars, body));
+                }
+                Optional<CJIRExpression> fallback;
+                if (e.getFallback().isPresent()) {
+                    fallback = Optional.of(evalExpressionEx(e.getFallback().get(), a));
+                    if (a.isEmpty()) {
+                        a = Optional.of(fallback.get().getType());
+                    }
+                } else {
+                    fallback = Optional.empty();
+                    var missingCases = List.<String>of();
+                    for (int i = 0; i < sieve.size(); i++) {
+                        if (!sieve.get(i)) {
+                            missingCases.add(caseNamesByTag.get(i));
+                        }
+                    }
+                    if (missingCases.size() > 0) {
+                        var itemName = type.getItem().getFullName();
+                        throw CJError.of("Missing union cases for " + itemName + ": " + missingCases, e.getMark());
+                    }
+                    if (sieve.isEmpty()) {
+                        throw CJError.of("Empty unions require at least a default case", e.getMark());
+                    }
+                }
+                return new CJIRUnion(e, a.get(), target, cases, fallback);
             }
         }, a);
         if (a.isPresent()) {

@@ -76,8 +76,7 @@ final class CJPass05 extends CJPassBaseEx {
                         entry.getMark(), methodRef.getMark());
             }
             if (entry == null || !entry.hasBody()) {
-                map.put(name, new MethodEntry(methodRef.getMark(), type, name, signature,
-                        type.getItem().isNative() || methodRef.getMethod().getBody().isPresent()));
+                map.put(name, new MethodEntry(methodRef.getMark(), type, name, signature, methodRef.hasImpl()));
             }
         }
     }
@@ -119,7 +118,8 @@ final class CJPass05 extends CJPassBaseEx {
     }
 
     private static CJIRBinding bindMethodWithDummyVars(CJIRClassType selfType, CJIRMethodRef methodRef) {
-        return methodRef.getBinding(selfType, getDummyVars(methodRef.getMethod().getTypeParameters().size()).map(x -> x));
+        return methodRef.getBinding(selfType,
+                getDummyVars(methodRef.getMethod().getTypeParameters().size()).map(x -> x));
     }
 
     private static final class Signature {

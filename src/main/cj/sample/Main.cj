@@ -1,5 +1,6 @@
 package sample
 
+import sample.SampleUnion
 import cj.IO
 
 class Main {
@@ -13,6 +14,15 @@ class Main {
         {
             val x = 12
             IO.println(x)
+        }
+
+        {
+            var x = SampleUnion.one(24)
+            union x {
+                case one(a) = IO.println("a: " + a)
+                case two(a, b) = ()
+                case three(s) = ()
+            }
         }
     }
 }

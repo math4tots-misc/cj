@@ -4,6 +4,7 @@ import crossj.base.FS;
 import crossj.base.Func1;
 import crossj.base.IO;
 import crossj.base.List;
+import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
 
@@ -90,13 +91,12 @@ public final class CJJSTranslator {
 
     private static void inheritMethods(StringBuilder out, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
-        var seenMethods = Set.fromIterable(item.getMembers().map(m -> m.getName()));
+        var seenMethods = Set.fromIterable(item.getMethods().map(m -> m.getName()));
         walkTraits(item, trait -> {
             var traitMetaClassName = translateItemMetaClassName(trait.getItem().getFullName());
-            for (var member : trait.getItem().getMembers()) {
-                if (member instanceof CJIRMethod && !seenMethods.contains(member.getName())) {
-                    var method = (CJIRMethod) member;
-                    if (method.getBody().isPresent()) {
+            for (var method : trait.getItem().getMethods()) {
+                if (!seenMethods.contains(method.getName())) {
+                    if (method.hasImpl()) {
                         seenMethods.add(method.getName());
                         var jsMethodName = translateMethodName(method.getName());
                         out.append(itemMetaClassName + ".prototype." + jsMethodName + "=" + traitMetaClassName
@@ -179,29 +179,34 @@ public final class CJJSTranslator {
             }
             out.append("}\n");
         }
-        for (var member : item.getMembers()) {
-            if (member instanceof CJIRMethod) {
-                var method = (CJIRMethod) member;
-                if (method.getBody().isPresent()) {
-                    var methodName = translateMethodName(method.getName());
-                    var typeArgNames = method.getTypeParameters()
-                            .map(p -> translateMethodLevelTypeVariable(p.getName()));
-                    var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
-                    var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
-                    out.append(methodName + "(" + Str.join(",", allArgNames) + "){\n");
-                    var body = translateExpression(method.getBody().get());
-                    for (var line : body.getLines()) {
-                        out.append(line);
-                    }
-                    if (method.getReturnType().isUnitType()) {
-                        if (!body.isPure()) {
-                            out.append(body.getExpression() + ";\n");
-                        }
-                    } else {
-                        out.append("return " + body.getExpression() + ";\n");
-                    }
-                    out.append("}\n");
+        if (item.getKind() == CJIRItemKind.Union && !item.isNative()) {
+            for (var caseDefn : item.getCases()) {
+                var methodName = translateMethodName(caseDefn.getName());
+                var argc = caseDefn.getTypes().size();
+                var args = Str.join(",", Range.upto(argc).map(i -> "a" + i));
+                out.append(methodName + "(" + args + "){return[" + caseDefn.getTag() + "," + args + "];}\n");
+            }
+        }
+        for (var method : item.getMethods()) {
+            var optionalBody = method.getBody();
+            if (optionalBody.isPresent()) {
+                var methodName = translateMethodName(method.getName());
+                var typeArgNames = method.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
+                var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
+                var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
+                out.append(methodName + "(" + Str.join(",", allArgNames) + "){\n");
+                var body = translateExpression(optionalBody.get());
+                for (var line : body.getLines()) {
+                    out.append(line);
                 }
+                if (method.getReturnType().isUnitType()) {
+                    if (!body.isPure()) {
+                        out.append(body.getExpression() + ";\n");
+                    }
+                } else {
+                    out.append("return " + body.getExpression() + ";\n");
+                }
+                out.append("}\n");
             }
         }
         out.append("}\n");
@@ -332,6 +337,42 @@ public final class CJJSTranslator {
             public CJJSBlob visitLogicalNot(CJIRLogicalNot e, Void a) {
                 var inner = translateExpression(e.getInner());
                 return new CJJSBlob(inner.getLines(), "(!" + inner.getExpression() + ")", inner.isPure());
+            }
+
+            @Override
+            public CJJSBlob visitUnion(CJIRUnion e, Void a) {
+                var target = translateExpression(e.getTarget()).toPure(ctx);
+                var lines = target.getLines();
+                var tmpvar = ctx.newTempVarName();
+                lines.add("let " + tmpvar + ";\n");
+                lines.add("switch((" + target.getExpression() + ")[0]){\n");
+                for (var entry : e.getCases()) {
+                    var caseDefn = entry.get2();
+                    var body = translateExpression(entry.get4());
+                    var tag = caseDefn.getTag();
+                    var names = entry.get3().map(d -> translateLocalVariableName(d.getName()));
+                    var mutable = entry.get3().any(d -> d.isMutable());
+                    var prefix = mutable ? "let " : "const ";
+                    lines.add("case " + tag + ":{\n");
+                    lines.add(prefix + "[," + Str.join(",", names) + "]=" + target.getExpression() + ";\n");
+                    lines.addAll(body.getLines());
+                    lines.add(tmpvar + "=" + body.getExpression() + ";\n");
+                    lines.add("break;\n");
+                    lines.add("}\n");
+                }
+                if (e.getFallback().isPresent()) {
+                    var fallback = translateExpression(e.getFallback().get());
+                    lines.add("default:{\n");
+                    lines.addAll(fallback.getLines());
+                    if (!fallback.isPure()) {
+                        lines.add(fallback.getExpression() + ";\n");
+                    }
+                    lines.add("}\n");
+                } else {
+                    lines.add("default:throw new Error(\"Invalid tag\");\n");
+                }
+                lines.add("}\n");
+                return new CJJSBlob(lines, tmpvar, true);
             }
         }, null);
     }

@@ -26,6 +26,10 @@ public interface CJIRType {
         return methodRef;
     }
 
+    default boolean isUnionType() {
+        return false;
+    }
+
     default boolean isUnitType() {
         return toString().equals("cj.Unit");
     }

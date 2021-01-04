@@ -51,4 +51,8 @@ public final class CJIRMethodRef {
         }
         return binding;
     }
+
+    public boolean hasImpl() {
+        return method.hasImpl();
+    }
 }

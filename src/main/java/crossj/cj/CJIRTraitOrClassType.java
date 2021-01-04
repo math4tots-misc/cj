@@ -46,11 +46,8 @@ abstract class CJIRTraitOrClassType {
 
     public final List<CJIRMethodRef> getMethodRefs() {
         var ret = List.<CJIRMethodRef>of();
-        for (var member : getItem().getMembers()) {
-            if (member instanceof CJIRMethod) {
-                var method = (CJIRMethod) member;
-                ret.add(new CJIRMethodRef(this, method));
-            }
+        for (var method : getItem().getMethods()) {
+            ret.add(new CJIRMethodRef(this, method));
         }
         return ret;
     }

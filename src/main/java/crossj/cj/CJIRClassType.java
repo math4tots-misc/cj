@@ -21,6 +21,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isUnionType() {
+        return item.getKind() == CJIRItemKind.Union;
+    }
+
+    @Override
     public CJIRMethodRef findMethodOrNull(String shortName) {
         return super.findMethodOrNull(shortName);
     }

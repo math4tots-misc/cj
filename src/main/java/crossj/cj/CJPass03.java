@@ -1,5 +1,9 @@
 package crossj.cj;
 
+import crossj.base.List;
+import crossj.base.Optional;
+import crossj.base.Range;
+
 /**
  * Pass 3
  *
@@ -14,45 +18,78 @@ final class CJPass03 extends CJPassBaseEx {
     @Override
     void handleItem(CJIRItem item) {
         checkTypeParameterTraitsAndTraitDeclarations(item);
-        materializeMethods(item);
+        materializeMembers(item);
     }
 
     /**
      * Creates all the CJIRMethod objects for this item.
      */
-    private void materializeMethods(CJIRItem item) {
+    private void materializeMembers(CJIRItem item) {
         for (var memberAst : item.getAst().getMembers()) {
             if (memberAst instanceof CJAstMethodDefinition) {
-                var methodAst = (CJAstMethodDefinition) memberAst;
-                var conditions = methodAst.getConditions().map(condition -> new CJIRTypeCondition(condition,
-                        getTypeParameter(condition.getVariableName(), condition.getMark())));
-                var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
-                var method = new CJIRMethod(methodAst, conditions, typeParameters);
-
-                enterMethod(method);
-
-                for (var typeParameter : typeParameters) {
-                    var typeParameterAst = typeParameter.getAst();
-                    typeParameter.getTraits().addAll(typeParameterAst.getTraits().map(lctx::evalTraitExpression));
+                materializeMethod(item, (CJAstMethodDefinition) memberAst, false);
+            } else if (memberAst instanceof CJAstCaseDefinition) {
+                if (item.getKind() != CJIRItemKind.Union) {
+                    throw CJError.of("Only union items may have case definitions", memberAst.getMark());
                 }
-
-                var parameters = method.getParameters();
-                for (var parameterAst : methodAst.getParameters()) {
-                    var type = lctx.evalTypeExpression(parameterAst.getType());
-                    var parameter = new CJIRParameter(parameterAst, type);
-                    parameters.add(parameter);
-                }
-
-                var returnType = methodAst.getReturnType().map(lctx::evalTypeExpression).getOrElseDo(lctx::getUnitType);
-                method.setReturnType(returnType);
-
-                exitMethod();
-
-                item.getMembers().add(method);
+                var tag = item.getCases().size();
+                var caseAst = (CJAstCaseDefinition) memberAst;
+                var types = caseAst.getTypes().map(lctx::evalTypeExpression);
+                var caseDefn = new CJIRCase(caseAst, tag, types);
+                item.getCases().add(caseDefn);
+                var methodAst = synthesizeCaseMethod(item, caseAst);
+                materializeMethod(item, methodAst, true);
             } else {
-                throw CJError.of("TODO: materializeMethods " + memberAst.getClass().getName(), memberAst.getMark());
+                throw CJError.of("TODO: materializeMembers " + memberAst.getClass().getName(), memberAst.getMark());
             }
         }
+    }
+
+    private CJAstMethodDefinition synthesizeCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {
+        var parameters = Range.upto(caseAst.getTypes().size()).map(i -> new CJAstParameter(
+            caseAst.getTypes().get(i).getMark(),
+            false,
+            "a" + i,
+            caseAst.getTypes().get(i)
+        )).list();
+        return new CJAstMethodDefinition(
+            caseAst.getMark(),
+            List.of(),
+            List.of(),
+            caseAst.getName(),
+            List.of(),
+            parameters,
+            Optional.of(new CJAstTypeExpression(caseAst.getMark(), "Self", List.of())),
+            Optional.empty());
+    }
+
+    private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent) {
+        var conditions = methodAst.getConditions().map(condition -> new CJIRTypeCondition(condition,
+                getTypeParameter(condition.getVariableName(), condition.getMark())));
+        var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
+        var method = new CJIRMethod(methodAst, conditions, typeParameters,
+                implPresent || methodAst.getBody().isPresent() || item.isNative());
+
+        enterMethod(method);
+
+        for (var typeParameter : typeParameters) {
+            var typeParameterAst = typeParameter.getAst();
+            typeParameter.getTraits().addAll(typeParameterAst.getTraits().map(lctx::evalTraitExpression));
+        }
+
+        var parameters = method.getParameters();
+        for (var parameterAst : methodAst.getParameters()) {
+            var type = lctx.evalTypeExpression(parameterAst.getType());
+            var parameter = new CJIRParameter(parameterAst, type);
+            parameters.add(parameter);
+        }
+
+        var returnType = methodAst.getReturnType().map(lctx::evalTypeExpression).getOrElseDo(lctx::getUnitType);
+        method.setReturnType(returnType);
+
+        exitMethod();
+
+        item.getMethods().add(method);
     }
 
     private CJIRTypeParameter getTypeParameter(String shortName, CJMark... marks) {
