@@ -2,7 +2,6 @@ package crossj.cj;
 
 import crossj.base.Func1;
 import crossj.base.List;
-import crossj.base.Optional;
 import crossj.base.Set;
 
 public abstract class CJIRContextBase {
@@ -65,9 +64,10 @@ public abstract class CJIRContextBase {
         }
     }
 
-    CJIRReifiedMethodRef checkMethodTypeArgs(CJIRType selfType, CJIRMethodRef methodRef, List<CJIRType> args, CJMark... marks) {
+    CJIRReifiedMethodRef checkMethodTypeArgs(CJIRType selfType, CJIRMethodRef methodRef, List<CJIRType> args,
+            CJMark... marks) {
         checkMethodTypeArgc(methodRef, args, marks);
-        var binding = methodRef.getBinding(Optional.of(selfType), args);
+        var binding = methodRef.getBinding(selfType, args);
         var typeParameters = methodRef.getMethod().getTypeParameters();
         for (int i = 0; i < args.size(); i++) {
             var typeParameter = typeParameters.get(i);
