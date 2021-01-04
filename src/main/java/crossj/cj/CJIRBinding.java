@@ -15,6 +15,18 @@ public final class CJIRBinding {
         map.put(key, type);
     }
 
+    public boolean containsKey(String key) {
+        return map.containsKey(key);
+    }
+
+    public CJIRType get(String key) {
+        return map.get(key);
+    }
+
+    public CJIRType getSelfType() {
+        return selfType;
+    }
+
     /**
      * Naively apply the binding.
      * The resulting type is not checked for whether all traits are
@@ -49,7 +61,7 @@ public final class CJIRBinding {
         }, null);
     }
 
-    public Map<String, CJIRType> getMap() {
-        return map;
+    public int size() {
+        return map.size();
     }
 }

@@ -170,7 +170,7 @@ final class CJPass05 extends CJPassBaseEx {
 
             @Override
             public CJIRType visitVariable(CJIRVariableType t, Void a) {
-                return binding.getMap().get(t.getName());
+                return binding.get(t.getName());
             }
 
             @Override

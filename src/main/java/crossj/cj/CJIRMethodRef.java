@@ -35,10 +35,20 @@ public final class CJIRMethodRef {
     public CJIRBinding getBinding(CJIRType selfType, List<CJIRType> args) {
         var typeParameters = method.getTypeParameters();
         Assert.equals(typeParameters.size(), args.size());
-        var binding = owner.getBinding();
+        return getPartialBinding(selfType, args);
+    }
+
+    public CJIRBinding getPartialBinding(CJIRType selfType, List<CJIRType> args, CJMark... marks) {
+        var typeParameters = method.getTypeParameters();
+        if (args.size() > typeParameters.size()) {
+            throw CJError.of(owner.getItem().getFullName() + "." + method.getName() + " expectesd "
+                    + typeParameters.size() + " type parameters but got " + args.size(), marks);
+        }
+        Assert.that(args.size() <= typeParameters.size());
+        var binding = owner.getBindingWithSelfType(selfType);
         for (int i = 0; i < args.size(); i++) {
             binding.put(typeParameters.get(i).getName(), args.get(i));
         }
-        return new CJIRBinding(selfType, binding.getMap());
+        return binding;
     }
 }

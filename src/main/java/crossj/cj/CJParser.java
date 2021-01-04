@@ -360,6 +360,16 @@ public final class CJParser {
         while (tokenPrecedence >= precedence) {
             var opMark = getMark();
             switch (peek().type) {
+                case '.': {
+                    next();
+                    var methodMark = getMark();
+                    var methodName = parseId();
+                    var typeArgs = parseTypeArgs();
+                    var args = List.of(expr);
+                    args.addAll(parseArgs());
+                    expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, typeArgs, args);
+                    break;
+                }
                 case '=': {
                     next();
                     var valexpr = parseExpression();
@@ -428,9 +438,12 @@ public final class CJParser {
                 return parseBlock();
             case '(': {
                 var mark = getMark();
-                if (consume(')')) {
+                if (atOffset(')', 1)) {
+                    next();
+                    next();
                     return new CJAstLiteral(mark, CJIRLiteralKind.Unit, "()");
                 } else {
+                    next();
                     var inner = parseExpression();
                     expect(')');
                     return inner;

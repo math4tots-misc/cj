@@ -11,6 +11,10 @@ public final class CJIRVariableType implements CJIRType {
         this.additionalTraits = additionalTraits;
     }
 
+    public CJIRTypeParameter getDeclaration() {
+        return declaration;
+    }
+
     public String getName() {
         return declaration.getName();
     }

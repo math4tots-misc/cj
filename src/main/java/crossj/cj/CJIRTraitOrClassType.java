@@ -4,16 +4,20 @@ import crossj.base.List;
 import crossj.base.Str;
 
 abstract class CJIRTraitOrClassType {
-    private CJIRBinding bindings = null;
+    private CJIRBinding binding = null;
 
     public abstract CJIRItem getItem();
     public abstract List<CJIRType> getArgs();
 
-    public CJIRBinding getBinding() {
-        if (bindings == null) {
-            bindings = getItem().getBinding(getArgs());
+    private CJIRBinding getBinding() {
+        if (binding == null) {
+            binding = getItem().getBinding(getArgs());
         }
-        return bindings;
+        return binding;
+    }
+
+    public CJIRBinding getBindingWithSelfType(CJIRType selfType) {
+        return getItem().getBindingWithSelfType(selfType, getArgs());
     }
 
     public List<CJIRTrait> getTraits(CJMark... marks) {

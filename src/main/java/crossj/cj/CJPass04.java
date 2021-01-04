@@ -1,8 +1,10 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
+import crossj.base.Tuple3;
 
 /**
  * Pass 4
@@ -121,26 +123,122 @@ final class CJPass04 extends CJPassBaseEx {
 
             @Override
             public CJIRExpression visitMethodCall(CJAstMethodCall e, Optional<CJIRType> a) {
+                List<CJIRType> typeArgs;
+                var args = List.<CJIRExpression>of();
+                CJIRType owner;
+                var argAsts = e.getArgs();
+
                 if (e.getOwner().isEmpty()) {
-                    throw CJError.of("TODO evalExpression-visitMethodCall instance", e.getMark());
+                    // For a "non-static" method call, the first argument must always be
+                    // evaluated without bound to determine the owner type.
+                    args = List.of(evalExpression(argAsts.get(0)));
+                    owner = args.get(0).getType();
                 } else {
-                    var ownerAst = e.getOwner().get();
-                    var owner = lctx.evalTypeExpression(ownerAst);
-                    var methodRef = owner.findMethod(e.getName(), e.getMark());
-                    var typeArgs = e.getTypeArgs().map(lctx::evalTypeExpression);
-                    var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, e.getMark());
-                    var parameterTypes = reifiedMethodRef.getParameterTypes();
-                    var argAsts = e.getArgs();
-                    checkArgc(parameterTypes, argAsts, e.getMark());
-                    var args = List.<CJIRExpression>of();
-                    for (int i = 0; i < parameterTypes.size(); i++) {
-                        var parameterType = parameterTypes.get(i);
-                        var argAst = argAsts.get(i);
-                        args.add(evalExpressionWithType(argAst, parameterType));
-                    }
-                    var returnType = reifiedMethodRef.getReturnType();
-                    return new CJIRMethodCall(e, returnType, owner, methodRef, typeArgs, args);
+                    // For "static" method calls, no expressions have to be evaluated
+                    // to determine the owner type.
+                    args = List.of();
+                    owner = lctx.evalTypeExpression(e.getOwner().get());
                 }
+                var methodRef = owner.findMethod(e.getName(), e.getMark());
+
+                if (e.getTypeArgs().size() == 0 && methodRef.getMethod().getTypeParameters().size() > 0) {
+                    // If no type arguments are provided, and the method has type parameters,
+                    // try to infer them.
+                    typeArgs = inferMethodTypeArgs(e.getMark(), owner, methodRef, a, argAsts, args);
+                } else {
+                    // use the given type arguments as is
+                    typeArgs = e.getTypeArgs().map(lctx::evalTypeExpression);
+                }
+                var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, e.getMark());
+                var parameterTypes = reifiedMethodRef.getParameterTypes();
+                checkArgc(parameterTypes, argAsts, e.getMark());
+                while (args.size() < parameterTypes.size()) {
+                    var parameterType = parameterTypes.get(args.size());
+                    var argAst = argAsts.get(args.size());
+                    args.add(evalExpressionWithType(argAst, parameterType));
+                }
+                var returnType = reifiedMethodRef.getReturnType();
+                return new CJIRMethodCall(e, returnType, owner, methodRef, typeArgs, args);
+            }
+
+            private List<CJIRType> inferMethodTypeArgs(CJMark mark, CJIRType selfType, CJIRMethodRef methodRef,
+                    Optional<CJIRType> expectedReturnType, List<CJAstExpression> args,
+                    List<CJIRExpression> alreadyEvaluatedExpressions) {
+                var itemBinding = methodRef.getOwner().getBindingWithSelfType(selfType);
+                var stack = List.<Tuple3<CJMark, CJIRType, CJIRType>>of();
+                var exprs = alreadyEvaluatedExpressions;
+                var map = Map.<String, CJIRType>of();
+                var typeParameters = methodRef.getMethod().getTypeParameters();
+                var target = typeParameters.size();
+                var parameters = methodRef.getMethod().getParameters();
+                var exprsLimit = Math.min(args.size(), parameters.size());
+
+                if (expectedReturnType.isPresent()) {
+                    stack.add(Tuple3.of(mark, methodRef.getMethod().getReturnType(), expectedReturnType.get()));
+                }
+
+                while (map.size() < target && (stack.size() > 0 || exprs.size() < exprsLimit)) {
+                    if (stack.size() == 0) {
+                        // if the stack is empty but we have more arguments we can look at, use it.
+                        var i = exprs.size();
+                        var arg = args.get(i);
+                        var expr = evalExpression(arg);
+                        exprs.add(expr);
+                        stack.add(Tuple3.of(arg.getMark(), parameters.get(i).getVariableType(), expr.getType()));
+                    }
+                    var triple = stack.pop();
+                    var inferMark = triple.get1();
+                    var param = triple.get2();
+                    var given = triple.get3();
+
+                    // TODO: More thorough checking
+                    if (param instanceof CJIRVariableType) {
+                        var variableType = (CJIRVariableType) param;
+                        var variableName = variableType.getName();
+                        if (!itemBinding.containsKey(variableName) && !map.containsKey(variableName)) {
+                            Assert.that(variableType.isMethodLevel());
+
+                            // this is a free variable. Let's bind it.
+                            map.put(variableName, given);
+
+                            // we also use the trait bounds of this variable to add more inferences
+                            for (var bound : variableType.getDeclaration().getTraits()) {
+                                var givenImplTrait = given.getImplementingTraitByItemOrNull(bound.getItem());
+                                if (givenImplTrait == null) {
+                                    throw CJError.of(given + " does not implement required bound " + bound, inferMark,
+                                            variableType.getDeclaration().getMark());
+                                }
+                                for (int i = 0; i < bound.getArgs().size(); i++) {
+                                    var typeFromBound = bound.getArgs().get(i);
+                                    var typeFromGiven = givenImplTrait.getArgs().get(i);
+                                    stack.add(Tuple3.of(variableType.getDeclaration().getMark(), typeFromBound,
+                                            typeFromGiven));
+                                }
+                            }
+                        }
+                    } else if (param instanceof CJIRClassType) {
+                        var classTypeParam = (CJIRClassType) param;
+                        if (!(given instanceof CJIRClassType)) {
+                            throw CJError.of("Expected argument of form " + param + " but got " + given, inferMark);
+                        }
+                        var classTypeGiven = (CJIRClassType) given;
+                        if (classTypeParam.getItem() != classTypeGiven.getItem()
+                                || classTypeParam.getArgs().size() != classTypeGiven.getArgs().size()) {
+                            throw CJError.of("Expected argument of form " + param + " but got " + given, inferMark);
+                        }
+                        for (int i = 0; i < classTypeGiven.getArgs().size(); i++) {
+                            stack.add(Tuple3.of(inferMark, classTypeParam.getArgs().get(i),
+                                    classTypeGiven.getArgs().get(i)));
+                        }
+                    }
+                }
+
+                if (map.size() < target) {
+                    throw CJError.of("Could not infer type arguments", mark);
+                }
+
+                var typeArgs = typeParameters.map(tp -> map.get(tp.getName()));
+                return typeArgs;
             }
 
             @Override
@@ -202,7 +300,7 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private CJIRAssignmentTarget evalAssignableTarget(CJAstAssignmentTarget target) {
-        return target.accept(new CJAstAssignmentTargetVisitor<CJIRAssignmentTarget, Void>(){
+        return target.accept(new CJAstAssignmentTargetVisitor<CJIRAssignmentTarget, Void>() {
             @Override
             public CJIRAssignmentTarget visitName(CJAstNameAssignmentTarget t, Void a) {
                 var name = t.getName();

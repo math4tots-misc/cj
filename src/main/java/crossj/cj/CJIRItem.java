@@ -77,12 +77,16 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     }
 
     public CJIRBinding getBinding(List<CJIRType> args) {
+        CJIRType selfType = isTrait() ? new CJIRSelfType(new CJIRTrait(this, args)) : new CJIRClassType(this, args);
+        return getBindingWithSelfType(selfType, args);
+    }
+
+    public CJIRBinding getBindingWithSelfType(CJIRType selfType, List<CJIRType> args) {
         Assert.equals(typeParameters.size(), args.size());
         var map = Map.<String, CJIRType>of();
         for (int i = 0; i < args.size(); i++) {
             map.put(typeParameters.get(i).getName(), args.get(i));
         }
-        CJIRType selfType = isTrait() ? new CJIRSelfType(new CJIRTrait(this, args)) : new CJIRClassType(this, args);
         return new CJIRBinding(selfType, map);
     }
 

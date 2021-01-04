@@ -33,4 +33,14 @@ public interface CJIRType {
     default boolean isNeverType() {
         return toString().equals("cj.Never");
     }
+
+    default CJIRTrait getImplementingTraitByItemOrNull(CJIRItem item) {
+        for (var trait : getTraits()) {
+            var ret = trait.getImplementingTraitByItemOrNull(item);
+            if (ret != null) {
+                return ret;
+            }
+        }
+        return null;
+    }
 }
