@@ -4,6 +4,7 @@ import crossj.base.FS;
 import crossj.base.Func1;
 import crossj.base.IO;
 import crossj.base.List;
+import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
@@ -329,32 +330,49 @@ public final class CJJSTranslator {
             public CJJSBlob visitMethodCall(CJIRMethodCall e, Void a) {
                 var typeArgs = e.getTypeArgs().map(CJJSTranslator.this::translateType);
                 var args = e.getArgs().map(CJJSTranslator.this::translateExpression);
-                if (args.all(arg -> arg.isSimple())) {
-                    var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                    return joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
-                } else {
-                    args = args.map(arg -> arg.toPure(ctx));
-                    var lines = List.<String>of();
-                    for (var arg : args) {
-                        lines.addAll(arg.getLines());
-                    }
-                    var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                    return joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
+                args = args.all(arg -> arg.isSimple()) ? args : args.map(arg -> arg.toPure(ctx));
+                var lines = List.<String>of();
+                for (var arg : args) {
+                    lines.addAll(arg.getLines());
                 }
+                var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
+                var pair = joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
+                return new CJJSBlob(lines, pair.get1(), pair.get2());
             }
 
-            private CJJSBlob joinMethodCall(CJIRType owner, CJIRMethodRef methodRef, List<String> allArgs) {
+            private Pair<String, Boolean> joinMethodCall(CJIRType owner, CJIRMethodRef methodRef,
+                    List<String> allArgs) {
                 var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
                 switch (fullMethodName) {
                     case "cj.Int.__add":
-                        return CJJSBlob.inline("((" + Str.join("+", allArgs) + ")|0)", false);
+                        return Pair.of("((" + Str.join("+", allArgs) + ")|0)", false);
                     case "cj.Int.__mul":
-                        return CJJSBlob.inline("((" + Str.join("*", allArgs) + ")|0)", false);
+                        return Pair.of("((" + Str.join("*", allArgs) + ")|0)", false);
                     case "cj.Int.__sub":
-                        return CJJSBlob.inline("((" + Str.join("-", allArgs) + ")|0)", false);
+                        return Pair.of("((" + Str.join("-", allArgs) + ")|0)", false);
+                    case "cj.Int.__floordiv":
+                        return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
+                    case "cj.Int.__div":
+                        return Pair.of("(" + Str.join("/", allArgs) + ")", false);
+                    case "cj.Double.__add":
+                        return Pair.of("(" + Str.join("+", allArgs) + ")", false);
+                    case "cj.Double.__mul":
+                        return Pair.of("(" + Str.join("*", allArgs) + ")", false);
+                    case "cj.Double.__sub":
+                        return Pair.of("(" + Str.join("-", allArgs) + ")", false);
+                    case "cj.Double.__floordiv":
+                        return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
+                    case "cj.Double.__div":
+                        return Pair.of("(" + Str.join("/", allArgs) + ")", false);
+                    case "cj.Fn0":
+                    case "cj.Fn1":
+                    case "cj.Fn2":
+                    case "cj.Fn3":
+                    case "cj.Fn4":
+                        return Pair.of(allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")", false);
                     default:
-                        return CJJSBlob.inline(translateType(owner) + "." + translateMethodName(methodRef.getName())
-                                + "(" + Str.join(",", allArgs) + ")", false);
+                        return Pair.of(translateType(owner) + "." + translateMethodName(methodRef.getName()) + "("
+                                + Str.join(",", allArgs) + ")", false);
                 }
             }
 
