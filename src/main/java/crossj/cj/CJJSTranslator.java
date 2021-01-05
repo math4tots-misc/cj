@@ -155,6 +155,10 @@ public final class CJJSTranslator {
         return "L$" + variableName;
     }
 
+    private static String translateFieldName(String fieldName) {
+        return "F$" + fieldName;
+    }
+
     private String translateItemLevelTypeVariable(String variableName) {
         return item.isTrait() ? "this." + translateTraitLevelTypeVariableName(variableName) + "()"
                 : "this." + translateMethodLevelTypeVariable(variableName);
@@ -179,6 +183,47 @@ public final class CJJSTranslator {
             }
             out.append("}\n");
         }
+
+        // emit static fields
+        for (var field : item.getFields().filter(f -> f.isStatic())) {
+            var getterMethodName = translateMethodName(field.getGetterName());
+            var fieldName = translateFieldName(field.getName());
+            out.append(getterMethodName + "(){\n");
+            out.append("if (!('" + fieldName + "' in this)){\n");
+            var blob = translateExpression(field.getExpression().get());
+            blob.getLines().forEach(out::append);
+            out.append("this." + fieldName + "=" + blob.getExpression() + ";\n");
+            out.append("}\n");
+            out.append("return this." + fieldName + ";\n");
+            out.append("}\n");
+            if (field.isMutable()) {
+                var setterMethodName = translateMethodName(field.getSetterName());
+                out.append(setterMethodName + "(x){this." + fieldName + "=x;}\n");
+            }
+        }
+
+        // for (non-union) classes: emit non-static fields and malloc
+        if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
+            var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
+            for (var field : nonStaticFields) {
+                var index = field.getIndex();
+                var getterMethodName = translateMethodName(field.getGetterName());
+                out.append(getterMethodName + "(a){return a[" + index + "]}\n");
+                if (field.isMutable()) {
+                    var setterMethodName = translateMethodName(field.getSetterName());
+                    out.append(setterMethodName + "(a,x){a[" + index + "]=x}\n");
+                }
+            }
+            var mallocMethodName = translateMethodName("__malloc");
+            if (nonStaticFields.isEmpty()) {
+                out.append(mallocMethodName + "(){return null;}\n");
+            } else {
+                var argnames = Str.join(",", Range.upto(nonStaticFields.size()).map(i -> "a" + i));
+                out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
+            }
+        }
+
+        // for unions: emit case constructors
         if (item.getKind() == CJIRItemKind.Union && !item.isNative()) {
             for (var caseDefn : item.getCases()) {
                 var methodName = translateMethodName(caseDefn.getName());
@@ -187,6 +232,7 @@ public final class CJJSTranslator {
                 out.append(methodName + "(" + args + "){return[" + caseDefn.getTag() + "," + args + "];}\n");
             }
         }
+
         for (var method : item.getMethods()) {
             var optionalBody = method.getBody();
             if (optionalBody.isPresent()) {

@@ -7,8 +7,7 @@ import crossj.base.List;
  *
  * Create the type parameter's traits and item's trait declaration IRs
  *
- * TODO: verify trait constraints
- * (currently, only type argument count is checked)
+ * Trait constraints are checked in pass 3
  */
 final class CJPass02 extends CJPassBase {
     CJPass02(CJIRContext ctx) {

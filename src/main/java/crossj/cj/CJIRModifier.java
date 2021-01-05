@@ -5,5 +5,4 @@ public enum CJIRModifier {
     Static,
     Public,
     Private,
-    Mutable,
 }

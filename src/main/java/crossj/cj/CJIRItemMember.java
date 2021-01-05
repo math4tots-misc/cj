@@ -14,4 +14,8 @@ public abstract class CJIRItemMember<N extends CJAstItemMemberDefinition> extend
     public String getName() {
         return ast.getName();
     }
+
+    public boolean isStatic() {
+        return ast.isStatic();
+    }
 }

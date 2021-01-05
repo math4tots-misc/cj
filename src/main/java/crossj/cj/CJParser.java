@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Tuple3;
@@ -298,9 +299,8 @@ public final class CJParser {
         var modifiers = parseModifiers();
         switch (peek().type) {
             case CJToken.KW_VAL:
-            case CJToken.KW_VAR: {
-                throw CJError.of("TODO parseItemMember field", getMark());
-            }
+            case CJToken.KW_VAR:
+                return parseFieldDefinition(modifiers);
             case CJToken.KW_CASE:
                 return parseCaseDefinition(modifiers);
             case CJToken.KW_IF:
@@ -308,6 +308,17 @@ public final class CJParser {
                 return parseMethod(modifiers);
         }
         throw ekind("val, var, def or if");
+    }
+
+    private CJAstFieldDefinition parseFieldDefinition(List<CJIRModifier> modifiers) {
+        var mutable = next().type == CJToken.KW_VAR;
+        var mark = getMark();
+        var name = parseId();
+        expect(':');
+        var type = parseTypeExpression();
+        var expression = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
+        expectDelimiters();
+        return new CJAstFieldDefinition(mark, modifiers, mutable, name, type, expression);
     }
 
     private CJAstCaseDefinition parseCaseDefinition(List<CJIRModifier> modifiers) {
@@ -385,11 +396,20 @@ public final class CJParser {
                 case '.': {
                     next();
                     var methodMark = getMark();
-                    var methodName = parseId();
-                    var typeArgs = parseTypeArgs();
+                    var name = parseId();
                     var args = List.of(expr);
-                    args.addAll(parseArgs());
-                    expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, typeArgs, args);
+                    if (at('(') || at('[')) {
+                        var typeArgs = parseTypeArgs();
+                        args.addAll(parseArgs());
+                        expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
+                    } else if (consume('=')) {
+                        var methodName = "__set_" + name;
+                        args.add(parseExpression());
+                        expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                    } else {
+                        var methodName = "__get_" + name;
+                        expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                    }
                     break;
                 }
                 case '=': {
@@ -596,9 +616,18 @@ public final class CJParser {
                 expect('.');
                 var mark = getMark();
                 var name = parseId();
-                var typeArgs = parseTypeArgs();
-                var args = parseArgs();
-                return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
+                if (at('[') || at('(')) {
+                    var typeArgs = parseTypeArgs();
+                    var args = parseArgs();
+                    return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
+                } else if (consume('=')) {
+                    var methodName = "__set_" + name;
+                    var args = List.of(parseExpression());
+                    return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), args);
+                } else {
+                    var methodName = "__get_" + name;
+                    return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), List.of());
+                }
             }
             case CJToken.ID:
                 return new CJAstVariableAccess(getMark(), parseId());

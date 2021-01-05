@@ -1,5 +1,6 @@
 package sample
 
+import sample.SampleClass
 import sample.SampleUnion
 import cj.IO
 
@@ -26,6 +27,20 @@ class Main {
         }
 
         IO.println("foo: " + Self.foo(SampleUnion.two(76, 2)))
+
+        {
+            IO.println("sampleStaticField = " + SampleUnion.sampleStaticField)
+            SampleUnion.sampleStaticField = 91
+            IO.println("sampleStaticField = " + SampleUnion.sampleStaticField)
+        }
+
+        {
+            val x = SampleClass.__malloc("hi", 5.5)
+            IO.println("valField = " + x.valField)
+            IO.println("varField = " + x.varField)
+            x.varField = 77.2
+            IO.println("varField = " + x.varField)
+        }
     }
 
     def foo(u: SampleUnion): Int = union u {

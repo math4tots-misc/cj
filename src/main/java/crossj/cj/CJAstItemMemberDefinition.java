@@ -19,4 +19,8 @@ public abstract class CJAstItemMemberDefinition extends CJAstNode {
     public String getName() {
         return name;
     }
+
+    public boolean isStatic() {
+        return modifiers.contains(CJIRModifier.Static);
+    }
 }

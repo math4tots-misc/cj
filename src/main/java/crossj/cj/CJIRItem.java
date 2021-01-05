@@ -9,6 +9,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
     private final List<CJIRMethod> methods = List.of();
+    private final List<CJIRField> fields = List.of();
     private final List<CJIRCase> cases;
     private final Map<String, String> shortNameMap;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
@@ -68,6 +69,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public List<CJIRMethod> getMethods() {
         return methods;
+    }
+
+    public List<CJIRField> getFields() {
+        return fields;
     }
 
     public List<CJIRCase> getCases() {

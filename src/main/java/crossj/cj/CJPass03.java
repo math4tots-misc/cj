@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Range;
@@ -25,9 +26,42 @@ final class CJPass03 extends CJPassBaseEx {
      * Creates all the CJIRMethod objects for this item.
      */
     private void materializeMembers(CJIRItem item) {
+
+        if (item.getKind() == CJIRItemKind.Class) {
+            var mallocMethodAst = synthesizeMallocMethod(item);
+            materializeMethod(item, mallocMethodAst, true);
+        }
+
         for (var memberAst : item.getAst().getMembers()) {
             if (memberAst instanceof CJAstMethodDefinition) {
                 materializeMethod(item, (CJAstMethodDefinition) memberAst, false);
+            } else if (memberAst instanceof CJAstFieldDefinition) {
+                var fieldAst = (CJAstFieldDefinition) memberAst;
+                if (fieldAst.isStatic()) {
+                    if (item.getTypeParameters().size() > 0) {
+                        throw CJError.of("classes with type parameters cannot have static fields", fieldAst.getMark());
+                    }
+                    if (fieldAst.getExpression().isEmpty()) {
+                        throw CJError.of("static fields must always have an initializer", fieldAst.getMark());
+                    }
+                } else {
+                    if (item.getKind() != CJIRItemKind.Class) {
+                        throw CJError.of("unions and traits cannot have non-static fields", fieldAst.getMark());
+                    }
+                    if (fieldAst.getExpression().isPresent()) {
+                        throw CJError.of("non-static fields may not have an initializer", fieldAst.getMark());
+                    }
+                }
+                var index = fieldAst.isStatic() ? -1 : item.getFields().filter(f -> !f.isStatic()).size();
+                var type = lctx.evalTypeExpression(fieldAst.getType());
+                var field = new CJIRField(fieldAst, index, type);
+                item.getFields().add(field);
+                var accessMethodAst = synthesizeFieldAccessMethod(item, fieldAst);
+                materializeMethod(item, accessMethodAst, true);
+                if (field.isMutable()) {
+                    var assignMethodAst = synthesizeFieldAssignmentMethod(item, fieldAst);
+                    materializeMethod(item, assignMethodAst, true);
+                }
             } else if (memberAst instanceof CJAstCaseDefinition) {
                 if (item.getKind() != CJIRItemKind.Union) {
                     throw CJError.of("Only union items may have case definitions", memberAst.getMark());
@@ -45,22 +79,57 @@ final class CJPass03 extends CJPassBaseEx {
         }
     }
 
+    private CJAstMethodDefinition synthesizeFieldAccessMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
+        var mark = fieldAst.getMark();
+        var methodName = fieldAst.getGetterName();
+        var parameters = List.<CJAstParameter>of();
+        if (!fieldAst.isStatic()) {
+            parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
+        }
+        var returnType = Optional.of(fieldAst.getType());
+        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
+                Optional.empty());
+    }
+
+    private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
+        var mark = fieldAst.getMark();
+        var methodName = fieldAst.getSetterName();
+        var parameters = List.<CJAstParameter>of();
+        if (!fieldAst.isStatic()) {
+            parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
+        }
+        parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
+        var returnType = Optional.of(newUnitTypeExpression(mark));
+        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
+                Optional.empty());
+    }
+
+    private CJAstMethodDefinition synthesizeMallocMethod(CJIRItem item) {
+        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
+                .map(f -> (CJAstFieldDefinition) f);
+        Assert.that(fields.all(f -> !f.isStatic()));
+        var mark = item.getMark();
+        var methodName = "__malloc";
+        var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
+        var returnType = Optional.of(newSelfTypeExpression(item.getMark()));
+        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
+                Optional.empty());
+    }
+
     private CJAstMethodDefinition synthesizeCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {
-        var parameters = Range.upto(caseAst.getTypes().size()).map(i -> new CJAstParameter(
-            caseAst.getTypes().get(i).getMark(),
-            false,
-            "a" + i,
-            caseAst.getTypes().get(i)
-        )).list();
-        return new CJAstMethodDefinition(
-            caseAst.getMark(),
-            List.of(),
-            List.of(),
-            caseAst.getName(),
-            List.of(),
-            parameters,
-            Optional.of(new CJAstTypeExpression(caseAst.getMark(), "Self", List.of())),
-            Optional.empty());
+        var parameters = Range.upto(caseAst.getTypes().size()).map(
+                i -> new CJAstParameter(caseAst.getTypes().get(i).getMark(), false, "a" + i, caseAst.getTypes().get(i)))
+                .list();
+        return new CJAstMethodDefinition(caseAst.getMark(), List.of(), List.of(), caseAst.getName(), List.of(),
+                parameters, Optional.of(newSelfTypeExpression(caseAst.getMark())), Optional.empty());
+    }
+
+    private CJAstTypeExpression newSelfTypeExpression(CJMark mark) {
+        return new CJAstTypeExpression(mark, "Self", List.of());
+    }
+
+    private CJAstTypeExpression newUnitTypeExpression(CJMark mark) {
+        return new CJAstTypeExpression(mark, "Unit", List.of());
     }
 
     private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent) {

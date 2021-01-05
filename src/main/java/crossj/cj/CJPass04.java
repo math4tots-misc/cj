@@ -23,10 +23,11 @@ final class CJPass04 extends CJPassBaseEx {
 
     @Override
     void handleItem(CJIRItem item) {
-        for (var member : item.getMethods()) {
-            if (member instanceof CJIRMethod) {
-                handleMethod((CJIRMethod) member);
-            }
+        for (var field : item.getFields()) {
+            handleField(field);
+        }
+        for (var method : item.getMethods()) {
+            handleMethod(method);
         }
     }
 
@@ -63,6 +64,17 @@ final class CJPass04 extends CJPassBaseEx {
             throw CJError.of("Variable " + name + " declared again", decl.getMark(), map.get(name).getMark());
         }
         map.put(name, decl);
+    }
+
+    private void handleField(CJIRField field) {
+        if (field.getAst().getExpression().isEmpty()) {
+            return;
+        }
+        var bodyAst = field.getAst().getExpression().get();
+        enterScope();
+        var body = evalExpressionWithType(bodyAst, field.getType());
+        exitScope();
+        field.setExpression(body);
     }
 
     private void handleMethod(CJIRMethod method) {
