@@ -36,8 +36,8 @@ public interface CJIRType {
         return toString().equals("cj.Unit");
     }
 
-    default boolean isNeverType() {
-        return toString().equals("cj.Never");
+    default boolean isNoReturnType() {
+        return toString().equals("cj.NoReturn");
     }
 
     default boolean isFunctionType() {

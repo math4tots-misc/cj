@@ -10,7 +10,7 @@ import crossj.base.Set;
 
 public final class CJIRContext extends CJIRContextBase {
 
-    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.Never", "cj.Bool", "cj.Char", "cj.Int",
+    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Bool", "cj.Char", "cj.Int",
             "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable", "cj.Iterator",
             "cj.Eq", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 
@@ -21,7 +21,7 @@ public final class CJIRContext extends CJIRContextBase {
      * to one of the exceptions explicitly listed
      */
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
-            Pair.of("Never", List.of("cj.Never")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
+            Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
             Pair.of("Self", List.of()));
 
     /**

@@ -1,2 +1,0 @@
-class MC$cj$Never {
-}
