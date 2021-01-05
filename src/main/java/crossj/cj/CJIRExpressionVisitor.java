@@ -9,4 +9,5 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitAssignment(CJIRAssignment e, A a);
     public abstract R visitLogicalNot(CJIRLogicalNot e, A a);
     public abstract R visitUnion(CJIRUnion e, A a);
+    public abstract R visitLambda(CJIRLambda e, A a);
 }

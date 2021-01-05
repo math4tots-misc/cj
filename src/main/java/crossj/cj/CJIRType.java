@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 
 public interface CJIRType {
+
     <R, A> R accept(CJIRTypeVisitor<R, A> visitor, A a);
 
     /**
@@ -36,6 +37,10 @@ public interface CJIRType {
 
     default boolean isNeverType() {
         return toString().equals("cj.Never");
+    }
+
+    default boolean isFunctionType() {
+        return false;
     }
 
     default CJIRTrait getImplementingTraitByItemOrNull(CJIRItem item) {

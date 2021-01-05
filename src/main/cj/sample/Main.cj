@@ -41,6 +41,10 @@ class Main {
             x.varField = 77.2
             IO.println("varField = " + x.varField)
         }
+
+        {
+            var f: Fn2[Int, Int, Int] = (a, b) -> a + b
+        }
     }
 
     def foo(u: SampleUnion): Int = union u {

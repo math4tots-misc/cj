@@ -368,6 +368,37 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 return new CJIRUnion(e, a.get(), target, cases, fallback);
             }
+
+            @Override
+            public CJIRExpression visitLambda(CJAstLambda e, Optional<CJIRType> a) {
+                if (a.isEmpty()) {
+                    throw CJError.of("Lambda expressions must be typed", e.getMark());
+                }
+                var type = a.get();
+                if (!type.isFunctionType()) {
+                    throw CJError.of("Expected " + type + " but got a lambda expression", e.getMark());
+                }
+                var fnType = (CJIRClassType) type;
+                var fnTypeArgs = fnType.getArgs();
+                var returnType = fnTypeArgs.get(fnTypeArgs.size() - 1);
+                var parameterTypes = fnTypeArgs.slice(0, fnTypeArgs.size() - 1);
+                var parameterAsts = e.getParameters();
+                if (parameterTypes.size() != parameterAsts.size()) {
+                    throw CJError.of("Expected " + parameterTypes.size()
+                            + " arg function but got a lambda expression with " + parameterAsts.size() + " parameters",
+                            e.getMark());
+                }
+                var parameters = Range.upto(parameterAsts.size()).map(i -> {
+                    var parameterType = parameterTypes.get(i);
+                    var parameterAst = parameterAsts.get(i);
+                    var paramMark = parameterAst.get1();
+                    var mutable = parameterAst.get2();
+                    var name = parameterAst.get3();
+                    return new CJIRAdHocVariableDeclaration(paramMark, mutable, name, parameterType);
+                }).list();
+                var body = evalExpressionWithType(e.getBody(), returnType);
+                return new CJIRLambda(e, type, parameters, body);
+            }
         }, a);
         if (a.isPresent()) {
             var expectedType = a.get();

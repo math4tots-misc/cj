@@ -1,7 +1,6 @@
 package crossj.cj;
 
 import crossj.base.Assert;
-import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Tuple3;
@@ -684,6 +683,12 @@ public final class CJParser {
         }
         throw ekind("expression");
     }
+
+    // private boolean atLambda() {
+    //     if (at(CJToken.ID) && atOffset(CJToken.RIGHT_ARROW, 1)) {
+    //         return true;
+    //     }
+    // }
 
     private List<CJAstExpression> parseArgs() {
         var list = List.<CJAstExpression>of();

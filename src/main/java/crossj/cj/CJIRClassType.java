@@ -26,6 +26,19 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isFunctionType() {
+        switch (item.getFullName()) {
+            case "cj.Fn0":
+            case "cj.Fn1":
+            case "cj.Fn2":
+            case "cj.Fn3":
+            case "cj.Fn4":
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public CJIRMethodRef findMethodOrNull(String shortName) {
         return super.findMethodOrNull(shortName);
     }

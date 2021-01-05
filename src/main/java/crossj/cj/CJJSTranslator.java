@@ -420,6 +420,29 @@ public final class CJJSTranslator {
                 lines.add("}\n");
                 return new CJJSBlob(lines, tmpvar, true);
             }
+
+            @Override
+            public CJJSBlob visitLambda(CJIRLambda e, Void a) {
+                var parameters = e.getParameters();
+                var parameterNames = parameters.map(p -> translateLocalVariableName(p.getName()));
+                var paramstr = "(" + Str.join(",", parameterNames) + ")=>";
+                var blob = translateExpression(e.getBody());
+                if (blob.isSimple()) {
+                    return new CJJSBlob(List.of(), paramstr + "(" + blob.getExpression() + ")", false);
+                } else {
+                    var lines = List.of("{\n", Str.join("\n", blob.getLines()) + "\n");
+                    if (e.getReturnType().isUnitType()) {
+                        if (!blob.isPure()) {
+                            lines.add(blob.getExpression() + ";\n");
+                        }
+                    } else {
+                        lines.add("return " + blob.getExpression() + ";\n");
+                    }
+                    lines.add("}\n");
+                    var body = Str.join("", lines);
+                    return new CJJSBlob(List.of(), "(" + paramstr + body + ")", false);
+                }
+            }
         }, null);
     }
 
