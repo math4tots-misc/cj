@@ -4,6 +4,7 @@ import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Pair;
 import crossj.base.Repr;
 import crossj.base.Set;
 
@@ -12,6 +13,16 @@ public final class CJIRContext extends CJIRContextBase {
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.Never", "cj.Bool", "cj.Char", "cj.Int",
             "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable", "cj.Iterator",
             "cj.Eq", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
+
+    /**
+     * These are the names that can only be used in special contexts.
+     *
+     * These names cannot be used as type names, unless their full name corresponds
+     * to one of the exceptions explicitly listed
+     */
+    static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
+            Pair.of("Never", List.of("cj.Never")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
+            Pair.of("Self", List.of()));
 
     /**
      * Source roots to search for cj files.
