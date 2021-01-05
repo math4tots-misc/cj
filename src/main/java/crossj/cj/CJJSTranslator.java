@@ -350,7 +350,7 @@ public final class CJJSTranslator {
                         return Pair.of("((" + Str.join("*", allArgs) + ")|0)", false);
                     case "cj.Int.__sub":
                         return Pair.of("((" + Str.join("-", allArgs) + ")|0)", false);
-                    case "cj.Int.__floordiv":
+                    case "cj.Int.__truncdiv":
                         return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
                     case "cj.Int.__div":
                         return Pair.of("(" + Str.join("/", allArgs) + ")", false);
@@ -360,7 +360,7 @@ public final class CJJSTranslator {
                         return Pair.of("(" + Str.join("*", allArgs) + ")", false);
                     case "cj.Double.__sub":
                         return Pair.of("(" + Str.join("-", allArgs) + ")", false);
-                    case "cj.Double.__floordiv":
+                    case "cj.Double.__truncdiv":
                         return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
                     case "cj.Double.__div":
                         return Pair.of("(" + Str.join("/", allArgs) + ")", false);
