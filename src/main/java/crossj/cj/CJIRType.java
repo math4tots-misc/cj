@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.base.Repr;
 
 public interface CJIRType {
 
@@ -22,7 +23,7 @@ public interface CJIRType {
     default CJIRMethodRef findMethod(String shortName, CJMark... marks) {
         var methodRef = findMethodOrNull(shortName);
         if (methodRef == null) {
-            throw CJError.of("Method " + shortName + " not found in " + this, marks);
+            throw CJError.of("Method " + Repr.of(shortName) + " not found in " + this, marks);
         }
         return methodRef;
     }

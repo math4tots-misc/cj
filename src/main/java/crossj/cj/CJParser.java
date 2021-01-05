@@ -589,7 +589,9 @@ public final class CJParser {
                 return parseBlock();
             case '(': {
                 var mark = getMark();
-                if (atOffset(')', 1)) {
+                if (atLambda()) {
+                    return parseLambda();
+                } else if (atOffset(')', 1)) {
                     next();
                     next();
                     return new CJAstLiteral(mark, CJIRLiteralKind.Unit, "()");
@@ -629,7 +631,7 @@ public final class CJParser {
                 }
             }
             case CJToken.ID:
-                return new CJAstVariableAccess(getMark(), parseId());
+                return atLambda() ? parseLambda() : new CJAstVariableAccess(getMark(), parseId());
             case CJToken.KW_VAL:
             case CJToken.KW_VAR: {
                 var mutable = next().type == CJToken.KW_VAR;
@@ -684,11 +686,43 @@ public final class CJParser {
         throw ekind("expression");
     }
 
-    // private boolean atLambda() {
-    //     if (at(CJToken.ID) && atOffset(CJToken.RIGHT_ARROW, 1)) {
-    //         return true;
-    //     }
-    // }
+    private boolean atLambda() {
+        var start = i;
+        if (at(CJToken.ID) && atOffset(CJToken.RIGHT_ARROW, 1)) {
+            return true;
+        }
+        if (!consume('(')) {
+            return false;
+        }
+        while (consume(',') || consume(CJToken.KW_VAR) || consume(CJToken.ID)) {}
+        var ret = consume(')') && consume(CJToken.RIGHT_ARROW);
+        i = start;
+        return ret;
+    }
+
+    private CJAstLambda parseLambda() {
+        var mark = getMark();
+        var parameters = List.<Tuple3<CJMark, Boolean, String>>of();
+        if (at(CJToken.ID)) {
+            var parameterName = parseId();
+            parameters.add(Tuple3.of(mark, false, parameterName));
+        } else {
+            expect('(');
+            while (!consume(')')) {
+                var mutable = consume(CJToken.KW_VAR);
+                var parameterMark = getMark();
+                var parameterName = parseId();
+                parameters.add(Tuple3.of(parameterMark, mutable, parameterName));
+                if (!consume(',')) {
+                    expect(')');
+                    break;
+                }
+            }
+        }
+        expect(CJToken.RIGHT_ARROW);
+        var body = parseExpression();
+        return new CJAstLambda(mark, parameters, body);
+    }
 
     private List<CJAstExpression> parseArgs() {
         var list = List.<CJAstExpression>of();

@@ -6,6 +6,7 @@ import crossj.base.Map;
 import crossj.base.Optional;
 import crossj.base.Pair;
 import crossj.base.Range;
+import crossj.base.Repr;
 import crossj.base.Tuple3;
 import crossj.base.Tuple4;
 
@@ -52,7 +53,7 @@ final class CJPass04 extends CJPassBaseEx {
     private CJIRLocalVariableDeclaration findLocal(String shortName, CJMark... marks) {
         var decl = findLocalOrNull(shortName);
         if (decl == null) {
-            throw CJError.of("Variable " + shortName + " not found", marks);
+            throw CJError.of("Variable " + Repr.of(shortName) + " not found", marks);
         }
         return decl;
     }
@@ -396,7 +397,10 @@ final class CJPass04 extends CJPassBaseEx {
                     var name = parameterAst.get3();
                     return new CJIRAdHocVariableDeclaration(paramMark, mutable, name, parameterType);
                 }).list();
+                enterScope();
+                parameters.forEach(p -> declareLocal(p));
                 var body = evalExpressionWithType(e.getBody(), returnType);
+                exitScope();
                 return new CJIRLambda(e, type, parameters, body);
             }
         }, a);

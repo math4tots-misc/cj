@@ -11,7 +11,7 @@ public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.Never", "cj.Bool", "cj.Char", "cj.Int",
             "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable", "cj.Iterator",
-            "cj.Eq", "cj.Hash");
+            "cj.Eq", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 
     /**
      * Source roots to search for cj files.

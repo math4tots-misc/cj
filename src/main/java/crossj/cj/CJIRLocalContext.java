@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
+import crossj.base.Repr;
 
 public final class CJIRLocalContext extends CJIRContextBase {
     private final CJIRContext global;
@@ -38,7 +39,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
     CJIRItem getTraitItem(String shortName, CJMark... marks) {
         var fullName = item.getShortNameMap().getOrNull(shortName);
         if (fullName == null) {
-            throw CJError.of("Trait " + shortName + " not found", marks);
+            throw CJError.of("Trait " + Repr.of(shortName) + " not found", marks);
         }
         var item = global.loadItem(fullName, marks);
         if (!item.getKind().isTraitKind()) {
@@ -50,7 +51,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
     CJIRItem getTypeItem(String shortName, CJMark... marks) {
         var fullName = item.getShortNameMap().getOrNull(shortName);
         if (fullName == null) {
-            throw CJError.of("Type " + shortName + " not found", marks);
+            throw CJError.of("Type " + Repr.of(shortName) + " not found", marks);
         }
         var item = global.loadItem(fullName, marks);
         if (!item.getKind().isTypeKind()) {

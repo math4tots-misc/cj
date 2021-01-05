@@ -44,6 +44,7 @@ class Main {
 
         {
             var f: Fn2[Int, Int, Int] = (a, b) -> a + b
+            IO.println("f.call(22, 88) = " + f.call(22, 88))
         }
     }
 
