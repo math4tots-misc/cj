@@ -17,6 +17,12 @@ class MC$cj$List {
     M$add(self, t) {
         self.push(t);
     }
+    M$get(self, i) {
+        return self[i];
+    }
+    M$set(self, i, t) {
+        self[i] = t;
+    }
     M$map(TV$R, self, f) {
         return self.map(f);
     }
