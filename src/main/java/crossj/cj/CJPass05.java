@@ -64,7 +64,7 @@ final class CJPass05 extends CJPassBaseEx {
 
     private static void addMethods(CJIRClassType classType, Map<String, MethodEntry> map, CJIRTraitOrClassType type,
             CJMark classMark) {
-        for (var methodRef : type.getMethodRefs()) {
+        for (var methodRef : type.getMethodRefsRegardlessOfConditions()) {
             var name = methodRef.getName();
             var signature = Signature.fromMethodRef(methodRef, classType);
             var entry = map.getOrNull(name);

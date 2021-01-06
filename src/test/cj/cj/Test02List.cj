@@ -21,4 +21,14 @@ class Test02List {
             Assert.equal(list.get(0), 15)
         }
     }
+
+    @test
+    def repr() = {
+        # Self.print([true, true, false])
+        IO.println("print " + [true, true, false].repr())
+    }
+
+    def print[T: Repr](t: T) = {
+        IO.println("print " + t.repr())
+    }
 }

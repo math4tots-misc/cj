@@ -10,6 +10,7 @@ import crossj.base.List;
 public final class CJIRMethodRef {
     private final CJIRTraitOrClassType owner;
     private final CJIRMethod method;
+    private boolean allConditionsCache = false;
 
     CJIRMethodRef(CJIRTraitOrClassType owner, CJIRMethod method) {
         this.owner = owner;
@@ -54,5 +55,18 @@ public final class CJIRMethodRef {
 
     public boolean hasImpl() {
         return method.hasImpl();
+    }
+
+    /**
+     * Checks whether all conditions on the method are satisfied.
+     *
+     * This is used to determine whether this method actually "exists" for the given
+     * owner type.
+     */
+    public boolean satisfiesAllConditions() {
+        if (!allConditionsCache) {
+            allConditionsCache = method.getConditions().all(cond -> cond.isSatisfied(owner.getBinding()));
+        }
+        return allConditionsCache;
     }
 }

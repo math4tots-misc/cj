@@ -9,7 +9,7 @@ abstract class CJIRTraitOrClassType {
     public abstract CJIRItem getItem();
     public abstract List<CJIRType> getArgs();
 
-    private CJIRBinding getBinding() {
+    CJIRBinding getBinding() {
         if (binding == null) {
             binding = getItem().getBinding(getArgs());
         }
@@ -21,19 +21,25 @@ abstract class CJIRTraitOrClassType {
     }
 
     public List<CJIRTrait> getTraits() {
-        // TODO: Filter out disqualified traits based on type
-        return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBinding()));
+        var traits = List.<CJIRTrait>of();
+        var binding = getBinding();
+        for (var decl : getItem().getTraitDeclarations()) {
+            if (decl.getConditions().all(cond -> cond.isSatisfied(binding))) {
+                traits.add(decl.getTrait().apply(binding));
+            }
+        }
+        return traits;
     }
 
     public CJIRMethodRef findMethodOrNull(String shortName) {
         var method = getItem().getMethodOrNull(shortName);
         if (method != null) {
-            return new CJIRMethodRef(this, method);
+            var methodRef = new CJIRMethodRef(this, method);
+            return methodRef.satisfiesAllConditions() ? methodRef : null;
         }
         for (var trait : getTraits()) {
             var methodRef = trait.findMethodOrNull(shortName);
             if (methodRef != null) {
-                // TODO: Filter out methods that don't have all its conditions satisfied.
                 return methodRef;
             }
         }
@@ -42,10 +48,15 @@ abstract class CJIRTraitOrClassType {
 
     @Override
     public final String toString() {
-        return getItem().getFullName() + (getArgs().isEmpty() ? "" : "[" + Str.join(",", getArgs()) + "]");
+        var args = getArgs().map(arg -> arg.apply(getBinding()));
+        return getItem().getFullName() + (args.isEmpty() ? "" : "[" + Str.join(",", args) + "]");
     }
 
     public final List<CJIRMethodRef> getMethodRefs() {
+        return getMethodRefsRegardlessOfConditions().filter(m -> m.satisfiesAllConditions());
+    }
+
+    public final List<CJIRMethodRef> getMethodRefsRegardlessOfConditions() {
         var ret = List.<CJIRMethodRef>of();
         for (var method : getItem().getMethods()) {
             ret.add(new CJIRMethodRef(this, method));
