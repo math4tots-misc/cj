@@ -2,6 +2,7 @@ package cj
 
 native class List[T] :
         Iterable[T],
+        Hash if T : Hash,
         Repr if T : Repr {
     def empty(): Self
 
@@ -15,5 +16,7 @@ native class List[T] :
 
     def toList(self: Self): Self
 
+    if T : Hash def __eq(self: Self,  other: Self): Bool
+    if T : Hash def hash(self: Self): Int
     if T : Repr def repr(self: Self): String
 }

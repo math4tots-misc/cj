@@ -26,6 +26,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isListType() {
+        return item.getFullName().equals("cj.List");
+    }
+
+    @Override
     public boolean isFunctionType() {
         switch (item.getFullName()) {
             case "cj.Fn0":

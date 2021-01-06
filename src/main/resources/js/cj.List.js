@@ -26,6 +26,26 @@ class MC$cj$List {
     M$toList(self) {
         return Array.from(self);
     }
+    M$__eq(self, other) {
+        const T = this.TV$T;
+        if (self.length !== other.length) {
+            return false;
+        }
+        for (let i = 0; i < self.length; i++) {
+            if (!T.M$__eq(self[i], other[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    M$hash(self) {
+        const T = this.TV$T;
+        let hash = 1;
+        for (const item of self) {
+            hash = combineHash(hash, T.M$hash(item));
+        }
+        return hash;
+    }
     M$repr(self) {
         const TV$T = this.TV$T;
         return "[" + self.map(t => TV$T.M$repr(t)).join(", ") + "]";

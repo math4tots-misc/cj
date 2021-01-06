@@ -365,15 +365,22 @@ final class CJPass04 extends CJPassBaseEx {
                 if (a.isEmpty() && e.getExpressions().isEmpty()) {
                     throw CJError.of("Could not determine type of list display", e.getMark());
                 }
+                var itemType = a.map(expectedType -> {
+                    if (!expectedType.isListType()) {
+                        throw CJError.of("Expected " + expectedType + " but got a list display", e.getMark());
+                    }
+                    var listType = (CJIRClassType) expectedType;
+                    return listType.getArgs().get(0);
+                });
                 var expressions = List.<CJIRExpression>of();
                 for (var expressionAst : e.getExpressions()) {
-                    var expression = evalExpressionEx(expressionAst, a);
+                    var expression = evalExpressionEx(expressionAst, itemType);
                     expressions.add(expression);
-                    if (a.isEmpty()) {
-                        a = Optional.of(expression.getType());
+                    if (itemType.isEmpty()) {
+                        itemType = Optional.of(expression.getType());
                     }
                 }
-                return new CJIRListDisplay(e, ctx.getListType(a.get()), expressions);
+                return new CJIRListDisplay(e, ctx.getListType(itemType.get()), expressions);
             }
 
             @Override
