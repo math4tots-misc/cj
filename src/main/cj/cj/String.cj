@@ -1,6 +1,6 @@
 package cj
 
-native class String: Repr, ToBool {
+native class String: Repr, ToBool, Hash {
     def toString(self: Self): Self
     def repr(self: Self): String
 
@@ -8,4 +8,7 @@ native class String: Repr, ToBool {
     def size(self: Self): Int
 
     def toBool(self: Self): Bool
+
+    def __eq(self: Self, other: Self): Bool
+    def hash(self: Self): Int
 }

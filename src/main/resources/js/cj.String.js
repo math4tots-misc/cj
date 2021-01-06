@@ -31,4 +31,14 @@ class MC$cj$String {
     M$toBool(self) {
         return self.length !== 0;
     }
+    M$__eq(self, other) {
+        return self === other;
+    }
+    M$hash(self) {
+        let h = 0;
+        for (const c of self) {
+            h = combineHash(h, c.codePointAt(0));
+        }
+        return h;
+    }
 }

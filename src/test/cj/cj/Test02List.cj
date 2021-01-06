@@ -25,10 +25,9 @@ class Test02List {
     @test
     def repr() = {
         # Self.print([true, true, false])
-        IO.println("print " + [true, true, false].repr())
+        Assert.equal("print " + [true, true, false].repr(), "print [true, true, false]")
+        Assert.equal(Self.print([true, true, false]), "print [true, true, false]")
     }
 
-    def print[T: Repr](t: T) = {
-        IO.println("print " + t.repr())
-    }
+    def print[T: Repr](t: T): String = "print " + t.repr()
 }
