@@ -10,10 +10,11 @@ public final class CJAstMethodDefinition extends CJAstItemMemberDefinition {
     private final Optional<CJAstTypeExpression> returnType;
     private final Optional<CJAstExpression> body;
 
-    public CJAstMethodDefinition(CJMark mark, List<CJAstTypeCondition> conditions, List<CJIRModifier> modifiers,
-            String name, List<CJAstTypeParameter> typeParameters, List<CJAstParameter> parameters,
+    public CJAstMethodDefinition(CJMark mark, Optional<String> comment, List<CJAstAnnotationExpression> annotations,
+            List<CJAstTypeCondition> conditions, List<CJIRModifier> modifiers, String name,
+            List<CJAstTypeParameter> typeParameters, List<CJAstParameter> parameters,
             Optional<CJAstTypeExpression> returnType, Optional<CJAstExpression> body) {
-        super(mark, modifiers, name);
+        super(mark, comment, annotations, modifiers, name);
         this.conditions = conditions;
         this.typeParameters = typeParameters;
         this.parameters = parameters;

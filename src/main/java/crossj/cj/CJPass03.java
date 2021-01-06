@@ -86,9 +86,8 @@ final class CJPass03 extends CJPassBaseEx {
         if (!fieldAst.isStatic()) {
             parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
         }
-        var returnType = Optional.of(fieldAst.getType());
-        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
-                Optional.empty());
+        var returnType = fieldAst.getType();
+        return synthesizeMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -99,9 +98,8 @@ final class CJPass03 extends CJPassBaseEx {
             parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
         }
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
-        var returnType = Optional.of(newUnitTypeExpression(mark));
-        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
-                Optional.empty());
+        var returnType = newUnitTypeExpression(mark);
+        return synthesizeMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeMallocMethod(CJIRItem item) {
@@ -111,17 +109,22 @@ final class CJPass03 extends CJPassBaseEx {
         var mark = item.getMark();
         var methodName = "__malloc";
         var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
-        var returnType = Optional.of(newSelfTypeExpression(item.getMark()));
-        return new CJAstMethodDefinition(mark, List.of(), List.of(), methodName, List.of(), parameters, returnType,
-                Optional.empty());
+        var returnType = newSelfTypeExpression(item.getMark());
+        return synthesizeMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {
+        var mark = caseAst.getMark();
         var parameters = Range.upto(caseAst.getTypes().size()).map(
                 i -> new CJAstParameter(caseAst.getTypes().get(i).getMark(), false, "a" + i, caseAst.getTypes().get(i)))
                 .list();
-        return new CJAstMethodDefinition(caseAst.getMark(), List.of(), List.of(), caseAst.getName(), List.of(),
-                parameters, Optional.of(newSelfTypeExpression(caseAst.getMark())), Optional.empty());
+        return synthesizeMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
+    }
+
+    private CJAstMethodDefinition synthesizeMethod(CJMark mark, String name, List<CJAstParameter> parameters,
+            CJAstTypeExpression returnType) {
+        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(), List.of(), List.of(), name, List.of(),
+                parameters, Optional.of(returnType), Optional.empty());
     }
 
     private CJAstTypeExpression newSelfTypeExpression(CJMark mark) {
@@ -133,9 +136,10 @@ final class CJPass03 extends CJPassBaseEx {
     }
 
     private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent) {
+        var annotationProcessor = CJIRAnnotationProcessor.processMember(methodAst);
         var conditions = methodAst.getConditions().map(conditionAst -> {
             var condition = new CJIRTypeCondition(conditionAst,
-                getTypeParameter(conditionAst.getVariableName(), conditionAst.getMark()));
+                    getTypeParameter(conditionAst.getVariableName(), conditionAst.getMark()));
             for (var traitAst : conditionAst.getTraits()) {
                 condition.getTraits().add(lctx.evalTraitExpression(traitAst));
             }
@@ -143,7 +147,16 @@ final class CJPass03 extends CJPassBaseEx {
         });
         var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
         var method = new CJIRMethod(methodAst, conditions, typeParameters,
-                implPresent || methodAst.getBody().isPresent() || item.isNative());
+                implPresent || methodAst.getBody().isPresent() || item.isNative(), annotationProcessor.isTest());
+
+        if (method.isTest()) {
+            if (methodAst.getTypeParameters().size() > 0 || methodAst.getParameters().size() > 0) {
+                throw CJError.of("test methods may not have any kind of parameters", method.getMark());
+            }
+            if (item.getTypeParameters().size() > 0) {
+                throw CJError.of("items with type parameters may not have test methods", method.getMark());
+            }
+        }
 
         enterMethod(method);
 

@@ -173,6 +173,7 @@ public final class CJParser {
             imports.add(parseImport());
         }
         var comment = parseComment();
+        var annotations = parseAnnotations();
         var modifiers = parseModifiers();
         var kind = parseItemKind();
         var mark = getMark();
@@ -190,8 +191,41 @@ public final class CJParser {
         if (!at(CJToken.EOF)) {
             throw ekind("EOF");
         }
-        return new CJAstItemDefinition(mark, packageName, imports, comment, modifiers, kind, shortName, typeParameters,
-                traitDeclarations, members);
+        return new CJAstItemDefinition(mark, packageName, imports, comment, annotations, modifiers, kind, shortName,
+                typeParameters, traitDeclarations, members);
+    }
+
+    private List<CJAstAnnotationExpression> parseAnnotations() {
+        var list = List.<CJAstAnnotationExpression>of();
+        while (consume('@')) {
+            list.add(parseAnnotationExpression());
+            expectDelimiters();
+        }
+        return list;
+    }
+
+    private CJAstAnnotationExpression parseAnnotationExpression() {
+        var mark = getMark();
+        String name;
+        switch (peek().type) {
+            case CJToken.INT:
+            case CJToken.DOUBLE:
+                name = next().text;
+                break;
+            default:
+                name = parseId();
+        }
+        var args = List.<CJAstAnnotationExpression>of();
+        if (consume('(')) {
+            while (!consume(')')) {
+                args.add(parseAnnotationExpression());
+                if (!consume(',')) {
+                    expect(')');
+                    break;
+                }
+            }
+        }
+        return new CJAstAnnotationExpression(mark, name, args);
     }
 
     private List<CJAstTypeParameter> parseTypeParameters(boolean itemLevel) {
@@ -214,6 +248,9 @@ public final class CJParser {
         var traits = List.<CJAstTraitExpression>of();
         if (consume(':')) {
             traits.add(parseTraitExpression());
+            while (consume('&')) {
+                traits.add(parseTraitExpression());
+            }
         }
         return new CJAstTypeParameter(mark, itemLevel, name, traits);
     }
@@ -296,21 +333,24 @@ public final class CJParser {
     }
 
     private CJAstItemMemberDefinition parseItemMember() {
+        var comment = parseComment();
+        var annotations = parseAnnotations();
         var modifiers = parseModifiers();
         switch (peek().type) {
             case CJToken.KW_VAL:
             case CJToken.KW_VAR:
-                return parseFieldDefinition(modifiers);
+                return parseFieldDefinition(comment, annotations, modifiers);
             case CJToken.KW_CASE:
-                return parseCaseDefinition(modifiers);
+                return parseCaseDefinition(comment, annotations, modifiers);
             case CJToken.KW_IF:
             case CJToken.KW_DEF:
-                return parseMethod(modifiers);
+                return parseMethod(comment, annotations, modifiers);
         }
         throw ekind("val, var, def or if");
     }
 
-    private CJAstFieldDefinition parseFieldDefinition(List<CJIRModifier> modifiers) {
+    private CJAstFieldDefinition parseFieldDefinition(Optional<String> comment,
+            List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers) {
         var mutable = next().type == CJToken.KW_VAR;
         var mark = getMark();
         var name = parseId();
@@ -318,10 +358,11 @@ public final class CJParser {
         var type = parseTypeExpression();
         var expression = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
         expectDelimiters();
-        return new CJAstFieldDefinition(mark, modifiers, mutable, name, type, expression);
+        return new CJAstFieldDefinition(mark, comment, annotations, modifiers, mutable, name, type, expression);
     }
 
-    private CJAstCaseDefinition parseCaseDefinition(List<CJIRModifier> modifiers) {
+    private CJAstCaseDefinition parseCaseDefinition(Optional<String> comment,
+            List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers) {
         expect(CJToken.KW_CASE);
         var mark = getMark();
         var name = parseId();
@@ -336,10 +377,11 @@ public final class CJParser {
             }
         }
         expectDelimiters();
-        return new CJAstCaseDefinition(mark, modifiers, name, types);
+        return new CJAstCaseDefinition(mark, comment, annotations, modifiers, name, types);
     }
 
-    private CJAstMethodDefinition parseMethod(List<CJIRModifier> modifiers) {
+    private CJAstMethodDefinition parseMethod(Optional<String> comment, List<CJAstAnnotationExpression> annotations,
+            List<CJIRModifier> modifiers) {
         var conditions = List.<CJAstTypeCondition>of();
         if (consume(CJToken.KW_IF)) {
             conditions.add(parseTypeCondition());
@@ -357,8 +399,8 @@ public final class CJParser {
         var returnType = consume(':') ? Optional.of(parseTypeExpression()) : Optional.<CJAstTypeExpression>empty();
         var body = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
         expectDelimiters();
-        return new CJAstMethodDefinition(mark, conditions, modifiers, name, typeParameters, parameters, returnType,
-                body);
+        return new CJAstMethodDefinition(mark, comment, annotations, conditions, modifiers, name, typeParameters,
+                parameters, returnType, body);
     }
 
     private List<CJAstParameter> parseParameters() {
@@ -708,7 +750,8 @@ public final class CJParser {
         if (!consume('(')) {
             return false;
         }
-        while (consume(',') || consume(CJToken.KW_VAR) || consume(CJToken.ID)) {}
+        while (consume(',') || consume(CJToken.KW_VAR) || consume(CJToken.ID)) {
+        }
         var ret = consume(')') && consume(CJToken.RIGHT_ARROW);
         i = start;
         return ret;

@@ -9,9 +9,9 @@ public final class CJAstFieldDefinition extends CJAstItemMemberDefinition {
     private final CJAstTypeExpression type;
     private final Optional<CJAstExpression> expression;
 
-    CJAstFieldDefinition(CJMark mark, List<CJIRModifier> modifiers, boolean mutable, String name, CJAstTypeExpression type,
+    CJAstFieldDefinition(CJMark mark, Optional<String> comment, List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers, boolean mutable, String name, CJAstTypeExpression type,
             Optional<CJAstExpression> expression) {
-        super(mark, modifiers, name);
+        super(mark, comment, annotations, modifiers, name);
         this.mutable = mutable;
         this.type = type;
         this.expression = expression;

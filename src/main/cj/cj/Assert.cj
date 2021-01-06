@@ -1,5 +1,6 @@
 package cj
 
-class Assert {
-    def equal[T: Eq](a: T, b: T)
+native class Assert {
+    def that[B: ToBool](b: B)
+    def equal[T: Eq & Repr](a: T, b: T)
 }

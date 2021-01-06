@@ -1,4 +1,5 @@
 package cj
 
-native class Bool {
+native class Bool: ToBool {
+    def toBool(self: Self): Self
 }

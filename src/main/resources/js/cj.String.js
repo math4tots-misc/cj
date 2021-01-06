@@ -28,4 +28,7 @@ class MC$cj$String {
     M$size(s) {
         return s.length;
     }
+    M$toBool(self) {
+        return self.length !== 0;
+    }
 }

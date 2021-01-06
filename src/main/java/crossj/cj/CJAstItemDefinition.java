@@ -7,6 +7,7 @@ public final class CJAstItemDefinition extends CJAstNode {
     private final String packageName;
     private final List<CJAstImport> imports;
     private final Optional<String> comment;
+    private final List<CJAstAnnotationExpression> annotations;
     private final List<CJIRModifier> modifiers;
     private final CJIRItemKind kind;
     private final String shortName;
@@ -19,6 +20,7 @@ public final class CJAstItemDefinition extends CJAstNode {
             String packageName,
             List<CJAstImport> imports,
             Optional<String> comment,
+            List<CJAstAnnotationExpression> annotations,
             List<CJIRModifier> modifiers,
             CJIRItemKind kind,
             String shortName,
@@ -29,6 +31,7 @@ public final class CJAstItemDefinition extends CJAstNode {
         this.packageName = packageName;
         this.imports = imports;
         this.comment = comment;
+        this.annotations = annotations;
         this.modifiers = modifiers;
         this.kind = kind;
         this.shortName = shortName;
@@ -47,6 +50,10 @@ public final class CJAstItemDefinition extends CJAstNode {
 
     public Optional<String> getComment() {
         return comment;
+    }
+
+    public List<CJAstAnnotationExpression> getAnnotations() {
+        return annotations;
     }
 
     public List<CJIRModifier> getModifiers() {

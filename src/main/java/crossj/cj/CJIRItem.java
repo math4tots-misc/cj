@@ -5,6 +5,7 @@ import crossj.base.List;
 import crossj.base.Map;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
+    private final List<String> deriveList;
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
@@ -15,8 +16,9 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private final Map<String, CJIRMethod> methodMap = Map.of();
 
-    CJIRItem(CJAstItemDefinition ast) {
+    CJIRItem(CJAstItemDefinition ast, List<String> deriveList) {
         super(ast);
+        this.deriveList = deriveList;
         this.fullName = ast.getPackageName() + "." + ast.getShortName();
         this.cases = ast.getKind() == CJIRItemKind.Union ? List.of() : null;
 
@@ -29,6 +31,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             shortNameMap.put(imp.getAlias(), imp.getFullName());
         }
         shortNameMap.put(ast.getShortName(), fullName);
+    }
+
+    public List<String> getDeriveList() {
+        return deriveList;
     }
 
     public List<CJIRModifier> getModifiers() {

@@ -20,4 +20,7 @@ class MC$cj$Int {
     M$__mod(a, b) {
         return (a + b)|0;
     }
+    M$toBool(self) {
+        return !!self;
+    }
 }

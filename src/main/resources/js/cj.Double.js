@@ -8,4 +8,7 @@ class MC$cj$Double {
     M$hash(x) {
         return (10000 * x) | 0;
     }
+    M$toBool(self) {
+        return !!self;
+    }
 }

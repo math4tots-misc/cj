@@ -30,6 +30,26 @@ public final class CJJSTranslator {
                 out.append(mainClass + "." + translateMethodName("main") + "();\n");
                 return null;
             }
+
+            @Override
+            public Void visitTest(CJIRRunModeTest m, Void a) {
+                var items = irctx.getAllLoadedItems();
+                for (var item : items) {
+                    var testMethods = item.getMethods().filter(meth -> meth.isTest());
+                    if (testMethods.isEmpty()) {
+                        continue;
+                    }
+                    var metaObjectName = translateItemMetaObjectName(item.getFullName());
+                    out.append("console.log('in " + item.getFullName() + "');\n");
+                    for (var method : testMethods) {
+                        out.append("console.log('    testing " + method.getName() + "');\n");
+                        var methodName = translateMethodName(method.getName());
+                        out.append(metaObjectName + "." + methodName + "();\n");
+                    }
+                }
+                out.append("console.log('all tests pass');\n");
+                return null;
+            }
         }, null);
         out.append("})();\n");
         return out.toString();

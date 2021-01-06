@@ -11,8 +11,8 @@ import crossj.base.Set;
 public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Bool", "cj.Char", "cj.Int",
-            "cj.Double", "cj.String", "cj.Repr", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable", "cj.Iterator",
-            "cj.Eq", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
+            "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List", "cj.IO", "cj.Iterable",
+            "cj.Iterator", "cj.Eq", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -57,7 +57,9 @@ public final class CJIRContext extends CJIRContextBase {
             var path = FS.join(sourceRoot, relpath);
             if (FS.isFile(path)) {
                 var data = IO.readFile(path);
-                return new CJIRItem(CJParser.parseString(path, data));
+                var ast = CJParser.parseString(path, data);
+                var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
+                return new CJIRItem(ast, annotationProcessor.getDeriveList());
             }
         }
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
@@ -70,6 +72,55 @@ public final class CJIRContext extends CJIRContextBase {
 
     public CJIRItem loadItem(String name, CJMark... marks) {
         return itemMap.getOrInsert(name, () -> _forceLoadItem(name, marks));
+    }
+
+    private static List<String> listClassNames(String sourceRoot) {
+        var stack = FS.list(sourceRoot);
+        var out = List.<String>of();
+        while (stack.size() > 0) {
+            var subdir = stack.pop();
+            for (var child : FS.list(FS.join(sourceRoot, subdir))) {
+                var childPath = FS.join(sourceRoot, subdir, child);
+                if (isValidPackageComponent(child) && FS.isDir(childPath)) {
+                    stack.add(childPath);
+                } else if (child.endsWith(".cj") && FS.isFile(childPath)) {
+                    var innerRelpath = FS.join(subdir, child);
+                    var name = innerRelpath.substring(0, innerRelpath.length() - ".cj".length())
+                            .replace(FS.getSeparator(), ".");
+                    out.add(name);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static boolean isValidPackageComponent(String name) {
+        if (name.isEmpty()) {
+            return false;
+        }
+        if (!isValidStartChar(name.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < name.length(); i++) {
+            if (!isValidMiddleChar(name.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isValidStartChar(char ch) {
+        return ch == '_' || 'a' <= ch && ch <= 'z';
+    }
+
+    private static boolean isValidMiddleChar(char ch) {
+        return isValidStartChar(ch) || '0' <= ch && ch <= '9';
+    }
+
+    public void loadAllItemsInSourceRoots() {
+        for (var sourceRoot : sourceRoots) {
+            loadItemsRec(listClassNames(sourceRoot));
+        }
     }
 
     public void loadItemsRec(List<String> names, CJMark... marks) {

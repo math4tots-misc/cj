@@ -8,4 +8,5 @@ native class Int: Repr, Hash {
     def __sub(a: Self, b: Self): Int
     def __mul(a: Self, b: Self): Int
     def __mod(a: Self, b: Self): Int
+    def toBool(self: Self): Bool
 }
