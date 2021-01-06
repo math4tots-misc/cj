@@ -61,7 +61,16 @@ public final class CJIRLocalContext extends CJIRContextBase {
     }
 
     private CJIRClassType evalClassTypeExpression(CJAstTypeExpression typeExpression) {
-        var item = getTypeItem(typeExpression.getName(), typeExpression.getMark());
+        var name = typeExpression.getName();
+        switch (name) {
+            case "Fn":
+                name += typeExpression.getArgs().size() - 1;
+                break;
+            case "Tuple":
+                name += typeExpression.getArgs().size();
+                break;
+        }
+        var item = getTypeItem(name, typeExpression.getMark());
         var args = typeExpression.getArgs().map(te -> evalTypeExpression(te));
         checkItemArgs(item, args, typeExpression.getMark());
         return new CJIRClassType(item, args);

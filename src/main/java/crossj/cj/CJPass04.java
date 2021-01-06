@@ -200,9 +200,18 @@ final class CJPass04 extends CJPassBaseEx {
                         // if the stack is empty but we have more arguments we can look at, use it.
                         var i = exprs.size();
                         var arg = args.get(i);
-                        var expr = evalExpression(arg);
+                        var parameterType = parameters.get(i).getVariableType();
+                        var parameterMark = parameters.get(i).getMark();
+                        CJIRExpression expr;
+                        if (arg instanceof CJAstLambda) {
+                            var lambdaAst = (CJAstLambda) arg;
+                            expr = handleLambdaTypeForMethodInference(mark, parameterType, parameterMark, lambdaAst,
+                                    itemBinding, map);
+                        } else {
+                            expr = evalExpression(arg);
+                        }
                         exprs.add(expr);
-                        stack.add(Tuple3.of(arg.getMark(), parameters.get(i).getVariableType(), expr.getType()));
+                        stack.add(Tuple3.of(arg.getMark(), parameterType, expr.getType()));
                     }
                     var triple = stack.pop();
                     var inferMark = triple.get1();
@@ -257,6 +266,63 @@ final class CJPass04 extends CJPassBaseEx {
 
                 var typeArgs = typeParameters.map(tp -> map.get(tp.getName()));
                 return typeArgs;
+            }
+
+            private CJIRExpression handleLambdaTypeForMethodInference(CJMark mark, CJIRType parameterType,
+                    CJMark parameterMark, CJAstLambda lambdaAst, CJIRBinding itemBinding, Map<String, CJIRType> map) {
+                var argMark = lambdaAst.getMark();
+                if (!parameterType.isFunctionType()) {
+                    throw CJError.of("Expected " + parameterType + " but got a lambda expression", argMark,
+                            parameterMark);
+                }
+                var rawLambdaType = (CJIRClassType) parameterType;
+                var lambdaArgc = rawLambdaType.getArgs().size() - 1;
+                if (lambdaArgc != lambdaAst.getParameters().size()) {
+                    throw CJError.of("Expected function with " + lambdaArgc + " but got a lambda expression with "
+                            + lambdaAst.getParameters().size() + " parameters", argMark, parameterMark);
+                }
+                var lambdaParameters = List.<CJIRAdHocVariableDeclaration>of();
+                for (int j = 0; j + 1 < rawLambdaType.getArgs().size(); j++) {
+                    var parameterTriple = lambdaAst.getParameters().get(j);
+                    var mutable = parameterTriple.get2();
+                    var name = parameterTriple.get3();
+                    var rawLambdaArgType = rawLambdaType.getArgs().get(j);
+                    var lambdaArgType = getDeterminedTypeOrNull(itemBinding, map, rawLambdaArgType);
+                    if (lambdaArgType == null) {
+                        throw CJError.of("Could not infer type of lambda expression", argMark);
+                    }
+                    lambdaParameters.add(new CJIRAdHocVariableDeclaration(mark, mutable, name, lambdaArgType));
+                }
+                // Argument types of the lambda expression are known at this point. Use them to
+                // determine the return type.
+                enterScope();
+                for (var parameter : lambdaParameters) {
+                    declareLocal(parameter);
+                }
+                var body = evalExpression(lambdaAst.getBody());
+                exitScope();
+                var lambdaType = new CJIRClassType(rawLambdaType.getItem(), List
+                        .of(lambdaParameters.map(p -> p.getVariableType()), List.of(body.getType())).flatMap(x -> x));
+                return new CJIRLambda(lambdaAst, lambdaType, lambdaParameters, body);
+            }
+
+            private CJIRType getDeterminedTypeOrNull(CJIRBinding binding, Map<String, CJIRType> map,
+                    CJIRType declaredType) {
+                if (declaredType instanceof CJIRVariableType) {
+                    var name = ((CJIRVariableType) declaredType).getName();
+                    return binding.containsKey(name) ? binding.get(name) : map.getOrNull(name);
+                } else {
+                    var type = (CJIRClassType) declaredType;
+                    var argtypes = List.<CJIRType> of();
+                    for (var arg : type.getArgs()) {
+                        var newArg = getDeterminedTypeOrNull(binding, map, arg);
+                        if (newArg == null) {
+                            return null;
+                        }
+                        argtypes.add(newArg);
+                    }
+                    return new CJIRClassType(type.getItem(), argtypes);
+                }
             }
 
             @Override
@@ -373,7 +439,7 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitLambda(CJAstLambda e, Optional<CJIRType> a) {
                 if (a.isEmpty()) {
-                    throw CJError.of("Lambda expressions must be typed", e.getMark());
+                    throw CJError.of("Could not infer type of lambda expression", e.getMark());
                 }
                 var type = a.get();
                 if (!type.isFunctionType()) {

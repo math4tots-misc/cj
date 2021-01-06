@@ -43,8 +43,17 @@ class Main {
         }
 
         {
-            var f: Fn2[Int, Int, Int] = (a, b) -> a + b
+            val f: Fn2[Int, Int, Int] = (a, b) -> a + b
             IO.println("f.call(22, 88) = " + f.call(22, 88))
+        }
+
+        {
+            val list = List[Int].empty()
+            list.add(3)
+            list.add(5)
+            IO.println("list = " + list)
+            val list2 = list.map(x -> x * x)
+            IO.println("list2 = " + list2)
         }
     }
 

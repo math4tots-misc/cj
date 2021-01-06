@@ -262,6 +262,7 @@ public final class CJParser {
             declarations.add(parseTraitDeclaration());
             skipDelimiters();
             while (consume(',')) {
+                skipDelimiters();
                 declarations.add(parseTraitDeclaration());
                 skipDelimiters();
             }

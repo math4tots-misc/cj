@@ -2,6 +2,9 @@ class MC$cj$List {
     constructor(TV$T) {
         this.TV$T = TV$T;
     }
+    M$empty() {
+        return [];
+    }
     M$iter(self) {
         return self[Symbol.iterator]();
     }
@@ -13,5 +16,12 @@ class MC$cj$List {
     }
     M$add(self, t) {
         self.push(t);
+    }
+    M$map(TV$R, self, f) {
+        return self.map(f);
+    }
+    M$repr(self) {
+        const TV$T = this.TV$T;
+        return "[" + self.map(t => TV$T.M$repr(t)).join(", ") + "]";
     }
 }
