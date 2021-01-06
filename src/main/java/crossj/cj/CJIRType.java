@@ -12,7 +12,7 @@ public interface CJIRType {
      * @param marks
      * @return
      */
-    List<CJIRTrait> getTraits(CJMark... marks);
+    List<CJIRTrait> getTraits();
 
     default CJIRType apply(CJIRBinding binding, CJMark... marks) {
         return binding.apply(this, marks);
@@ -41,6 +41,15 @@ public interface CJIRType {
     }
 
     default boolean isFunctionType() {
+        return false;
+    }
+
+    default boolean implementsTrait(CJIRTrait trait) {
+        for (var subtrait : getTraits()) {
+            if (subtrait.extendsTrait(trait)) {
+                return true;
+            }
+        }
         return false;
     }
 

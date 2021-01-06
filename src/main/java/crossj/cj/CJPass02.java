@@ -29,6 +29,9 @@ final class CJPass02 extends CJPassBase {
             for (var conditionAst : traitDeclarationAst.getConditions()) {
                 var typeParameter = getVariable(conditionAst.getVariableName(), conditionAst.getMark());
                 var condition = new CJIRTypeCondition(conditionAst, typeParameter);
+                for (var conditionTraitAst : conditionAst.getTraits()) {
+                    condition.getTraits().add(evalTraitExpression(conditionTraitAst));
+                }
                 traitDeclaration.getConditions().add(condition);
             }
             item.getTraitDeclarations().add(traitDeclaration);

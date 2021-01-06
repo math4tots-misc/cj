@@ -603,6 +603,19 @@ public final class CJParser {
                     return inner;
                 }
             }
+            case '[': {
+                var mark = getMark();
+                next();
+                var expressions = List.<CJAstExpression>of();
+                while (!consume(']')) {
+                    expressions.add(parseExpression());
+                    if (!consume(',')) {
+                        expect(']');
+                        break;
+                    }
+                }
+                return new CJAstListDisplay(mark, expressions);
+            }
             case CJToken.KW_TRUE:
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.Bool, "true");
             case CJToken.KW_FALSE:

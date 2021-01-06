@@ -169,4 +169,7 @@ public abstract class CJIRContextBase {
         return getGlobal().getStringType();
     }
 
+    CJIRType getListType(CJIRType innerType) {
+        return getGlobal().getListType(innerType);
+    }
 }

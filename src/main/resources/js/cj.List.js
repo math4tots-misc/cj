@@ -20,6 +20,12 @@ class MC$cj$List {
     M$map(TV$R, self, f) {
         return self.map(f);
     }
+    M$filter(self, f) {
+        return self.filter(f);
+    }
+    M$toList(self) {
+        return Array.from(self);
+    }
     M$repr(self) {
         const TV$T = this.TV$T;
         return "[" + self.map(t => TV$T.M$repr(t)).join(", ") + "]";

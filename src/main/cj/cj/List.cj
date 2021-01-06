@@ -11,7 +11,9 @@ native class List[T] :
     def add(self: Self, t: T)
 
     def map[R](self: Self, f: Fn[T, R]): List[R]
+    def filter(self: Self, f: Fn[T, Bool]): Self
 
-    if T : Repr
-    def repr(self: Self): String
+    def toList(self: Self): Self
+
+    if T : Repr def repr(self: Self): String
 }

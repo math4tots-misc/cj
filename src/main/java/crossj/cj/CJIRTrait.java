@@ -45,4 +45,16 @@ public final class CJIRTrait extends CJIRTraitOrClassType {
         }
         return null;
     }
+
+    boolean extendsTrait(CJIRTrait trait) {
+        if (this.equals(trait)) {
+            return true;
+        }
+        for (var subtrait : this.getTraits()) {
+            if (subtrait.extendsTrait(trait)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -51,9 +51,16 @@ class Main {
             val list = List[Int].empty()
             list.add(3)
             list.add(5)
-            IO.println("list = " + list)
+            IO.println("list = " + list.repr())
             val list2 = list.map(x -> x * x)
-            IO.println("list2 = " + list2)
+            IO.println("list2 = " + list2.repr())
+        }
+
+        {
+            val list = ["a", "b", "c", "dd"]
+            IO.println("list.size(): " + list.size())
+            IO.println("list: " + list.repr())
+            IO.println(list.map(s -> s.size()))
         }
     }
 

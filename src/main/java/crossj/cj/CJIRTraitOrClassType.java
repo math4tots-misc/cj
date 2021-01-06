@@ -20,9 +20,9 @@ abstract class CJIRTraitOrClassType {
         return getItem().getBindingWithSelfType(selfType, getArgs());
     }
 
-    public List<CJIRTrait> getTraits(CJMark... marks) {
+    public List<CJIRTrait> getTraits() {
         // TODO: Filter out disqualified traits based on type
-        return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBinding(), marks));
+        return getItem().getTraitDeclarations().map(td -> td.getTrait().apply(getBinding()));
     }
 
     public CJIRMethodRef findMethodOrNull(String shortName) {
@@ -33,6 +33,7 @@ abstract class CJIRTraitOrClassType {
         for (var trait : getTraits()) {
             var methodRef = trait.findMethodOrNull(shortName);
             if (methodRef != null) {
+                // TODO: Filter out methods that don't have all its conditions satisfied.
                 return methodRef;
             }
         }

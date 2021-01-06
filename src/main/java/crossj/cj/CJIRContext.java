@@ -181,4 +181,12 @@ public final class CJIRContext extends CJIRContextBase {
         }
         return stringType;
     }
+
+    @Override
+    CJIRType getListType(CJIRType innerType) {
+        var listItem = getListItem();
+        var args = List.of(innerType);
+        checkItemArgs(listItem, args);
+        return new CJIRClassType(listItem, args);
+    }
 }

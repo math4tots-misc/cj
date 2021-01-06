@@ -14,7 +14,7 @@ public final class CJIRSelfType implements CJIRType {
         return visitor.visitSelf(this, a);
     }
     @Override
-    public List<CJIRTrait> getTraits(CJMark... marks) {
+    public List<CJIRTrait> getTraits() {
         return List.of(selfTrait);
     }
 

@@ -20,7 +20,7 @@ public final class CJIRVariableType implements CJIRType {
     }
 
     @Override
-    public List<CJIRTrait> getTraits(CJMark... marks) {
+    public List<CJIRTrait> getTraits() {
         return List.join(declaration.getTraits(), additionalTraits);
     }
 

@@ -404,6 +404,21 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitListDisplay(CJIRListDisplay e, Void a) {
+                var lines = List.<String>of();
+                var args = e.getExpressions().map(arg -> translateExpression(arg));
+                if (!args.all(arg -> arg.isSimple())) {
+                    args = args.map(arg -> arg.toPure(ctx));
+                }
+                var out = List.<String>of();
+                for (var blob : args) {
+                    lines.addAll(blob.getLines());
+                    out.add(blob.getExpression());
+                }
+                return new CJJSBlob(lines, "[" + Str.join(",", out) + "]", false);
+            }
+
+            @Override
             public CJJSBlob visitUnion(CJIRUnion e, Void a) {
                 var target = translateExpression(e.getTarget()).toPure(ctx);
                 var lines = target.getLines();

@@ -133,8 +133,14 @@ final class CJPass03 extends CJPassBaseEx {
     }
 
     private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent) {
-        var conditions = methodAst.getConditions().map(condition -> new CJIRTypeCondition(condition,
-                getTypeParameter(condition.getVariableName(), condition.getMark())));
+        var conditions = methodAst.getConditions().map(conditionAst -> {
+            var condition = new CJIRTypeCondition(conditionAst,
+                getTypeParameter(conditionAst.getVariableName(), conditionAst.getMark()));
+            for (var traitAst : conditionAst.getTraits()) {
+                condition.getTraits().add(lctx.evalTraitExpression(traitAst));
+            }
+            return condition;
+        });
         var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
         var method = new CJIRMethod(methodAst, conditions, typeParameters,
                 implPresent || methodAst.getBody().isPresent() || item.isNative());

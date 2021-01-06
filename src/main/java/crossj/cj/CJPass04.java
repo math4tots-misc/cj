@@ -361,6 +361,22 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitListDisplay(CJAstListDisplay e, Optional<CJIRType> a) {
+                if (a.isEmpty() && e.getExpressions().isEmpty()) {
+                    throw CJError.of("Could not determine type of list display", e.getMark());
+                }
+                var expressions = List.<CJIRExpression>of();
+                for (var expressionAst : e.getExpressions()) {
+                    var expression = evalExpressionEx(expressionAst, a);
+                    expressions.add(expression);
+                    if (a.isEmpty()) {
+                        a = Optional.of(expression.getType());
+                    }
+                }
+                return new CJIRListDisplay(e, ctx.getListType(a.get()), expressions);
+            }
+
+            @Override
             public CJIRExpression visitUnion(CJAstUnion e, Optional<CJIRType> a) {
                 var target = evalExpression(e.getTarget());
                 if (!target.getType().isUnionType()) {
