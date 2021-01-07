@@ -10,5 +10,7 @@ class Test02Numbers {
         Assert.equal(21 % 42, 21)
         Assert.equal(21 // 42, 0)
         Assert.equal(21 / 42, 0.5)
+        Assert.equal(+21, 21)
+        Assert.equal(~21, -22)
     }
 }
