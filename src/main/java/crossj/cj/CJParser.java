@@ -703,7 +703,7 @@ public final class CJParser {
                 next();
                 var condition = parseExpression();
                 var left = parseBlock();
-                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE) ? Optional.of(parseExpression())
+                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE) ? Optional.of(parseBlock())
                         : Optional.empty();
                 return new CJAstIf(mark, condition, left, right);
             }
