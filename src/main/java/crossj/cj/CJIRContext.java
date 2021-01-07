@@ -61,7 +61,12 @@ public final class CJIRContext extends CJIRContextBase {
                 var data = IO.readFile(path);
                 var ast = CJParser.parseString(path, data);
                 var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
-                return new CJIRItem(ast, annotationProcessor.getDeriveList());
+                var item = new CJIRItem(ast, annotationProcessor.getDeriveList());
+                if (!item.getFullName().equals(name)) {
+                    throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
+                            item.getMark());
+                }
+                return item;
             }
         }
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
