@@ -33,4 +33,18 @@ class Test01 {
         Assert.withMessage(not ({ false } or { false }), "{ false } or { false }")
         Assert.withMessage({ true } or { true }, "{ true } or { true }")
     }
+
+    @test
+    def toBoolConditions() = {
+        Assert.withMessage(if (3) { true } else { false }, "if (*) { * } else { * }")
+        Assert.withMessage(not 0, "not 0")
+        Assert.withMessage(not not 5, "5")
+        Assert.withMessage("asdf", "non-empty string")
+        Assert.withMessage(not "", "empty string")
+        {
+            val list = [1, 2, 3]
+            Assert.withMessage(not not list, "non-empty list")
+            Assert.withMessage(not List[Int].empty(), "empty list")
+        }
+    }
 }

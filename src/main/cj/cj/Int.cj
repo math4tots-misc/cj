@@ -1,6 +1,6 @@
 package cj
 
-native class Int: Repr, Hash, Ord {
+native class Int: Repr, Hash, Ord, ToBool {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
@@ -8,6 +8,6 @@ native class Int: Repr, Hash, Ord {
     def __sub(a: Self, b: Self): Int
     def __mul(a: Self, b: Self): Int
     def __mod(a: Self, b: Self): Int
-    def toBool(self: Self): Bool
     def __lt(self: Self, other: Self): Bool
+    def toBool(self: Self): Bool
 }

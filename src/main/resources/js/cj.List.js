@@ -29,6 +29,9 @@ class MC$cj$List {
     M$filter(self, f) {
         return self.filter(f);
     }
+    M$toBool(self) {
+        return self.length !== 0;
+    }
     M$toList(self) {
         return Array.from(self);
     }

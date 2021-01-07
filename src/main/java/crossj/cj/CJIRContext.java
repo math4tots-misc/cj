@@ -42,6 +42,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRType intType = null;
     private CJIRType doubleType = null;
     private CJIRType stringType = null;
+    private CJIRTrait toBoolTrait = null;
 
     @Override
     CJIRContext getGlobal() {
@@ -187,6 +188,18 @@ public final class CJIRContext extends CJIRContextBase {
     }
 
     @Override
+    CJIRTrait itemToTrait(CJIRItem item, List<CJIRType> args, CJMark... marks) {
+        checkItemArgs(item, args, marks);
+        return new CJIRTrait(item, args);
+    }
+
+    @Override
+    CJIRTrait getTraitWithArgs(String itemName, List<CJIRType> args, CJMark... marks) {
+        var item = loadItem(itemName, marks);
+        return itemToTrait(item, args, marks);
+    }
+
+    @Override
     CJIRType getUnitType() {
         if (unitType == null) {
             unitType = getTypeWithArgs("cj.Unit", List.of());
@@ -240,5 +253,13 @@ public final class CJIRContext extends CJIRContextBase {
         var args = List.of(innerType);
         checkItemArgs(listItem, args);
         return new CJIRClassType(listItem, args);
+    }
+
+    @Override
+    CJIRTrait getToBoolTrait() {
+        if (toBoolTrait == null) {
+            toBoolTrait = getTraitWithArgs("cj.ToBool", List.of());
+        }
+        return toBoolTrait;
     }
 }

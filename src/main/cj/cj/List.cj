@@ -2,6 +2,7 @@ package cj
 
 native class List[T] :
         Iterable[T],
+        ToBool,
         Hash if T : Hash,
         Repr if T : Repr {
     def empty(): Self
@@ -15,6 +16,8 @@ native class List[T] :
 
     def map[R](self: Self, f: Fn[T, R]): List[R]
     def filter(self: Self, f: Fn[T, Bool]): Self
+
+    def toBool(self: Self): Bool
 
     def toList(self: Self): Self
 

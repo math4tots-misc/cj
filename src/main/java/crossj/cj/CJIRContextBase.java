@@ -145,6 +145,14 @@ public abstract class CJIRContextBase {
         return getGlobal().getTypeWithArgs(itemName, args, marks);
     }
 
+    CJIRTrait itemToTrait(CJIRItem item, List<CJIRType> args, CJMark... marks) {
+        return getGlobal().itemToTrait(item, args, marks);
+    }
+
+    CJIRTrait getTraitWithArgs(String itemName, List<CJIRType> args, CJMark... marks) {
+        return getGlobal().getTraitWithArgs(itemName, args, marks);
+    }
+
     CJIRType getUnitType() {
         return getGlobal().getUnitType();
     }
@@ -171,5 +179,9 @@ public abstract class CJIRContextBase {
 
     CJIRType getListType(CJIRType innerType) {
         return getGlobal().getListType(innerType);
+    }
+
+    CJIRTrait getToBoolTrait() {
+        return getGlobal().getToBoolTrait();
     }
 }

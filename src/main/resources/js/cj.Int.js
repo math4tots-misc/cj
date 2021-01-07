@@ -20,10 +20,10 @@ class MC$cj$Int {
     M$__mod(a, b) {
         return (a + b)|0;
     }
-    M$toBool(self) {
-        return !!self;
-    }
     M$__lt(self, other) {
         return self < other;
+    }
+    M$toBool(self) {
+        return !!self;
     }
 }

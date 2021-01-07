@@ -97,7 +97,37 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private CJIRExpression evalBoolExpression(CJAstExpression expression) {
-        return evalExpressionWithType(expression, ctx.getBoolType());
+        var boolType = ctx.getBoolType();
+        var ir = evalExpressionExUnchecked(expression, Optional.of(boolType));
+        var actualType = ir.getType();
+        if (actualType.equals(boolType)) {
+            // Bool is required, and we got exactly a Bool
+        } else if (actualType.implementsTrait(ctx.getToBoolTrait())) {
+            // not a Bool, but convertible to Bool (ToBool)
+            var methodRef = actualType.findMethod("toBool", expression.getMark());
+            ir = synthesizeMethodCall(expression, actualType, methodRef, List.of(), List.of(ir));
+        } else {
+            throw CJError.of("Expected a Bool convertible value but got " + actualType, expression.getMark());
+        }
+        return ir;
+    }
+
+    private CJIRMethodCall synthesizeMethodCall(CJAstExpression ast, CJIRType owner, CJIRMethodRef methodRef,
+            List<CJIRType> typeArgs, List<CJIRExpression> args) {
+        // this method cannot be reused in evalExpressionEx::visitMethodCall, because
+        // the order
+        // in which the method is resolved vs when the arguments are resolved are a bit
+        // different.
+        var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, ast.getMark());
+        var parameterTypes = reifiedMethodRef.getParameterTypes();
+        checkArgc(parameterTypes, args, ast.getMark());
+        for (int i = 0; i < args.size(); i++) {
+            var parameterType = parameterTypes.get(i);
+            var arg = args.get(i);
+            checkResultType(arg.getMark(), parameterType, arg.getType());
+        }
+        var returnType = reifiedMethodRef.getReturnType();
+        return new CJIRMethodCall(ast, returnType, owner, methodRef, typeArgs, args);
     }
 
     private CJIRExpression evalExpressionWithType(CJAstExpression expression, CJIRType type) {
@@ -105,6 +135,22 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private CJIRExpression evalExpressionEx(CJAstExpression expression, Optional<CJIRType> a) {
+        var ir = evalExpressionExUnchecked(expression, a);
+        if (a.isPresent()) {
+            var expectedType = a.get();
+            var actualType = ir.getType();
+            checkResultType(expression.getMark(), expectedType, actualType);
+        }
+        return ir;
+    }
+
+    private void checkResultType(CJMark mark, CJIRType expectedType, CJIRType actualType) {
+        if (!expectedType.equals(actualType)) {
+            throw CJError.of("Expected " + expectedType + " but got " + actualType, mark);
+        }
+    }
+
+    private CJIRExpression evalExpressionExUnchecked(CJAstExpression expression, Optional<CJIRType> a) {
         var ir = expression.accept(new CJAstExpressionVisitor<CJIRExpression, Optional<CJIRType>>() {
 
             @Override
@@ -377,6 +423,7 @@ final class CJPass04 extends CJPassBaseEx {
                     throw CJError.of("Could not determine type of list display", e.getMark());
                 }
                 var itemType = a.map(expectedType -> {
+                    // TODO: Consider whether to be permissive in the case where expectedType is a Bool
                     if (!expectedType.isListType()) {
                         throw CJError.of("Expected " + expectedType + " but got a list display", e.getMark());
                     }
@@ -524,13 +571,6 @@ final class CJPass04 extends CJPassBaseEx {
                 return new CJIRLambda(e, type, parameters, body);
             }
         }, a);
-        if (a.isPresent()) {
-            var expectedType = a.get();
-            var actualType = ir.getType();
-            if (!expectedType.equals(actualType)) {
-                throw CJError.of("Expected " + expectedType + " but got " + actualType, expression.getMark());
-            }
-        }
         return ir;
     }
 
@@ -567,7 +607,7 @@ final class CJPass04 extends CJPassBaseEx {
         }, null);
     }
 
-    private void checkArgc(List<CJIRType> parameterTypes, List<CJAstExpression> exprs, CJMark mark) {
+    private void checkArgc(List<CJIRType> parameterTypes, List<?> exprs, CJMark mark) {
         var expected = parameterTypes.size();
         var actual = exprs.size();
         if (expected != actual) {
