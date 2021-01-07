@@ -333,18 +333,13 @@ public final class CJJSTranslator {
                 var lines = List.of(returns ? "let " + tmpvar + ";" : "");
                 lines.add("{\n");
                 for (int i = 0; i + 1 < exprs.size(); i++) {
-                    var blob = translateExpression(exprs.get(i));
-                    lines.addAll(blob.getLines());
-                    if (!blob.isPure()) {
-                        lines.add(blob.getExpression() + ";\n");
-                    }
+                    translateExpression(exprs.get(i)).dropValue(lines);
                 }
                 var last = translateExpression(exprs.last());
-                lines.addAll(last.getLines());
                 if (returns) {
-                    lines.add(tmpvar + "=" + last.getExpression() + ";\n");
-                } else if (!last.isPure()) {
-                    lines.add(last.getExpression() + ";\n");
+                    last.setValue(lines, tmpvar + "=");
+                } else {
+                    last.dropValue(lines);
                 }
                 lines.add("}\n");
                 return new CJJSBlob(lines, tmpvar, true);
@@ -416,9 +411,11 @@ public final class CJJSTranslator {
 
             @Override
             public CJJSBlob visitAssignment(CJIRAssignment e, Void a) {
-                return new CJJSBlob(
-                        List.of(translateTarget(e.getTarget()) + "=" + translateExpression(e.getExpression()) + ";\n"),
-                        "null", true);
+                var expr = translateExpression(e.getExpression());
+                var target = translateTarget(e.getTarget());
+                var lines = expr.getLines();
+                lines.add(target + "=" + expr.getExpression() + ";\n");
+                return new CJJSBlob(lines, "null", true);
             }
 
             @Override
@@ -440,8 +437,7 @@ public final class CJJSTranslator {
                     var tmpvar = ctx.newTempVarName();
                     lines.add("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";\n");
                     lines.add("if(" + (e.isAnd() ? "" : "!") + "(" + left.getExpression() + ")){\n");
-                    lines.addAll(right.getLines());
-                    lines.add(tmpvar + "=" + right.getExpression() + ";\n");
+                    right.setValue(lines, tmpvar + "=");
                     lines.add("}\n");
                     return new CJJSBlob(lines, tmpvar, true);
                 }
@@ -474,7 +470,7 @@ public final class CJJSTranslator {
                     var tmpvar = ctx.newTempVarName();
                     var lines = List.of("let " + tmpvar + ";\n");
                     lines.addAll(condition.getLines());
-                    lines.add("if(" + condition.getExpression()  + "){\n");
+                    lines.add("if(" + condition.getExpression() + "){\n");
                     lines.addAll(left.getLines());
                     lines.add(tmpvar + "=" + left.getExpression() + ";\n");
                     lines.add("}else{\n");
@@ -483,6 +479,16 @@ public final class CJJSTranslator {
                     lines.add("}\n");
                     return new CJJSBlob(lines, tmpvar, true);
                 }
+            }
+
+            @Override
+            public CJJSBlob visitWhile(CJIRWhile e, Void a) {
+                var condition = translateExpression(e.getCondition());
+                var lines = condition.getLines();
+                lines.add("while(" + condition.getExpression() + "){\n");
+                translateExpression(e.getBody()).dropValue(lines);
+                lines.add("}\n");
+                return new CJJSBlob(lines, "null", true);
             }
 
             @Override
@@ -501,18 +507,14 @@ public final class CJJSTranslator {
                     var prefix = mutable ? "let " : "const ";
                     lines.add("case " + tag + ":{\n");
                     lines.add(prefix + "[," + Str.join(",", names) + "]=" + target.getExpression() + ";\n");
-                    lines.addAll(body.getLines());
-                    lines.add(tmpvar + "=" + body.getExpression() + ";\n");
+                    body.setValue(lines, tmpvar + "=");
                     lines.add("break;\n");
                     lines.add("}\n");
                 }
                 if (e.getFallback().isPresent()) {
                     var fallback = translateExpression(e.getFallback().get());
                     lines.add("default:{\n");
-                    lines.addAll(fallback.getLines());
-                    if (!fallback.isPure()) {
-                        lines.add(fallback.getExpression() + ";\n");
-                    }
+                    fallback.dropValue(lines);
                     lines.add("}\n");
                 } else {
                     lines.add("default:throw new Error(\"Invalid tag\");\n");
@@ -530,13 +532,11 @@ public final class CJJSTranslator {
                 if (blob.isSimple()) {
                     return new CJJSBlob(List.of(), paramstr + "(" + blob.getExpression() + ")", false);
                 } else {
-                    var lines = List.of("{\n", Str.join("\n", blob.getLines()) + "\n");
+                    var lines = List.of("{\n");
                     if (e.getReturnType().isUnitType()) {
-                        if (!blob.isPure()) {
-                            lines.add(blob.getExpression() + ";\n");
-                        }
+                        blob.dropValue(lines);
                     } else {
-                        lines.add("return " + blob.getExpression() + ";\n");
+                        blob.setValue(lines, "return ");
                     }
                     lines.add("}\n");
                     var body = Str.join("", lines);

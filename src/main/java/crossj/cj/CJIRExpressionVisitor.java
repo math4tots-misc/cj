@@ -11,6 +11,7 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitLogicalBinop(CJIRLogicalBinop e, A a);
     public abstract R visitListDisplay(CJIRListDisplay e, A a);
     public abstract R visitIf(CJIRIf e, A a);
+    public abstract R visitWhile(CJIRWhile e, A a);
     public abstract R visitUnion(CJIRUnion e, A a);
     public abstract R visitLambda(CJIRLambda e, A a);
 }

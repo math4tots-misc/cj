@@ -145,7 +145,7 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private void checkResultType(CJMark mark, CJIRType expectedType, CJIRType actualType) {
-        if (!expectedType.equals(actualType)) {
+        if (!expectedType.equals(ctx.getUnitType()) && !expectedType.equals(actualType)) {
             throw CJError.of("Expected " + expectedType + " but got " + actualType, mark);
         }
     }
@@ -459,6 +459,14 @@ final class CJPass04 extends CJPassBaseEx {
                 var rightAst = e.getRight().getOrElseDo(() -> new CJAstLiteral(e.getMark(), CJIRLiteralKind.Unit, ""));
                 var right = evalExpressionWithType(rightAst, returnType);
                 return new CJIRIf(e, returnType, condition, left, right);
+            }
+
+            @Override
+            public CJIRExpression visitWhile(CJAstWhile e, Optional<CJIRType> a) {
+                var unitType = ctx.getUnitType();
+                var condition = evalBoolExpression(e.getCondition());
+                var body = evalExpressionWithType(e.getBody(), unitType);
+                return new CJIRWhile(e, unitType, condition, body);
             }
 
             @Override

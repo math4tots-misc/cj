@@ -56,8 +56,35 @@ public final class CJJSBlob {
         } else {
             var newLines = List.fromIterable(lines);
             var v = ctx.newTempVarName();
-            newLines.add("const " + v + "=" + expression + ";");
+            newLines.add("const " + v + "=" + expression + ";\n");
             return new CJJSBlob(newLines, v, true);
         }
+    }
+
+    /**
+     * Adds a list of lines that executes all the side effects of this blob.
+     *
+     * In particular, if this is pure, adds just the lines, otherwise, it adds
+     * the lines appended with an extra line that evaluates and drops the expression.
+     */
+    public void dropValue(List<String> outLines) {
+        outLines.addAll(lines);
+        if (!pure) {
+            outLines.add(expression + ";\n");
+        }
+    }
+
+    /**
+     * Adds a list of lines that executes all the side effects of this blob,
+     * then adds a last statement with the expression preceded by the given prefix.
+     */
+    public void setValue(List<String> outLines, String prefix) {
+        outLines.addAll(lines);
+        outLines.add(prefix + expression + ";\n");
+    }
+
+    @Override
+    public String toString() {
+        throw new RuntimeException();
     }
 }
