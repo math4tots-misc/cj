@@ -8,6 +8,7 @@ import crossj.base.Tuple4;
 
 public final class CJParser {
     private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
+    private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
 
     public static CJAstItemDefinition parseString(String path, String string) {
         var tokens = CJLexer.lex(string).get();
@@ -461,6 +462,13 @@ public final class CJParser {
                     expr = new CJAstAssignment(opMark, target, valexpr);
                     break;
                 }
+                case CJToken.KW_AND:
+                case CJToken.KW_OR: {
+                    var isAnd = next().type == CJToken.KW_AND;
+                    var right = parseExpressionWithPrecedence(tokenPrecedence + 1);
+                    expr = new CJAstLogicalBinop(opMark, isAnd, expr, right);
+                    break;
+                }
                 case '+':
                 case '-':
                 case '*':
@@ -690,6 +698,11 @@ public final class CJParser {
             }
             case CJToken.ID:
                 return atLambda() ? parseLambda() : new CJAstVariableAccess(getMark(), parseId());
+            case CJToken.KW_NOT: {
+                var mark = getMark();
+                next();
+                return new CJAstLogicalNot(mark, parseExpressionWithPrecedence(LOGICAL_NOT_PRECEDENCE));
+            }
             case CJToken.KW_VAL:
             case CJToken.KW_VAR: {
                 var mutable = next().type == CJToken.KW_VAR;

@@ -96,6 +96,10 @@ final class CJPass04 extends CJPassBaseEx {
         return evalExpressionEx(expression, Optional.empty());
     }
 
+    private CJIRExpression evalBoolExpression(CJAstExpression expression) {
+        return evalExpressionWithType(expression, ctx.getBoolType());
+    }
+
     private CJIRExpression evalExpressionWithType(CJAstExpression expression, CJIRType type) {
         return evalExpressionEx(expression, Optional.of(type));
     }
@@ -356,8 +360,15 @@ final class CJPass04 extends CJPassBaseEx {
 
             @Override
             public CJIRExpression visitLogicalNot(CJAstLogicalNot e, Optional<CJIRType> a) {
-                var inner = evalExpressionWithType(e.getInner(), ctx.getBoolType());
+                var inner = evalBoolExpression(e.getInner());
                 return new CJIRLogicalNot(e, ctx.getBoolType(), inner);
+            }
+
+            @Override
+            public CJIRExpression visitLogicalBinop(CJAstLogicalBinop e, Optional<CJIRType> a) {
+                var left = evalBoolExpression(e.getLeft());
+                var right = evalBoolExpression(e.getRight());
+                return new CJIRLogicalBinop(e, ctx.getBoolType(), e.isAnd(), left, right);
             }
 
             @Override

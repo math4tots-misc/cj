@@ -4,6 +4,11 @@ class MC$cj$Assert {
             throw new Error("Assertion failed");
         }
     }
+    M$withMessage(TV$B, b, msg) {
+        if (!TV$B.M$toBool(b)) {
+            throw new Error("Assertion failed: " + msg);
+        }
+    }
     M$equal(TV$T, a, b) {
         if (!TV$T.M$__eq(a, b)) {
             const astr = TV$T.M$repr(a);

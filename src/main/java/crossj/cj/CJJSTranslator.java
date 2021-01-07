@@ -428,6 +428,26 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitLogicalBinop(CJIRLogicalBinop e, Void a) {
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (left.isSimple() && right.isSimple()) {
+                    var op = e.isAnd() ? "&&" : "||";
+                    return CJJSBlob.inline("((" + left.getExpression() + ")" + op + "(" + right.getExpression() + "))",
+                            false);
+                } else {
+                    var lines = left.getLines();
+                    var tmpvar = ctx.newTempVarName();
+                    lines.add("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";\n");
+                    lines.add("if(" + (e.isAnd() ? "" : "!") + "(" + left.getExpression() + ")){\n");
+                    lines.addAll(right.getLines());
+                    lines.add(tmpvar + "=" + right.getExpression() + ";\n");
+                    lines.add("}\n");
+                    return new CJJSBlob(lines, tmpvar, true);
+                }
+            }
+
+            @Override
             public CJJSBlob visitListDisplay(CJIRListDisplay e, Void a) {
                 var lines = List.<String>of();
                 var args = e.getExpressions().map(arg -> translateExpression(arg));
