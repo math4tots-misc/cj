@@ -137,7 +137,7 @@ final class CJPass04 extends CJPassBaseEx {
                 for (int i = 0; i + 1 < exprs.size(); i++) {
                     newExprs.add(evalExpressionWithType(exprs.get(i), ctx.getUnitType()));
                 }
-                newExprs.add(evalExpressionWithType(exprs.last(), a.get()));
+                newExprs.add(evalExpressionEx(exprs.last(), a));
                 exitScope();
 
                 return new CJIRBlock(e, newExprs.last().getType(), newExprs);
@@ -317,7 +317,7 @@ final class CJPass04 extends CJPassBaseEx {
                     return binding.containsKey(name) ? binding.get(name) : map.getOrNull(name);
                 } else {
                     var type = (CJIRClassType) declaredType;
-                    var argtypes = List.<CJIRType> of();
+                    var argtypes = List.<CJIRType>of();
                     for (var arg : type.getArgs()) {
                         var newArg = getDeterminedTypeOrNull(binding, map, arg);
                         if (newArg == null) {
@@ -392,6 +392,26 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                 }
                 return new CJIRListDisplay(e, ctx.getListType(itemType.get()), expressions);
+            }
+
+            @Override
+            public CJIRExpression visitIf(CJAstIf e, Optional<CJIRType> a) {
+                var condition = evalBoolExpression(e.getCondition());
+                CJIRType returnType;
+                CJIRExpression left;
+                if (e.getRight().isEmpty()) {
+                    returnType = ctx.getUnitType();
+                    left = evalExpressionWithType(e.getLeft(), returnType);
+                } else if (a.isPresent()) {
+                    returnType = a.get();
+                    left = evalExpressionWithType(e.getLeft(), returnType);
+                } else {
+                    left = evalExpression(e.getLeft());
+                    returnType = left.getType();
+                }
+                var rightAst = e.getRight().getOrElseDo(() -> new CJAstLiteral(e.getMark(), CJIRLiteralKind.Unit, ""));
+                var right = evalExpressionWithType(rightAst, returnType);
+                return new CJIRIf(e, returnType, condition, left, right);
             }
 
             @Override

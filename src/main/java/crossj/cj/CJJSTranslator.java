@@ -328,8 +328,8 @@ public final class CJJSTranslator {
             @Override
             public CJJSBlob visitBlock(CJIRBlock e, Void a) {
                 var exprs = e.getExpressions();
-                var returns = !e.getType().toString().equals("cj.Unit");
-                var tmpvar = returns ? ctx.newTempVarName() : "";
+                var returns = !e.getType().isUnionType();
+                var tmpvar = returns ? ctx.newTempVarName() : "null";
                 var lines = List.of(returns ? "let " + tmpvar + ";" : "");
                 lines.add("{\n");
                 for (int i = 0; i + 1 < exprs.size(); i++) {
@@ -460,6 +460,29 @@ public final class CJJSTranslator {
                     out.add(blob.getExpression());
                 }
                 return new CJJSBlob(lines, "[" + Str.join(",", out) + "]", false);
+            }
+
+            @Override
+            public CJJSBlob visitIf(CJIRIf e, Void a) {
+                var condition = translateExpression(e.getCondition());
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (condition.isSimple() && left.isSimple() && right.isSimple()) {
+                    return CJJSBlob.inline("(" + condition.getExpression() + "?" + left.getExpression() + ":"
+                            + right.getExpression() + ")", false);
+                } else {
+                    var tmpvar = ctx.newTempVarName();
+                    var lines = List.of("let " + tmpvar + ";\n");
+                    lines.addAll(condition.getLines());
+                    lines.add("if(" + condition.getExpression()  + "){\n");
+                    lines.addAll(left.getLines());
+                    lines.add(tmpvar + "=" + left.getExpression() + ";\n");
+                    lines.add("}else{\n");
+                    lines.addAll(right.getLines());
+                    lines.add(tmpvar + "=" + right.getExpression() + ";\n");
+                    lines.add("}\n");
+                    return new CJJSBlob(lines, tmpvar, true);
+                }
             }
 
             @Override

@@ -698,6 +698,15 @@ public final class CJParser {
             }
             case CJToken.ID:
                 return atLambda() ? parseLambda() : new CJAstVariableAccess(getMark(), parseId());
+            case CJToken.KW_IF: {
+                var mark = getMark();
+                next();
+                var condition = parseExpression();
+                var left = parseBlock();
+                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE) ? Optional.of(parseExpression())
+                        : Optional.empty();
+                return new CJAstIf(mark, condition, left, right);
+            }
             case CJToken.KW_NOT: {
                 var mark = getMark();
                 next();

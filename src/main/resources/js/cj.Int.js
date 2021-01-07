@@ -23,4 +23,7 @@ class MC$cj$Int {
     M$toBool(self) {
         return !!self;
     }
+    M$__lt(self, other) {
+        return self < other;
+    }
 }

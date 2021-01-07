@@ -9,6 +9,13 @@ class Test02List {
             val list: List[String] = []
             Assert.equal(list.size(), 0)
         }
+        {
+            val list = [
+                if true { 15 } else { 20 },
+                if false { 30 } else { 75 },
+            ]
+            Assert.equal(list, [15, 75])
+        }
     }
 
     @test
@@ -19,6 +26,19 @@ class Test02List {
             list.add(15)
             Assert.equal(list, [15])
             Assert.equal(list.get(0), 15)
+        }
+        {
+            var list = List[Int].empty()
+            if (5 < 10) {
+                list.add(66)
+            }
+            if (10 > 5) {
+                list.add(123)
+            }
+            if (5 > 10) {
+                list.add(777)
+            }
+            Assert.equal(list, [66, 123])
         }
     }
 
