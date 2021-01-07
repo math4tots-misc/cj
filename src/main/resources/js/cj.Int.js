@@ -8,6 +8,15 @@ class MC$cj$Int {
     M$hash(i) {
         return i;
     }
+    M$__pos(a) {
+        return a;
+    }
+    M$__neg(a) {
+        return -a;
+    }
+    M$__invert(a) {
+        return ~a;
+    }
     M$__add(a, b) {
         return (a + b)|0;
     }
@@ -19,6 +28,15 @@ class MC$cj$Int {
     }
     M$__mod(a, b) {
         return (a + b)|0;
+    }
+    M$__rem(a, b) {
+        return (a % b)|0;
+    }
+    M$__truncdiv(a, b) {
+        return (a / b)|0;
+    }
+    M$__div(a, b) {
+        return a / b;
     }
     M$__lt(self, other) {
         return self < other;

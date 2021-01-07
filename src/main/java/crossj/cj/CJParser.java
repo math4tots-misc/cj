@@ -9,6 +9,7 @@ import crossj.base.Tuple4;
 public final class CJParser {
     private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
     private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
+    private static final int UNARY_OP_PRECEDENCE = getTokenPrecedence('*') + 5;
 
     public static CJAstItemDefinition parseString(String path, String string) {
         var tokens = CJLexer.lex(string).get();
@@ -711,6 +712,27 @@ public final class CJParser {
                 var mark = getMark();
                 next();
                 return new CJAstLogicalNot(mark, parseExpressionWithPrecedence(LOGICAL_NOT_PRECEDENCE));
+            }
+            case '+':
+            case '-':
+            case '~': {
+                var mark = getMark();
+                String methodName;
+                switch (next().type) {
+                    case '+':
+                        methodName = "__pos";
+                        break;
+                    case '-':
+                        methodName = "__neg";
+                        break;
+                    case '~':
+                        methodName = "__invert";
+                        break;
+                    default:
+                        throw CJError.of("FUBAR: UNRECOGNIZED UNARY OP", mark);
+                }
+                var inner = parseExpressionWithPrecedence(UNARY_OP_PRECEDENCE);
+                return new CJAstMethodCall(mark, Optional.empty(), methodName, List.of(), List.of(inner));
             }
             case CJToken.KW_VAL:
             case CJToken.KW_VAR: {
