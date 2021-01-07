@@ -1,7 +1,7 @@
 package cj
 
 ## Test list operations
-class Test02List {
+class Test03List {
 
     @test
     def literals() = {
