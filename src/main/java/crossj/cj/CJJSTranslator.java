@@ -16,11 +16,15 @@ public final class CJJSTranslator {
     private final CJIRItem item;
     private final CJIRClassType selfType;
 
-    public static String translate(CJIRContext irctx, CJIRRunMode runMode) {
+    public static String translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
         var out = new StringBuilder();
-        var jsctx = new CJJSContext();
+        var jsctx = new CJJSContext(enableStack);
         out.append("(function(){\n");
-        out.append("\"use strict\"\n");
+        out.append("\"use strict\";\n");
+        if (enableStack) {
+            emitStackPrelude(out);
+            out.append("const f = function(){\n");
+        }
         emitPrelude(out);
         translateItems(out, irctx, jsctx);
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
@@ -55,12 +59,36 @@ public final class CJJSTranslator {
                 return null;
             }
         }, null);
+        if (enableStack) {
+            out.append("};\n");
+            emitStackData(out, jsctx);
+            out.append("try{f()}catch(e){printStackTrace();throw e;}\n");
+        }
         out.append("})();\n");
         return out.toString();
     }
 
+    private static void emitStackData(StringBuilder out, CJJSContext jsctx) {
+        out.append("const filenameData=[\n");
+        for (var filename : jsctx.getFileNamesForStack()) {
+            out.append("\"" + filename + "\",\n");
+        }
+        out.append("];\n");
+        out.append("const markData=[\n");
+        for (var mark : jsctx.getMarksForStack()) {
+            var fileIndex = jsctx.getFileNameIndex(mark.filename);
+            out.append(fileIndex + "," + mark.line + "," + mark.column + ",\n");
+        }
+        out.append("];\n");
+    }
+
     private static void emitPrelude(StringBuilder out) {
         var path = FS.join(jsroot, "prelude.js");
+        out.append(IO.readFile(path));
+    }
+
+    private static void emitStackPrelude(StringBuilder out) {
+        var path = FS.join(jsroot, "prelude.stack.js");
         out.append(IO.readFile(path));
     }
 
@@ -356,11 +384,11 @@ public final class CJJSTranslator {
                     lines.addAll(arg.getLines());
                 }
                 var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                var pair = joinMethodCall(e.getOwner(), e.getMethodRef(), allArgs);
+                var pair = joinMethodCall(e.getMark(), e.getOwner(), e.getMethodRef(), allArgs);
                 return new CJJSBlob(lines, pair.get1(), pair.get2());
             }
 
-            private Pair<String, Boolean> joinMethodCall(CJIRType owner, CJIRMethodRef methodRef,
+            private Pair<String, Boolean> joinMethodCall(CJMark mark, CJIRType owner, CJIRMethodRef methodRef,
                     List<String> allArgs) {
                 var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
                 switch (fullMethodName) {
@@ -389,10 +417,20 @@ public final class CJJSTranslator {
                     case "cj.Fn2":
                     case "cj.Fn3":
                     case "cj.Fn4":
-                        return Pair.of(allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")", false);
+                        return Pair.of(wrapStackManagement(mark,
+                                allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")"), false);
                     default:
-                        return Pair.of(translateType(owner) + "." + translateMethodName(methodRef.getName()) + "("
-                                + Str.join(",", allArgs) + ")", false);
+                        return Pair.of(wrapStackManagement(mark, translateType(owner) + "."
+                                + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs) + ")"),
+                                false);
+                }
+            }
+
+            private String wrapStackManagement(CJMark mark, String expr) {
+                if (ctx.isStackEnabled()) {
+                    return "pop(push(" + ctx.addMark(mark) + ")," + expr + ")";
+                } else {
+                    return expr;
                 }
             }
 

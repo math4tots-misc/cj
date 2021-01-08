@@ -16,6 +16,7 @@ public final class JSMain {
         var mainClasses = List.<String>of();
         var sourceRoots = List.of(FS.join("src", "main", "cj"));
         var outPath = "";
+        var enableStack = true;
         CJIRRunMode runMode = null;
         for (var arg : args) {
             switch (mode) {
@@ -37,6 +38,12 @@ public final class JSMain {
                         case "-o":
                         case "--out":
                             mode = Mode.Out;
+                            break;
+                        case "--disable-stack":
+                            enableStack = false;
+                            break;
+                        case "--enable-stack":
+                            enableStack = true;
                             break;
                         default: {
                             throw new RuntimeException("Unrecognized arg: " + arg);
@@ -76,7 +83,7 @@ public final class JSMain {
             var mainClass = ((CJIRRunModeMain) runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
-        var js = CJJSTranslator.translate(ctx, runMode);
+        var js = CJJSTranslator.translate(ctx, enableStack, runMode);
         if (outPath.equals("-")) {
             IO.print(js);
         } else {
