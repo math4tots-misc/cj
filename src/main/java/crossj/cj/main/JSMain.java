@@ -45,9 +45,8 @@ public final class JSMain {
                         case "--enable-stack":
                             enableStack = true;
                             break;
-                        default: {
+                        default:
                             throw new RuntimeException("Unrecognized arg: " + arg);
-                        }
                     }
                     break;
                 case MainClass:
