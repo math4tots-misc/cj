@@ -47,4 +47,10 @@ class Test01 {
             Assert.withMessage(not List[Int].empty(), "empty list")
         }
     }
+
+    @test
+    def isAndIsNot() = {
+        Assert.withMessage(3 is 3, "3 is 3")
+        Assert.withMessage(4 is not 5, "4 is not 5")
+    }
 }

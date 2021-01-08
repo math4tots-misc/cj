@@ -9,6 +9,7 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitAssignment(CJIRAssignment e, A a);
     public abstract R visitLogicalNot(CJIRLogicalNot e, A a);
     public abstract R visitLogicalBinop(CJIRLogicalBinop e, A a);
+    public abstract R visitIs(CJIRIs e, A a);
     public abstract R visitListDisplay(CJIRListDisplay e, A a);
     public abstract R visitIf(CJIRIf e, A a);
     public abstract R visitWhile(CJIRWhile e, A a);

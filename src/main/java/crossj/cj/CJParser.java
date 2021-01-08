@@ -479,6 +479,17 @@ public final class CJParser {
                     expr = new CJAstLogicalBinop(opMark, isAnd, expr, right);
                     break;
                 }
+                case CJToken.KW_IS: {
+                    var mark = getMark();
+                    next();
+                    var isNot = consume(CJToken.KW_NOT);
+                    var right = parseExpressionWithPrecedence(tokenPrecedence + 1);
+                    expr = new CJAstIs(mark, expr, right);
+                    if (isNot) {
+                        expr = new CJAstLogicalNot(mark, expr);
+                    }
+                    break;
+                }
                 case '+':
                 case '-':
                 case '*':

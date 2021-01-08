@@ -445,6 +445,20 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitIs(CJIRIs e, Void a) {
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (left.isSimple() && right.isSimple()) {
+                    return CJJSBlob.inline("(" + left.getExpression() + "===" + right.getExpression() + ")", false);
+                } else {
+                    left = left.toPure(ctx);
+                    var lines = left.getLines();
+                    lines.addAll(right.getLines());
+                    return new CJJSBlob(lines, "(" + left.getExpression() + "===" + right.getExpression() + ")", false);
+                }
+            }
+
+            @Override
             public CJJSBlob visitListDisplay(CJIRListDisplay e, Void a) {
                 var lines = List.<String>of();
                 var args = e.getExpressions().map(arg -> translateExpression(arg));

@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import java.util.Objects;
+
 import crossj.base.Repr;
 
 public final class CJMark implements Repr {
@@ -35,5 +37,19 @@ public final class CJMark implements Repr {
 
     public static CJMark getBuiltin() {
         return builtin;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filename, line, column);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CJMark)) {
+            return false;
+        }
+        var other = (CJMark) obj;
+        return filename.equals(other.filename) && line == other.line && column == other.column;
     }
 }
