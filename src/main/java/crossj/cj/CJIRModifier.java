@@ -5,4 +5,5 @@ public enum CJIRModifier {
     Static,
     Public,
     Private,
+    Async,
 }

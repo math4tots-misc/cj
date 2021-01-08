@@ -11,4 +11,26 @@ class MC$cj$Double {
     M$toBool(self) {
         return !!self;
     }
+
+    M$__lt(self, other) {
+        return self < other;
+    }
+    M$__add(self, other) {
+        return self + other;
+    }
+    M$__sub(self, other) {
+        return self - other;
+    }
+    M$__mul(self, other) {
+        return self * other;
+    }
+    M$__div(self, other) {
+        return self / other;
+    }
+    M$__mod(self, other) {
+        return self % other;
+    }
+    M$__truncdiv(self, other) {
+        return (self / other)|0;
+    }
 }

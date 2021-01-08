@@ -4,13 +4,19 @@ import crossj.base.List;
 import crossj.base.Tuple3;
 
 public final class CJAstLambda extends CJAstExpression {
+    private final boolean async_;
     private final List<Tuple3<CJMark, Boolean, String>> parameters;
     private final CJAstExpression body;
 
-    CJAstLambda(CJMark mark, List<Tuple3<CJMark, Boolean, String>> parameters, CJAstExpression body) {
+    CJAstLambda(CJMark mark, boolean async_, List<Tuple3<CJMark, Boolean, String>> parameters, CJAstExpression body) {
         super(mark);
+        this.async_ = async_;
         this.parameters = parameters;
         this.body = body;
+    }
+
+    public boolean isAsync() {
+        return async_;
     }
 
     public List<Tuple3<CJMark, Boolean, String>> getParameters() {

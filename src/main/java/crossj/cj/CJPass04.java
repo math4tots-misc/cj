@@ -17,6 +17,7 @@ import crossj.base.Tuple4;
  */
 final class CJPass04 extends CJPassBaseEx {
     private final List<Map<String, CJIRLocalVariableDeclaration>> locals = List.of();
+    private final List<Pair<Boolean, CJIRType>> lambdaStack = List.of();
 
     CJPass04(CJIRContext ctx) {
         super(ctx);
@@ -38,6 +39,24 @@ final class CJPass04 extends CJPassBaseEx {
 
     private void exitScope() {
         locals.pop();
+    }
+
+    private void enterLambdaScope(boolean isAsync) {
+        enterScope();
+        lambdaStack.add(Pair.of(isAsync, ctx.getNoReturnType()));
+    }
+
+    private void exitLambdaScope() {
+        exitScope();
+        lambdaStack.pop();
+    }
+
+    private boolean inAsyncContext() {
+        if (lambdaStack.size() > 0) {
+            return lambdaStack.last().get1();
+        } else {
+            return lctx.getMethod().map(m -> m.isAsync()).getOrElse(false);
+        }
     }
 
     private CJIRLocalVariableDeclaration findLocalOrNull(String shortName) {
@@ -83,12 +102,14 @@ final class CJPass04 extends CJPassBaseEx {
             return;
         }
         var bodyAst = method.getAst().getBody().get();
+        enterMethod(method);
         enterScope();
         for (var parameter : method.getParameters()) {
             declareLocal(parameter);
         }
-        var body = evalExpressionWithType(bodyAst, method.getReturnType());
+        var body = evalExpressionWithType(bodyAst, method.getInnerReturnType());
         exitScope();
+        exitMethod();
         method.setBody(body);
     }
 
@@ -345,15 +366,15 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 // Argument types of the lambda expression are known at this point. Use them to
                 // determine the return type.
-                enterScope();
+                enterLambdaScope(lambdaAst.isAsync());
                 for (var parameter : lambdaParameters) {
                     declareLocal(parameter);
                 }
                 var body = evalExpression(lambdaAst.getBody());
-                exitScope();
+                exitLambdaScope();
                 var lambdaType = new CJIRClassType(rawLambdaType.getItem(), List
                         .of(lambdaParameters.map(p -> p.getVariableType()), List.of(body.getType())).flatMap(x -> x));
-                return new CJIRLambda(lambdaAst, lambdaType, lambdaParameters, body);
+                return new CJIRLambda(lambdaAst, lambdaType, lambdaAst.isAsync(), lambdaParameters, body);
             }
 
             private CJIRType getDeterminedTypeOrNull(CJIRBinding binding, Map<String, CJIRType> map,
@@ -572,11 +593,26 @@ final class CJPass04 extends CJPassBaseEx {
                     var name = parameterAst.get3();
                     return new CJIRAdHocVariableDeclaration(paramMark, mutable, name, parameterType);
                 }).list();
-                enterScope();
+                enterLambdaScope(e.isAsync());
                 parameters.forEach(p -> declareLocal(p));
                 var body = evalExpressionWithType(e.getBody(), returnType);
-                exitScope();
-                return new CJIRLambda(e, type, parameters, body);
+                exitLambdaScope();
+                return new CJIRLambda(e, type, e.isAsync(), parameters, body);
+            }
+
+            @Override
+            public CJIRExpression visitAwait(CJAstAwait e, Optional<CJIRType> a) {
+                if (!inAsyncContext()) {
+                    throw CJError.of("Await can only be used from inside an async method", e.getMark());
+                }
+                var optionalExpectedInnerType = a.map(ctx::getPromiseType);
+                var inner = evalExpressionEx(e.getInner(), optionalExpectedInnerType);
+                var innerType = inner.getType();
+                if (!innerType.isPromiseType()) {
+                    throw CJError.of("Await expects a Promise expression but got " + innerType, e.getMark());
+                }
+                var outerType = ((CJIRClassType) innerType).getArgs().get(0);
+                return new CJIRAwait(e, outerType, inner);
             }
         }, a);
         return ir;

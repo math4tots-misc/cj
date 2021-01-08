@@ -41,4 +41,8 @@ public final class CJAstMethodDefinition extends CJAstItemMemberDefinition {
     public Optional<CJAstExpression> getBody() {
         return body;
     }
+
+    public boolean isAsync() {
+        return getModifiers().contains(CJIRModifier.Async);
+    }
 }

@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
@@ -47,6 +48,19 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
         return returnType;
     }
 
+    /**
+     * Mostly the same as getReturnType, except if this is an async method,
+     * should return the Promise's type argument.
+     */
+    public CJIRType getInnerReturnType() {
+        if (isAsync()) {
+            Assert.that(returnType.isPromiseType());
+            return ((CJIRClassType) returnType).getArgs().get(0);
+        } else {
+            return returnType;
+        }
+    }
+
     public Optional<CJIRExpression> getBody() {
         return body;
     }
@@ -57,6 +71,10 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
 
     public boolean hasImpl() {
         return implPresent;
+    }
+
+    public boolean isAsync() {
+        return getModifiers().contains(CJIRModifier.Async);
     }
 
     public Map<String, CJIRTypeParameter> getTypeParameterMap() {

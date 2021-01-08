@@ -36,6 +36,10 @@ public interface CJIRType {
         return false;
     }
 
+    default boolean isPromiseType() {
+        return false;
+    }
+
     default boolean isUnitType() {
         return toString().equals("cj.Unit");
     }

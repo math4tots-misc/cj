@@ -133,8 +133,8 @@ public abstract class CJIRContextBase {
         return getGlobal().getListItem();
     }
 
-    CJIRType getListType(CJIRType innerType, CJMark... marks) {
-        return getGlobal().getListType(innerType, marks);
+    CJIRItem getPromiseItem() {
+        return getGlobal().getPromiseItem();
     }
 
     CJIRClassType itemToType(CJIRItem item, List<CJIRType> args, CJMark... marks) {
@@ -155,6 +155,10 @@ public abstract class CJIRContextBase {
 
     CJIRType getUnitType() {
         return getGlobal().getUnitType();
+    }
+
+    CJIRType getNoReturnType() {
+        return getGlobal().getNoReturnType();
     }
 
     CJIRType getBoolType() {
@@ -179,6 +183,10 @@ public abstract class CJIRContextBase {
 
     CJIRType getListType(CJIRType innerType) {
         return getGlobal().getListType(innerType);
+    }
+
+    CJIRType getPromiseType(CJIRType innerType) {
+        return getGlobal().getPromiseType(innerType);
     }
 
     CJIRTrait getToBoolTrait() {

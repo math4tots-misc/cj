@@ -12,8 +12,8 @@ public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Bool", "cj.Char", "cj.Int",
             "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List", "cj.Assert", "cj.IO",
-            "cj.Iterable", "cj.Iterator", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3",
-            "cj.Fn4");
+            "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
+            "cj.Fn3", "cj.Fn4");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -23,6 +23,7 @@ public final class CJIRContext extends CJIRContextBase {
      */
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
             Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
+            Pair.of("Iterator", List.of("cj.Iterator")), Pair.of("Promise", List.of("cj.Promise")),
             Pair.of("Self", List.of()));
 
     /**
@@ -36,7 +37,9 @@ public final class CJIRContext extends CJIRContextBase {
     private final Map<String, CJIRItem> itemMap = Map.of();
 
     private CJIRItem listItem = null;
+    private CJIRItem promiseItem = null;
     private CJIRType unitType = null;
+    private CJIRType noReturnType = null;
     private CJIRType boolType = null;
     private CJIRType charType = null;
     private CJIRType intType = null;
@@ -176,8 +179,24 @@ public final class CJIRContext extends CJIRContextBase {
     }
 
     @Override
-    CJIRType getListType(CJIRType innerType, CJMark... marks) {
-        return itemToType(getListItem(), List.of(innerType), marks);
+    CJIRType getListType(CJIRType innerType) {
+        var listItem = getListItem();
+        var args = List.of(innerType);
+        checkItemArgs(listItem, args);
+        return new CJIRClassType(listItem, args);
+    }
+
+    @Override
+    CJIRItem getPromiseItem() {
+        if (promiseItem == null) {
+            promiseItem = loadItem("cj.Promise");
+        }
+        return promiseItem;
+    }
+
+    @Override
+    CJIRType getPromiseType(CJIRType innerType) {
+        return itemToType(getPromiseItem(), List.of(innerType));
     }
 
     @Override
@@ -210,6 +229,14 @@ public final class CJIRContext extends CJIRContextBase {
             unitType = getTypeWithArgs("cj.Unit", List.of());
         }
         return unitType;
+    }
+
+    @Override
+    CJIRType getNoReturnType() {
+        if (noReturnType == null) {
+            noReturnType = getTypeWithArgs("cj.NoReturn", List.of());
+        }
+        return noReturnType;
     }
 
     @Override
@@ -250,14 +277,6 @@ public final class CJIRContext extends CJIRContextBase {
             stringType = getTypeWithArgs("cj.String", List.of());
         }
         return stringType;
-    }
-
-    @Override
-    CJIRType getListType(CJIRType innerType) {
-        var listItem = getListItem();
-        var args = List.of(innerType);
-        checkItemArgs(listItem, args);
-        return new CJIRClassType(listItem, args);
     }
 
     @Override

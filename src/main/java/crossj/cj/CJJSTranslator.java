@@ -265,7 +265,8 @@ public final class CJJSTranslator {
                 var typeArgNames = method.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
                 var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
                 var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
-                out.append(methodName + "(" + Str.join(",", allArgNames) + "){\n");
+                var prefix = method.isAsync() ? "async " : "";
+                out.append(prefix + methodName + "(" + Str.join(",", allArgNames) + "){\n");
                 var body = translateExpression(optionalBody.get());
                 for (var line : body.getLines()) {
                     out.append(line);
@@ -542,6 +543,12 @@ public final class CJJSTranslator {
                     var body = Str.join("", lines);
                     return new CJJSBlob(List.of(), "(" + paramstr + body + ")", false);
                 }
+            }
+
+            @Override
+            public CJJSBlob visitAwait(CJIRAwait e, Void a) {
+                var inner = translateExpression(e.getInner());
+                return new CJJSBlob(inner.getLines(), "(await " + inner.getExpression() + ")", false);
             }
         }, null);
     }

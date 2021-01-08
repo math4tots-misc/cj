@@ -175,6 +175,10 @@ final class CJPass03 extends CJPassBaseEx {
         var returnType = methodAst.getReturnType().map(lctx::evalTypeExpression).getOrElseDo(lctx::getUnitType);
         method.setReturnType(returnType);
 
+        if (method.isAsync() && !returnType.isPromiseType()) {
+            throw CJError.of("Async methods must return a Promise type", method.getMark());
+        }
+
         exitMethod();
 
         item.getMethods().add(method);

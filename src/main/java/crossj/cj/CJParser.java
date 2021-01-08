@@ -126,6 +126,11 @@ public final class CJParser {
                     modifiers.add(CJIRModifier.Private);
                     break;
                 }
+                case CJToken.KW_ASYNC: {
+                    next();
+                    modifiers.add(CJIRModifier.Async);
+                    break;
+                }
                 default: {
                     repeat = false;
                 }
@@ -440,19 +445,23 @@ public final class CJParser {
                 case '.': {
                     next();
                     var methodMark = getMark();
-                    var name = parseId();
-                    var args = List.of(expr);
-                    if (at('(') || at('[')) {
-                        var typeArgs = parseTypeArgs();
-                        args.addAll(parseArgs());
-                        expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
-                    } else if (consume('=')) {
-                        var methodName = "__set_" + name;
-                        args.add(parseExpression());
-                        expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                    if (consume(CJToken.KW_AWAIT)) {
+                        expr = new CJAstAwait(methodMark, expr);
                     } else {
-                        var methodName = "__get_" + name;
-                        expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                        var name = parseId();
+                        var args = List.of(expr);
+                        if (at('(') || at('[')) {
+                            var typeArgs = parseTypeArgs();
+                            args.addAll(parseArgs());
+                            expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
+                        } else if (consume('=')) {
+                            var methodName = "__set_" + name;
+                            args.add(parseExpression());
+                            expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                        } else {
+                            var methodName = "__get_" + name;
+                            expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                        }
                     }
                     break;
                 }
@@ -796,6 +805,9 @@ public final class CJParser {
     }
 
     private boolean atLambda() {
+        if (at(CJToken.KW_ASYNC)) {
+            return true;
+        }
         var start = i;
         if (at(CJToken.ID) && atOffset(CJToken.RIGHT_ARROW, 1)) {
             return true;
@@ -812,6 +824,7 @@ public final class CJParser {
 
     private CJAstLambda parseLambda() {
         var mark = getMark();
+        var isAsync = consume(CJToken.KW_ASYNC);
         var parameters = List.<Tuple3<CJMark, Boolean, String>>of();
         if (at(CJToken.ID)) {
             var parameterName = parseId();
@@ -831,7 +844,7 @@ public final class CJParser {
         }
         expect(CJToken.RIGHT_ARROW);
         var body = parseExpression();
-        return new CJAstLambda(mark, parameters, body);
+        return new CJAstLambda(mark, isAsync, parameters, body);
     }
 
     private List<CJAstExpression> parseArgs() {

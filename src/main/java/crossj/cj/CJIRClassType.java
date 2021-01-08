@@ -31,6 +31,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isPromiseType() {
+        return item.getFullName().equals("cj.Promise");
+    }
+
+    @Override
     public boolean isFunctionType() {
         switch (item.getFullName()) {
             case "cj.Fn0":

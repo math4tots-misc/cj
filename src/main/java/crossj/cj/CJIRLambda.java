@@ -3,13 +3,19 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRLambda extends CJIRExpression {
+    private final boolean async_;
     private final List<CJIRAdHocVariableDeclaration> parameters;
     private final CJIRExpression body;
 
-    CJIRLambda(CJAstExpression ast, CJIRType type, List<CJIRAdHocVariableDeclaration> parameters, CJIRExpression body) {
+    CJIRLambda(CJAstExpression ast, CJIRType type, boolean async_, List<CJIRAdHocVariableDeclaration> parameters, CJIRExpression body) {
         super(ast, type);
+        this.async_ = async_;
         this.parameters = parameters;
         this.body = body;
+    }
+
+    public boolean isAsync() {
+        return async_;
     }
 
     public List<CJIRAdHocVariableDeclaration> getParameters() {
