@@ -48,11 +48,18 @@ public abstract class CJIRContextBase {
         for (int i = 0; i < args.size(); i++) {
             var typeParameter = typeParameters.get(i);
             var arg = args.get(i);
+            checkTypeArg(arg, marks);
             for (var subtrait : typeParameter.getTraits().map(t -> t.apply(binding, marks))) {
                 if (!implementsTrait(arg, subtrait)) {
                     throw CJError.of(arg + " does not implement required trait " + subtrait, marks);
                 }
             }
+        }
+    }
+
+    private void checkTypeArg(CJIRType arg, CJMark... marks) {
+        if (arg.isNullableType()) {
+            throw CJError.of("Nullable types may not be used as a type argument", marks);
         }
     }
 
@@ -72,6 +79,7 @@ public abstract class CJIRContextBase {
         for (int i = 0; i < args.size(); i++) {
             var typeParameter = typeParameters.get(i);
             var arg = args.get(i);
+            checkTypeArg(arg, marks);
             for (var subtrait : typeParameter.getTraits().map(t -> t.apply(binding, marks))) {
                 if (!implementsTrait(arg, subtrait)) {
                     throw CJError.of(arg + " does not implement required trait " + subtrait, marks);

@@ -10,10 +10,10 @@ import crossj.base.Set;
 
 public final class CJIRContext extends CJIRContextBase {
 
-    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Bool", "cj.Char", "cj.Int",
-            "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List", "cj.Assert", "cj.IO",
-            "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
-            "cj.Fn3", "cj.Fn4");
+    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.Bool",
+            "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List",
+            "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0",
+            "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 
     /**
      * These are the names that can only be used in special contexts.

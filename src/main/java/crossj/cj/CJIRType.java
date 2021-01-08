@@ -40,6 +40,10 @@ public interface CJIRType {
         return false;
     }
 
+    default boolean isNullableType() {
+        return false;
+    }
+
     default boolean isUnitType() {
         return toString().equals("cj.Unit");
     }

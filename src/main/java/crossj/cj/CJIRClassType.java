@@ -31,6 +31,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isNullableType() {
+        return item.getFullName().equals("cj.Nullable");
+    }
+
+    @Override
     public boolean isPromiseType() {
         return item.getFullName().equals("cj.Promise");
     }

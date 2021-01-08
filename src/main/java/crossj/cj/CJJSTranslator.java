@@ -241,7 +241,7 @@ public final class CJJSTranslator {
             }
             var mallocMethodName = translateMethodName("__malloc");
             if (nonStaticFields.isEmpty()) {
-                out.append(mallocMethodName + "(){return null;}\n");
+                out.append(mallocMethodName + "(){return undefined;}\n");
             } else {
                 var argnames = Str.join(",", Range.upto(nonStaticFields.size()).map(i -> "a" + i));
                 out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
@@ -291,7 +291,7 @@ public final class CJJSTranslator {
             public CJJSBlob visitLiteral(CJIRLiteral e, Void a) {
                 switch (e.getKind()) {
                     case Unit:
-                        return CJJSBlob.inline("null", true);
+                        return CJJSBlob.inline("undefined", true);
                     case Bool:
                         return CJJSBlob.inline(e.getRawText(), true);
                     case Char:
@@ -330,7 +330,7 @@ public final class CJJSTranslator {
             public CJJSBlob visitBlock(CJIRBlock e, Void a) {
                 var exprs = e.getExpressions();
                 var returns = !e.getType().isUnionType();
-                var tmpvar = returns ? ctx.newTempVarName() : "null";
+                var tmpvar = returns ? ctx.newTempVarName() : "undefined";
                 var lines = List.of(returns ? "let " + tmpvar + ";" : "");
                 lines.add("{\n");
                 for (int i = 0; i + 1 < exprs.size(); i++) {
@@ -402,7 +402,7 @@ public final class CJJSTranslator {
                 var inner = translateExpression(e.getExpression());
                 var lines = inner.getLines();
                 lines.add(prefix + translateTarget(e.getTarget()) + "=" + inner.getExpression() + ";\n");
-                return new CJJSBlob(lines, "null", true);
+                return new CJJSBlob(lines, "undefined", true);
             }
 
             @Override
@@ -416,7 +416,7 @@ public final class CJJSTranslator {
                 var target = translateTarget(e.getTarget());
                 var lines = expr.getLines();
                 lines.add(target + "=" + expr.getExpression() + ";\n");
-                return new CJJSBlob(lines, "null", true);
+                return new CJJSBlob(lines, "undefined", true);
             }
 
             @Override
@@ -489,7 +489,7 @@ public final class CJJSTranslator {
                 lines.add("while(" + condition.getExpression() + "){\n");
                 translateExpression(e.getBody()).dropValue(lines);
                 lines.add("}\n");
-                return new CJJSBlob(lines, "null", true);
+                return new CJJSBlob(lines, "undefined", true);
             }
 
             @Override
