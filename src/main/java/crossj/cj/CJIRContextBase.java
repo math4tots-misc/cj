@@ -141,6 +141,10 @@ public abstract class CJIRContextBase {
         return getGlobal().getListItem();
     }
 
+    CJIRItem getNullableItem() {
+        return getGlobal().getNullableItem();
+    }
+
     CJIRItem getPromiseItem() {
         return getGlobal().getPromiseItem();
     }
@@ -189,12 +193,16 @@ public abstract class CJIRContextBase {
         return getGlobal().getStringType();
     }
 
-    CJIRType getListType(CJIRType innerType) {
-        return getGlobal().getListType(innerType);
+    CJIRType getListType(CJIRType innerType, CJMark... marks) {
+        return getGlobal().getListType(innerType, marks);
     }
 
-    CJIRType getPromiseType(CJIRType innerType) {
-        return getGlobal().getPromiseType(innerType);
+    CJIRType getNullableType(CJIRType innerType, CJMark... marks) {
+        return getGlobal().getNullableType(innerType, marks);
+    }
+
+    CJIRType getPromiseType(CJIRType innerType, CJMark... marks) {
+        return getGlobal().getPromiseType(innerType, marks);
     }
 
     CJIRTrait getToBoolTrait() {

@@ -10,6 +10,7 @@ public abstract class CJAstExpressionVisitor<R, A> {
     public abstract R visitLogicalNot(CJAstLogicalNot e, A a);
     public abstract R visitLogicalBinop(CJAstLogicalBinop e, A a);
     public abstract R visitIs(CJAstIs e, A a);
+    public abstract R visitNullWrap(CJAstNullWrap e, A a);
     public abstract R visitListDisplay(CJAstListDisplay e, A a);
     public abstract R visitIf(CJAstIf e, A a);
     public abstract R visitWhile(CJAstWhile e, A a);

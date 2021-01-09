@@ -687,6 +687,21 @@ public final class CJParser {
                 }
                 return new CJAstListDisplay(mark, expressions);
             }
+            case CJToken.KW_NULL: {
+                var mark = getMark();
+                next();
+                var innerType = Optional.<CJAstTypeExpression>empty();
+                if (consume('[')) {
+                    innerType = Optional.of(parseTypeExpression());
+                    expect(']');
+                }
+                var inner = Optional.<CJAstExpression>empty();
+                if (consume('(')) {
+                    inner = Optional.of(parseExpression());
+                    expect(')');
+                }
+                return new CJAstNullWrap(mark, innerType, inner);
+            }
             case CJToken.KW_TRUE:
                 next();
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.Bool, "true");

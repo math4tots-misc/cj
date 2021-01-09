@@ -27,4 +27,19 @@ class Test04ControlFlow {
         val end = Time.now()
         Assert.withMessage(end - start > 0.049, "Test04ControlFlow.async_/sampleAsync")
     }
+
+    @test
+    def nullable() = {
+        val a = null(10)
+        Assert.that(a.isPresent())
+        Assert.that(not a.isEmpty())
+        Assert.equal(a.get(), 10)
+        Assert.equal(a.map(x -> x * x).get(), 100)
+        val b = null[Int]
+        Assert.that(not b.isPresent())
+        Assert.that(b.isEmpty())
+        val c: Nullable[String] = null
+        Assert.that(not c.isPresent())
+        Assert.that(c.isEmpty())
+    }
 }

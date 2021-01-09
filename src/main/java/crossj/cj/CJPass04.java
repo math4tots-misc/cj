@@ -177,17 +177,6 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitLiteral(CJAstLiteral e, Optional<CJIRType> a) {
                 switch (e.getKind()) {
-                    case Null:
-                        if (a.isPresent()) {
-                            var type = a.get();
-                            if (type.isNullableType()) {
-                                return new CJIRLiteral(e, a.get(), e.getKind(), "null");
-                            } else {
-                                throw CJError.of("Expected " + type + " but got null expression", e.getMark());
-                            }
-                        } else {
-                            throw CJError.of("Could not infer type of null expression", e.getMark());
-                        }
                     case Unit:
                         return new CJIRLiteral(e, ctx.getUnitType(), e.getKind(), e.getRawText());
                     case Bool:
@@ -457,12 +446,37 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitNullWrap(CJAstNullWrap e, Optional<CJIRType> a) {
+                CJIRType innerType;
+                Optional<CJIRExpression> inner;
+                if (e.getInnerType().isPresent() || a.isPresent()) {
+                    innerType = e.getInnerType().map(lctx::evalTypeExpression).getOrElseDo(() -> {
+                        var expectedType = a.get();
+                        if (!expectedType.isNullableType()) {
+                            throw CJError.of("Expected " + expectedType + " but got a nullable expression",
+                                    e.getMark());
+                        }
+                        return ((CJIRClassType) expectedType).getArgs().get(0);
+                    });
+                    inner = e.getInner().map(i -> evalExpressionWithType(i, innerType));
+                } else if (e.getInner().isPresent()) {
+                    var inner0 = evalExpression(e.getInner().get());
+                    inner = Optional.of(inner0);
+                    innerType = inner0.getType();
+                } else {
+                    throw CJError.of("Could not infer type of null expression", e.getMark());
+                }
+                return new CJIRNullWrap(e, ctx.getNullableType(innerType, e.getMark()), inner);
+            }
+
+            @Override
             public CJIRExpression visitListDisplay(CJAstListDisplay e, Optional<CJIRType> a) {
                 if (a.isEmpty() && e.getExpressions().isEmpty()) {
                     throw CJError.of("Could not determine type of list display", e.getMark());
                 }
                 var itemType = a.map(expectedType -> {
-                    // TODO: Consider whether to be permissive in the case where expectedType is a Bool
+                    // TODO: Consider whether to be permissive in the case where expectedType is a
+                    // Bool
                     if (!expectedType.isListType()) {
                         throw CJError.of("Expected " + expectedType + " but got a list display", e.getMark());
                     }

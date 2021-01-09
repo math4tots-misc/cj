@@ -318,8 +318,6 @@ public final class CJJSTranslator {
             @Override
             public CJJSBlob visitLiteral(CJIRLiteral e, Void a) {
                 switch (e.getKind()) {
-                    case Null:
-                        return CJJSBlob.inline("null", true);
                     case Unit:
                         return CJJSBlob.inline("undefined", true);
                     case Bool:
@@ -496,6 +494,11 @@ public final class CJJSTranslator {
                     lines.addAll(right.getLines());
                     return new CJJSBlob(lines, "(" + left.getExpression() + "===" + right.getExpression() + ")", false);
                 }
+            }
+
+            @Override
+            public CJJSBlob visitNullWrap(CJIRNullWrap e, Void a) {
+                return e.getInner().map(i -> translateExpression(i)).getOrElseDo(() -> CJJSBlob.inline("null", true));
             }
 
             @Override

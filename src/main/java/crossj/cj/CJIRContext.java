@@ -37,6 +37,7 @@ public final class CJIRContext extends CJIRContextBase {
     private final Map<String, CJIRItem> itemMap = Map.of();
 
     private CJIRItem listItem = null;
+    private CJIRItem nullableItem = null;
     private CJIRItem promiseItem = null;
     private CJIRType unitType = null;
     private CJIRType noReturnType = null;
@@ -179,11 +180,27 @@ public final class CJIRContext extends CJIRContextBase {
     }
 
     @Override
-    CJIRType getListType(CJIRType innerType) {
+    CJIRType getListType(CJIRType innerType, CJMark... marks) {
         var listItem = getListItem();
         var args = List.of(innerType);
         checkItemArgs(listItem, args);
         return new CJIRClassType(listItem, args);
+    }
+
+    @Override
+    CJIRItem getNullableItem() {
+        if (nullableItem == null) {
+            nullableItem = loadItem("cj.Nullable");
+        }
+        return nullableItem;
+    }
+
+    @Override
+    CJIRType getNullableType(CJIRType innerType, CJMark... marks) {
+        var nullableItem = getNullableItem();
+        var args = List.of(innerType);
+        checkItemArgs(nullableItem, args, marks);
+        return new CJIRClassType(nullableItem, args);
     }
 
     @Override
@@ -195,8 +212,8 @@ public final class CJIRContext extends CJIRContextBase {
     }
 
     @Override
-    CJIRType getPromiseType(CJIRType innerType) {
-        return itemToType(getPromiseItem(), List.of(innerType));
+    CJIRType getPromiseType(CJIRType innerType, CJMark... marks) {
+        return itemToType(getPromiseItem(), List.of(innerType), marks);
     }
 
     @Override
