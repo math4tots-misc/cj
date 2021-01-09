@@ -177,6 +177,17 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitLiteral(CJAstLiteral e, Optional<CJIRType> a) {
                 switch (e.getKind()) {
+                    case Null:
+                        if (a.isPresent()) {
+                            var type = a.get();
+                            if (type.isNullableType()) {
+                                return new CJIRLiteral(e, a.get(), e.getKind(), "null");
+                            } else {
+                                throw CJError.of("Expected " + type + " but got null expression", e.getMark());
+                            }
+                        } else {
+                            throw CJError.of("Could not infer type of null expression", e.getMark());
+                        }
                     case Unit:
                         return new CJIRLiteral(e, ctx.getUnitType(), e.getKind(), e.getRawText());
                     case Bool:

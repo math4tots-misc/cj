@@ -7,7 +7,6 @@ class Test01 {
     @test
     def sanity() = {
         Assert.equal(1, 1)
-        Assert.equal(1, 2)
     }
 
     @test

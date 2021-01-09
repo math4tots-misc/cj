@@ -318,6 +318,8 @@ public final class CJJSTranslator {
             @Override
             public CJJSBlob visitLiteral(CJIRLiteral e, Void a) {
                 switch (e.getKind()) {
+                    case Null:
+                        return CJJSBlob.inline("null", true);
                     case Unit:
                         return CJJSBlob.inline("undefined", true);
                     case Bool:
