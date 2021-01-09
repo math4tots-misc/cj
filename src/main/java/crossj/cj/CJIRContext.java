@@ -22,9 +22,9 @@ public final class CJIRContext extends CJIRContextBase {
      * to one of the exceptions explicitly listed
      */
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
-            Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
-            Pair.of("Iterator", List.of("cj.Iterator")), Pair.of("Promise", List.of("cj.Promise")),
-            Pair.of("Self", List.of()));
+            Pair.of("Nullable", List.of("cj.Nullable")), Pair.of("NoReturn", List.of("cj.NoReturn")),
+            Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()), Pair.of("Iterator", List.of("cj.Iterator")),
+            Pair.of("Promise", List.of("cj.Promise")), Pair.of("Self", List.of()));
 
     /**
      * Source roots to search for cj files.
