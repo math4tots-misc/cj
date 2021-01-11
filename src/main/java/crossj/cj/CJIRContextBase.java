@@ -58,9 +58,6 @@ public abstract class CJIRContextBase {
     }
 
     private void checkTypeArg(CJIRType arg, CJMark... marks) {
-        if (arg.isNullableType()) {
-            throw CJError.of("Nullable types may not be used as a type argument", marks);
-        }
     }
 
     void checkItemArgc(CJIRItem item, List<CJIRType> args, CJMark... marks) {

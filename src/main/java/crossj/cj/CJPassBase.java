@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.Func1;
+import crossj.base.List;
 import crossj.base.Optional;
 
 abstract class CJPassBase {
@@ -37,5 +38,13 @@ abstract class CJPassBase {
 
     void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
         CJIRContextBase.walkTraits(item, f);
+    }
+
+    List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJMark mark, boolean nullableAllowed) {
+        if (nullableAllowed) {
+            return List.of();
+        } else {
+            return List.of(new CJAstTraitExpression(mark, "NonNull", List.of()));
+        }
     }
 }

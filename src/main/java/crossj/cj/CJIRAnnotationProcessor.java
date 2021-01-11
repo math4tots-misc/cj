@@ -16,6 +16,7 @@ public final class CJIRAnnotationProcessor {
         return proc;
     }
 
+    private boolean nullable = false;
     private boolean test = false;
     private final List<String> deriveList = List.of();
 
@@ -38,6 +39,13 @@ public final class CJIRAnnotationProcessor {
                 throw CJError.of("Methods cannot have 'derive' annotations", mark);
             }
         }
+        if (nullable) {
+            throw CJError.of("Item members cannot be nullable", mark);
+        }
+    }
+
+    public boolean isNullable() {
+        return nullable;
     }
 
     public boolean isTest() {
@@ -48,13 +56,21 @@ public final class CJIRAnnotationProcessor {
         return deriveList;
     }
 
+    private void expectArgc(int expected, CJAstAnnotationExpression e) {
+        if (e.getArgs().size() != expected) {
+            throw CJError.of("Expected " + expected + " args but got " + e.getArgs().size(), e.getMark());
+        }
+    }
+
     private void exec(CJAstAnnotationExpression expression) {
         var command = expression.getName();
         switch (command) {
+            case "nullable":
+                expectArgc(0, expression);
+                nullable = true;
+                break;
             case "test":
-                if (expression.getArgs().size() > 0) {
-                    throw CJError.of("Unexpected annotation expression arguments", expression.getMark());
-                }
+                expectArgc(0, expression);
                 test = true;
                 break;
             case "derive":

@@ -7,6 +7,7 @@ package cj
 ##
 ## TODO: Allow Nullable to appear as a type argument in a way similar to Rust's "?Sized" mechanism.
 ##
+@nullable
 native class Nullable[T] {
     def isPresent(self: Self): Bool
     def isEmpty(self: Self): Bool

@@ -17,7 +17,7 @@ final class CJPass05 extends CJPassBaseEx {
 
     private static List<CJIRVariableType> getDummyVars(int len) {
         while (dummyVars.size() < len) {
-            var ast = new CJAstTypeParameter(CJMark.getBuiltin(), false, "$" + dummyVars.size(), List.of());
+            var ast = new CJAstTypeParameter(CJMark.getBuiltin(), false, "$" + dummyVars.size(), true, List.of());
             var declaration = new CJIRTypeParameter(ast);
             dummyVars.add(new CJIRVariableType(declaration, List.of()));
         }

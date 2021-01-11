@@ -10,8 +10,8 @@ import crossj.base.Set;
 
 public final class CJIRContext extends CJIRContextBase {
 
-    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.Bool",
-            "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List",
+    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.NonNull",
+            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List",
             "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0",
             "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 
@@ -22,9 +22,10 @@ public final class CJIRContext extends CJIRContextBase {
      * to one of the exceptions explicitly listed
      */
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
-            Pair.of("Nullable", List.of("cj.Nullable")), Pair.of("NoReturn", List.of("cj.NoReturn")),
-            Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()), Pair.of("Iterator", List.of("cj.Iterator")),
-            Pair.of("Promise", List.of("cj.Promise")), Pair.of("Self", List.of()));
+            Pair.of("Nullable", List.of("cj.Nullable")), Pair.of("NonNull", List.of("cj.NonNull")),
+            Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Tuple", List.of()),
+            Pair.of("Iterator", List.of("cj.Iterator")), Pair.of("Promise", List.of("cj.Promise")),
+            Pair.of("Self", List.of()));
 
     /**
      * Source roots to search for cj files.
@@ -65,7 +66,7 @@ public final class CJIRContext extends CJIRContextBase {
                 var data = IO.readFile(path);
                 var ast = CJParser.parseString(path, data);
                 var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
-                var item = new CJIRItem(ast, annotationProcessor.getDeriveList());
+                var item = new CJIRItem(ast, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
                 if (!item.getFullName().equals(name)) {
                     throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
                             item.getMark());

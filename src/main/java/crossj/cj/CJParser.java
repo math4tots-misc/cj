@@ -252,6 +252,7 @@ public final class CJParser {
     private CJAstTypeParameter parseTypeParameter(boolean itemLevel) {
         var mark = getMark();
         var name = parseTypeId();
+        var nullableAllowed = consume('?');
         var traits = List.<CJAstTraitExpression>of();
         if (consume(':')) {
             traits.add(parseTraitExpression());
@@ -259,7 +260,7 @@ public final class CJParser {
                 traits.add(parseTraitExpression());
             }
         }
-        return new CJAstTypeParameter(mark, itemLevel, name, traits);
+        return new CJAstTypeParameter(mark, itemLevel, name, nullableAllowed, traits);
     }
 
     private CJAstTraitExpression parseTraitExpression() {

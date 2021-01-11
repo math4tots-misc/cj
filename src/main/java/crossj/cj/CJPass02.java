@@ -17,13 +17,26 @@ final class CJPass02 extends CJPassBase {
     @Override
     void handleItem(CJIRItem item) {
         for (var typeParameter : item.getTypeParameters()) {
-            var ast = typeParameter.getAst();
-            for (var traitAst : ast.getTraits()) {
+            var typeParameterAst = typeParameter.getAst();
+            var traitAsts = List.<CJAstTraitExpression>of();
+            traitAsts.addAll(typeParameterAst.getTraits());
+            traitAsts.addAll(
+                    synthesizeTypeVariableAutoTraits(typeParameterAst.getMark(), typeParameterAst.isNullableAllowed()));
+            for (var traitAst : traitAsts) {
                 var trait = evalTraitExpression(traitAst);
                 typeParameter.getTraits().add(trait);
             }
         }
-        for (var traitDeclarationAst : item.getAst().getTraitDeclarations()) {
+        var traitDeclarationAsts = List.<CJAstTraitDeclaration>of();
+        traitDeclarationAsts.addAll(item.getAst().getTraitDeclarations());
+        if (!item.isTrait() && !item.isNullable()) {
+            // unless the class/union is explicitly marked nullable, NonNull is implied
+            var mark = item.getMark();
+            var traitDeclarationAst = new CJAstTraitDeclaration(mark,
+                    new CJAstTraitExpression(mark, "NonNull", List.of()), List.of());
+            traitDeclarationAsts.add(traitDeclarationAst);
+        }
+        for (var traitDeclarationAst : traitDeclarationAsts) {
             var trait = evalTraitExpression(traitDeclarationAst.getTrait());
             var traitDeclaration = new CJIRTraitDeclaration(traitDeclarationAst, trait);
             for (var conditionAst : traitDeclarationAst.getConditions()) {
