@@ -7,6 +7,7 @@ import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.base.Repr;
 import crossj.base.Set;
+import crossj.base.Str;
 
 public final class CJIRContext extends CJIRContextBase {
 
@@ -64,9 +65,7 @@ public final class CJIRContext extends CJIRContextBase {
             var path = FS.join(sourceRoot, relpath);
             if (FS.isFile(path)) {
                 var data = IO.readFile(path);
-                var ast = CJParser.parseString(path, data);
-                var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
-                var item = new CJIRItem(ast, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
+                var item = itemFromAst(CJParser.parseString(path, data));
                 if (!item.getFullName().equals(name)) {
                     throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
                             item.getMark());
@@ -77,22 +76,49 @@ public final class CJIRContext extends CJIRContextBase {
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
     }
 
+    private static CJIRItem itemFromAst(CJAstItemDefinition ast) {
+        var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
+        return new CJIRItem(ast, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
+    }
+
+    /**
+     * Returns the outermost item name from the given item name.
+     *
+     * E.g.
+     *   foo.bar.Baz.Inner -> foo.bar.Baz
+     *   foo.bar.Baz -> foo.bar.Baz
+     *   foo.Bar.Baz.Inner -> foo.Bar
+     */
+    private static String getOutermostItemName(String itemName) {
+        var parts = List.<String>of();
+        for (var part : Str.split(itemName, ".")) {
+            var firstChar = part.charAt(0);
+            parts.add(part);
+            if ('A' <= firstChar && firstChar <= 'Z') {
+                break;
+            }
+        }
+        return Str.join(".", parts);
+    }
+
     public CJIRItem loadItem(String name, CJMark... marks) {
         var item = itemMap.getOrNull(name);
-        if (item == null) {
-            item = _forceLoadItem(name, marks);
-            itemMap.put(name, item);
+        if (item != null) {
+            return item;
+        }
+        var outerItem = _forceLoadItem(getOutermostItemName(name), marks);
+        itemMap.put(outerItem.getFullName(), outerItem);
 
-            var ast = item.getAst();
-            for (var member : ast.getMembers()) {
-                if (member instanceof CJAstItemDefinition) {
-                    var childItemAst = (CJAstItemDefinition) member;
-                    var annotationProcessor = CJIRAnnotationProcessor.processItem(childItemAst);
-                    var childItem = new CJIRItem(childItemAst, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
-                    itemMap.put(childItem.getFullName(), childItem);
-                }
+        var ast = outerItem.getAst();
+        for (var member : ast.getMembers()) {
+            if (member instanceof CJAstItemDefinition) {
+                var childItem = itemFromAst((CJAstItemDefinition) member);
+                itemMap.put(childItem.getFullName(), childItem);
             }
-
+        }
+        item = itemMap.getOrNull(name);
+        if (item == null) {
+            throw CJError.of("Item " + name + " not found", marks);
         }
         return item;
     }

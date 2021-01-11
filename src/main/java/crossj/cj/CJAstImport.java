@@ -1,11 +1,15 @@
 package crossj.cj;
 
+import crossj.base.Optional;
+
 public final class CJAstImport extends CJAstNode {
     private final String fullName;
+    private final Optional<String> alias;
 
-    CJAstImport(CJMark mark, String fullName) {
+    CJAstImport(CJMark mark, String fullName, Optional<String> alias) {
         super(mark);
         this.fullName = fullName;
+        this.alias = alias;
     }
 
     public String getFullName() {
@@ -13,6 +17,6 @@ public final class CJAstImport extends CJAstNode {
     }
 
     public String getAlias() {
-        return fullName.substring(fullName.lastIndexOf('.') + 1);
+        return alias.getOrElseDo(() -> fullName.substring(fullName.lastIndexOf('.') + 1));
     }
 }

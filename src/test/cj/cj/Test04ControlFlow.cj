@@ -1,6 +1,7 @@
 package cj
 
-import cj.Time
+import cj.Test01.NestedClass
+import cj.Time as Tim
 import cj.AIO
 
 class Test04ControlFlow {
@@ -22,9 +23,9 @@ class Test04ControlFlow {
     }
 
     async def sampleAsync(): Promise[Unit] = {
-        val start = Time.now()
+        val start = Tim.now()
         AIO.wait(0.05).await
-        val end = Time.now()
+        val end = Tim.now()
         Assert.withMessage(end - start > 0.049, "Test04ControlFlow.async_/sampleAsync")
     }
 
@@ -51,5 +52,10 @@ class Test04ControlFlow {
     @nullable
     class NullableTypeArg[T?] {
         val t: T
+    }
+
+    @test
+    def nestedItem() = {
+        Assert.equal(NestedClass.nestedClassVal, "some nested item val")
     }
 }

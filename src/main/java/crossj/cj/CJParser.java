@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.base.Pair;
 import crossj.base.Tuple3;
 import crossj.base.Tuple4;
 
@@ -166,10 +167,15 @@ public final class CJParser {
         return sb.toString();
     }
 
-    private String parseFullItemName() {
+    private Pair<String, Optional<String>> parseFullItemNameAndAlias() {
         var packageName = parsePackageName();
         expect('.');
-        return packageName + "." + parseTypeId();
+        var name = packageName + "." + parseTypeId();
+        while (consume('.')) {
+            name += "." + parseTypeId();
+        }
+        Optional<String> alias = consume(CJToken.KW_AS) ? Optional.of(parseTypeId()) : Optional.empty();
+        return Pair.of(name, alias);
     }
 
     private CJAstItemDefinition parseTranslationUnit() {
@@ -186,7 +192,7 @@ public final class CJParser {
         var kind = parseItemKind();
         var mark = getMark();
         var shortName = parseTypeId();
-        imports.add(new CJAstImport(mark, packageName + "." + shortName));
+        imports.add(new CJAstImport(mark, packageName + "." + shortName, Optional.empty()));
         var typeParameters = parseTypeParameters(true);
         var traitDeclarations = parseTraitDeclarations();
         skipDelimiters();
@@ -296,9 +302,11 @@ public final class CJParser {
     private CJAstImport parseImport() {
         expect(CJToken.KW_IMPORT);
         var mark = getMark();
-        var fullName = parseFullItemName();
+        var pair = parseFullItemNameAndAlias();
+        var fullName = pair.get1();
+        var alias = pair.get2();
         expectDelimiters();
-        return new CJAstImport(mark, fullName);
+        return new CJAstImport(mark, fullName, alias);
     }
 
     private List<CJAstTraitDeclaration> parseTraitDeclarations() {
@@ -342,7 +350,8 @@ public final class CJParser {
         return new CJAstTypeCondition(mark, variableName, traits);
     }
 
-    private CJAstItemMemberDefinition parseItemMember(String outerPackageName, String outerShortName, List<CJAstImport> imports) {
+    private CJAstItemMemberDefinition parseItemMember(String outerPackageName, String outerShortName,
+            List<CJAstImport> imports) {
         var comment = parseComment();
         var annotations = parseAnnotations();
         var modifiers = parseModifiers();
@@ -358,7 +367,8 @@ public final class CJParser {
             case CJToken.KW_CLASS:
             case CJToken.KW_TRAIT:
             case CJToken.KW_UNION:
-                return parseChildItemDefinition(outerPackageName, outerShortName, imports, comment, annotations, modifiers);
+                return parseChildItemDefinition(outerPackageName, outerShortName, imports, comment, annotations,
+                        modifiers);
         }
         throw ekind("val, var, def or if");
     }
@@ -370,7 +380,7 @@ public final class CJParser {
         var kind = parseItemKind();
         var mark = getMark();
         var shortName = parseTypeId();
-        imports.add(new CJAstImport(mark, packageName + "." + shortName));
+        imports.add(new CJAstImport(mark, packageName + "." + shortName, Optional.empty()));
         var typeParameters = parseTypeParameters(true);
         var traitDeclarations = parseTraitDeclarations();
         skipDelimiters();

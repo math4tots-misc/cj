@@ -53,4 +53,8 @@ class Test01 {
         Assert.withMessage(3 is 3, "3 is 3")
         Assert.withMessage(4 is not 5, "4 is not 5")
     }
+
+    class NestedClass {
+        static val nestedClassVal: String = "some nested item val"
+    }
 }
