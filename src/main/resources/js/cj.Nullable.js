@@ -17,6 +17,11 @@ class MC$cj$Nullable {
         }
         return self;
     }
+    *M$iter(self) {
+        if (self !== null) {
+            yield self;
+        }
+    }
     M$__eq(self, other) {
         return self === null ? other === null : (other !== null && this.TV$T.M$__eq(self, other));
     }
