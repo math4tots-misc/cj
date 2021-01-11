@@ -16,6 +16,12 @@ public final class CJIRAnnotationProcessor {
         return proc;
     }
 
+    public static CJIRAnnotationProcessor processTypeParameter(CJAstTypeParameter ast) {
+        var proc = new CJIRAnnotationProcessor(ast.getMark(), ast.getAnnotations());
+        proc.checkForTypeParameter(ast);
+        return proc;
+    }
+
     private boolean nullable = false;
     private boolean test = false;
     private final List<String> deriveList = List.of();
@@ -26,22 +32,39 @@ public final class CJIRAnnotationProcessor {
         }
     }
 
-    private void checkForItem(CJAstItemDefinition ast) {
+    private void cannotMarkTest(CJAstNode ast) {
         if (test) {
             throw CJError.of("Only methods can be marked 'test'", ast.getMark());
         }
     }
 
+    private void cannotMarkDerive(CJAstNode ast) {
+        if (deriveList.size() > 0) {
+            throw CJError.of("Only items can have derive annotations", ast.getMark());
+        }
+    }
+
+    private void cannotMarkNullable(CJAstNode ast) {
+        if (nullable){
+            throw CJError.of(ast.getClass() + " cannot be marked nullable", ast.getMark());
+        }
+    }
+
+    private void checkForItem(CJAstItemDefinition ast) {
+        cannotMarkTest(ast);
+    }
+
     private void checkForMember(CJAstItemMemberDefinition ast) {
-        var mark = ast.getMark();
-        if (ast instanceof CJAstMethodDefinition) {
-            if (deriveList.size() > 0) {
-                throw CJError.of("Methods cannot have 'derive' annotations", mark);
-            }
+        cannotMarkDerive(ast);
+        if (!(ast instanceof CJAstMethodDefinition)) {
+            cannotMarkTest(ast);
         }
-        if (nullable) {
-            throw CJError.of("Item members cannot be nullable", mark);
-        }
+        cannotMarkNullable(ast);
+    }
+
+    private void checkForTypeParameter(CJAstTypeParameter ast) {
+        cannotMarkDerive(ast);
+        cannotMarkTest(ast);
     }
 
     public boolean isNullable() {

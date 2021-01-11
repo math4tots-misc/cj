@@ -10,7 +10,7 @@ class Test04ControlFlow {
     def while1() = {
         val list = List[Int].empty()
         var i = 6
-        while i < 10 {
+        while i< 10 {
             list.add(i)
             i = i + 1
         }
@@ -42,6 +42,9 @@ class Test04ControlFlow {
         val c: Nullable[String] = null
         Assert.that(not c.isPresent())
         Assert.that(c.isEmpty())
+        Assert.that(null[String] != null(""))
+        Assert.that(null[String] == null[String])
+        Assert.that(null("") == null(""))
     }
 
     @test
@@ -49,8 +52,8 @@ class Test04ControlFlow {
         NullableTypeArg[Nullable[String]].__malloc(null)
     }
 
-    @nullable
-    class NullableTypeArg[T?] {
+    # For type parameters: "T?" can also be used as an alias for "@nullable T"
+    class NullableTypeArg[@nullable T] {
         val t: T
     }
 

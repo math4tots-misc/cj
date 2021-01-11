@@ -214,7 +214,7 @@ public final class CJParser {
         var list = List.<CJAstAnnotationExpression>of();
         while (consume('@')) {
             list.add(parseAnnotationExpression());
-            expectDelimiters();
+            skipDelimiters();
         }
         return list;
     }
@@ -258,9 +258,12 @@ public final class CJParser {
     }
 
     private CJAstTypeParameter parseTypeParameter(boolean itemLevel) {
+        var annotations = parseAnnotations();
         var mark = getMark();
         var name = parseTypeId();
-        var nullableAllowed = consume('?');
+        if (consume('?')) {
+            annotations.add(new CJAstAnnotationExpression(mark, "nullable", List.of()));
+        }
         var traits = List.<CJAstTraitExpression>of();
         if (consume(':')) {
             traits.add(parseTraitExpression());
@@ -268,7 +271,7 @@ public final class CJParser {
                 traits.add(parseTraitExpression());
             }
         }
-        return new CJAstTypeParameter(mark, itemLevel, name, nullableAllowed, traits);
+        return new CJAstTypeParameter(mark, itemLevel, annotations, name, traits);
     }
 
     private CJAstTraitExpression parseTraitExpression() {

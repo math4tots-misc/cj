@@ -5,4 +5,8 @@ class MC$cj$Iterator {
     M$iter(i) {
         return i;
     }
+    M$next(self) {
+        const { done, value } = self.next();
+        return done ? null : value;
+    }
 }

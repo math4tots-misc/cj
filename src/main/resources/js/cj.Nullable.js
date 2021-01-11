@@ -1,4 +1,7 @@
 class MC$cj$Nullable {
+    constructor(TV$T) {
+        this.TV$T = TV$T;
+    }
     M$isPresent(self) {
         return self !== null;
     }
@@ -13,5 +16,11 @@ class MC$cj$Nullable {
             throw new Error("get from empty Nullable");
         }
         return self;
+    }
+    M$__eq(self, other) {
+        return self === null ? other === null : (other !== null && this.TV$T.M$__eq(self, other));
+    }
+    M$repr(self) {
+        return self === null ? "null" : ("null(" + this.TV$T.M$repr(self) + ")");
     }
 }

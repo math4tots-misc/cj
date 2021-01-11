@@ -20,8 +20,7 @@ final class CJPass02 extends CJPassBase {
             var typeParameterAst = typeParameter.getAst();
             var traitAsts = List.<CJAstTraitExpression>of();
             traitAsts.addAll(typeParameterAst.getTraits());
-            traitAsts.addAll(
-                    synthesizeTypeVariableAutoTraits(typeParameterAst.getMark(), typeParameterAst.isNullableAllowed()));
+            traitAsts.addAll(synthesizeTypeVariableAutoTraits(typeParameterAst));
             for (var traitAst : traitAsts) {
                 var trait = evalTraitExpression(traitAst);
                 typeParameter.getTraits().add(trait);

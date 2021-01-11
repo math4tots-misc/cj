@@ -166,7 +166,7 @@ final class CJPass03 extends CJPassBaseEx {
             var typeParameterAst = typeParameter.getAst();
             var traitAsts = List.<CJAstTraitExpression>of();
             traitAsts.addAll(typeParameterAst.getTraits());
-            traitAsts.addAll(synthesizeTypeVariableAutoTraits(typeParameter.getMark(), typeParameterAst.isNullableAllowed()));
+            traitAsts.addAll(synthesizeTypeVariableAutoTraits(typeParameterAst));
             typeParameter.getTraits().addAll(traitAsts.map(lctx::evalTraitExpression));
         }
 

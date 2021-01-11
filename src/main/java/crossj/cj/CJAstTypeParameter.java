@@ -4,16 +4,16 @@ import crossj.base.List;
 
 public final class CJAstTypeParameter extends CJAstNode {
     private final boolean itemLevel;
+    private final List<CJAstAnnotationExpression> annotations;
     private final String name;
-    private final boolean nullableAllowed;
     private final List<CJAstTraitExpression> traits;
 
-    CJAstTypeParameter(CJMark mark, boolean itemLevel, String name, boolean nullableAllowed,
+    CJAstTypeParameter(CJMark mark, boolean itemLevel, List<CJAstAnnotationExpression> annotations, String name,
             List<CJAstTraitExpression> traits) {
         super(mark);
         this.itemLevel = itemLevel;
+        this.annotations = annotations;
         this.name = name;
-        this.nullableAllowed = nullableAllowed;
         this.traits = traits;
     }
 
@@ -25,8 +25,8 @@ public final class CJAstTypeParameter extends CJAstNode {
         return !isItemLevel();
     }
 
-    public boolean isNullableAllowed() {
-        return nullableAllowed;
+    public List<CJAstAnnotationExpression> getAnnotations() {
+        return annotations;
     }
 
     public String getName() {

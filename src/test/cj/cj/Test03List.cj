@@ -50,4 +50,16 @@ class Test03List {
     }
 
     def print[T: Repr](t: T): String = "print " + t.repr()
+
+    @test
+    def iter() = {
+        {
+            val list = ["asdf", "qwer", "zxcv"]
+            val iter = list.iter()
+            Assert.equal(iter.next(), null("asdf"))
+            Assert.equal(iter.next(), null("qwer"))
+            Assert.equal(iter.next(), null("zxcv"))
+            Assert.equal(iter.next(), null)
+        }
+    }
 }

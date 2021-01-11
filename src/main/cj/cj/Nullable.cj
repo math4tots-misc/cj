@@ -8,9 +8,11 @@ package cj
 ## TODO: Allow Nullable to appear as a type argument in a way similar to Rust's "?Sized" mechanism.
 ##
 @nullable
-native class Nullable[T] {
+native class Nullable[T]: Eq if T: Eq, Repr if T: Repr {
     def isPresent(self: Self): Bool
     def isEmpty(self: Self): Bool
     def map[R](self: Self, f: Fn[T, R]): Nullable[R]
     def get(self: Self): T
+    if T : Eq def __eq(self: Self, other: Self): Bool
+    if T : Repr def repr(self: Self): String
 }

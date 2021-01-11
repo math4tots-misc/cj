@@ -40,11 +40,12 @@ abstract class CJPassBase {
         CJIRContextBase.walkTraits(item, f);
     }
 
-    List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJMark mark, boolean nullableAllowed) {
-        if (nullableAllowed) {
+    List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJAstTypeParameter ast) {
+        var annotationProcessor = CJIRAnnotationProcessor.processTypeParameter(ast);
+        if (annotationProcessor.isNullable()) {
             return List.of();
         } else {
-            return List.of(new CJAstTraitExpression(mark, "NonNull", List.of()));
+            return List.of(new CJAstTraitExpression(ast.getMark(), "NonNull", List.of()));
         }
     }
 }
