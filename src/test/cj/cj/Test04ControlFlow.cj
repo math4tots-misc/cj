@@ -42,4 +42,14 @@ class Test04ControlFlow {
         Assert.that(not c.isPresent())
         Assert.that(c.isEmpty())
     }
+
+    @test
+    def nullableTypeArg() = {
+        NullableTypeArg[Nullable[String]].__malloc(null)
+    }
+
+    @nullable
+    class NullableTypeArg[T?] {
+        val t: T
+    }
 }

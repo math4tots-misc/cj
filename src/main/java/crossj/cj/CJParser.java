@@ -6,6 +6,7 @@ import crossj.base.Optional;
 import crossj.base.Tuple3;
 import crossj.base.Tuple4;
 
+// TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
     private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
     private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
@@ -185,6 +186,7 @@ public final class CJParser {
         var kind = parseItemKind();
         var mark = getMark();
         var shortName = parseTypeId();
+        imports.add(new CJAstImport(mark, packageName + "." + shortName));
         var typeParameters = parseTypeParameters(true);
         var traitDeclarations = parseTraitDeclarations();
         skipDelimiters();
@@ -192,7 +194,7 @@ public final class CJParser {
         skipDelimiters();
         var members = List.<CJAstItemMemberDefinition>of();
         while (!consume('}')) {
-            members.add(parseItemMember());
+            members.add(parseItemMember(packageName, shortName, imports));
         }
         skipDelimiters();
         if (!at(CJToken.EOF)) {
@@ -340,7 +342,7 @@ public final class CJParser {
         return new CJAstTypeCondition(mark, variableName, traits);
     }
 
-    private CJAstItemMemberDefinition parseItemMember() {
+    private CJAstItemMemberDefinition parseItemMember(String outerPackageName, String outerShortName, List<CJAstImport> imports) {
         var comment = parseComment();
         var annotations = parseAnnotations();
         var modifiers = parseModifiers();
@@ -353,8 +355,34 @@ public final class CJParser {
             case CJToken.KW_IF:
             case CJToken.KW_DEF:
                 return parseMethod(comment, annotations, modifiers);
+            case CJToken.KW_CLASS:
+            case CJToken.KW_TRAIT:
+            case CJToken.KW_UNION:
+                return parseChildItemDefinition(outerPackageName, outerShortName, imports, comment, annotations, modifiers);
         }
         throw ekind("val, var, def or if");
+    }
+
+    private CJAstItemDefinition parseChildItemDefinition(String outerPackageName, String outerShortName,
+            List<CJAstImport> imports, Optional<String> comment, List<CJAstAnnotationExpression> annotations,
+            List<CJIRModifier> modifiers) {
+        var packageName = outerPackageName + "." + outerShortName;
+        var kind = parseItemKind();
+        var mark = getMark();
+        var shortName = parseTypeId();
+        imports.add(new CJAstImport(mark, packageName + "." + shortName));
+        var typeParameters = parseTypeParameters(true);
+        var traitDeclarations = parseTraitDeclarations();
+        skipDelimiters();
+        expect('{');
+        skipDelimiters();
+        var members = List.<CJAstItemMemberDefinition>of();
+        while (!consume('}')) {
+            members.add(parseItemMember(packageName, shortName, imports));
+        }
+        expectDelimiters();
+        return new CJAstItemDefinition(mark, packageName, imports, comment, annotations, modifiers, kind, shortName,
+                typeParameters, traitDeclarations, members);
     }
 
     private CJAstFieldDefinition parseFieldDefinition(Optional<String> comment,

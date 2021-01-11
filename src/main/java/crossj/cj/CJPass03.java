@@ -73,6 +73,8 @@ final class CJPass03 extends CJPassBaseEx {
                 item.getCases().add(caseDefn);
                 var methodAst = synthesizeCaseMethod(item, caseAst);
                 materializeMethod(item, methodAst, true);
+            } else if (memberAst instanceof CJAstItemDefinition) {
+                // item definitions are currently already pulled to the top level
             } else {
                 throw CJError.of("TODO: materializeMembers " + memberAst.getClass().getName(), memberAst.getMark());
             }

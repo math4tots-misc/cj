@@ -77,13 +77,24 @@ public final class CJIRContext extends CJIRContextBase {
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
     }
 
-    public CJIRItem forceLoadItem(String name, CJMark... marks) {
-        itemMap.put(name, _forceLoadItem(name, marks));
-        return itemMap.get(name);
-    }
-
     public CJIRItem loadItem(String name, CJMark... marks) {
-        return itemMap.getOrInsert(name, () -> _forceLoadItem(name, marks));
+        var item = itemMap.getOrNull(name);
+        if (item == null) {
+            item = _forceLoadItem(name, marks);
+            itemMap.put(name, item);
+
+            var ast = item.getAst();
+            for (var member : ast.getMembers()) {
+                if (member instanceof CJAstItemDefinition) {
+                    var childItemAst = (CJAstItemDefinition) member;
+                    var annotationProcessor = CJIRAnnotationProcessor.processItem(childItemAst);
+                    var childItem = new CJIRItem(childItemAst, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
+                    itemMap.put(childItem.getFullName(), childItem);
+                }
+            }
+
+        }
+        return item;
     }
 
     private static List<String> listClassNames(String sourceRoot) {

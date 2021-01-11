@@ -18,23 +18,23 @@ public abstract class CJAstItemMemberDefinition extends CJAstNode {
         this.name = name;
     }
 
-    public Optional<String> getComment() {
+    public final Optional<String> getComment() {
         return comment;
     }
 
-    public List<CJAstAnnotationExpression> getAnnotations() {
+    public final List<CJAstAnnotationExpression> getAnnotations() {
         return annotations;
     }
 
-    public List<CJIRModifier> getModifiers() {
+    public final List<CJIRModifier> getModifiers() {
         return modifiers;
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
-    public boolean isStatic() {
+    public final boolean isStatic() {
         return modifiers.contains(CJIRModifier.Static);
     }
 }
