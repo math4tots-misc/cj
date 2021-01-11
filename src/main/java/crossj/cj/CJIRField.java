@@ -13,10 +13,6 @@ public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
         this.type = type;
     }
 
-    public String getName() {
-        return ast.getName();
-    }
-
     public boolean isMutable() {
         return ast.isMutable();
     }

@@ -7,15 +7,15 @@ public abstract class CJIRItemMember<N extends CJAstItemMemberDefinition> extend
         super(ast);
     }
 
-    public List<CJIRModifier> getModifiers() {
+    public final List<CJIRModifier> getModifiers() {
         return ast.getModifiers();
     }
 
-    public String getName() {
+    public final String getName() {
         return ast.getName();
     }
 
-    public boolean isStatic() {
+    public final boolean isStatic() {
         return ast.isStatic();
     }
 }

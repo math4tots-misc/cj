@@ -16,10 +16,6 @@ public final class CJIRCase extends CJIRItemMember<CJAstCaseDefinition> {
         return tag;
     }
 
-    public String getName() {
-        return ast.getName();
-    }
-
     public List<CJIRType> getTypes() {
         return types;
     }
