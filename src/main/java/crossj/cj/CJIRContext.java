@@ -12,7 +12,7 @@ import crossj.base.Str;
 public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.NonNull",
-            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.List",
+            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString", "cj.ToList", "cj.List",
             "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0",
             "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4");
 

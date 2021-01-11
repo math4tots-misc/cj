@@ -9,4 +9,7 @@ class MC$cj$Iterator {
         const { done, value } = self.next();
         return done ? null : value;
     }
+    M$toList(self) {
+        return Array.from(self);
+    }
 }
