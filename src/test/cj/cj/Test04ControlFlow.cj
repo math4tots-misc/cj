@@ -61,4 +61,13 @@ class Test04ControlFlow {
     def nestedItem() = {
         Assert.equal(NestedClass.nestedClassVal, "some nested item val")
     }
+
+    @test
+    def for1() = {
+        val out = List[Int].empty()
+        for x in [1, 2, 3] {
+            out.add(x * x)
+        }
+        Assert.equal(out, [1, 4, 9])
+    }
 }

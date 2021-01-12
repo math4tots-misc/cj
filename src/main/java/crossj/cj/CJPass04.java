@@ -133,6 +133,10 @@ final class CJPass04 extends CJPassBaseEx {
         return ir;
     }
 
+    private CJIRExpression evalUnitExpression(CJAstExpression expression) {
+        return evalExpressionWithType(expression, ctx.getUnitType());
+    }
+
     private CJIRMethodCall synthesizeMethodCall(CJAstExpression ast, CJIRType owner, CJIRMethodRef methodRef,
             List<CJIRType> typeArgs, List<CJIRExpression> args) {
         // this method cannot be reused in evalExpressionEx::visitMethodCall, because
@@ -202,7 +206,7 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var newExprs = List.<CJIRExpression>of();
                 for (int i = 0; i + 1 < exprs.size(); i++) {
-                    newExprs.add(evalExpressionWithType(exprs.get(i), ctx.getUnitType()));
+                    newExprs.add(evalUnitExpression(exprs.get(i)));
                 }
                 newExprs.add(evalExpressionEx(exprs.last(), a));
                 exitScope();
@@ -522,8 +526,27 @@ final class CJPass04 extends CJPassBaseEx {
             public CJIRExpression visitWhile(CJAstWhile e, Optional<CJIRType> a) {
                 var unitType = ctx.getUnitType();
                 var condition = evalBoolExpression(e.getCondition());
-                var body = evalExpressionWithType(e.getBody(), unitType);
+                var body = evalUnitExpression(e.getBody());
                 return new CJIRWhile(e, unitType, condition, body);
+            }
+
+            @Override
+            public CJIRExpression visitFor(CJAstFor e, Optional<CJIRType> a) {
+                var container = evalExpression(e.getContainer());
+                var iterable = container.getType().getImplementingTraitByItemOrNull(ctx.getIterableItem());
+                if (iterable == null) {
+                    throw CJError.of("For loop requires an iterable, but got " + container.getType(), e.getMark());
+                }
+                var methodRef = container.getType().findMethod("iter", e.getMark());
+                var iterator = synthesizeMethodCall(e, container.getType(), methodRef, List.of(), List.of(container));
+                var targetType = iterable.getArgs().get(0);
+                enterScope();
+                var target = evalDeclarableTarget(e.getTarget(), false, targetType);
+                declareTarget(target);
+                var condition = e.getCondition().map(b -> evalBoolExpression(b));
+                var body = evalUnitExpression(e.getBody());
+                exitScope();
+                return new CJIRFor(e, ctx.getUnitType(), target, iterator, condition, body);
             }
 
             @Override

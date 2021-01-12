@@ -41,6 +41,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRItem listItem = null;
     private CJIRItem nullableItem = null;
     private CJIRItem promiseItem = null;
+    private CJIRItem iterableItem = null;
     private CJIRType unitType = null;
     private CJIRType noReturnType = null;
     private CJIRType boolType = null;
@@ -252,6 +253,19 @@ public final class CJIRContext extends CJIRContextBase {
     @Override
     CJIRType getPromiseType(CJIRType innerType, CJMark... marks) {
         return itemToType(getPromiseItem(), List.of(innerType), marks);
+    }
+
+    @Override
+    CJIRItem getIterableItem() {
+        if (iterableItem == null) {
+            iterableItem = loadItem("cj.Iterable");
+        }
+        return iterableItem;
+    }
+
+    @Override
+    CJIRType getIterableType(CJIRType innerType, CJMark... marks) {
+        return itemToType(getIterableItem(), List.of(innerType), marks);
     }
 
     @Override

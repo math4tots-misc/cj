@@ -146,6 +146,10 @@ public abstract class CJIRContextBase {
         return getGlobal().getPromiseItem();
     }
 
+    CJIRItem getIterableItem() {
+        return getGlobal().getIterableItem();
+    }
+
     CJIRClassType itemToType(CJIRItem item, List<CJIRType> args, CJMark... marks) {
         return getGlobal().itemToType(item, args, marks);
     }
@@ -200,6 +204,10 @@ public abstract class CJIRContextBase {
 
     CJIRType getPromiseType(CJIRType innerType, CJMark... marks) {
         return getGlobal().getPromiseType(innerType, marks);
+    }
+
+    CJIRType getIterableType(CJIRType innerType, CJMark... marks) {
+        return getGlobal().getIterableType(innerType, marks);
     }
 
     CJIRTrait getToBoolTrait() {

@@ -550,6 +550,23 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitFor(CJIRFor e, Void a) {
+                var iterator = translateExpression(e.getIterator());
+                var lines = iterator.getLines();
+                var target = translateTarget(e.getTarget());
+                lines.add("for (const " + target + " of " + iterator.getExpression() + "){\n");
+                if (e.getCondition().isPresent()) {
+                    var condition = translateExpression(e.getCondition().get());
+                    lines.addAll(condition.getLines());
+                    lines.add("if (!(" + condition.getExpression() + ")){ break }\n");
+                }
+                var body = translateExpression(e.getBody());
+                body.dropValue(lines);
+                lines.add("}\n");
+                return new CJJSBlob(lines, "undefined", true);
+            }
+
+            @Override
             public CJJSBlob visitUnion(CJIRUnion e, Void a) {
                 var target = translateExpression(e.getTarget()).toPure(ctx);
                 var lines = target.getLines();

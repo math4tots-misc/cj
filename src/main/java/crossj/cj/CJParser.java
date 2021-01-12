@@ -9,7 +9,6 @@ import crossj.base.Tuple4;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
-    private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
     private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
     private static final int UNARY_OP_PRECEDENCE = getTokenPrecedence('*') + 5;
 
@@ -792,6 +791,17 @@ public final class CJParser {
                 var body = parseBlock();
                 return new CJAstWhile(mark, condition, body);
             }
+            case CJToken.KW_FOR: {
+                var mark = getMark();
+                next();
+                var target = parseTarget();
+                expect(CJToken.KW_IN);
+                var container = parseExpression();
+                Optional<CJAstExpression> condition = consume(CJToken.KW_IF) ? Optional.of(parseExpression())
+                        : Optional.empty();
+                var body = parseBlock();
+                return new CJAstFor(mark, target, container, condition, body);
+            }
             case CJToken.KW_NOT: {
                 var mark = getMark();
                 next();
@@ -822,7 +832,7 @@ public final class CJParser {
             case CJToken.KW_VAR: {
                 var mutable = next().type == CJToken.KW_VAR;
                 var mark = getMark();
-                var target = expressionToTarget(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                var target = parseTarget();
                 var declaredType = consume(':') ? Optional.of(parseTypeExpression())
                         : Optional.<CJAstTypeExpression>empty();
                 expect('=');
@@ -948,5 +958,9 @@ public final class CJParser {
             throw CJError.of("Expected assignment target but got " + expression.getClass().getName(),
                     expression.getMark());
         }
+    }
+
+    private CJAstAssignmentTarget parseTarget() {
+        return expressionToTarget(parseAtomExpression());
     }
 }
