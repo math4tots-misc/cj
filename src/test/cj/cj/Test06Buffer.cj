@@ -18,5 +18,6 @@ class Test06Buffer {
             Assert.equal(buf.getU8(0), 72)
             Assert.equal(buf.getU16(0), 72 + (256 * 'e'))
         }
+        Assert.equal(Buffer.fromUTF8("asdf").repr(), "Buffer.ofU8s([97, 115, 100, 102])")
     }
 }
