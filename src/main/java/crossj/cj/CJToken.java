@@ -265,4 +265,30 @@ public final class CJToken {
         Assert.withMessage(name.startsWith("CJToken.KW_"), name);
         return name.substring("CJToken.KW_".length(), name.length()).toLowerCase();
     }
+
+    public static int charLiteralToInt(String rawText, CJMark... marks) {
+        switch (rawText) {
+            case "'\\''":
+                return (int) '\'';
+            case "'\\\"'":
+                return (int) '"';
+            case "'\\\\'":
+                return (int) '\\';
+            case "'\\n'":
+                return (int) '\n';
+            case "'\\t'":
+                return (int) '\t';
+            case "'\\r'":
+                return (int) '\r';
+            case "'\\0'":
+                return (int) '\0';
+        }
+        if (rawText.length() >= 3 && rawText.charAt(0) == '\'' && rawText.charAt(rawText.length() - 1) == '\'') {
+            var codePoint = rawText.codePointAt(1);
+            if (Character.toString(codePoint).length() + 2 == rawText.length()) {
+                return codePoint;
+            }
+        }
+        throw CJError.of("Could not convert character literal to int: " + rawText, marks);
+    }
 }

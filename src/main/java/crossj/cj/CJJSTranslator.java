@@ -323,27 +323,7 @@ public final class CJJSTranslator {
                     case Bool:
                         return CJJSBlob.inline(e.getRawText(), true);
                     case Char:
-                        switch (e.getRawText()) {
-                            case "'\\''":
-                                return CJJSBlob.inline("" + (int) '\'', true);
-                            case "'\\\"'":
-                                return CJJSBlob.inline("" + (int) '"', true);
-                            case "'\\\\'":
-                                return CJJSBlob.inline("" + (int) '\\', true);
-                            case "'\\n'":
-                                return CJJSBlob.inline("" + (int) '\n', true);
-                            case "'\\t'":
-                                return CJJSBlob.inline("" + (int) '\t', true);
-                            case "'\\r'":
-                                return CJJSBlob.inline("" + (int) '\r', true);
-                            case "'\\0'":
-                                return CJJSBlob.inline("" + (int) '\0', true);
-                        }
-                        if (e.getRawText().length() == 3 && e.getRawText().charAt(0) == '\''
-                                && e.getRawText().charAt(2) == '\'') {
-                            return CJJSBlob.inline("" + (int) e.getRawText().charAt(1), true);
-                        }
-                        return CJJSBlob.inline(e.getRawText() + ".codePointAt(0)", true);
+                        return CJJSBlob.inline("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()), true);
                     case Int:
                         return CJJSBlob.inline(e.getRawText(), true);
                     case Double:

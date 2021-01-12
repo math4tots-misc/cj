@@ -749,6 +749,8 @@ public final class CJParser {
             case CJToken.KW_FALSE:
                 next();
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.Bool, "false");
+            case CJToken.CHAR:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.Char, next().text);
             case CJToken.INT:
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.Int, next().text);
             case CJToken.DOUBLE:
