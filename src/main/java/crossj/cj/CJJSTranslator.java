@@ -555,8 +555,13 @@ public final class CJJSTranslator {
                 var lines = iterator.getLines();
                 var target = translateTarget(e.getTarget());
                 lines.add("for (const " + target + " of " + iterator.getExpression() + "){\n");
-                if (e.getCondition().isPresent()) {
-                    var condition = translateExpression(e.getCondition().get());
+                if (e.getIfCondition().isPresent()) {
+                    var condition = translateExpression(e.getIfCondition().get());
+                    lines.addAll(condition.getLines());
+                    lines.add("if (!(" + condition.getExpression() + ")){ continue }\n");
+                }
+                if (e.getWhileCondition().isPresent()) {
+                    var condition = translateExpression(e.getWhileCondition().get());
                     lines.addAll(condition.getLines());
                     lines.add("if (!(" + condition.getExpression() + ")){ break }\n");
                 }
