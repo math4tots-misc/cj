@@ -117,7 +117,9 @@ public final class CJJSTranslator {
         // emit meta objects (i.e. const MO$* = MC$*)
         // traits and items with type parameters will not have meta objects.
         for (var item : items) {
-            if (!item.isTrait() && item.getTypeParameters().isEmpty()) {
+            if (!item.isTrait()) {
+                // Even if the type has type parameters, we create a meta object for
+                // calling generic methods with.
                 var itemName = item.getFullName();
                 out.append("const " + translateItemMetaObjectName(itemName) + "=new "
                         + translateItemMetaClassName(itemName) + "();\n");
@@ -356,7 +358,8 @@ public final class CJJSTranslator {
 
             @Override
             public CJJSBlob visitMethodCall(CJIRMethodCall e, Void a) {
-                var typeArgs = e.getTypeArgs().map(CJJSTranslator.this::translateType);
+                var typeArgs = e.getMethodRef().isGeneric() ? e.getTypeArgs().map(i -> "null")
+                        : e.getTypeArgs().map(CJJSTranslator.this::translateType);
                 var args = e.getArgs().map(CJJSTranslator.this::translateExpression);
                 args = args.all(arg -> arg.isSimple()) ? args : args.map(arg -> arg.toPure(ctx));
                 var lines = List.<String>of();
@@ -399,10 +402,17 @@ public final class CJJSTranslator {
                     case "cj.Fn4":
                         return Pair.of(wrapStackManagement(mark,
                                 allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")"), false);
-                    default:
-                        return Pair.of(wrapStackManagement(mark, translateType(owner) + "."
+                    default: {
+                        String ownerStr;
+                        if (methodRef.isGeneric() && owner instanceof CJIRClassType) {
+                            ownerStr = translateItemMetaObjectName(((CJIRClassType) owner).getItem().getFullName());
+                        } else {
+                            ownerStr = translateType(owner);
+                        }
+                        return Pair.of(wrapStackManagement(mark, ownerStr + "."
                                 + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs) + ")"),
                                 false);
+                    }
                 }
             }
 

@@ -12,16 +12,18 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
     private CJIRType returnType = null;
     private final boolean implPresent;
     private final boolean test;
+    private final boolean generic;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private Optional<CJIRExpression> body = Optional.empty();
 
     CJIRMethod(CJAstMethodDefinition ast, List<CJIRTypeCondition> conditions, List<CJIRTypeParameter> typeParameters,
-            boolean implPresent, boolean test) {
+            boolean implPresent, boolean test, boolean generic) {
         super(ast);
         this.conditions = conditions;
         this.typeParameters = typeParameters;
         this.implPresent = implPresent;
         this.test = test;
+        this.generic = generic;
 
         for (var typeParameter : typeParameters) {
             typeParameterMap.put(typeParameter.getName(), typeParameter);
@@ -30,6 +32,10 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
 
     public boolean isTest() {
         return test;
+    }
+
+    public boolean isGeneric() {
+        return generic;
     }
 
     public List<CJIRTypeCondition> getConditions() {

@@ -1,5 +1,5 @@
 package cj
 
 native class Fn0[R?] {
-    def call(self: Self): R
+    @generic def call(self: Self): R
 }

@@ -148,8 +148,12 @@ final class CJPass03 extends CJPassBaseEx {
             return condition;
         });
         var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
+        if (annotationProcessor.isGeneric() && item.isTrait()) {
+            throw CJError.of("Trait methods cannot be marked generic", methodAst.getMark());
+        }
         var method = new CJIRMethod(methodAst, conditions, typeParameters,
-                implPresent || methodAst.getBody().isPresent() || item.isNative(), annotationProcessor.isTest());
+                implPresent || methodAst.getBody().isPresent() || item.isNative(), annotationProcessor.isTest(),
+                annotationProcessor.isGeneric());
 
         if (method.isTest()) {
             if (methodAst.getTypeParameters().size() > 0 || methodAst.getParameters().size() > 0) {

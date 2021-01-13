@@ -5,17 +5,17 @@ native class List[T?] :
         ToBool,
         Hash if T : Hash,
         Repr if T : Repr {
-    def empty(): Self
+    @generic def empty(): Self
 
-    def iter(self: Self): Iterator[T]
-    def size(self: Self): Int
-    def isEmpty(self: Self): Bool
-    def add(self: Self, t: T)
-    def get(self: Self, i: Int): T
-    def set(self: Self, i: Int, t: T)
+    @generic def iter(self: Self): Iterator[T]
+    @generic def size(self: Self): Int
+    @generic def isEmpty(self: Self): Bool
+    @generic def add(self: Self, t: T)
+    @generic def get(self: Self, i: Int): T
+    @generic def set(self: Self, i: Int, t: T)
 
-    def map[R](self: Self, f: Fn[T, R]): List[R]
-    def filter(self: Self, f: Fn[T, Bool]): Self
+    @generic def map[R](self: Self, f: Fn[T, R]): List[R]
+    @generic def filter(self: Self, f: Fn[T, Bool]): Self
 
     def toBool(self: Self): Bool
 

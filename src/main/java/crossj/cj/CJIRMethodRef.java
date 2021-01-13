@@ -25,6 +25,10 @@ public final class CJIRMethodRef {
         return method;
     }
 
+    public boolean isGeneric() {
+        return method.isGeneric();
+    }
+
     public String getName() {
         return method.getName();
     }
