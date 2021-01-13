@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Pair;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean nullable;
@@ -136,6 +137,28 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public CJIRTraitOrClassType toTraitOrClassType() {
         List<CJIRType> args = typeParameters.map(tp -> new CJIRVariableType(tp, List.of()));
+        return isTrait() ? new CJIRTrait(this, args) : new CJIRClassType(this, args);
+    }
+
+    /**
+     * Like toTraitOrClassType, but the type variables implement all traits asked for
+     * in all of this item's trait declarations.
+     */
+    CJIRTraitOrClassType toFullyImplementingTraitOrClassType() {
+        List<CJIRVariableType> variables = typeParameters.map(tp -> new CJIRVariableType(tp, List.of()));
+        List<CJIRType> args = variables.map(v -> v);
+        var map = Map.fromIterable(variables.map(v -> Pair.of(v.getName(), v)));
+        for (var decl : traitDeclarations) {
+            for (var cond : decl.getConditions()) {
+                var variable = map.get(cond.getTypeParameter().getName());
+                var additionalTraits = variable.getAdditionalTraits();
+                for (var trait : cond.getTraits()) {
+                    if (!additionalTraits.contains(trait)) {
+                        additionalTraits.add(trait);
+                    }
+                }
+            }
+        }
         return isTrait() ? new CJIRTrait(this, args) : new CJIRClassType(this, args);
     }
 }

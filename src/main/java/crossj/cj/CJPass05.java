@@ -42,13 +42,15 @@ final class CJPass05 extends CJPassBaseEx {
     /**
      * Checks that the given item (assumed to be a class) implements all the methods
      * as declared in its traits.
+     *
+     * TODO: Check condition traits and methods
      */
     private void checkMethods(CJIRItem item) {
         var mark = item.getMark();
         var type = (CJIRClassType) item.toTraitOrClassType();
         var methodMap = Map.<String, MethodEntry>of();
         addMethods(type, methodMap, type, mark);
-        walkTraits(item, trait -> {
+        CJIRContextBase.walkTraits(item.toTraitOrClassType(), trait -> {
             addMethods(type, methodMap, trait, mark);
             return null;
         });

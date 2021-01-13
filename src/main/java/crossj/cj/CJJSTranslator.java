@@ -2,7 +2,6 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.FS;
-import crossj.base.Func1;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Pair;
@@ -131,7 +130,7 @@ public final class CJJSTranslator {
     private static void addTypeVariableMethods(StringBuilder out, CJJSContext jsctx, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
         var translator = new CJJSTranslator(out, jsctx, item);
-        walkTraits(item, trait -> {
+        CJIRContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
             var params = trait.getItem().getTypeParameters();
             var args = trait.getArgs();
             for (int i = 0; i < args.size(); i++) {
@@ -148,7 +147,7 @@ public final class CJJSTranslator {
     private static void inheritMethods(StringBuilder out, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
         var seenMethods = Set.fromIterable(item.getMethods().map(m -> m.getName()));
-        walkTraits(item, trait -> {
+        CJIRContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
             var traitMetaClassName = translateItemMetaClassName(trait.getItem().getFullName());
             for (var method : trait.getItem().getMethods()) {
                 if (!seenMethods.contains(method.getName())) {
@@ -162,10 +161,6 @@ public final class CJJSTranslator {
             }
             return null;
         });
-    }
-
-    private static void walkTraits(CJIRItem item, Func1<Void, CJIRTrait> f) {
-        CJIRContextBase.walkTraits(item, f);
     }
 
     private static void translateItem(StringBuilder out, CJJSContext ctx, CJIRItem item) {

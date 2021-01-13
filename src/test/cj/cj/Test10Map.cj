@@ -18,4 +18,12 @@ class Test10Map {
             Assert.equal(map.repr(), "[50: 30, 75: 2]")
         }
     }
+
+    @test
+    def constructor() = {
+        {
+            val map = Map.of([(1, 2), (3, 4)])
+            Assert.equal("" + map, "[1: 2, 3: 4]")
+        }
+    }
 }
