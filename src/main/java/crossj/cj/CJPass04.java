@@ -506,6 +506,34 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitTupleDisplay(CJAstTupleDisplay e, Optional<CJIRType> a) {
+                if (a.isEmpty()) {
+                    var expressions = e.getExpressions().map(x -> evalExpression(x));
+                    var argTypes = expressions.map(x -> x.getType());
+                    var tupleTypeName = "cj.Tuple" + expressions.size();
+                    var tupleType = ctx.getTypeWithArgs(tupleTypeName, argTypes, e.getMark());
+                    return new CJIRTupleDisplay(e, tupleType, expressions);
+                } else {
+                    var expectedType = a.get();
+                    if (!expectedType.isTupleType()) {
+                        throw CJError.of("Expected " + expectedType + " but got a tuple display", e.getMark());
+                    }
+                    var displayItemName = "cj.Tuple" + e.getExpressions().size();
+                    var classType = (CJIRClassType) expectedType;
+                    if (!classType.getItem().getFullName().equals(displayItemName)) {
+                        throw CJError.of("Expected " + classType + " but got a " + displayItemName, e.getMark());
+                    }
+                    var expressions = List.<CJIRExpression>of();
+                    var argAsts = e.getExpressions();
+                    var expectedTypes = classType.getArgs();
+                    for (int i = 0; i < expectedTypes.size(); i++) {
+                        expressions.add(evalExpressionWithType(argAsts.get(i), expectedTypes.get(i)));
+                    }
+                    return new CJIRTupleDisplay(e, expectedType, expressions);
+                }
+            }
+
+            @Override
             public CJIRExpression visitIf(CJAstIf e, Optional<CJIRType> a) {
                 var condition = evalBoolExpression(e.getCondition());
                 CJIRType returnType;

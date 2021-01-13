@@ -711,8 +711,20 @@ public final class CJParser {
                 } else {
                     next();
                     var inner = parseExpression();
-                    expect(')');
-                    return inner;
+                    if (consume(',')) {
+                        var expressions = List.of(inner);
+                        while (!consume(')')) {
+                            expressions.add(parseExpression());
+                            if (!consume(',')) {
+                                expect(')');
+                                break;
+                            }
+                        }
+                        return new CJAstTupleDisplay(mark, expressions);
+                    } else {
+                        expect(')');
+                        return inner;
+                    }
                 }
             }
             case '[': {

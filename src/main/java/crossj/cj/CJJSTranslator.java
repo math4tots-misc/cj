@@ -483,8 +483,17 @@ public final class CJJSTranslator {
 
             @Override
             public CJJSBlob visitListDisplay(CJIRListDisplay e, Void a) {
+                return handleList(e.getExpressions());
+            }
+
+            @Override
+            public CJJSBlob visitTupleDisplay(CJIRTupleDisplay e, Void a) {
+                return handleList(e.getExpressions());
+            }
+
+            private CJJSBlob handleList(List<CJIRExpression> expressions) {
                 var lines = List.<String>of();
-                var args = e.getExpressions().map(arg -> translateExpression(arg));
+                var args = expressions.map(arg -> translateExpression(arg));
                 if (!args.all(arg -> arg.isSimple())) {
                     args = args.map(arg -> arg.toPure(ctx));
                 }

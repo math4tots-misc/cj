@@ -36,6 +36,10 @@ public interface CJIRType {
         return false;
     }
 
+    default boolean isTupleType() {
+        return false;
+    }
+
     default boolean isPromiseType() {
         return false;
     }

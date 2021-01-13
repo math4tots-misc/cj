@@ -31,6 +31,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isTupleType() {
+        return item.getFullName().startsWith("cj.Tuple");
+    }
+
+    @Override
     public boolean isNullableType() {
         return item.getFullName().equals("cj.Nullable");
     }
