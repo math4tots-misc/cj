@@ -12,7 +12,7 @@ class Map[K: Hash, V] {
         if self._list.size() < newCap {
             val oldList = self._list
             self._size = 0
-            self._list = Range.upto(newCap).iter().map(i -> List[Tuple[K, V]].empty()).toList()
+            self._list = List.ofSize(newCap, i -> [])
         }
     }
 

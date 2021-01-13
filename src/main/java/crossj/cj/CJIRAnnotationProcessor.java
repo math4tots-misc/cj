@@ -24,6 +24,7 @@ public final class CJIRAnnotationProcessor {
 
     private boolean nullable = false;
     private boolean test = false;
+    private boolean generic = false;
     private final List<String> deriveList = List.of();
 
     private CJIRAnnotationProcessor(CJMark mark, List<CJAstAnnotationExpression> commands) {
@@ -50,14 +51,22 @@ public final class CJIRAnnotationProcessor {
         }
     }
 
+    private void cannotMarkGeneric(CJAstNode ast) {
+        if (generic){
+            throw CJError.of(ast.getClass() + " cannot be marked generic", ast.getMark());
+        }
+    }
+
     private void checkForItem(CJAstItemDefinition ast) {
         cannotMarkTest(ast);
+        cannotMarkGeneric(ast);
     }
 
     private void checkForMember(CJAstItemMemberDefinition ast) {
         cannotMarkDerive(ast);
         if (!(ast instanceof CJAstMethodDefinition)) {
             cannotMarkTest(ast);
+            cannotMarkGeneric(ast);
         }
         cannotMarkNullable(ast);
     }
@@ -65,6 +74,7 @@ public final class CJIRAnnotationProcessor {
     private void checkForTypeParameter(CJAstTypeParameter ast) {
         cannotMarkDerive(ast);
         cannotMarkTest(ast);
+        cannotMarkGeneric(ast);
     }
 
     public boolean isNullable() {
@@ -73,6 +83,10 @@ public final class CJIRAnnotationProcessor {
 
     public boolean isTest() {
         return test;
+    }
+
+    public boolean isGeneric() {
+        return generic;
     }
 
     public List<String> getDeriveList() {
@@ -95,6 +109,10 @@ public final class CJIRAnnotationProcessor {
             case "test":
                 expectArgc(0, expression);
                 test = true;
+                break;
+            case "generic":
+                expectArgc(0, expression);
+                generic = true;
                 break;
             case "derive":
                 deriveList.addAll(expression.getArgs().map(this::eval));

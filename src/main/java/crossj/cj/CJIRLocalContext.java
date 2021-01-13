@@ -53,6 +53,10 @@ public final class CJIRLocalContext extends CJIRContextBase {
         if (fullName == null) {
             throw CJError.of("Type " + Repr.of(shortName) + " not found", marks);
         }
+        return loadTypeItem(fullName, marks);
+    }
+
+    CJIRItem loadTypeItem(String fullName, CJMark... marks) {
         var item = global.loadItem(fullName, marks);
         if (!item.getKind().isTypeKind()) {
             throw CJError.of(fullName + " is not a type item (i.e. class or union)", marks);
@@ -72,6 +76,17 @@ public final class CJIRLocalContext extends CJIRContextBase {
         }
         var item = getTypeItem(name, typeExpression.getMark());
         var args = typeExpression.getArgs().map(te -> evalTypeExpression(te));
+        if (!name.endsWith("_") && item.getTypeParameters().size() > 0 && args.isEmpty()) {
+            // In the specific case when:
+            // - the item name does not end with an underscore,
+            // - the item the name refers to has type parameters,
+            // - but the provided expression has no type parameters,
+            // get the item named (name + "_") instead.
+            //
+            // This effectively allows adding static methods to items with
+            // generic types that do not actually care about the item's generic types.
+            item = loadTypeItem(item.getFullName() + "_", typeExpression.getMark());
+        }
         checkItemArgs(item, args, typeExpression.getMark());
         return new CJIRClassType(item, args);
     }
@@ -89,6 +104,23 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return evalClassTypeExpression(typeExpression);
     }
 
+    /**
+     * a version of evalTypeExpression used at the item level in pass 2, when
+     * there's not enough information to do a normal evalTypeExpression.
+     */
+    private CJIRType evalTypeExpressionUnchecked(CJAstTypeExpression texpr) {
+        var typeParameter = getItem().getTypeParameterMap().getOrNull(texpr.getName());
+        if (typeParameter != null) {
+            if (texpr.getArgs().size() != 0) {
+                throw CJError.of("type variables cannot accept arguments", texpr.getMark());
+            }
+            return new CJIRVariableType(typeParameter, List.of());
+        }
+        var typeItem = getTypeItem(texpr.getName(), texpr.getMark());
+        var args = texpr.getArgs().map(te -> evalTypeExpression(te));
+        return new CJIRClassType(typeItem, args);
+    }
+
     private void assertNoTypeArgs(CJAstTypeExpression typeExpression) {
         if (typeExpression.getArgs().size() > 0) {
             throw CJError.of("Self type and type variables may not have type arguments", typeExpression.getMark());
@@ -99,6 +131,16 @@ public final class CJIRLocalContext extends CJIRContextBase {
         var traitItem = getTraitItem(traitExpression.getName(), traitExpression.getMark());
         var args = traitExpression.getArgs().map(te -> evalTypeExpression(te));
         checkItemArgs(traitItem, args, traitExpression.getMark());
+        return new CJIRTrait(traitItem, args);
+    }
+
+    /**
+     * a version of evalTraitExpression used at the item level in pass 2, when
+     * there's not enough information to do a normal evalTraitExpression.
+     */
+    CJIRTrait evalTraitExpressionUnchecked(CJAstTraitExpression texpr) {
+        var traitItem = getTraitItem(texpr.getName(), texpr.getMark());
+        var args = texpr.getArgs().map(te -> evalTypeExpressionUnchecked(te));
         return new CJIRTrait(traitItem, args);
     }
 
