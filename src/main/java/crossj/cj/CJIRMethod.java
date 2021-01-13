@@ -4,6 +4,7 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
+import crossj.base.annotations.Nullable;
 
 public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
     private final List<CJIRTypeCondition> conditions;
@@ -13,17 +14,19 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
     private final boolean implPresent;
     private final boolean test;
     private final boolean generic;
+    private final CJIRExtraMethodInfo extra;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private Optional<CJIRExpression> body = Optional.empty();
 
     CJIRMethod(CJAstMethodDefinition ast, List<CJIRTypeCondition> conditions, List<CJIRTypeParameter> typeParameters,
-            boolean implPresent, boolean test, boolean generic) {
+            boolean implPresent, boolean test, boolean generic, CJIRExtraMethodInfo extra) {
         super(ast);
         this.conditions = conditions;
         this.typeParameters = typeParameters;
         this.implPresent = implPresent;
         this.test = test;
         this.generic = generic;
+        this.extra = extra;
 
         for (var typeParameter : typeParameters) {
             typeParameterMap.put(typeParameter.getName(), typeParameter);
@@ -36,6 +39,11 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
 
     public boolean isGeneric() {
         return generic;
+    }
+
+    @Nullable
+    public CJIRExtraMethodInfo getExtra() {
+        return extra;
     }
 
     public List<CJIRTypeCondition> getConditions() {

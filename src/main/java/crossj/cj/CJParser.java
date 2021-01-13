@@ -495,13 +495,36 @@ public final class CJParser {
                             var typeArgs = parseTypeArgs();
                             args.addAll(parseArgs());
                             expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
-                        } else if (consume('=')) {
-                            var methodName = "__set_" + name;
-                            args.add(parseExpression());
-                            expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
                         } else {
-                            var methodName = "__get_" + name;
-                            expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(), args);
+                            switch (peek().type) {
+                                case '=':
+                                case CJToken.PLUS_EQ: {
+                                    String prefix;
+                                    switch (peek().type) {
+                                        case '=':
+                                            prefix = "__set_";
+                                            break;
+                                        case CJToken.PLUS_EQ:
+                                            prefix = "__augadd_";
+                                            break;
+                                        default:
+                                            throw CJError.of(
+                                                    "UNRECOGNIZED AUG ASSIGN TOK " + CJToken.typeToString(peek().type),
+                                                    getMark());
+                                    }
+                                    next();
+                                    var methodName = prefix + name;
+                                    args.add(parseExpression());
+                                    expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(),
+                                            args);
+                                    break;
+                                }
+                                default: {
+                                    var methodName = "__get_" + name;
+                                    expr = new CJAstMethodCall(methodMark, Optional.empty(), methodName, List.of(),
+                                            args);
+                                }
+                            }
                         }
                     }
                     break;
@@ -814,13 +837,32 @@ public final class CJParser {
                     var typeArgs = parseTypeArgs();
                     var args = parseArgs();
                     return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
-                } else if (consume('=')) {
-                    var methodName = "__set_" + name;
-                    var args = List.of(parseExpression());
-                    return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), args);
                 } else {
-                    var methodName = "__get_" + name;
-                    return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), List.of());
+                    switch (peek().type) {
+                        case '=':
+                        case CJToken.PLUS_EQ: {
+                            String prefix;
+                            switch (peek().type) {
+                                case '=':
+                                    prefix = "__set_";
+                                    break;
+                                case CJToken.PLUS_EQ:
+                                    prefix = "__augadd_";
+                                    break;
+                                default:
+                                    throw CJError.of("UNRECOGNIZED AUG ASSIGN TOK " + CJToken.typeToString(peek().type),
+                                            getMark());
+                            }
+                            next();
+                            var methodName = prefix + name;
+                            var args = List.of(parseExpression());
+                            return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), args);
+                        }
+                        default: {
+                            var methodName = "__get_" + name;
+                            return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), List.of());
+                        }
+                    }
                 }
             }
             case CJToken.ID:
@@ -830,7 +872,8 @@ public final class CJParser {
                 next();
                 var condition = parseExpression();
                 var left = parseBlock();
-                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE) ? Optional.of(parseBlock())
+                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE)
+                        ? at(CJToken.KW_IF) ? Optional.of(parseExpression()) : Optional.of(parseBlock())
                         : Optional.empty();
                 return new CJAstIf(mark, condition, left, right);
             }

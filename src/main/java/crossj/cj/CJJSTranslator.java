@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.FS;
 import crossj.base.Func1;
 import crossj.base.IO;
@@ -409,6 +410,38 @@ public final class CJJSTranslator {
                         } else {
                             ownerStr = translateType(owner);
                         }
+
+                        var extra = methodRef.getMethod().getExtra();
+
+                        if (extra instanceof CJIRFieldMethodInfo) {
+                            var info = (CJIRFieldMethodInfo) extra;
+                            var field = info.getField();
+                            if (field.isStatic()) {
+                                var target = ownerStr + "." + translateFieldName(field.getName());
+                                switch (info.getKind()) {
+                                    case "=":
+                                        Assert.equals(allArgs.size(), 1);
+                                        return Pair.of(target + info.getKind() + allArgs.last(), false);
+                                    case "+=":
+                                        Assert.equals(allArgs.size(), 1);
+                                        return Pair.of(target + "=(" + ownerStr + "."
+                                                + translateMethodName(field.getGetterName()) + "())" + "+"
+                                                + allArgs.last(), false);
+                                }
+                            } else if (!field.isStatic()) {
+                                var target = allArgs.get(0) + "[" + field.getIndex() + "]";
+                                switch (info.getKind()) {
+                                    case "":
+                                        Assert.equals(allArgs.size(), 1);
+                                        return Pair.of(target, false);
+                                    case "=":
+                                    case "+=":
+                                        Assert.equals(allArgs.size(), 2);
+                                        return Pair.of(target + info.getKind() + allArgs.last(), false);
+                                }
+                            }
+                        }
+
                         return Pair.of(wrapStackManagement(mark, ownerStr + "."
                                 + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs) + ")"),
                                 false);

@@ -29,12 +29,12 @@ final class CJPass03 extends CJPassBaseEx {
 
         if (item.getKind() == CJIRItemKind.Class) {
             var mallocMethodAst = synthesizeMallocMethod(item);
-            materializeMethod(item, mallocMethodAst, true);
+            materializeMethod(item, mallocMethodAst, true, null);
         }
 
         for (var memberAst : item.getAst().getMembers()) {
             if (memberAst instanceof CJAstMethodDefinition) {
-                materializeMethod(item, (CJAstMethodDefinition) memberAst, false);
+                materializeMethod(item, (CJAstMethodDefinition) memberAst, false, null);
             } else if (memberAst instanceof CJAstFieldDefinition) {
                 var fieldAst = (CJAstFieldDefinition) memberAst;
                 if (fieldAst.isStatic()) {
@@ -57,10 +57,14 @@ final class CJPass03 extends CJPassBaseEx {
                 var field = new CJIRField(fieldAst, index, type);
                 item.getFields().add(field);
                 var accessMethodAst = synthesizeFieldAccessMethod(item, fieldAst);
-                materializeMethod(item, accessMethodAst, true);
+                materializeMethod(item, accessMethodAst, true, new CJIRFieldMethodInfo(field, ""));
                 if (field.isMutable()) {
                     var assignMethodAst = synthesizeFieldAssignmentMethod(item, fieldAst);
-                    materializeMethod(item, assignMethodAst, true);
+                    materializeMethod(item, assignMethodAst, true, new CJIRFieldMethodInfo(field, "="));
+                    if (field.getType().equals(ctx.getIntType())) {
+                        var augMethodAst = synthesizeFieldAugMethod(item, fieldAst);
+                        materializeMethod(item, augMethodAst, true, new CJIRFieldMethodInfo(field, "+="));
+                    }
                 }
             } else if (memberAst instanceof CJAstCaseDefinition) {
                 if (item.getKind() != CJIRItemKind.Union) {
@@ -72,7 +76,7 @@ final class CJPass03 extends CJPassBaseEx {
                 var caseDefn = new CJIRCase(caseAst, tag, types);
                 item.getCases().add(caseDefn);
                 var methodAst = synthesizeCaseMethod(item, caseAst);
-                materializeMethod(item, methodAst, true);
+                materializeMethod(item, methodAst, true, null);
             } else if (memberAst instanceof CJAstItemDefinition) {
                 // item definitions are currently already pulled to the top level
             } else {
@@ -95,6 +99,18 @@ final class CJPass03 extends CJPassBaseEx {
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
         var mark = fieldAst.getMark();
         var methodName = fieldAst.getSetterName();
+        var parameters = List.<CJAstParameter>of();
+        if (!fieldAst.isStatic()) {
+            parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
+        }
+        parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
+        var returnType = newUnitTypeExpression(mark);
+        return synthesizeMethod(mark, methodName, parameters, returnType);
+    }
+
+    private CJAstMethodDefinition synthesizeFieldAugMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
+        var mark = fieldAst.getMark();
+        var methodName = "__augadd_" + fieldAst.getName();
         var parameters = List.<CJAstParameter>of();
         if (!fieldAst.isStatic()) {
             parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
@@ -137,7 +153,8 @@ final class CJPass03 extends CJPassBaseEx {
         return new CJAstTypeExpression(mark, "Unit", List.of());
     }
 
-    private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent) {
+    private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent,
+            CJIRExtraMethodInfo extra) {
         var annotationProcessor = CJIRAnnotationProcessor.processMember(methodAst);
         var conditions = methodAst.getConditions().map(conditionAst -> {
             var condition = new CJIRTypeCondition(conditionAst,
@@ -153,7 +170,7 @@ final class CJPass03 extends CJPassBaseEx {
         }
         var method = new CJIRMethod(methodAst, conditions, typeParameters,
                 implPresent || methodAst.getBody().isPresent() || item.isNative(), annotationProcessor.isTest(),
-                annotationProcessor.isGeneric());
+                annotationProcessor.isGeneric(), extra);
 
         if (method.isTest()) {
             if (methodAst.getTypeParameters().size() > 0 || methodAst.getParameters().size() > 0) {
