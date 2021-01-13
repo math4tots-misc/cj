@@ -48,7 +48,7 @@ abstract class CJIRTraitOrClassType {
 
     @Override
     public final String toString() {
-        var args = getArgs().map(arg -> arg.apply(getBinding()));
+        var args = getArgs().map(arg -> getBinding().tryApply(arg));
         return getItem().getFullName() + (args.isEmpty() ? "" : "[" + Str.join(",", args) + "]");
     }
 

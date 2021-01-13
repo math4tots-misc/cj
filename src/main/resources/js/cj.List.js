@@ -5,6 +5,8 @@ class MC$cj$List {
     M$empty() {
         return [];
     }
+    M$ofSize(n, f) {
+    }
     M$iter(self) {
         return self[Symbol.iterator]();
     }
