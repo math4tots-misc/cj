@@ -116,7 +116,7 @@ class Test04ControlFlow {
 
     @test
     def return1() = {
-        Assert.equal(Self.functionThatReturns(16), 123)
+        Assert.equal(Self.functionThatReturns(16), 26)
     }
 
     def functionThatReturns(i: Int) : Int = {
