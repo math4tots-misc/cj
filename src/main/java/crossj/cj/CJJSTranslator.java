@@ -650,7 +650,7 @@ public final class CJJSTranslator {
             }
 
             @Override
-            public CJJSBlob visitReturn(CJIReturn e, Void a) {
+            public CJJSBlob visitReturn(CJIRReturn e, Void a) {
                 var inner = translateExpression(e.getExpression());
                 var lines = inner.getLines();
                 lines.add("return " + inner.getExpression() + ";\n");

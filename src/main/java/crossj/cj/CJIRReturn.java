@@ -1,9 +1,9 @@
 package crossj.cj;
 
-public final class CJIReturn extends CJIRExpression {
+public final class CJIRReturn extends CJIRExpression {
     private final CJIRExpression expression;
 
-    CJIReturn(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
+    CJIRReturn(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
         super(ast, type);
         this.expression = expression;
     }

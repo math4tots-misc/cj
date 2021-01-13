@@ -214,13 +214,18 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitBlock(CJAstBlock e, Optional<CJIRType> a) {
                 enterScope();
+                var noReturnType = ctx.getNoReturnType();
                 var exprs = e.getExpressions();
                 if (exprs.size() == 0) {
                     return new CJIRLiteral(e, ctx.getUnitType(), CJIRLiteralKind.Unit, "");
                 }
                 var newExprs = List.<CJIRExpression>of();
                 for (int i = 0; i + 1 < exprs.size(); i++) {
-                    newExprs.add(evalUnitExpression(exprs.get(i)));
+                    var newExpr = evalUnitExpression(exprs.get(i));
+                    newExprs.add(newExpr);
+                    if (newExpr.getType().equals(noReturnType)) {
+                        throw CJError.of("Unreachable code", exprs.get(i + 1).getMark());
+                    }
                 }
                 newExprs.add(evalExpressionEx(exprs.last(), a));
                 exitScope();
@@ -727,7 +732,7 @@ final class CJPass04 extends CJPassBaseEx {
                     // unit is actually fine, however, in explicit returns this seems like a bug.
                     throw CJError.of("Function returns unit type, but a non-unit was returned", e.getMark());
                 }
-                return new CJIReturn(e, ctx.getNoReturnType(), inner);
+                return new CJIRReturn(e, ctx.getNoReturnType(), inner);
             }
 
             @Override
