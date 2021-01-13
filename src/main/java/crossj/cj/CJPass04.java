@@ -437,6 +437,18 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitAugmentedAssignment(CJAstAugmentedAssignment e, Optional<CJIRType> a) {
+                var target = findLocal(e.getTarget(), e.getMark());
+                var targetType = target.getVariableType();
+                if (targetType.equals(ctx.getIntType()) || targetType.equals(ctx.getDoubleType())) {
+                    var expression = evalExpressionWithType(e.getExpression(), target.getVariableType());
+                    return new CJIRAugmentedAssignment(e, ctx.getUnitType(), target, e.getKind(), expression);
+                } else {
+                    throw CJError.of("Augmented assignments are only supported for int and double values", e.getMark());
+                }
+            }
+
+            @Override
             public CJIRExpression visitLogicalNot(CJAstLogicalNot e, Optional<CJIRType> a) {
                 var inner = evalBoolExpression(e.getInner());
                 return new CJIRLogicalNot(e, ctx.getBoolType(), inner);

@@ -438,6 +438,32 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitAugmentedAssignment(CJIRAugmentedAssignment e, Void a) {
+                var target = translateLocalVariableName(e.getTarget().getName());
+                var augexpr = translateExpression(e.getExpression());
+                String op;
+                switch (e.getKind()) {
+                    case Add:
+                        op = "+=";
+                        break;
+                    case Subtract:
+                        op = "-=";
+                        break;
+                    case Multiply:
+                        op = "*=";
+                        break;
+                    case Remainder:
+                        op = "%=";
+                        break;
+                    default:
+                        throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
+                }
+                var lines = augexpr.getLines();
+                lines.add(target + op + augexpr.getExpression() + ";\n");
+                return new CJJSBlob(lines, "undefined", true);
+            }
+
+            @Override
             public CJJSBlob visitLogicalNot(CJIRLogicalNot e, Void a) {
                 var inner = translateExpression(e.getInner());
                 return new CJJSBlob(inner.getLines(), "(!" + inner.getExpression() + ")", inner.isPure());

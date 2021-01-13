@@ -513,6 +513,38 @@ public final class CJParser {
                     expr = new CJAstAssignment(opMark, target, valexpr);
                     break;
                 }
+                case CJToken.PLUS_EQ:
+                case CJToken.MINUS_EQ:
+                case CJToken.STAR_EQ:
+                case CJToken.REM_EQ: {
+                    var mark = getMark();
+                    CJIRAugAssignKind kind;
+                    switch (peek().type) {
+                        case CJToken.PLUS_EQ:
+                            kind = CJIRAugAssignKind.Add;
+                            break;
+                        case CJToken.MINUS_EQ:
+                            kind = CJIRAugAssignKind.Subtract;
+                            break;
+                        case CJToken.STAR_EQ:
+                            kind = CJIRAugAssignKind.Multiply;
+                            break;
+                        case CJToken.REM_EQ:
+                            kind = CJIRAugAssignKind.Remainder;
+                            break;
+                        default:
+                            throw CJError.of("Unrecognized augmented assignment kind", mark);
+                    }
+                    next();
+                    var valexpr = parseExpressionWithPrecedence(tokenPrecedence + 1);
+                    if (!(expr instanceof CJAstVariableAccess)) {
+                        throw CJError.of("Augmented assignments are currently only supported for variables",
+                                expr.getMark());
+                    }
+                    var name = ((CJAstVariableAccess) expr).getName();
+                    expr = new CJAstAugmentedAssignment(mark, name, kind, valexpr);
+                    break;
+                }
                 case CJToken.KW_AND:
                 case CJToken.KW_OR: {
                     var isAnd = next().type == CJToken.KW_AND;
@@ -653,6 +685,10 @@ public final class CJParser {
         // mostly follows Python, except uses Rust style '?'
         switch (tokenType) {
             case '=':
+            case CJToken.PLUS_EQ:
+            case CJToken.MINUS_EQ:
+            case CJToken.STAR_EQ:
+            case CJToken.REM_EQ:
                 return 20;
             case CJToken.KW_OR:
                 return 40;
