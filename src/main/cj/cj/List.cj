@@ -1,6 +1,6 @@
 package cj
 
-native class List[T] :
+native class List[T?] :
         Iterable[T],
         ToBool,
         Hash if T : Hash,
