@@ -970,6 +970,9 @@ public final class CJParser {
         if (expression instanceof CJAstVariableAccess) {
             var e = (CJAstVariableAccess) expression;
             return new CJAstNameAssignmentTarget(e.getMark(), e.getName());
+        } else if (expression instanceof CJAstTupleDisplay) {
+            var subtargets = ((CJAstTupleDisplay) expression).getExpressions().map(s -> expressionToTarget(s));
+            return new CJAstTupleAssignmentTarget(expression.getMark(), subtargets);
         } else {
             throw CJError.of("Expected assignment target but got " + expression.getClass().getName(),
                     expression.getMark());

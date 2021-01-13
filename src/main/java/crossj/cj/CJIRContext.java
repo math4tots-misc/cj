@@ -42,6 +42,9 @@ public final class CJIRContext extends CJIRContextBase {
     private final Map<String, CJIRItem> itemMap = Map.of();
 
     private CJIRItem listItem = null;
+    private CJIRItem tuple2Item = null;
+    private CJIRItem tuple3Item = null;
+    private CJIRItem tuple4Item = null;
     private CJIRItem nullableItem = null;
     private CJIRItem promiseItem = null;
     private CJIRItem iterableItem = null;
@@ -209,6 +212,46 @@ public final class CJIRContext extends CJIRContextBase {
         new CJPass03(this).run();
         new CJPass04(this).run();
         new CJPass05(this).run();
+    }
+
+    CJIRItem getTuple2Item() {
+        if (tuple2Item == null) {
+            tuple2Item = loadItem("cj.Tuple2");
+        }
+        return tuple2Item;
+    }
+
+    CJIRItem getTuple3Item() {
+        if (tuple3Item == null) {
+            tuple3Item = loadItem("cj.Tuple3");
+        }
+        return tuple3Item;
+    }
+
+    CJIRItem getTuple4Item() {
+        if (tuple4Item == null) {
+            tuple4Item = loadItem("cj.Tuple4");
+        }
+        return tuple4Item;
+    }
+
+    CJIRType getTupleType(List<CJIRType> args, CJMark... marks) {
+        CJIRItem item;
+        switch (args.size()) {
+            case 2:
+                item = getTuple2Item();
+                break;
+            case 3:
+                item = getTuple3Item();
+                break;
+            case 4:
+                item = getTuple4Item();
+                break;
+            default:
+                throw CJError.of("Tuple" + args.size() + " is not supported", marks);
+        }
+        checkItemArgs(item, args);
+        return new CJIRClassType(item, args);
     }
 
     @Override

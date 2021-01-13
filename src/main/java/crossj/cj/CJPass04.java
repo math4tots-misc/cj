@@ -715,6 +715,25 @@ final class CJPass04 extends CJPassBaseEx {
             public CJIRAssignmentTarget visitName(CJAstNameAssignmentTarget t, Void a) {
                 return new CJIRNameAssignmentTarget(t, mutable, t.getName(), type);
             }
+
+            @Override
+            public CJIRAssignmentTarget visitTuple(CJAstTupleAssignmentTarget t, Void a) {
+                if (!type.isTupleType()) {
+                    throw CJError.of("Expected " + type + " but got tuple assignment target", target.getMark());
+                }
+                var typeArgs = ((CJIRClassType) type).getArgs();
+                var subtargetAsts = t.getSubtargets();
+                if (typeArgs.size() != subtargetAsts.size()) {
+                    throw CJError.of(
+                            "Expected Tuple" + typeArgs.size() + " but found Tuple" + subtargetAsts.size() + " target",
+                            t.getMark());
+                }
+                var subtargets = List.<CJIRAssignmentTarget>of();
+                for (int i = 0; i < typeArgs.size(); i++) {
+                    subtargets.add(evalDeclarableTarget(subtargetAsts.get(i), mutable, typeArgs.get(i)));
+                }
+                return new CJIRTupleAssignmentTarget(target, subtargets, type);
+            }
         }, null);
     }
 
@@ -723,6 +742,12 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public Void visitName(CJIRNameAssignmentTarget t, Void a) {
                 declareLocal(t);
+                return null;
+            }
+
+            @Override
+            public Void visitTuple(CJIRTupleAssignmentTarget t, Void a) {
+                t.getSubtargets().forEach(s -> declareTarget(s));
                 return null;
             }
         }, null);
@@ -738,6 +763,13 @@ final class CJPass04 extends CJPassBaseEx {
                     throw CJError.of(name + " is not mutable", decl.getMark());
                 }
                 return new CJIRNameAssignmentTarget(t, true, name, decl.getVariableType());
+            }
+
+            @Override
+            public CJIRAssignmentTarget visitTuple(CJAstTupleAssignmentTarget t, Void a) {
+                var subtargets = t.getSubtargets().map(s -> evalAssignableTarget(s));
+                var type = ctx.getTupleType(subtargets.map(s -> s.getTargetType()), t.getMark());
+                return new CJIRTupleAssignmentTarget(t, subtargets, type);
             }
         }, null);
     }

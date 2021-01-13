@@ -17,4 +17,13 @@ class Test08Tuple {
     }
 
     def returnPair(): Tuple[Int, String] = (1, "two")
+
+    @test
+    def assignment() = {
+        {
+            val (a, b) = Self.returnPair()
+            Assert.equal(a, 1)
+            Assert.equal(b, "two")
+        }
+    }
 }

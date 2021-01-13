@@ -660,6 +660,11 @@ public final class CJJSTranslator {
             public String visitName(CJIRNameAssignmentTarget t, Void a) {
                 return translateLocalVariableName(t.getName());
             }
+
+            @Override
+            public String visitTuple(CJIRTupleAssignmentTarget t, Void a) {
+                return "[" + Str.join(",", t.getSubtargets().map(s -> translateTarget(s))) + "]";
+            }
         }, null);
     }
 }
