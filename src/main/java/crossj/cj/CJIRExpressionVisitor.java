@@ -15,6 +15,7 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitListDisplay(CJIRListDisplay e, A a);
     public abstract R visitTupleDisplay(CJIRTupleDisplay e, A a);
     public abstract R visitIf(CJIRIf e, A a);
+    public abstract R visitIfNull(CJIRIfNull e, A a);
     public abstract R visitWhile(CJIRWhile e, A a);
     public abstract R visitFor(CJIRFor e, A a);
     public abstract R visitUnion(CJIRUnion e, A a);

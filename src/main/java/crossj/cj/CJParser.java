@@ -9,6 +9,7 @@ import crossj.base.Tuple4;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
+    private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
     private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
     private static final int UNARY_OP_PRECEDENCE = getTokenPrecedence('*') + 5;
 
@@ -531,7 +532,7 @@ public final class CJParser {
                 }
                 case '=': {
                     next();
-                    var valexpr = parseExpression();
+                    var valexpr = parseExpressionWithPrecedence(tokenPrecedence + 1);
                     var target = expressionToTarget(expr);
                     expr = new CJAstAssignment(opMark, target, valexpr);
                     break;
@@ -870,12 +871,33 @@ public final class CJParser {
             case CJToken.KW_IF: {
                 var mark = getMark();
                 next();
-                var condition = parseExpression();
-                var left = parseBlock();
-                Optional<CJAstExpression> right = consume(CJToken.KW_ELSE)
-                        ? at(CJToken.KW_IF) ? Optional.of(parseExpression()) : Optional.of(parseBlock())
-                        : Optional.empty();
-                return new CJAstIf(mark, condition, left, right);
+                var mutable = consume(CJToken.KW_VAR);
+                var condition = parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5);
+                if (condition instanceof CJAstNullWrap && consume('=')) {
+                    var wrap = (CJAstNullWrap) condition;
+                    if (wrap.getInnerType().isPresent()) {
+                        throw CJError.of("Inner null wrap type cannot be specified here", mark);
+                    }
+                    if (wrap.getInner().isEmpty()) {
+                        throw CJError.of("if null must specify a target", mark);
+                    }
+                    var target = expressionToTarget(wrap.getInner().get());
+                    var inner = parseExpression();
+                    var left = parseBlock();
+                    Optional<CJAstExpression> right = consume(CJToken.KW_ELSE)
+                            ? at(CJToken.KW_IF) ? Optional.of(parseExpression()) : Optional.of(parseBlock())
+                            : Optional.empty();
+                    return new CJAstIfNull(mark, mutable, target, inner, left, right);
+                } else {
+                    if (mutable) {
+                        throw CJError.of("Expected null wrapped assignment target", mark);
+                    }
+                    var left = parseBlock();
+                    Optional<CJAstExpression> right = consume(CJToken.KW_ELSE)
+                            ? at(CJToken.KW_IF) ? Optional.of(parseExpression()) : Optional.of(parseBlock())
+                            : Optional.empty();
+                    return new CJAstIf(mark, condition, left, right);
+                }
             }
             case CJToken.KW_RETURN: {
                 var mark = getMark();

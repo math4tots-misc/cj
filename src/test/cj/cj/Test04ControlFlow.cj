@@ -58,6 +58,28 @@ class Test04ControlFlow {
     }
 
     @test
+    def ifNull() = {
+        {
+            val t = null(10)
+            val x = if null(i) = t {
+                "not null: " + i
+            } else {
+                "null"
+            }
+            Assert.equal(x, "not null: 10")
+        }
+        {
+            val t = null[Int]
+            val x = if null(i) = t {
+                "not null: " + i
+            } else {
+                "null"
+            }
+            Assert.equal(x, "null")
+        }
+    }
+
+    @test
     def nestedItem() = {
         Assert.equal(NestedClass.nestedClassVal, "some nested item val")
     }

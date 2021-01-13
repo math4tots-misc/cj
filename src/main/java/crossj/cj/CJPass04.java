@@ -582,6 +582,40 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitIfNull(CJAstIfNull e, Optional<CJIRType> a) {
+                var inner = evalExpression(e.getExpression());
+                if (!inner.getType().isNullableType()) {
+                    throw CJError.of("Expected nullable type", inner.getMark());
+                }
+                var targetType = ((CJIRClassType) inner.getType()).getArgs().get(0);
+                var target = evalDeclarableTarget(e.getTarget(), e.isMutable(), targetType);
+                CJIRType returnType;
+                CJIRExpression left;
+                if (e.getRight().isEmpty()) {
+                    returnType = ctx.getUnitType();
+                    enterScope();
+                    declareTarget(target);
+                    left = evalExpressionWithType(e.getLeft(), returnType);
+                    exitScope();
+                } else if (a.isPresent()) {
+                    returnType = a.get();
+                    enterScope();
+                    declareTarget(target);
+                    left = evalExpressionWithType(e.getLeft(), returnType);
+                    exitScope();
+                } else {
+                    enterScope();
+                    declareTarget(target);
+                    left = evalExpression(e.getLeft());
+                    exitScope();
+                    returnType = left.getType();
+                }
+                var rightAst = e.getRight().getOrElseDo(() -> new CJAstLiteral(e.getMark(), CJIRLiteralKind.Unit, ""));
+                var right = evalExpressionWithType(rightAst, returnType);
+                return new CJIRIfNull(e, returnType, e.isMutable(), target, inner, left, right);
+            }
+
+            @Override
             public CJIRExpression visitWhile(CJAstWhile e, Optional<CJIRType> a) {
                 var unitType = ctx.getUnitType();
                 var condition = evalBoolExpression(e.getCondition());

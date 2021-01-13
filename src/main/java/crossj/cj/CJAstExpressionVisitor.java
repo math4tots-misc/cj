@@ -15,6 +15,7 @@ public abstract class CJAstExpressionVisitor<R, A> {
     public abstract R visitListDisplay(CJAstListDisplay e, A a);
     public abstract R visitTupleDisplay(CJAstTupleDisplay e, A a);
     public abstract R visitIf(CJAstIf e, A a);
+    public abstract R visitIfNull(CJAstIfNull e, A a);
     public abstract R visitWhile(CJAstWhile e, A a);
     public abstract R visitFor(CJAstFor e, A a);
     public abstract R visitUnion(CJAstUnion e, A a);

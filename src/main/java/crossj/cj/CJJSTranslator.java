@@ -598,6 +598,26 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitIfNull(CJIRIfNull e, Void a) {
+                var inner = translateExpression(e.getExpression()).toPure(ctx);
+                var target = translateTarget(e.getTarget());
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                var tmpvar = ctx.newTempVarName();
+                var lines = List.of("let " + tmpvar + ";\n");
+                lines.addAll(inner.getLines());
+                lines.add("if((" + inner.getExpression() + ")!==null){\n");
+                lines.add("let " + target + "=" + inner.getExpression() + ";\n");
+                lines.addAll(left.getLines());
+                lines.add(tmpvar + "=" + left.getExpression() + ";\n");
+                lines.add("}else{\n");
+                lines.addAll(right.getLines());
+                lines.add(tmpvar + "=" + right.getExpression() + ";\n");
+                lines.add("}\n");
+                return new CJJSBlob(lines, tmpvar, true);
+            }
+
+            @Override
             public CJJSBlob visitWhile(CJIRWhile e, Void a) {
                 var condition = translateExpression(e.getCondition());
                 var lines = condition.getLines();
