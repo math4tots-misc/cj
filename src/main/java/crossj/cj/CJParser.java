@@ -834,6 +834,12 @@ public final class CJParser {
                         : Optional.empty();
                 return new CJAstIf(mark, condition, left, right);
             }
+            case CJToken.KW_RETURN: {
+                var mark = getMark();
+                next();
+                var expression = parseExpression();
+                return new CJAstReturn(mark, expression);
+            }
             case CJToken.KW_WHILE: {
                 var mark = getMark();
                 next();

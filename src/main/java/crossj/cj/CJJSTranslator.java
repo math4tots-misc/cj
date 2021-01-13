@@ -650,6 +650,14 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitReturn(CJIReturn e, Void a) {
+                var inner = translateExpression(e.getExpression());
+                var lines = inner.getLines();
+                lines.add("return " + inner.getExpression() + ";\n");
+                return new CJJSBlob(lines, "NORETURN", false);
+            }
+
+            @Override
             public CJJSBlob visitAwait(CJIRAwait e, Void a) {
                 var inner = translateExpression(e.getInner());
                 return new CJJSBlob(inner.getLines(), "(await " + inner.getExpression() + ")", false);

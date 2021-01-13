@@ -19,5 +19,6 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitFor(CJIRFor e, A a);
     public abstract R visitUnion(CJIRUnion e, A a);
     public abstract R visitLambda(CJIRLambda e, A a);
+    public abstract R visitReturn(CJIReturn e, A a);
     public abstract R visitAwait(CJIRAwait e, A a);
 }

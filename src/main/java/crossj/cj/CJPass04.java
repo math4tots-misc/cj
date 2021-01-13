@@ -59,6 +59,14 @@ final class CJPass04 extends CJPassBaseEx {
         }
     }
 
+    private CJIRType getCurrentExpectedReturnTypeOrNull() {
+        if (lambdaStack.size() > 0) {
+            return lambdaStack.last().get2();
+        } else {
+            return lctx.getMethod().map(m -> m.getInnerReturnType()).getOrElse(null);
+        }
+    }
+
     private CJIRLocalVariableDeclaration findLocalOrNull(String shortName) {
         for (int i = locals.size() - 1; i >= 0; i--) {
             var decl = locals.get(i).getOrNull(shortName);
@@ -170,7 +178,10 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private void checkResultType(CJMark mark, CJIRType expectedType, CJIRType actualType) {
-        if (!expectedType.equals(ctx.getUnitType()) && !expectedType.equals(actualType)) {
+        if (expectedType.equals(ctx.getUnitType()) || actualType.equals(ctx.getNoReturnType())) {
+            // when the expected type is Unit or the expression's type is NoReturn,
+            // by default we forgo the check.
+        } else if (!expectedType.equals(actualType)) {
             throw CJError.of("Expected " + expectedType + " but got " + actualType, mark);
         }
     }
@@ -701,6 +712,22 @@ final class CJPass04 extends CJPassBaseEx {
                 var body = evalExpressionWithType(e.getBody(), returnType);
                 exitLambdaScope();
                 return new CJIRLambda(e, type, e.isAsync(), parameters, body);
+            }
+
+            @Override
+            public CJIRExpression visitReturn(CJAstReturn e, Optional<CJIRType> a) {
+                var unitType = ctx.getUnitType();
+                var expectedReturnType = getCurrentExpectedReturnTypeOrNull();
+                if (expectedReturnType == null) {
+                    throw CJError.of("Tried to return outside of a function or method", e.getMark());
+                }
+                var inner = evalExpressionWithType(e.getExpression(), expectedReturnType);
+                if (!inner.getType().equals(unitType) && expectedReturnType.equals(unitType)) {
+                    // by normal type checking rules, returning non-unit from function that returns
+                    // unit is actually fine, however, in explicit returns this seems like a bug.
+                    throw CJError.of("Function returns unit type, but a non-unit was returned", e.getMark());
+                }
+                return new CJIReturn(e, ctx.getNoReturnType(), inner);
             }
 
             @Override
