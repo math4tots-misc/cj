@@ -808,15 +808,52 @@ public final class CJParser {
             case CJToken.KW_FOR: {
                 var mark = getMark();
                 next();
-                var target = parseTarget();
-                expect(CJToken.KW_IN);
-                var container = parseExpression();
-                Optional<CJAstExpression> ifCondition = consume(CJToken.KW_IF) ? Optional.of(parseExpression())
-                        : Optional.empty();
-                Optional<CJAstExpression> whileCondition = consume(CJToken.KW_WHILE) ? Optional.of(parseExpression())
-                        : Optional.empty();
-                var body = parseBlock();
-                return new CJAstFor(mark, target, container, ifCondition, whileCondition, body);
+                if (at(';') || at(CJToken.ID) && atOffset('=', 1)) {
+                    // c-style for loop -- pure parse-time syntactic sugar
+                    Optional<CJAstAssignmentTarget> target;
+                    Optional<CJAstExpression> initExpr;
+                    if (at(';')) {
+                        target = Optional.empty();
+                        initExpr = Optional.empty();
+                    } else {
+                        target = Optional.of(parseTarget());
+                        expect('=');
+                        initExpr = Optional.of(parseExpression());
+                    }
+                    expect(';');
+                    CJAstExpression condition;
+                    if (at(';')) {
+                        condition = new CJAstLiteral(mark, CJIRLiteralKind.Bool, "true");
+                    } else {
+                        condition = parseExpression();
+                    }
+                    expect(';');
+                    Optional<CJAstExpression> increment = at('{') ? Optional.empty() : Optional.of(parseExpression());
+                    var body = parseBlock();
+
+                    List<CJAstExpression> outer = List.of();
+                    if (target.isPresent()) {
+                        outer.add(new CJAstVariableDeclaration(mark, true, target.get(), Optional.empty(),
+                                initExpr.get()));
+                    }
+                    var inner = List.<CJAstExpression>of(body);
+                    if (increment.isPresent()) {
+                        inner.add(increment.get());
+                    }
+                    outer.add(new CJAstWhile(mark, condition, new CJAstBlock(mark, inner)));
+                    return new CJAstBlock(mark, outer);
+                } else {
+                    var target = parseTarget();
+                    expect(CJToken.KW_IN);
+                    var container = parseExpression();
+                    Optional<CJAstExpression> ifCondition = consume(CJToken.KW_IF) ? Optional.of(parseExpression())
+                            : Optional.empty();
+                    Optional<CJAstExpression> whileCondition = consume(CJToken.KW_WHILE)
+                            ? Optional.of(parseExpression())
+                            : Optional.empty();
+                    var body = parseBlock();
+                    return new CJAstFor(mark, target, container, ifCondition, whileCondition, body);
+                }
             }
             case CJToken.KW_NOT: {
                 var mark = getMark();
