@@ -66,19 +66,27 @@ public final class CJIRContext extends CJIRContextBase {
         return sourceRoots;
     }
 
-    private CJIRItem _forceLoadItem(String name, CJMark... marks) {
+    private String getItemPathOrNull(String name) {
         var relpath = name.replace(".", FS.getSeparator()) + ".cj";
         for (var sourceRoot : sourceRoots) {
             var path = FS.join(sourceRoot, relpath);
             if (FS.isFile(path)) {
-                var data = IO.readFile(path);
-                var item = itemFromAst(CJParser.parseString(path, data));
-                if (!item.getFullName().equals(name)) {
-                    throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
-                            item.getMark());
-                }
-                return item;
+                return path;
             }
+        }
+        return null;
+    }
+
+    private CJIRItem _forceLoadItem(String name, CJMark... marks) {
+        var path = getItemPathOrNull(name);
+        if (path != null) {
+            var data = IO.readFile(path);
+            var item = itemFromAst(CJParser.parseString(path, data));
+            if (!item.getFullName().equals(name)) {
+                throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
+                        item.getMark());
+            }
+            return item;
         }
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
     }
@@ -113,6 +121,9 @@ public final class CJIRContext extends CJIRContextBase {
         }
         var outerItem = _forceLoadItem(getOutermostItemName(name), marks);
         itemMap.put(outerItem.getFullName(), outerItem);
+        if (outerItem.getTypeParameters().size() > 0 && getItemPathOrNull(name + "_") != null) {
+            loadItem(name + "_", marks);
+        }
 
         var ast = outerItem.getAst();
         for (var member : ast.getMembers()) {
