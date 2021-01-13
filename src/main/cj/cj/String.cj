@@ -11,4 +11,6 @@ native class String: Repr, ToBool, Hash {
 
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
+
+    def join[T: ToString, C: Iterable[T]](self: Self, parts: C): String
 }

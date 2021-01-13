@@ -38,4 +38,12 @@ class MC$cj$Iterator {
         }
         return start;
     }
+    *M$flatMap(TV$X, TV$R, self, f) {
+        for (const t of self) {
+            const r = f(t);
+            for (const x of TV$R.M$iter(r)) {
+                yield x;
+            }
+        }
+    }
 }

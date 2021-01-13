@@ -13,8 +13,11 @@ native class List[T?] :
     @generic def add(self: Self, t: T)
     @generic def get(self: Self, i: Int): T
     @generic def set(self: Self, i: Int, t: T)
+    @generic def removeIndex(self: Self, i: Int): T
 
-    @generic def map[R](self: Self, f: Fn[T, R]): List[R]
+    @generic def __mul(self: Self, n: Int): Self
+
+    @generic def map[R?](self: Self, f: Fn[T, R]): List[R]
     @generic def filter(self: Self, f: Fn[T, Bool]): Self
 
     def toBool(self: Self): Bool

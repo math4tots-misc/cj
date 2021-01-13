@@ -290,7 +290,12 @@ final class CJPass04 extends CJPassBaseEx {
                 var exprsLimit = Math.min(args.size(), parameters.size());
 
                 if (expectedReturnType.isPresent()) {
-                    stack.add(Tuple3.of(mark, methodRef.getMethod().getReturnType(), expectedReturnType.get()));
+                    var mrtype = methodRef.getMethod().getReturnType();
+                    var etype = expectedReturnType.get();
+                    // If the method return type is NoReturn, there's no use trying to infer with it.
+                    if (!mrtype.isNoReturnType()) {
+                        stack.add(Tuple3.of(mark, mrtype, etype));
+                    }
                 }
 
                 while (map.size() < target && (stack.size() > 0 || exprs.size() < exprsLimit)) {
@@ -575,6 +580,11 @@ final class CJPass04 extends CJPassBaseEx {
                 } else {
                     left = evalExpression(e.getLeft());
                     returnType = left.getType();
+                    // TODO: Do the "correct" thing here
+                    // HACK: If the first branch is a NoReturn, relax the return type to a unit
+                    if (returnType.isNoReturnType()) {
+                        returnType = ctx.getUnitType();
+                    }
                 }
                 var rightAst = e.getRight().getOrElseDo(() -> new CJAstLiteral(e.getMark(), CJIRLiteralKind.Unit, ""));
                 var right = evalExpressionWithType(rightAst, returnType);
@@ -609,6 +619,11 @@ final class CJPass04 extends CJPassBaseEx {
                     left = evalExpression(e.getLeft());
                     exitScope();
                     returnType = left.getType();
+                    // TODO: Do the "correct" thing here
+                    // HACK: If the first branch is a NoReturn, relax the return type to a unit
+                    if (returnType.isNoReturnType()) {
+                        returnType = ctx.getUnitType();
+                    }
                 }
                 var rightAst = e.getRight().getOrElseDo(() -> new CJAstLiteral(e.getMark(), CJIRLiteralKind.Unit, ""));
                 var right = evalExpressionWithType(rightAst, returnType);

@@ -1,6 +1,6 @@
 package cj
 
-native class Tuple4[A0, A1, A2, A3]:
+native class Tuple4[A0?, A1?, A2?, A3?]:
         Eq if A0 : Eq and A1 : Eq and A2 : Eq and A3 : Eq,
         Hash if A0 : Hash and A1 : Hash and A2 : Hash and A3 : Hash,
         Repr if A0 : Repr and A1 : Repr and A2 : Repr and A3 : Repr {

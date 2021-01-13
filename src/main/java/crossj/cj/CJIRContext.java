@@ -13,8 +13,9 @@ public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.NonNull",
             "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString",
-            "cj.ToList", "cj.List", "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord",
-            "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4");
+            "cj.ToList", "cj.List", "cj.Map", "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq",
+            "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3",
+            "cj.Tuple4");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -24,6 +25,7 @@ public final class CJIRContext extends CJIRContextBase {
      */
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
             Pair.of("Nullable", List.of("cj.Nullable")), Pair.of("NonNull", List.of("cj.NonNull")),
+            Pair.of("List", List.of("cj.List")), Pair.of("Map", List.of("cj.Map")),
             Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Fn0", List.of("cj.Fn0")),
             Pair.of("Fn1", List.of("cj.Fn1")), Pair.of("Fn2", List.of("cj.Fn2")), Pair.of("Fn3", List.of("cj.Fn3")),
             Pair.of("Fn4", List.of("cj.Fn4")), Pair.of("Tuple", List.of()), Pair.of("Tuple2", List.of("cj.Tuple2")),

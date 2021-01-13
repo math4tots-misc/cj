@@ -62,4 +62,13 @@ class Test03List {
             Assert.equal(iter.next(), null)
         }
     }
+
+    @test
+    def removeIndex() = {
+        {
+            val list = ["asdf", "erty", "cvbn"]
+            Assert.equal(list.removeIndex(1), "erty")
+            Assert.equal(list, ["asdf", "cvbn"])
+        }
+    }
 }

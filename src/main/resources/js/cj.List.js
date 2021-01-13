@@ -25,6 +25,20 @@ class MC$cj$List {
     M$set(self, i, t) {
         self[i] = t;
     }
+    M$removeIndex(self, i) {
+        let value = self[i];
+        self.splice(i, 1);
+        return value;
+    }
+    M$__mul(self, n) {
+        const ret = [];
+        for (let i = 0; i < n; i++) {
+            for (const t of self) {
+                ret.push(t);
+            }
+        }
+        return ret;
+    }
     M$map(TV$R, self, f) {
         return self.map(f);
     }
