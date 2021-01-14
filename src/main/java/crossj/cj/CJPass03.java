@@ -93,7 +93,7 @@ final class CJPass03 extends CJPassBaseEx {
             parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
         }
         var returnType = fieldAst.getType();
-        return synthesizeMethod(mark, methodName, parameters, returnType);
+        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -105,7 +105,7 @@ final class CJPass03 extends CJPassBaseEx {
         }
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
         var returnType = newUnitTypeExpression(mark);
-        return synthesizeMethod(mark, methodName, parameters, returnType);
+        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeFieldAugMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -117,7 +117,7 @@ final class CJPass03 extends CJPassBaseEx {
         }
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
         var returnType = newUnitTypeExpression(mark);
-        return synthesizeMethod(mark, methodName, parameters, returnType);
+        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeMallocMethod(CJIRItem item) {
@@ -128,7 +128,7 @@ final class CJPass03 extends CJPassBaseEx {
         var methodName = "__malloc";
         var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
         var returnType = newSelfTypeExpression(item.getMark());
-        return synthesizeMethod(mark, methodName, parameters, returnType);
+        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
     private CJAstMethodDefinition synthesizeCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {
@@ -136,13 +136,17 @@ final class CJPass03 extends CJPassBaseEx {
         var parameters = Range.upto(caseAst.getTypes().size()).map(
                 i -> new CJAstParameter(caseAst.getTypes().get(i).getMark(), false, "a" + i, caseAst.getTypes().get(i)))
                 .list();
-        return synthesizeMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
+        return synthesizeGenericMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
     }
 
-    private CJAstMethodDefinition synthesizeMethod(CJMark mark, String name, List<CJAstParameter> parameters,
+    private CJAstAnnotationExpression synthesizeGenericAnnotation(CJMark mark) {
+        return new CJAstAnnotationExpression(mark, "generic", List.of());
+    }
+
+    private CJAstMethodDefinition synthesizeGenericMethod(CJMark mark, String name, List<CJAstParameter> parameters,
             CJAstTypeExpression returnType) {
-        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(), List.of(), List.of(), name, List.of(),
-                parameters, Optional.of(returnType), Optional.empty());
+        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(synthesizeGenericAnnotation(mark)), List.of(),
+                List.of(), name, List.of(), parameters, Optional.of(returnType), Optional.empty());
     }
 
     private CJAstTypeExpression newSelfTypeExpression(CJMark mark) {

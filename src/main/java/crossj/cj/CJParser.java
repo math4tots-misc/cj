@@ -790,15 +790,35 @@ public final class CJParser {
             case '[': {
                 var mark = getMark();
                 next();
-                var expressions = List.<CJAstExpression>of();
-                while (!consume(']')) {
-                    expressions.add(parseExpression());
-                    if (!consume(',')) {
+                if (consume(':')) {
+                    expect(']');
+                    return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Map", List.of())),
+                            "empty", List.of(), List.of());
+                } else if (consume(']')) {
+                    return new CJAstListDisplay(mark, List.of());
+                } else {
+                    var first = parseExpression();
+                    if (consume(':')) {
+                        var firstVal = parseExpression();
+                        var pairs = List.<CJAstExpression>of(new CJAstTupleDisplay(mark, List.of(first, firstVal)));
+                        while (consume(',') && !at(']')) {
+                            var key = parseExpression();
+                            expect(':');
+                            var value = parseExpression();
+                            pairs.add(new CJAstTupleDisplay(mark, List.of(key, value)));
+                        }
                         expect(']');
-                        break;
+                        return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Map", List.of())),
+                                "of", List.of(), List.of(new CJAstListDisplay(mark, pairs)));
+                    } else {
+                        var expressions = List.of(first);
+                        while (consume(',') && !at(']')) {
+                            expressions.add(parseExpression());
+                        }
+                        expect(']');
+                        return new CJAstListDisplay(mark, expressions);
                     }
                 }
-                return new CJAstListDisplay(mark, expressions);
             }
             case CJToken.KW_NULL: {
                 var mark = getMark();

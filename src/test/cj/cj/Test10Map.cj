@@ -20,10 +20,14 @@ class Test10Map {
     }
 
     @test
-    def constructor() = {
+    def literals() = {
         {
             val map = Map.of([(1, 2), (3, 4)])
             Assert.equal("" + map, "[1: 2, 3: 4]")
+            Assert.equal(map, [1: 2, 3: 4])
+            Assert.equal(map, [3: 4, 1: 2])
+            Assert.that(map != [1: 2])
+            Assert.that(map != [1: 2, 3: 5])
         }
     }
 }
