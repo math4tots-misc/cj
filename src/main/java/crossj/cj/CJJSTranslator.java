@@ -355,7 +355,7 @@ public final class CJJSTranslator {
             @Override
             public CJJSBlob visitMethodCall(CJIRMethodCall e, Void a) {
                 var typeArgs = e.getMethodRef().isGeneric() ? e.getTypeArgs().map(i -> "null")
-                        : e.getTypeArgs().map(CJJSTranslator.this::translateType);
+                        : translateTypeArgs(e.getMethodRef().getMethod().getTypeParameters(), e.getTypeArgs());
                 var args = e.getArgs().map(CJJSTranslator.this::translateExpression);
                 args = args.all(arg -> arg.isSimple()) ? args : args.map(arg -> arg.toPure(ctx));
                 var lines = List.<String>of();
@@ -400,7 +400,7 @@ public final class CJJSTranslator {
                                 allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")"), false);
                     default: {
                         String ownerStr;
-                        if (methodRef.isGeneric() && owner instanceof CJIRClassType) {
+                        if (methodRef.getMethod().isGenericSelf() && owner instanceof CJIRClassType) {
                             ownerStr = translateItemMetaObjectName(((CJIRClassType) owner).getItem().getFullName());
                         } else {
                             ownerStr = translateType(owner);
@@ -723,9 +723,13 @@ public final class CJJSTranslator {
                 } else if (selfType != null && selfType.equals(t)) {
                     return "this";
                 } else {
-                    var metaClassName = translateItemMetaClassName(t.getItem().getFullName());
-                    var args = Str.join(",", t.getArgs().map(arg -> translateType(arg)));
-                    return "new " + metaClassName + "(" + args + ")";
+                    var args = translateTypeArgs(t.getItem().getTypeParameters(), t.getArgs());
+                    if (args.all("null"::equals)) {
+                        return translateItemMetaObjectName(t.getItem().getFullName());
+                    } else {
+                        var metaClassName = translateItemMetaClassName(t.getItem().getFullName());
+                        return "new " + metaClassName + "(" + Str.join(",", args) + ")";
+                    }
                 }
             }
 
@@ -743,6 +747,19 @@ public final class CJJSTranslator {
                 return "this";
             }
         }, null);
+    }
+
+    private List<String> translateTypeArgs(List<CJIRTypeParameter> parameters, List<CJIRType> args) {
+        Assert.equals(parameters.size(), args.size());
+        var out = List.<String>of();
+        for (int i = 0; i < args.size(); i++) {
+            if (parameters.get(i).isGeneric()) {
+                out.add("null");
+            } else {
+                out.add(translateType(args.get(i)));
+            }
+        }
+        return out;
     }
 
     private String translateTarget(CJIRAssignmentTarget target) {

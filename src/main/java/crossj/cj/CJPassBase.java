@@ -35,12 +35,12 @@ abstract class CJPassBase {
         lctxPushed = null;
     }
 
-    List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJAstTypeParameter ast) {
-        var annotationProcessor = CJIRAnnotationProcessor.processTypeParameter(ast);
+    List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJIRTypeParameter typeParameter) {
+        var annotationProcessor = typeParameter.getAnnotation();
         if (annotationProcessor.isNullable()) {
             return List.of();
         } else {
-            return List.of(new CJAstTraitExpression(ast.getMark(), "NonNull", List.of()));
+            return List.of(new CJAstTraitExpression(typeParameter.getMark(), "NonNull", List.of()));
         }
     }
 }

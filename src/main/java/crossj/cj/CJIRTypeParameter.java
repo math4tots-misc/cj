@@ -3,10 +3,20 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
+    private final CJIRAnnotationProcessor annotation;
     private final List<CJIRTrait> traits = List.of();
 
-    public CJIRTypeParameter(CJAstTypeParameter ast) {
+    CJIRTypeParameter(CJAstTypeParameter ast) {
         super(ast);
+        this.annotation = CJIRAnnotationProcessor.processTypeParameter(ast);
+    }
+
+    public CJIRAnnotationProcessor getAnnotation() {
+        return annotation;
+    }
+
+    public boolean isGeneric() {
+        return annotation.isGeneric();
     }
 
     public String getName() {

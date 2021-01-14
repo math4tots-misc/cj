@@ -9,5 +9,5 @@ native class Iterator[T?] : Iterable[T] {
     @generic def filter(self: Self, f: Fn[T, Bool]): Iterator[T]
     @generic def reduce(self: Self, f: Fn[T, T, T]): T
     @generic def fold[R?](self: Self, start: R, f: Fn[R, T, R]): R
-    def flatMap[X?, R?: Iterable[X]](self: Self, f: Fn[T, R]): Iterator[X]
+    @genericSelf def flatMap[@generic X?, R?: Iterable[X]](self: Self, f: Fn[T, R]): Iterator[X]
 }

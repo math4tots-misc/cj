@@ -9,12 +9,12 @@ package cj
 ##
 @nullable
 native class Nullable[T]: Iterable[T], ToBool, Eq if T: Eq, Repr if T: Repr {
-    def isPresent(self: Self): Bool
-    def isEmpty(self: Self): Bool
-    def map[R](self: Self, f: Fn[T, R]): Nullable[R]
-    def get(self: Self): T
-    def iter(self: Self): Iterator[T]
-    def toBool(self: Self): Bool
+    @generic def isPresent(self: Self): Bool
+    @generic def isEmpty(self: Self): Bool
+    @generic def map[R](self: Self, f: Fn[T, R]): Nullable[R]
+    @generic def get(self: Self): T
+    @generic def iter(self: Self): Iterator[T]
+    @generic def toBool(self: Self): Bool
     if T : Eq def __eq(self: Self, other: Self): Bool
     if T : Repr def repr(self: Self): String
 }
