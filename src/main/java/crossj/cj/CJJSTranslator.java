@@ -391,6 +391,10 @@ public final class CJJSTranslator {
                         return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
                     case "cj.Double.__div":
                         return Pair.of("(" + Str.join("/", allArgs) + ")", false);
+                    case "cj.List.empty":
+                        return Pair.of("[]", false);
+                    case "cj.List_.empty":
+                        return Pair.of("[]", false);
                     case "cj.Fn0":
                     case "cj.Fn1":
                     case "cj.Fn2":
