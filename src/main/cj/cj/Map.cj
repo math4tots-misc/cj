@@ -132,7 +132,9 @@ class Map[K?: Hash, V?] :
 
     def removeOrFalse(self: Self, key: K): Bool = self._removeTriple(key).isPresent()
 
-    if K : Repr def remove(self: Self, key: K) = {
+    if V : NonNull def remove(self: Self, key: K): Nullable[V] = self._removeTriple(key).map(t -> t.get2())
+
+    if K : Repr def removeOrThrow(self: Self, key: K) = {
         if self._removeTriple(key).isEmpty() {
             IO.panic("Key " + key.repr() + " not found in this map")
         }
