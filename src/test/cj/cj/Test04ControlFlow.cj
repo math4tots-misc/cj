@@ -158,13 +158,13 @@ class Test04ControlFlow {
             }
             Assert.equal(x, "3 to 5")
         }
-        Assert.equal(Self.switchf(0), "other")
-        Assert.equal(Self.switchf(1), "one or two")
-        Assert.equal(Self.switchf(2), "one or two")
-        Assert.equal(Self.switchf(3), "3 to 5")
-        Assert.equal(Self.switchf(4), "3 to 5")
-        Assert.equal(Self.switchf(5), "3 to 5")
-        Assert.equal(Self.switchf(6), "other")
+        Assert.equal(switchf(0), "other")
+        Assert.equal(switchf(1), "one or two")
+        Assert.equal(switchf(2), "one or two")
+        Assert.equal(switchf(3), "3 to 5")
+        Assert.equal(switchf(4), "3 to 5")
+        Assert.equal(switchf(5), "3 to 5")
+        Assert.equal(switchf(6), "other")
     }
 
     def switchf(x: Int): String = switch x {

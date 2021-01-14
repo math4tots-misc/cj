@@ -887,7 +887,19 @@ public final class CJParser {
                 }
             }
             case CJToken.ID:
-                return atLambda() ? parseLambda() : new CJAstVariableAccess(getMark(), parseId());
+                if (atLambda()) {
+                    return parseLambda();
+                } else if (atOffset('(', 1) || atOffset('[', 1)) {
+                    // Syntactic sugar for Self method call
+                    var mark = getMark();
+                    var methodName = parseId();
+                    var typeArgs = parseTypeArgs();
+                    var args = parseArgs();
+                    return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Self", List.of())),
+                            methodName, typeArgs, args);
+                } else {
+                    return new CJAstVariableAccess(getMark(), parseId());
+                }
             case CJToken.KW_IF: {
                 var mark = getMark();
                 next();
