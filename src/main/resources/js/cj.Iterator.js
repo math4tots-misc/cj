@@ -25,14 +25,14 @@ class MC$cj$Iterator {
             }
         }
     }
-    *M$reduce(self, f) {
+    M$reduce(self, f) {
         const { done, start } = self.next();
         if (done) {
             throw new Error("Reduce on an empty iterator");
         }
         return this.M$fold(this.TV$T, self, start, f);
     }
-    *M$fold(TV$R, self, start, f) {
+    M$fold(TV$R, self, start, f) {
         for (const t of self) {
             start = f(start, t);
         }
