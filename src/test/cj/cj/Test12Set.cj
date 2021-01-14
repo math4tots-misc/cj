@@ -8,6 +8,7 @@ class Test12Set {
     def literal() = {
         val set = Set.of([1, 2, 3])
         Assert.equal(set, Set.of([3, 2, 1]))
+        Assert.equal(set, Set(2, 3, 2, 1))
     }
 
     @test
