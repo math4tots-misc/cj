@@ -144,4 +144,48 @@ class Test04ControlFlow {
     def functionThatReturns(i: Int) : Int = {
         return i + 10
     }
+
+    @test
+    def switch1() = {
+        {
+            val x = switch 5 {
+                case 1
+                case 2 = "one or two"
+                case 3
+                case 4
+                case 5 = "3 to 5"
+                default = "other"
+            }
+            Assert.equal(x, "3 to 5")
+        }
+        Assert.equal(Self.switchf(0), "other")
+        Assert.equal(Self.switchf(1), "one or two")
+        Assert.equal(Self.switchf(2), "one or two")
+        Assert.equal(Self.switchf(3), "3 to 5")
+        Assert.equal(Self.switchf(4), "3 to 5")
+        Assert.equal(Self.switchf(5), "3 to 5")
+        Assert.equal(Self.switchf(6), "other")
+    }
+
+    def switchf(x: Int): String = switch x {
+        case 1
+        case 2 = "one or two"
+        case 3
+        case 4
+        case 5 = "3 to 5"
+        default = "other"
+    }
+
+    @test
+    def switchStr() = {
+        {
+            val x = switch "xxx" {
+                case "yy" = "got 2 ys"
+                case "xx" = "got 2 xs"
+                case "xxx" = "got 3 xs"
+                case "xxxx" = "got 4 xs"
+            }
+            Assert.equal(x, "got 3 xs")
+        }
+    }
 }

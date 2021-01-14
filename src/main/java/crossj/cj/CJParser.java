@@ -1058,6 +1058,35 @@ public final class CJParser {
                 expect('}');
                 return new CJAstUnion(mark, target, cases, fallback);
             }
+            case CJToken.KW_SWITCH: {
+                var mark = getMark();
+                next();
+                var target = parseExpression();
+                expect('{');
+                skipDelimiters();
+                var cases = List.<Pair<List<CJAstExpression>, CJAstExpression>>of();
+                while (!at('}') && !at(CJToken.KW_DEFAULT)) {
+                    expect(CJToken.KW_CASE);
+                    var valexprs = List.of(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                    skipDelimiters();
+                    while (consume(CJToken.KW_CASE)) {
+                        valexprs.add(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                        skipDelimiters();
+                    }
+                    expect('=');
+                    var body = parseExpression();
+                    expectDelimiters();
+                    cases.add(Pair.of(valexprs, body));
+                }
+                var fallback = Optional.<CJAstExpression>empty();
+                if (consume(CJToken.KW_DEFAULT)) {
+                    expect('=');
+                    fallback = Optional.of(parseExpression());
+                    expectDelimiters();
+                }
+                expect('}');
+                return new CJAstSwitch(mark, target, cases, fallback);
+            }
         }
         throw ekind("expression");
     }

@@ -681,6 +681,48 @@ public final class CJJSTranslator {
             }
 
             @Override
+            public CJJSBlob visitSwitch(CJIRSwitch e, Void a) {
+                var target = translateExpression(e.getTarget());
+                var lines = target.getLines();
+                var tmpvar = ctx.newTempVarName();
+                lines.add("let " + tmpvar + ";\n");
+                lines.add("switch(" + target.getExpression() + "){\n");
+                for (var case_ : e.getCases()) {
+                    var values = case_.get1().map(c -> {
+                        var v = translateExpression(c);
+                        // TODO: Reconsider this restriction
+                        // At the very least, a check like this should live in one of the JSPass*
+                        // classees and not in code generation.
+                        if (!v.isSimple()) {
+                            throw CJError.of("Only simple expressions are allowed here", c.getMark());
+                        }
+                        return v;
+                    });
+                    for (var value : values) {
+                        lines.add("case " + value.getExpression() + ":\n");
+                    }
+                    lines.add("{\n");
+                    var body = translateExpression(case_.get2());
+                    lines.addAll(body.getLines());
+                    lines.add(tmpvar + "=" + body.getExpression() + ";\n");
+                    lines.add("break;\n");
+                    lines.add("}\n");
+                }
+                lines.add("default:");
+                if (e.getFallback().isPresent()) {
+                    lines.add("{\n");
+                    var fallback = translateExpression(e.getFallback().get());
+                    lines.addAll(fallback.getLines());
+                    lines.add(tmpvar + "=" + fallback.getExpression() + ";\n");
+                    lines.add("}\n");
+                } else {
+                    lines.add("throw new Error('Unhandled switch case');\n");
+                }
+                lines.add("}\n");
+                return new CJJSBlob(lines, tmpvar, true);
+            }
+
+            @Override
             public CJJSBlob visitLambda(CJIRLambda e, Void a) {
                 var parameters = e.getParameters();
                 var parameterNames = parameters.map(p -> translateLocalVariableName(p.getName()));

@@ -735,6 +735,39 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
+            public CJIRExpression visitSwitch(CJAstSwitch e, Optional<CJIRType> a) {
+                var target = evalExpression(e.getTarget());
+                var targetType = target.getType();
+                var switchPermittedTypes = List.of(ctx.getIntType(), ctx.getCharType(), ctx.getStringType());
+                // TODO: Reconsider this
+                if (!switchPermittedTypes.contains(targetType)) {
+                    throw CJError.of(targetType + " may not be used in a switch", e.getMark());
+                }
+                var cases = List.<Pair<List<CJIRExpression>, CJIRExpression>>of();
+                for (var case_ : e.getCases()) {
+                    var expressions = case_.get1().map(c -> evalExpressionWithType(c, targetType));
+                    var body = evalExpressionEx(case_.get2(), a);
+                    if (a.isEmpty()) {
+                        a = Optional.of(body.getType());
+                    }
+                    cases.add(Pair.of(expressions, body));
+                }
+                Optional<CJIRExpression> fallback = Optional.empty();
+                if (e.getFallback().isPresent()) {
+                    var fallbackAst = e.getFallback().get();
+                    var body = evalExpressionEx(fallbackAst, a);
+                    if (a.isEmpty()) {
+                        a = Optional.of(body.getType());
+                    }
+                    fallback = Optional.of(body);
+                }
+                if (a.isEmpty()) {
+                    throw CJError.of("switch must have at least one case or a default", e.getMark());
+                }
+                return new CJIRSwitch(e, a.get(), target, cases, fallback);
+            }
+
+            @Override
             public CJIRExpression visitLambda(CJAstLambda e, Optional<CJIRType> a) {
                 if (a.isEmpty()) {
                     throw CJError.of("Could not infer type of lambda expression", e.getMark());
