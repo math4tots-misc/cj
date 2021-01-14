@@ -5,6 +5,7 @@ import cj.Range
 
 class Map[K: Hash, V?] :
         Eq if V : Eq,
+        Hash if V : Hash,
         Repr if K : Repr and V : Repr {
     var _size : Int
     var _list : List[List[Tuple[Int, K, V]]]
@@ -157,6 +158,9 @@ class Map[K: Hash, V?] :
         }
         true
     }
+
+    if V: Hash def hash(self: Self): Int = (
+        self.pairs().fold(0, (h, pair) -> h + pair.hash()))
 
     if K: Repr and V: Repr def repr(self: Self): String = {
         if self._size == 0 {

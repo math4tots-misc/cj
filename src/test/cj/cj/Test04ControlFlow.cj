@@ -49,7 +49,10 @@ class Test04ControlFlow {
 
     @test
     def nullableTypeArg() = {
-        NullableTypeArg[Nullable[String]].__malloc(null)
+        val a = NullableTypeArg[Nullable[String]].__malloc(null)
+        Assert.equal(a.t, null)
+        Assert.that(a.t == null)
+        Assert.that(a.t != null("hi"))
     }
 
     # For type parameters: "T?" can also be used as an alias for "@nullable T"

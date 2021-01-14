@@ -68,6 +68,19 @@ public final class CJJSTranslator {
         return out.toString();
     }
 
+    private static boolean isWrapperType(CJIRType type) {
+        if (!(type instanceof CJIRClassType)) {
+            return false;
+        }
+        var item = ((CJIRClassType) type).getItem();
+        return isWrapperItem(item);
+    }
+
+    private static boolean isWrapperItem(CJIRItem item) {
+        var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
+        return nonStaticFields.size() == 1 && !nonStaticFields.get(0).isMutable();
+    }
+
     private static void emitStackData(StringBuilder out, CJJSContext jsctx) {
         out.append("const filenameData=[\n");
         for (var filename : jsctx.getFileNamesForStack()) {
@@ -256,21 +269,33 @@ public final class CJJSTranslator {
         // for (non-union) classes: emit non-static fields and malloc
         if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
             var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
-            for (var field : nonStaticFields) {
-                var index = field.getIndex();
+            if (isWrapperItem(item)) {
+                // wrapper type
+                // there is exactly 1 non-static field, and it is immutable
+                Assert.equals(nonStaticFields.size(), 1);
+                var field = nonStaticFields.get(0);
+                Assert.that(!field.isMutable());
                 var getterMethodName = translateMethodName(field.getGetterName());
-                out.append(getterMethodName + "(a){return a[" + index + "]}\n");
-                if (field.isMutable()) {
-                    var setterMethodName = translateMethodName(field.getSetterName());
-                    out.append(setterMethodName + "(a,x){a[" + index + "]=x}\n");
-                }
-            }
-            var mallocMethodName = translateMethodName("__malloc");
-            if (nonStaticFields.isEmpty()) {
-                out.append(mallocMethodName + "(){return undefined;}\n");
+                out.append(getterMethodName + "(a){return a}\n");
+                var mallocMethodName = translateMethodName("__malloc");
+                out.append(mallocMethodName + "(a){return a}\n");
             } else {
-                var argnames = Str.join(",", Range.upto(nonStaticFields.size()).map(i -> "a" + i));
-                out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
+                for (var field : nonStaticFields) {
+                    var index = field.getIndex();
+                    var getterMethodName = translateMethodName(field.getGetterName());
+                    out.append(getterMethodName + "(a){return a[" + index + "]}\n");
+                    if (field.isMutable()) {
+                        var setterMethodName = translateMethodName(field.getSetterName());
+                        out.append(setterMethodName + "(a,x){a[" + index + "]=x}\n");
+                    }
+                }
+                var mallocMethodName = translateMethodName("__malloc");
+                if (nonStaticFields.isEmpty()) {
+                    out.append(mallocMethodName + "(){return undefined;}\n");
+                } else {
+                    var argnames = Str.join(",", Range.upto(nonStaticFields.size()).map(i -> "a" + i));
+                    out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
+                }
             }
         }
 
@@ -428,7 +453,8 @@ public final class CJJSTranslator {
                                                 + allArgs.last(), false);
                                 }
                             } else if (!field.isStatic()) {
-                                var target = allArgs.get(0) + "[" + field.getIndex() + "]";
+                                var target = isWrapperType(owner) ? allArgs.get(0)
+                                        : allArgs.get(0) + "[" + field.getIndex() + "]";
                                 switch (info.getKind()) {
                                     case "":
                                         Assert.equals(allArgs.size(), 1);
@@ -436,6 +462,7 @@ public final class CJJSTranslator {
                                     case "=":
                                     case "+=":
                                         Assert.equals(allArgs.size(), 2);
+                                        Assert.that(field.isMutable());
                                         return Pair.of(target + info.getKind() + allArgs.last(), false);
                                 }
                             }
