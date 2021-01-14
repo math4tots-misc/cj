@@ -153,6 +153,7 @@ final class CJPass04 extends CJPassBaseEx {
         // different.
         var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, ast.getMark());
         var parameterTypes = reifiedMethodRef.getParameterTypes();
+        Assert.that(!methodRef.getMethod().isVariadic());
         checkArgc(parameterTypes, args, ast.getMark());
         for (int i = 0; i < args.size(); i++) {
             var parameterType = parameterTypes.get(i);
@@ -257,6 +258,22 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var methodRef = owner.findMethod(e.getName(), e.getMark());
 
+                if (methodRef.getMethod().isVariadic()) {
+                    // if this is a variadic method, wrap trailing args in a list display
+                    var split = methodRef.getMethod().getParameters().size() - 1;
+                    var newArgAsts = argAsts.sliceUpto(split);
+                    newArgAsts.add(new CJAstListDisplay(e.getMark(), argAsts.sliceFrom(split)));
+
+                    // If we had to evaluate the first argument to determine the owner type,
+                    // make sure that we didn't change it.
+                    // Theoretically we could support this case, but it would require a bit more
+                    // case handling.
+                    if (e.getOwner().isEmpty() && argAsts.get(0) != newArgAsts.get(0)) {
+                        throw CJError.of("The owner argument cannot be part of a variadic list", e.getMark());
+                    }
+                    argAsts = newArgAsts;
+                }
+
                 if (e.getTypeArgs().size() == 0 && methodRef.getMethod().getTypeParameters().size() > 0) {
                     // If no type arguments are provided, and the method has type parameters,
                     // try to infer them.
@@ -292,7 +309,8 @@ final class CJPass04 extends CJPassBaseEx {
                 if (expectedReturnType.isPresent()) {
                     var mrtype = methodRef.getMethod().getReturnType();
                     var etype = expectedReturnType.get();
-                    // If the method return type is NoReturn, there's no use trying to infer with it.
+                    // If the method return type is NoReturn, there's no use trying to infer with
+                    // it.
                     if (!mrtype.isNoReturnType()) {
                         stack.add(Tuple3.of(mark, mrtype, etype));
                     }

@@ -26,6 +26,7 @@ public final class CJIRAnnotationProcessor {
     private boolean test = false;
     private boolean generic = false;
     private boolean genericSelf = false;
+    private boolean variadic = false;
     private final List<String> deriveList = List.of();
 
     private CJIRAnnotationProcessor(CJMark mark, List<CJAstAnnotationExpression> commands) {
@@ -64,26 +65,35 @@ public final class CJIRAnnotationProcessor {
         }
     }
 
+    private void cannotMarkVariadic(CJAstNode ast) {
+        if (variadic){
+            throw CJError.of(ast.getClass() + " cannot be marked variadic", ast.getMark());
+        }
+    }
+
     private void checkForItem(CJAstItemDefinition ast) {
         cannotMarkTest(ast);
         cannotMarkGeneric(ast);
         cannotMarkGenericSelf(ast);
+        cannotMarkVariadic(ast);
     }
 
     private void checkForMember(CJAstItemMemberDefinition ast) {
         cannotMarkDerive(ast);
+        cannotMarkNullable(ast);
         if (!(ast instanceof CJAstMethodDefinition)) {
             cannotMarkTest(ast);
             cannotMarkGeneric(ast);
             cannotMarkGenericSelf(ast);
+            cannotMarkVariadic(ast);
         }
-        cannotMarkNullable(ast);
     }
 
     private void checkForTypeParameter(CJAstTypeParameter ast) {
         cannotMarkDerive(ast);
         cannotMarkTest(ast);
         cannotMarkGenericSelf(ast);
+        cannotMarkVariadic(ast);
     }
 
     public boolean isNullable() {
@@ -100,6 +110,10 @@ public final class CJIRAnnotationProcessor {
 
     public boolean isGenericSelf() {
         return genericSelf;
+    }
+
+    public boolean isVariadic() {
+        return variadic;
     }
 
     public List<String> getDeriveList() {
@@ -130,6 +144,10 @@ public final class CJIRAnnotationProcessor {
             case "genericSelf":
                 expectArgc(0, expression);
                 genericSelf = true;
+                break;
+            case "variadic":
+                expectArgc(0, expression);
+                variadic = true;
                 break;
             case "derive":
                 deriveList.addAll(expression.getArgs().map(this::eval));

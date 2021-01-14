@@ -56,7 +56,7 @@ public final class CJToken {
     public static final int KW_CONTINUE = 211;
     public static final int KW_VAR = 212;
     public static final int KW_VAL = 213;
-    public static final int KW_NEW = 214;
+    // public static final int KW_NEW = 214;
     public static final int KW_TRAIT = 215;
     public static final int KW_NATIVE = 216;
     public static final int KW_STATIC = 217;
@@ -81,9 +81,9 @@ public final class CJToken {
     public static final int KW_AWAIT = 236;
 
     public static final Tuple<Integer> KEYWORD_TYPES = Tuple.of(KW_DEF, KW_CLASS, KW_TRUE, KW_FALSE, KW_NULL, KW_IF,
-            KW_ELSE, KW_IMPORT, KW_WHILE, KW_BREAK, KW_CONTINUE, KW_VAR, KW_VAL, KW_NEW, KW_TRAIT, KW_NATIVE, KW_STATIC,
-            KW_PRIVATE, KW_PUBLIC, KW_PACKAGE, KW_RETURN, KW_AND, KW_OR, KW_IS, KW_NOT, KW_IN, KW_THEN, KW_SWITCH,
-            KW_CASE, KW_UNION, KW_ENUM, KW_DEFAULT, KW_AS, KW_FOR, KW_ASYNC, KW_AWAIT);
+            KW_ELSE, KW_IMPORT, KW_WHILE, KW_BREAK, KW_CONTINUE, KW_VAR, KW_VAL, /* KW_NEW, */ KW_TRAIT, KW_NATIVE,
+            KW_STATIC, KW_PRIVATE, KW_PUBLIC, KW_PACKAGE, KW_RETURN, KW_AND, KW_OR, KW_IS, KW_NOT, KW_IN, KW_THEN,
+            KW_SWITCH, KW_CASE, KW_UNION, KW_ENUM, KW_DEFAULT, KW_AS, KW_FOR, KW_ASYNC, KW_AWAIT);
 
     public final int type;
     public final String text;
@@ -203,8 +203,8 @@ public final class CJToken {
                 return "CJToken.KW_VAR";
             case KW_VAL:
                 return "CJToken.KW_VAL";
-            case KW_NEW:
-                return "CJToken.KW_NEW";
+            // case KW_NEW:
+            // return "CJToken.KW_NEW";
             case KW_TRAIT:
                 return "CJToken.KW_TRAIT";
             case KW_NATIVE:

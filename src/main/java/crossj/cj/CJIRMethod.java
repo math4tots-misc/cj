@@ -43,6 +43,10 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
         return annotation.isGenericSelf() || isGeneric();
     }
 
+    public boolean isVariadic() {
+        return annotation.isVariadic();
+    }
+
     @Nullable
     public CJIRExtraMethodInfo getExtra() {
         return extra;

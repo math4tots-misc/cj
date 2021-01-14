@@ -208,6 +208,11 @@ final class CJPass03 extends CJPassBaseEx {
             throw CJError.of("Async methods must return a Promise type", method.getMark());
         }
 
+        if (method.isVariadic() && (parameters.isEmpty() || !parameters.last().getVariableType().isListType())) {
+            throw CJError.of("Variadic the last parameter of a variadic method must always be a list type",
+                    method.getMark());
+        }
+
         exitMethod();
 
         item.getMethods().add(method);

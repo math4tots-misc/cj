@@ -851,6 +851,11 @@ public final class CJParser {
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.String, next().text);
             case CJToken.TYPE_ID: {
                 var owner = parseTypeExpression();
+                if (at('(')) {
+                    var mark = getMark();
+                    var args = parseArgs();
+                    return new CJAstMethodCall(mark, Optional.of(owner), "new", List.of(), args);
+                }
                 expect('.');
                 var mark = getMark();
                 var name = parseId();
