@@ -51,7 +51,7 @@ class Map[K: Hash, V?] :
         }
     }
 
-    def size(self: Self): Int = self._size
+    @generic def size(self: Self): Int = self._size
 
     def set(self: Self, key: K, value: V) = {
         self._checkForRehashBeforeInsert()
