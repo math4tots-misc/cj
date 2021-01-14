@@ -13,8 +13,8 @@ class Test12Set {
 
     @test
     def asKeys() = {
-        val map = [Set.of([1]): "first", Set.of([1, 2]): "second"]
-        Assert.equal("" + map, "[Set.of([1]): \"first\", Set.of([1, 2]): \"second\"]")
+        val map = Map(Set.of([1]): "first", Set.of([1, 2]): "second")
+        Assert.equal("" + map, "Map(Set(1): \"first\", Set(1, 2): \"second\")")
         Assert.equal(map.getOrNull(Set.of([2])), null)
         Assert.equal(map.getOrNull(Set.of([1])), null("first"))
         Assert.equal(map.getOrNull(Set.new(1, 2)), null("second"))

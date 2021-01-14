@@ -474,8 +474,13 @@ public final class CJParser {
         return new CJAstParameter(mark, mutable, name, type);
     }
 
-    private CJAstExpression parseExpression() {
+    private CJAstExpression parseExpressionExtended() {
         return parseExpressionWithPrecedence(0);
+    }
+
+    private CJAstExpression parseExpression() {
+        // by default, parsing an expression doesn't handle assignments by default.
+        return parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5);
     }
 
     private CJAstExpression parseExpressionWithPrecedence(int precedence) {
@@ -528,6 +533,14 @@ public final class CJParser {
                             }
                         }
                     }
+                    break;
+                }
+                case ':': {
+                    // a : b is syntactic sugar for (a, b)
+                    var mark = getMark();
+                    next();
+                    var second = parseExpression();
+                    expr = new CJAstTupleDisplay(mark, List.of(expr, second));
                     break;
                 }
                 case '=': {
@@ -714,6 +727,8 @@ public final class CJParser {
             case CJToken.STAR_EQ:
             case CJToken.REM_EQ:
                 return 20;
+            case ':':
+                return 30;
             case CJToken.KW_OR:
                 return 40;
             case CJToken.KW_AND:
@@ -790,35 +805,15 @@ public final class CJParser {
             case '[': {
                 var mark = getMark();
                 next();
-                if (consume(':')) {
-                    expect(']');
-                    return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Map", List.of())),
-                            "empty", List.of(), List.of());
-                } else if (consume(']')) {
-                    return new CJAstListDisplay(mark, List.of());
-                } else {
-                    var first = parseExpression();
-                    if (consume(':')) {
-                        var firstVal = parseExpression();
-                        var pairs = List.<CJAstExpression>of(new CJAstTupleDisplay(mark, List.of(first, firstVal)));
-                        while (consume(',') && !at(']')) {
-                            var key = parseExpression();
-                            expect(':');
-                            var value = parseExpression();
-                            pairs.add(new CJAstTupleDisplay(mark, List.of(key, value)));
-                        }
+                var expressions = List.<CJAstExpression>of();
+                while (!consume(']')) {
+                    expressions.add(parseExpression());
+                    if (!consume(',')) {
                         expect(']');
-                        return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Map", List.of())),
-                                "of", List.of(), List.of(new CJAstListDisplay(mark, pairs)));
-                    } else {
-                        var expressions = List.of(first);
-                        while (consume(',') && !at(']')) {
-                            expressions.add(parseExpression());
-                        }
-                        expect(']');
-                        return new CJAstListDisplay(mark, expressions);
+                        break;
                     }
                 }
+                return new CJAstListDisplay(mark, expressions);
             }
             case CJToken.KW_NULL: {
                 var mark = getMark();
@@ -972,7 +967,8 @@ public final class CJParser {
                         condition = parseExpression();
                     }
                     expect(';');
-                    Optional<CJAstExpression> increment = at('{') ? Optional.empty() : Optional.of(parseExpression());
+                    Optional<CJAstExpression> increment = at('{') ? Optional.empty()
+                            : Optional.of(parseExpressionExtended());
                     var body = parseBlock();
 
                     List<CJAstExpression> outer = List.of();
@@ -1170,7 +1166,7 @@ public final class CJParser {
         skipDelimiters();
         var exprs = List.<CJAstExpression>of();
         while (!consume('}')) {
-            exprs.add(parseExpression());
+            exprs.add(parseExpressionExtended());
             expectDelimiters();
         }
         return new CJAstBlock(mark, exprs);

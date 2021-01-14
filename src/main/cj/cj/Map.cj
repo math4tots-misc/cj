@@ -172,13 +172,8 @@ class Map[K?: Hash, V?] :
     if V: Hash def hash(self: Self): Int = (
         self.pairs().fold(0, (h, pair) -> h + pair.hash()))
 
-    if K: Repr and V: Repr def repr(self: Self): String = {
-        if self._size == 0 {
-            "[:]"
-        } else { (
-            "[" +
-            ", ".join(self.pairs().map(kv -> kv.get0().repr() + ": " + kv.get1().repr())) +
-            "]"
-        ) }
-    }
+    if K: Repr and V: Repr def repr(self: Self): String = (
+        "Map(" +
+        ", ".join(self.pairs().map(kv -> kv.get0().repr() + ": " + kv.get1().repr())) +
+        ")")
 }

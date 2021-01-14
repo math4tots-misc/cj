@@ -31,6 +31,6 @@ class Set[T?: Hash] :
     def hash(self: Self): Int = self.iter().fold(0, (h, t) -> h + t.hash())
 
     if T : Repr def repr(self: Self): String = {
-        "Set.of([" + ", ".join(self.iter().map(t -> t.repr())) + "])"
+        "Set(" + ", ".join(self.iter().map(t -> t.repr())) + ")"
     }
 }
