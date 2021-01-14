@@ -147,11 +147,11 @@ public final class CJIRContext extends CJIRContextBase {
         while (stack.size() > 0) {
             var subdir = stack.pop();
             for (var child : FS.list(FS.join(sourceRoot, subdir))) {
-                var childPath = FS.join(sourceRoot, subdir, child);
+                var innerRelpath = FS.join(subdir, child);
+                var childPath = FS.join(sourceRoot, innerRelpath);
                 if (isValidPackageComponent(child) && FS.isDir(childPath)) {
-                    stack.add(childPath);
+                    stack.add(innerRelpath);
                 } else if (child.endsWith(".cj") && FS.isFile(childPath)) {
-                    var innerRelpath = FS.join(subdir, child);
                     var name = innerRelpath.substring(0, innerRelpath.length() - ".cj".length())
                             .replace(FS.getSeparator(), ".");
                     out.add(name);
