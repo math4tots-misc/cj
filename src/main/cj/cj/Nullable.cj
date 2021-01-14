@@ -5,8 +5,6 @@ package cj
 ## This type is treated specially by the compiler.
 ## In particular, a nullable type may never appear as a type argument.
 ##
-## TODO: Allow Nullable to appear as a type argument in a way similar to Rust's "?Sized" mechanism.
-##
 @nullable
 native class Nullable[T]: Iterable[T], ToBool, Eq if T: Eq, Repr if T: Repr {
     @generic def isPresent(self: Self): Bool

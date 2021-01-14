@@ -59,4 +59,12 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     public List<CJAstItemMemberDefinition> getMembers() {
         return members;
     }
+
+    public boolean isValidCompanionClass() {
+        if (kind != CJIRItemKind.Class || !typeParameters.isEmpty()) {
+            return false;
+        }
+        var nonStaticFields = members.filter(m -> !m.isStatic() && m instanceof CJAstFieldDefinition);
+        return nonStaticFields.isEmpty();
+    }
 }

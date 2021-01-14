@@ -77,8 +77,24 @@ public final class CJJSTranslator {
     }
 
     private static boolean isWrapperItem(CJIRItem item) {
+        // check that there's exactly 1 non-static field
         var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
-        return nonStaticFields.size() == 1 && !nonStaticFields.get(0).isMutable();
+        if (nonStaticFields.size() != 1) {
+            return false;
+        }
+        var field = nonStaticFields.get(0);
+
+        // check that the field is immutable
+        if (field.isMutable()) {
+            return false;
+        }
+
+        // check that the field's type is not nullable
+        if (!field.getType().getTraits().any(t -> t.getItem().getFullName().equals("cj.NonNull"))) {
+            return false;
+        }
+
+        return true;
     }
 
     private static void emitStackData(StringBuilder out, CJJSContext jsctx) {

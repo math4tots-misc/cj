@@ -3,7 +3,7 @@ package cj
 import cj.NonNull
 import cj.Range
 
-class Map[K: Hash, V?] :
+class Map[K?: Hash, V?] :
         Eq if V : Eq,
         Hash if V : Hash,
         Repr if K : Repr and V : Repr {
@@ -11,6 +11,14 @@ class Map[K: Hash, V?] :
     var _list : List[List[Tuple[Int, K, V]]]
 
     @generic def empty(): Self = Self.__malloc(0, [])
+
+    def of(pairs: List[Tuple[K, V]]): Self = {
+        val ret = Self.empty()
+        for (k, v) in pairs {
+            ret.set(k, v)
+        }
+        ret
+    }
 
     def _rehash(self: Self, newCap: Int) = {
         if self._list.size() < newCap {

@@ -161,4 +161,8 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         }
         return isTrait() ? new CJIRTrait(this, args) : new CJIRClassType(this, args);
     }
+
+    public boolean isValidCompanionClass() {
+        return getAst().isValidCompanionClass();
+    }
 }

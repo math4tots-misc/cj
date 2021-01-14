@@ -14,4 +14,14 @@ class Test11Class {
         val a: Int
         var b: String
     }
+
+    @test
+    def wrapperClass() = {
+        val w = Wrapper.__malloc("hello")
+        Assert.equal(w.x, "hello")
+    }
+
+    class Wrapper {
+        val x: String
+    }
 }
