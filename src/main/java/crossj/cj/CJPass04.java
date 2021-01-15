@@ -1,7 +1,6 @@
 package crossj.cj;
 
 import crossj.base.Assert;
-import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
