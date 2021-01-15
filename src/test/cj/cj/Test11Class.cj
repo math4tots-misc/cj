@@ -49,4 +49,26 @@ class Test11Class {
         var mutableField : List[Int]
         val immutableField : String
     }
+
+    @test
+    def derivePod() = {
+        val a = DerivePod([1, 2], "xx")
+        Assert.equal(a, DerivePod([1, 2], "xx"))
+        Assert.that(a == DerivePod([1, 2], "xx"))
+        Assert.that(a != DerivePod([1, 2, 3], "xx"))
+        Assert.that(a != DerivePod([1, 2], "yy"))
+        Assert.equal("" + a, "DerivePod([1, 2], \"xx\")")
+        a.mutableField = [5, 6, 7]
+        Assert.equal(a.mutableField, [5, 6, 7])
+
+        val map = Map(a: 3, DerivePod([], "xx"): 7)
+        Assert.equal(map.get(a), 3)
+    }
+
+    @derive(pod)
+    class DerivePod {
+        static val someStaticField : String = "another static field here"
+        var mutableField : List[Int]
+        val immutableField : String
+    }
 }

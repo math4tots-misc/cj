@@ -32,12 +32,18 @@ final class CJPass02 extends CJPassBase {
         }
         var traitDeclarationAsts = List.<CJAstTraitDeclaration>of();
         traitDeclarationAsts.addAll(item.getAst().getTraitDeclarations());
+        var mark = item.getMark();
+        if (item.isDeriveHash()) {
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Hash"));
+        } else if (item.isDeriveEq()) {
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Eq"));
+        }
+        if (item.isDeriveRepr()) {
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Repr"));
+        }
         if (!item.isTrait() && !item.isNullable()) {
             // unless the class/union is explicitly marked nullable, NonNull is implied
-            var mark = item.getMark();
-            var traitDeclarationAst = new CJAstTraitDeclaration(mark,
-                    new CJAstTraitExpression(mark, "NonNull", List.of()), List.of());
-            traitDeclarationAsts.add(traitDeclarationAst);
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "NonNull"));
         }
         for (var traitDeclarationAst : traitDeclarationAsts) {
             var trait = lctx.evalTraitExpressionUnchecked(traitDeclarationAst.getTrait());
@@ -60,5 +66,9 @@ final class CJPass02 extends CJPassBase {
             throw CJError.of(shortName + " is not a variable", marks);
         }
         return typeParameter;
+    }
+
+    private CJAstTraitDeclaration newSimpleTraitDeclaration(CJMark mark, String shortName) {
+        return new CJAstTraitDeclaration(mark, new CJAstTraitExpression(mark, shortName, List.of()), List.of());
     }
 }

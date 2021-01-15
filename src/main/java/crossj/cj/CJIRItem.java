@@ -7,7 +7,11 @@ import crossj.base.Pair;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean nullable;
-    private final List<String> deriveList;
+    private final boolean deriveNew;
+    private final boolean deriveEq;
+    private final boolean deriveHash;
+    private final boolean deriveRepr;
+    private final boolean derivePod;
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
@@ -21,9 +25,48 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     CJIRItem(CJAstItemDefinition ast, boolean nullable, List<String> deriveList) {
         super(ast);
         this.nullable = nullable;
-        this.deriveList = deriveList;
         this.fullName = ast.getPackageName() + "." + ast.getShortName();
         this.cases = ast.getKind() == CJIRItemKind.Union ? List.of() : null;
+
+        // process derive lists
+        {
+            boolean deriveNew = false;
+            boolean deriveEq = false;
+            boolean deriveHash = false;
+            boolean deriveRepr = false;
+            boolean derivePod = false;
+            for (var command : deriveList) {
+                switch (command) {
+                    case "new":
+                        deriveNew = true;
+                        break;
+                    case "eq":
+                        deriveEq = true;
+                        break;
+                    case "hash":
+                        deriveEq = true;
+                        deriveHash = true;
+                        break;
+                    case "repr":
+                        deriveRepr = true;
+                        break;
+                    case "pod":
+                        deriveNew = true;
+                        deriveEq = true;
+                        deriveHash = true;
+                        deriveRepr = true;
+                        derivePod = true;
+                        break;
+                    default:
+                        throw CJError.of("Unrecognized derive command: " + command, ast.getMark());
+                }
+            }
+            this.deriveNew = deriveNew;
+            this.deriveEq = deriveEq;
+            this.deriveHash = deriveHash;
+            this.deriveRepr = deriveRepr;
+            this.derivePod = derivePod;
+        }
 
         shortNameMap = Map.of();
         for (var autoImportName : CJIRContext.autoImportItemNames) {
@@ -36,12 +79,28 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         shortNameMap.put(ast.getShortName(), fullName);
     }
 
-    public boolean isNullable() {
-        return nullable;
+    public boolean isDeriveNew() {
+        return deriveNew;
     }
 
-    public List<String> getDeriveList() {
-        return deriveList;
+    public boolean isDeriveEq() {
+        return deriveEq;
+    }
+
+    public boolean isDeriveHash() {
+        return deriveHash;
+    }
+
+    public boolean isDeriveRepr() {
+        return deriveRepr;
+    }
+
+    public boolean isDerivePod() {
+        return derivePod;
+    }
+
+    public boolean isNullable() {
+        return nullable;
     }
 
     public List<CJIRModifier> getModifiers() {

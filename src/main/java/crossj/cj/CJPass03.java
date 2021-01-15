@@ -10,6 +10,8 @@ import crossj.base.Range;
  *
  * - Checks type parameter traits and trait declarations, and <br/>
  * - Materializes methods
+ *
+ * Derived methods are also synthesized here
  */
 final class CJPass03 extends CJPassBaseEx {
     CJPass03(CJIRContext ctx) {
@@ -84,27 +86,31 @@ final class CJPass03 extends CJPassBaseEx {
             }
         }
 
-        // synthesize methods based on derive lists
-        {
-            boolean new_ = false;
+        if (item.isDeriveNew()) {
+            deriveItemClassCheck(item, "new");
+            var methodAst = synthesizeNewMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+        if (item.isDeriveEq()) {
+            deriveItemClassCheck(item, "eq");
+            var methodAst = synthesizeEqMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+        if (item.isDeriveHash()) {
+            deriveItemClassCheck(item, "hash");
+            var methodAst = synthesizeHashMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+        if (item.isDeriveRepr()) {
+            deriveItemClassCheck(item, "repr");
+            var methodAst = synthesizeReprMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+    }
 
-            for (var command : item.getDeriveList()) {
-                switch (command) {
-                    case "new":
-                        new_ = true;
-                        break;
-                    default:
-                        throw CJError.of("Unrecognized derive command: " + command, item.getMark());
-                }
-            }
-
-            if (new_) {
-                if (item.getKind() != CJIRItemKind.Class) {
-                    throw CJError.of("derive(new) can only be applied to class items", item.getMark());
-                }
-                var methodAst = synthesizeNewMethod(item);
-                materializeMethod(item, methodAst, true, null);;
-            }
+    private static void deriveItemClassCheck(CJIRItem item, String name) {
+        if (item.getKind() != CJIRItemKind.Class) {
+            throw CJError.of("derive(" + name + ") can only be applied to class items", item.getMark());
         }
     }
 
@@ -168,9 +174,55 @@ final class CJPass03 extends CJPassBaseEx {
                 .map(f -> (CJAstFieldDefinition) f);
         var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
         var selfType = newSelfTypeExpression(item.getMark());
-        var argexprs = fields.map(f -> (CJAstExpression) new CJAstVariableAccess(f.getMark(), f.getName()));
+        var argexprs = fields.map(f -> newGetVar(f.getMark(), f.getName()));
         var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
         return synthesizeGenericMethodWithBody(mark, "new", parameters, selfType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeEqMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
+                .map(f -> (CJAstFieldDefinition) f);
+        var boolType = newSimpleTypeWithName(mark, "Bool");
+        var selfType = newSelfTypeExpression(mark);
+        var parameters = List.of(new CJAstParameter(mark, false, "self", selfType),
+                new CJAstParameter(mark, false, "other", selfType));
+        var selfExpr = newGetVar(mark, "self");
+        var otherExpr = newGetVar(mark, "other");
+        var body = fields
+                .map(f -> newMethodCall(mark, "__eq", List.of(newMethodCall(mark, f.getGetterName(), List.of(selfExpr)),
+                        newMethodCall(mark, f.getGetterName(), List.of(otherExpr)))))
+                .reduce(this::newAnd);
+        return synthesizeMethodWithBody(mark, "__eq", parameters, boolType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeHashMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
+                .map(f -> (CJAstFieldDefinition) f);
+        var intType = newSimpleTypeWithName(mark, "Int");
+        var selfType = newSelfTypeExpression(mark);
+        var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
+        var selfExpr = newGetVar(mark, "self");
+        var listExpr = newList(mark, fields.map(
+                f -> newMethodCall(mark, "hash", List.of(newMethodCall(mark, f.getGetterName(), List.of(selfExpr))))));
+        var body = newMethodCall(mark, "hash", List.of(listExpr));
+        return synthesizeMethodWithBody(mark, "hash", parameters, intType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeReprMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
+                .map(f -> (CJAstFieldDefinition) f);
+        var stringType = newSimpleTypeWithName(mark, "String");
+        var selfType = newSelfTypeExpression(mark);
+        var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
+        var selfExpr = newGetVar(mark, "self");
+        var inner = newMethodCall(mark, "join",
+                List.of(newString(mark, ", "), newList(mark, fields.map(f -> newMethodCall(mark, "repr",
+                        List.of(newMethodCall(mark, f.getGetterName(), List.of(selfExpr))))))));
+        var body = newAdd(newString(mark, item.getShortName() + "("), newAdd(inner, newString(mark, ")")));
+        return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
     }
 
     private CJAstAnnotationExpression synthesizeGenericAnnotation(CJMark mark) {
@@ -188,17 +240,51 @@ final class CJPass03 extends CJPassBaseEx {
         return synthesizeGenericMethodEx(mark, name, parameters, returnType, Optional.empty());
     }
 
-    private CJAstMethodDefinition synthesizeGenericMethodWithBody(CJMark mark, String name, List<CJAstParameter> parameters,
-            CJAstTypeExpression returnType, CJAstExpression body) {
+    private CJAstMethodDefinition synthesizeGenericMethodWithBody(CJMark mark, String name,
+            List<CJAstParameter> parameters, CJAstTypeExpression returnType, CJAstExpression body) {
         return synthesizeGenericMethodEx(mark, name, parameters, returnType, Optional.of(body));
     }
 
+    private CJAstMethodDefinition synthesizeMethodWithBody(CJMark mark, String name, List<CJAstParameter> parameters,
+            CJAstTypeExpression returnType, CJAstExpression body) {
+        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(), List.of(), List.of(), name, List.of(),
+                parameters, Optional.of(returnType), Optional.of(body));
+    }
+
+    private CJAstExpression newString(CJMark mark, String text) {
+        return new CJAstLiteral(mark, CJIRLiteralKind.String, "\"" + text + "\"");
+    }
+
+    private CJAstExpression newAnd(CJAstExpression left, CJAstExpression right) {
+        return new CJAstLogicalBinop(left.getMark(), true, left, right);
+    }
+
+    private CJAstExpression newAdd(CJAstExpression left, CJAstExpression right) {
+        return newMethodCall(left.getMark(), "__add", List.of(left, right));
+    }
+
+    private CJAstExpression newGetVar(CJMark mark, String name) {
+        return new CJAstVariableAccess(mark, name);
+    }
+
+    private CJAstExpression newList(CJMark mark, List<CJAstExpression> args) {
+        return new CJAstListDisplay(mark, args);
+    }
+
+    private CJAstExpression newMethodCall(CJMark mark, String name, List<CJAstExpression> args) {
+        return new CJAstMethodCall(mark, Optional.empty(), name, List.of(), args);
+    }
+
     private CJAstTypeExpression newSelfTypeExpression(CJMark mark) {
-        return new CJAstTypeExpression(mark, "Self", List.of());
+        return newSimpleTypeWithName(mark, "Self");
     }
 
     private CJAstTypeExpression newUnitTypeExpression(CJMark mark) {
-        return new CJAstTypeExpression(mark, "Unit", List.of());
+        return newSimpleTypeWithName(mark, "Unit");
+    }
+
+    private CJAstTypeExpression newSimpleTypeWithName(CJMark mark, String name) {
+        return new CJAstTypeExpression(mark, name, List.of());
     }
 
     private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent,
