@@ -298,6 +298,13 @@ final class CJPass03 extends CJPassBaseEx {
             }
             return condition;
         });
+        for (var typeParameter : methodAst.getTypeParameters()) {
+            var itemTypeParameter = item.getTypeParameterMap().getOrNull(typeParameter.getName());
+            if (itemTypeParameter != null) {
+                throw CJError.of("Conflicting type variable name " + typeParameter.getName(), typeParameter.getMark(),
+                        itemTypeParameter.getMark());
+            }
+        }
         var typeParameters = methodAst.getTypeParameters().map(CJIRTypeParameter::new);
         if (annotationProcessor.isGeneric() && item.isTrait()) {
             throw CJError.of("Trait methods cannot be marked generic", methodAst.getMark());
