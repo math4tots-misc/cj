@@ -1,5 +1,7 @@
 package cj
 
+import cj.Test01
+
 class Test11Class {
     @test
     def multipleFields() = {
@@ -23,5 +25,10 @@ class Test11Class {
 
     class Wrapper {
         val x: String
+    }
+
+    @test
+    def referToNestedClass() = {
+        Assert.equal(Test01.NestedClass.nestedClassVal, "some nested item val")
     }
 }

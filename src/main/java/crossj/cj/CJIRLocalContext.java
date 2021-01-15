@@ -36,7 +36,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return method;
     }
 
-    CJIRItem getTraitItem(String shortName, CJMark... marks) {
+    private CJIRItem getTraitItem(String shortName, CJMark... marks) {
         var fullName = item.getShortNameMap().getOrNull(shortName);
         if (fullName == null) {
             throw CJError.of("Trait " + Repr.of(shortName) + " not found", marks);
@@ -48,23 +48,29 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return item;
     }
 
-    CJIRItem getTypeItem(String shortName, CJMark... marks) {
-        var fullName = item.getShortNameMap().getOrNull(shortName);
-        if (fullName == null) {
+    private CJIRItem getTypeItem(String shortName, boolean hasTypeArgs, CJMark... marks) {
+        var dotIndex = shortName.indexOf('.');
+        var outerShortName = dotIndex == -1 ? shortName : shortName.substring(0, dotIndex);
+        var outerFullName = item.getShortNameMap().getOrNull(outerShortName);
+        if (outerFullName == null) {
             throw CJError.of("Type " + Repr.of(shortName) + " not found", marks);
         }
-        return loadTypeItem(fullName, marks);
-    }
-
-    CJIRItem loadTypeItem(String fullName, CJMark... marks) {
+        var fullName = dotIndex == -1 ? outerFullName : (outerFullName + shortName.substring(dotIndex));
         var item = global.loadItem(fullName, marks);
+        if (item.isTrait() || (!hasTypeArgs && item.getTypeParameters().size() > 0)) {
+            // if the item that the name refers to:
+            //  - is a trait or,
+            //  - has type parameters, but the expression has no type arguments,
+            // use the "companion" item instead.
+            item = global.loadItem(fullName + "_", marks);
+        }
         if (!item.getKind().isTypeKind()) {
             throw CJError.of(fullName + " is not a type item (i.e. class or union)", marks);
         }
         return item;
     }
 
-    private CJIRClassType evalClassTypeExpression(CJAstTypeExpression typeExpression) {
+    private CJIRClassType evalClassTypeExpression(CJAstTypeExpression typeExpression, boolean check) {
         var name = typeExpression.getName();
         switch (name) {
             case "Fn":
@@ -74,24 +80,19 @@ public final class CJIRLocalContext extends CJIRContextBase {
                 name += typeExpression.getArgs().size();
                 break;
         }
-        var item = getTypeItem(name, typeExpression.getMark());
-        var args = typeExpression.getArgs().map(te -> evalTypeExpression(te));
-        if (!name.endsWith("_") && item.getTypeParameters().size() > 0 && args.isEmpty()) {
-            // In the specific case when:
-            // - the item name does not end with an underscore,
-            // - the item the name refers to has type parameters,
-            // - but the provided expression has no type parameters,
-            // get the item named (name + "_") instead.
-            //
-            // This effectively allows adding static methods to items with
-            // generic types that do not actually care about the item's generic types.
-            item = loadTypeItem(item.getFullName() + "_", typeExpression.getMark());
+        var item = getTypeItem(name, typeExpression.getArgs().size() > 0, typeExpression.getMark());
+        var args = typeExpression.getArgs().map(te -> evalTypeExpressionEx(te, check));
+        if (check) {
+            checkItemArgs(item, args, typeExpression.getMark());
         }
-        checkItemArgs(item, args, typeExpression.getMark());
         return new CJIRClassType(item, args);
     }
 
     CJIRType evalTypeExpression(CJAstTypeExpression typeExpression) {
+        return evalTypeExpressionEx(typeExpression, true);
+    }
+
+    private CJIRType evalTypeExpressionEx(CJAstTypeExpression typeExpression, boolean check) {
         var typeVariable = getTypeVariableOrNull(typeExpression.getName(), typeExpression.getMark());
         if (typeVariable != null) {
             assertNoTypeArgs(typeExpression);
@@ -101,24 +102,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
             assertNoTypeArgs(typeExpression);
             return selfType;
         }
-        return evalClassTypeExpression(typeExpression);
-    }
-
-    /**
-     * a version of evalTypeExpression used at the item level in pass 2, when
-     * there's not enough information to do a normal evalTypeExpression.
-     */
-    private CJIRType evalTypeExpressionUnchecked(CJAstTypeExpression texpr) {
-        var typeParameter = getItem().getTypeParameterMap().getOrNull(texpr.getName());
-        if (typeParameter != null) {
-            if (texpr.getArgs().size() != 0) {
-                throw CJError.of("type variables cannot accept arguments", texpr.getMark());
-            }
-            return new CJIRVariableType(typeParameter, List.of());
-        }
-        var typeItem = getTypeItem(texpr.getName(), texpr.getMark());
-        var args = texpr.getArgs().map(te -> evalTypeExpression(te));
-        return new CJIRClassType(typeItem, args);
+        return evalClassTypeExpression(typeExpression, check);
     }
 
     private void assertNoTypeArgs(CJAstTypeExpression typeExpression) {
@@ -127,21 +111,25 @@ public final class CJIRLocalContext extends CJIRContextBase {
         }
     }
 
-    CJIRTrait evalTraitExpression(CJAstTraitExpression traitExpression) {
+    private CJIRTrait evalTraitExpressionEx(CJAstTraitExpression traitExpression, boolean checked) {
         var traitItem = getTraitItem(traitExpression.getName(), traitExpression.getMark());
-        var args = traitExpression.getArgs().map(te -> evalTypeExpression(te));
-        checkItemArgs(traitItem, args, traitExpression.getMark());
+        var args = traitExpression.getArgs().map(te -> evalTypeExpressionEx(te, checked));
+        if (checked) {
+            checkItemArgs(traitItem, args, traitExpression.getMark());
+        }
         return new CJIRTrait(traitItem, args);
+    }
+
+    CJIRTrait evalTraitExpression(CJAstTraitExpression traitExpression) {
+        return evalTraitExpressionEx(traitExpression, true);
     }
 
     /**
      * a version of evalTraitExpression used at the item level in pass 2, when
      * there's not enough information to do a normal evalTraitExpression.
      */
-    CJIRTrait evalTraitExpressionUnchecked(CJAstTraitExpression texpr) {
-        var traitItem = getTraitItem(texpr.getName(), texpr.getMark());
-        var args = texpr.getArgs().map(te -> evalTypeExpressionUnchecked(te));
-        return new CJIRTrait(traitItem, args);
+    CJIRTrait evalTraitExpressionUnchecked(CJAstTraitExpression traitExpression) {
+        return evalTraitExpressionEx(traitExpression, false);
     }
 
     private CJIRVariableType getTypeVariable(String shortName, CJMark... marks) {

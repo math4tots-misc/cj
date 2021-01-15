@@ -284,6 +284,10 @@ public final class CJParser {
     private CJAstTypeExpression parseTypeExpression() {
         var mark = getMark();
         var name = parseTypeId();
+        while (at('.') && atOffset(CJToken.TYPE_ID, 1)) {
+            expect('.');
+            name += "." + parseTypeId();
+        }
         var args = parseTypeArgs();
         return new CJAstTypeExpression(mark, name, args);
     }
