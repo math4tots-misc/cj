@@ -11,6 +11,12 @@ class MC$cj$Double {
     M$toBool(self) {
         return !!self;
     }
+    M$toInt(self) {
+        return self|0;
+    }
+    M$toDouble(self) {
+        return self;
+    }
 
     M$__lt(self, other) {
         return self < other;

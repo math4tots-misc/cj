@@ -1,6 +1,6 @@
 package cj
 
-native class Int: Repr, Hash, Ord, ToBool {
+native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
@@ -16,4 +16,7 @@ native class Int: Repr, Hash, Ord, ToBool {
     def __div(a: Self, b: Self): Double
     def __lt(self: Self, other: Self): Bool
     def toBool(self: Self): Bool
+    def toInt(self: Self): Int
+    def toDouble(self: Self): Double
+    def toChar(self: Self): Char
 }

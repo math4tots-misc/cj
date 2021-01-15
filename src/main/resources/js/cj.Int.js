@@ -44,4 +44,14 @@ class MC$cj$Int {
     M$toBool(self) {
         return !!self;
     }
+    M$toInt(self) {
+        return self;
+    }
+    M$toDouble(self) {
+        return self;
+    }
+    M$toChar(self) {
+        // TODO: check for valid ranges
+        return self;
+    }
 }

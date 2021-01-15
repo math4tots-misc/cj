@@ -12,10 +12,10 @@ import crossj.base.Str;
 public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.NonNull",
-            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToString",
-            "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator",
-            "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2",
-            "cj.Tuple3", "cj.Tuple4");
+            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToChar", "cj.ToInt",
+            "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO",
+            "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
+            "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4");
 
     /**
      * These are the names that can only be used in special contexts.

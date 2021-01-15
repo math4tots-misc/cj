@@ -5,6 +5,10 @@ native class String: Repr, ToBool, Hash {
     def repr(self: Self): String
 
     def __add[T: ToString](self: Self, other: T): Self
+
+    ## Number of char codes in this string.
+    ## NOTE: If the default encoding is UTF-16, this is neither the number of bytes
+    ## nor the number of code points.
     def size(self: Self): Int
 
     def toBool(self: Self): Bool
