@@ -123,7 +123,7 @@ public final class CJIRContext extends CJIRContextBase {
         }
         var outerItem = _forceLoadItem(getOutermostItemName(name), marks);
         itemMap.put(outerItem.getFullName(), outerItem);
-        if (outerItem.getTypeParameters().size() > 0 && getItemPathOrNull(name + "_") != null) {
+        if (getItemPathOrNull(name + "_") != null) {
             loadItem(name + "_", marks);
         }
 
