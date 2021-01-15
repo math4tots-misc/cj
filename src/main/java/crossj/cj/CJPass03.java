@@ -83,6 +83,29 @@ final class CJPass03 extends CJPassBaseEx {
                 throw CJError.of("TODO: materializeMembers " + memberAst.getClass().getName(), memberAst.getMark());
             }
         }
+
+        // synthesize methods based on derive lists
+        {
+            boolean new_ = false;
+
+            for (var command : item.getDeriveList()) {
+                switch (command) {
+                    case "new":
+                        new_ = true;
+                        break;
+                    default:
+                        throw CJError.of("Unrecognized derive command: " + command, item.getMark());
+                }
+            }
+
+            if (new_) {
+                if (item.getKind() != CJIRItemKind.Class) {
+                    throw CJError.of("derive(new) can only be applied to class items", item.getMark());
+                }
+                var methodAst = synthesizeNewMethod(item);
+                materializeMethod(item, methodAst, true, null);;
+            }
+        }
     }
 
     private CJAstMethodDefinition synthesizeFieldAccessMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -139,14 +162,35 @@ final class CJPass03 extends CJPassBaseEx {
         return synthesizeGenericMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
     }
 
+    private CJAstMethodDefinition synthesizeNewMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
+                .map(f -> (CJAstFieldDefinition) f);
+        var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
+        var selfType = newSelfTypeExpression(item.getMark());
+        var argexprs = fields.map(f -> (CJAstExpression) new CJAstVariableAccess(f.getMark(), f.getName()));
+        var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
+        return synthesizeGenericMethodWithBody(mark, "new", parameters, selfType, body);
+    }
+
     private CJAstAnnotationExpression synthesizeGenericAnnotation(CJMark mark) {
         return new CJAstAnnotationExpression(mark, "generic", List.of());
     }
 
+    private CJAstMethodDefinition synthesizeGenericMethodEx(CJMark mark, String name, List<CJAstParameter> parameters,
+            CJAstTypeExpression returnType, Optional<CJAstExpression> body) {
+        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(synthesizeGenericAnnotation(mark)), List.of(),
+                List.of(), name, List.of(), parameters, Optional.of(returnType), body);
+    }
+
     private CJAstMethodDefinition synthesizeGenericMethod(CJMark mark, String name, List<CJAstParameter> parameters,
             CJAstTypeExpression returnType) {
-        return new CJAstMethodDefinition(mark, Optional.empty(), List.of(synthesizeGenericAnnotation(mark)), List.of(),
-                List.of(), name, List.of(), parameters, Optional.of(returnType), Optional.empty());
+        return synthesizeGenericMethodEx(mark, name, parameters, returnType, Optional.empty());
+    }
+
+    private CJAstMethodDefinition synthesizeGenericMethodWithBody(CJMark mark, String name, List<CJAstParameter> parameters,
+            CJAstTypeExpression returnType, CJAstExpression body) {
+        return synthesizeGenericMethodEx(mark, name, parameters, returnType, Optional.of(body));
     }
 
     private CJAstTypeExpression newSelfTypeExpression(CJMark mark) {
