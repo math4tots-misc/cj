@@ -95,6 +95,9 @@ class Map[K?: Hash, V?] :
         }
     }
 
+    def getOrDefault(self: Self, key: K, d: V): V = (
+        if null(t) = self._getTriple(key) { t.get2() } else { d })
+
     if V : NonNull def getOrNull(self: Self, key: K) : Nullable[V] = (
         if null(t) = self._getTriple(key) { null(t.get2()) } else { null })
 
