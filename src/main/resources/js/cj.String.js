@@ -44,4 +44,20 @@ class MC$cj$String {
     M$join(TV$T, TV$C, self, parts) {
         return Array.from(TV$C.M$iter(parts)).map(t => TV$T.M$toString(t)).join(self);
     }
+
+    M$charCodeAt(self, i) {
+        return defined(self.charCodeAt(i));
+    }
+    M$charAt(self, i) {
+        return defined(self.codePointAt(i));
+    }
+    *M$iter(self) {
+        for (let i = 0; i < self.length; i++) {
+            const c = self.codePointAt(i);
+            yield c;
+            if (self.charCodeAt(i) !== c) {
+                i++;
+            }
+        }
+    }
 }

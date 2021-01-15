@@ -71,4 +71,16 @@ class Test03List {
             Assert.equal(list, ["asdf", "cvbn"])
         }
     }
+
+    @test
+    def toSetAndToMap() = {
+        {
+            val set = [1, 2, 3].toSet()
+            Assert.equal(set, Set(2, 3, 1))
+        }
+        {
+            val map = [1: "a", 2: "b"].toMap()
+            Assert.equal(map, Map(2: "b", 1: "a"))
+        }
+    }
 }

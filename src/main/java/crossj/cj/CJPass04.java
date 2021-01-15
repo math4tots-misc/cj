@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
@@ -305,6 +306,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var target = typeParameters.size();
                 var parameters = methodRef.getMethod().getParameters();
                 var exprsLimit = Math.min(args.size(), parameters.size());
+                int nextInferArgIndex = 0;
 
                 if (expectedReturnType.isPresent()) {
                     var mrtype = methodRef.getMethod().getReturnType();
@@ -316,22 +318,29 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                 }
 
-                while (map.size() < target && (stack.size() > 0 || exprs.size() < exprsLimit)) {
+                while (map.size() < target && (stack.size() > 0 || nextInferArgIndex < exprsLimit)) {
                     if (stack.size() == 0) {
                         // if the stack is empty but we have more arguments we can look at, use it.
-                        var i = exprs.size();
+                        int i = nextInferArgIndex++;
                         var arg = args.get(i);
                         var parameterType = parameters.get(i).getVariableType();
                         var parameterMark = parameters.get(i).getMark();
                         CJIRExpression expr;
-                        if (arg instanceof CJAstLambda) {
-                            var lambdaAst = (CJAstLambda) arg;
-                            expr = handleLambdaTypeForMethodInference(mark, parameterType, parameterMark, lambdaAst,
-                                    itemBinding, map);
+                        if (i < exprs.size()) {
+                            // if the expression has already been resolved, just use it
+                            expr = exprs.get(i);
                         } else {
-                            expr = evalExpression(arg);
+                            // if the expression has not already been resolved, we need to resolve it
+                            // with the limited context we have here.
+                            if (arg instanceof CJAstLambda) {
+                                var lambdaAst = (CJAstLambda) arg;
+                                expr = handleLambdaTypeForMethodInference(mark, parameterType, parameterMark, lambdaAst,
+                                        itemBinding, map);
+                            } else {
+                                expr = evalExpression(arg);
+                            }
+                            exprs.add(expr);
                         }
-                        exprs.add(expr);
                         stack.add(Tuple3.of(arg.getMark(), parameterType, expr.getType()));
                     }
                     var triple = stack.pop();
