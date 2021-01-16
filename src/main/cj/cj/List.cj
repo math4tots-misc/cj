@@ -11,8 +11,8 @@ native class List[T?] :
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
     @generic def add(self: Self, t: T)
-    @generic def get(self: Self, i: Int): T
-    @generic def set(self: Self, i: Int, t: T)
+    @generic def __getitem(self: Self, i: Int): T
+    @generic def __setitem(self: Self, i: Int, t: T)
     @generic def removeIndex(self: Self, i: Int): T
 
     @generic def __mul(self: Self, n: Int): Self

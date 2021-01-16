@@ -15,7 +15,7 @@ trait Iterable[T?]: ToList[T] {
     def toMap[K?: Hash, V?, C: Iterable[Tuple[K, V]]](self: C): Map[K, V] = {
         val map = Map[K, V].empty()
         for (k, v) in self {
-            map.set(k, v)
+            map[k] = v
         }
         map
     }

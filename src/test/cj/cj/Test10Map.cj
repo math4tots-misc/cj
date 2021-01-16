@@ -10,11 +10,11 @@ class Test10Map {
             val map = Map[Int, Int].empty()
             Assert.equal(map.repr(), "Map()")
 
-            map.set(50, 20)
+            map[50] = 20
             Assert.equal(map.repr(), "Map(50: 20)")
-            map.set(50, 30)
+            map[50] = 30
             Assert.equal(map.repr(), "Map(50: 30)")
-            map.set(75, 2)
+            map[75] = 2
             Assert.equal(map.repr(), "Map(50: 30, 75: 2)")
         }
     }

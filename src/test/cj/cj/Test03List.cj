@@ -25,7 +25,7 @@ class Test03List {
             Assert.equal(list.size(), 0)
             list.add(15)
             Assert.equal(list, [15])
-            Assert.equal(list.get(0), 15)
+            Assert.equal(list[0], 15)
         }
         {
             var list = List[Int].empty()

@@ -501,7 +501,7 @@ public final class CJParser {
                     } else {
                         var name = parseId();
                         var args = List.of(expr);
-                        if (at('(') || at('[')) {
+                        if (atMethodArgsStart(i)) {
                             var typeArgs = parseTypeArgs();
                             args.addAll(parseArgs());
                             expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
@@ -536,6 +536,21 @@ public final class CJParser {
                                 }
                             }
                         }
+                    }
+                    break;
+                }
+                case '[': {
+                    var mark = getMark();
+                    next();
+                    var indexExpr = parseExpression();
+                    expect(']');
+                    if (consume('=')) {
+                        var valexpr = parseExpression();
+                        expr = new CJAstMethodCall(mark, Optional.empty(), "__setitem", List.of(),
+                                List.of(expr, indexExpr, valexpr));
+                    } else {
+                        expr = new CJAstMethodCall(mark, Optional.empty(), "__getitem", List.of(),
+                                List.of(expr, indexExpr));
                     }
                     break;
                 }
@@ -768,11 +783,56 @@ public final class CJParser {
             case CJToken.POWER:
                 return 130;
             case '.':
+            case '[':
             case '?':
                 return 140;
             default:
                 return -1;
         }
+    }
+
+    /**
+     * Check if the given index into the token list can be the start of a method
+     * argument list.
+     *
+     * Method args always include a '(', but it may optionally be preceeded by a
+     * type list ('[' types.. ']')
+     */
+    private boolean atMethodArgsStart(int i) {
+        var firstTokType = tokens.get(i).type;
+        if (firstTokType == '(') {
+            return true;
+        }
+        if (firstTokType != '[') {
+            return false;
+        }
+        var secondTokType = tokens.get(i + 1).type;
+        // check for either the start of a type (TYPE_ID) or an empty type list (']')
+        if (secondTokType != CJToken.TYPE_ID && secondTokType != ']') {
+            return false;
+        }
+        var j = i + 1;
+        var depth = 1;
+        while (depth > 0) {
+            var token = tokens.get(j++);
+            switch (token.type) {
+                case '[':
+                    depth++;
+                    break;
+                case ']':
+                    depth--;
+                    break;
+                case CJToken.TYPE_ID:
+                case '.':
+                case ',':
+                case '?':
+                    break;
+                default:
+                    // If any other token is encountered, we assume we have a non-type expression.
+                    return false;
+            }
+        }
+        return j < this.tokens.size() && tokens.get(j).type == '(';
     }
 
     private CJAstExpression parseAtomExpression() {
@@ -858,7 +918,7 @@ public final class CJParser {
                 expect('.');
                 var mark = getMark();
                 var name = parseId();
-                if (at('[') || at('(')) {
+                if (atMethodArgsStart(i)) {
                     var typeArgs = parseTypeArgs();
                     var args = parseArgs();
                     return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
@@ -893,7 +953,7 @@ public final class CJParser {
             case CJToken.ID:
                 if (atLambda()) {
                     return parseLambda();
-                } else if (atOffset('(', 1) || atOffset('[', 1)) {
+                } else if (atMethodArgsStart(i + 1)) {
                     // Syntactic sugar for Self method call
                     var mark = getMark();
                     var methodName = parseId();

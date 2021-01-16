@@ -15,7 +15,7 @@ class Map[K?: Hash, V?] :
     def of(pairs: List[Tuple[K, V]]): Self = {
         val ret = Self.empty()
         for (k, v) in pairs {
-            ret.set(k, v)
+            ret[k] = v
         }
         ret
     }
@@ -38,12 +38,12 @@ class Map[K?: Hash, V?] :
         val key = triple.get1()
         val list = self._list
         val index = Self._getIndex(hash, list.size())
-        val bucket = list.get(index)
+        val bucket = list[index]
         var i = 0
         while i < bucket.size() {
-            val entry = bucket.get(i)
+            val entry = bucket[i]
             if hash == entry.get0() and entry.get1() == key {
-                bucket.set(i, triple)
+                bucket[i] = triple
                 return ()
             }
             i += 1
@@ -62,7 +62,7 @@ class Map[K?: Hash, V?] :
 
     @generic def size(self: Self): Int = self._size
 
-    def set(self: Self, key: K, value: V) = {
+    def __setitem(self: Self, key: K, value: V) = {
         self._checkForRehashBeforeInsert()
         val hash = key.hash()
         self._insertNoRehash((hash, key, value))
@@ -76,7 +76,7 @@ class Map[K?: Hash, V?] :
         }
         val list = self._list
         val index = Self._getIndex(hash, list.size())
-        val bucket = list.get(index)
+        val bucket = list[index]
         for triple in bucket {
             if triple.get0() == hash and triple.get1() == key {
                 return null(triple)
@@ -90,7 +90,7 @@ class Map[K?: Hash, V?] :
             triple.get2()
         } else {
             val value = f.call()
-            self.set(key, value)
+            self[key] = value
             value
         }
     }
@@ -103,15 +103,15 @@ class Map[K?: Hash, V?] :
 
     def __contains(self: Self, key: K): Bool = self._getTriple(key).isPresent()
 
-    def get(self: Self, key: K): V = self._getTriple(key).get().get2()
+    def __getitem(self: Self, key: K): V = self._getTriple(key).get().get2()
 
     def __add(self: Self, other: Self): Self = {
         val ret = Self.empty()
         for (k, v) in self.pairs() {
-            ret.set(k, v)
+            ret[k] = v
         }
         for (k, v) in other.pairs() {
-            ret.set(k, v)
+            ret[k] = v
         }
         ret
     }
@@ -122,9 +122,9 @@ class Map[K?: Hash, V?] :
         }
         val hash = key.hash()
         val index = Self._getIndex(hash, self._list.size())
-        val bucket = self._list.get(index)
+        val bucket = self._list[index]
         for i = 0; i < bucket.size(); i += 1 {
-            val triple = bucket.get(i)
+            val triple = bucket[i]
             if triple.get0() == hash and triple.get1() == key {
                 self._size += -1
                 return null(bucket.removeIndex(i))

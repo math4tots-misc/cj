@@ -19,10 +19,10 @@ class MC$cj$List {
     M$add(self, t) {
         self.push(t);
     }
-    M$get(self, i) {
+    M$__getitem(self, i) {
         return self[i];
     }
-    M$set(self, i, t) {
+    M$__setitem(self, i, t) {
         self[i] = t;
     }
     M$removeIndex(self, i) {

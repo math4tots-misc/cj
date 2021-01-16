@@ -16,7 +16,7 @@ class Set[T?: Hash] :
         ret
     }
 
-    def add(self: Self, t: T) = self._map.set(t, t)
+    def add(self: Self, t: T) = self._map[t] = t
 
     def removeOrFalse(self: Self, t: T): Bool = self._map.removeOrFalse(t)
 
