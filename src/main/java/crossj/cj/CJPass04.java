@@ -231,7 +231,7 @@ final class CJPass04 extends CJPassBaseEx {
                 newExprs.add(evalExpressionEx(exprs.last(), a));
                 exitScope();
 
-                if (newExprs.size() == 1 && newExprs.get(0) instanceof CJIRBlock) {
+                if (newExprs.size() == 1 && !(newExprs.get(0) instanceof CJIRVariableDeclaration)) {
                     return newExprs.get(0);
                 }
 

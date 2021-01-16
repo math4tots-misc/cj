@@ -478,8 +478,8 @@ public final class CJParser {
         return new CJAstParameter(mark, mutable, name, type);
     }
 
-    private CJAstExpression parseExpressionExtended() {
-        return parseExpressionWithPrecedence(0);
+    private CJAstExpression parseBlockElementExpression() {
+        return parseExpressionWithPrecedenceUnchecked(0);
     }
 
     private CJAstExpression parseExpression() {
@@ -487,7 +487,20 @@ public final class CJParser {
         return parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5);
     }
 
+    private CJAstExpression parseIncrementExpression() {
+        return parseExpressionWithPrecedence(0);
+    }
+
     private CJAstExpression parseExpressionWithPrecedence(int precedence) {
+        // We do this check so that variable declarations only appear directly as a block item.
+        var expression = parseExpressionWithPrecedenceUnchecked(precedence);
+        if (expression instanceof CJAstVariableDeclaration) {
+            throw CJError.of("Variable declaration is not allowed here", expression.getMark());
+        }
+        return expression;
+    }
+
+    private CJAstExpression parseExpressionWithPrecedenceUnchecked(int precedence) {
         var expr = parseAtomExpression();
         var tokenPrecedence = getTokenPrecedence(peek().type);
         while (tokenPrecedence >= precedence) {
@@ -1032,7 +1045,7 @@ public final class CJParser {
                     }
                     expect(';');
                     Optional<CJAstExpression> increment = at('{') ? Optional.empty()
-                            : Optional.of(parseExpressionExtended());
+                            : Optional.of(parseIncrementExpression());
                     var body = parseBlock();
 
                     List<CJAstExpression> outer = List.of();
@@ -1230,7 +1243,7 @@ public final class CJParser {
         skipDelimiters();
         var exprs = List.<CJAstExpression>of();
         while (!consume('}')) {
-            exprs.add(parseExpressionExtended());
+            exprs.add(parseBlockElementExpression());
             expectDelimiters();
         }
         return new CJAstBlock(mark, exprs);
