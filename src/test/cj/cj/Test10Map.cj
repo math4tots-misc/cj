@@ -30,4 +30,16 @@ class Test10Map {
             Assert.that(map != Map(1: 2, 3: 5))
         }
     }
+
+    @test
+    def get() = {
+        {
+            val map = Map(1: "qwer", 2: "erty")
+            Assert.equal(map[1], "qwer")
+            Assert.equal(map[2], "erty")
+            Assert.that(1 in map)
+            Assert.that(2 in map)
+            Assert.that(3 not in map)
+        }
+    }
 }
