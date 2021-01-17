@@ -19,3 +19,25 @@ function defined(x) {
     }
     return x;
 }
+
+/**
+ * tests whether two type objects are equal
+ * @param {*} a
+ * @param {*} b
+ */
+function typeEq(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (a.constructor !== b.constructor) {
+        return false;
+    }
+    for (let key in a) {
+        if (key.startsWith("TV$")) {
+            if (!typeEq(a[key], b[key])) {
+                return false;
+            }
+        }
+    }
+    return true;
+}

@@ -861,7 +861,27 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitThrow(CJAstThrow e, Optional<CJIRType> a) {
                 var expression = evalExpression(e.getExpression());
-                return new CJIRThrow(e, ctx.getUnitType(), expression);
+                return new CJIRThrow(e, ctx.getNoReturnType(), expression);
+            }
+
+            @Override
+            public CJIRExpression visitTry(CJAstTry e, Optional<CJIRType> a) {
+                var body = evalExpressionEx(e.getBody(), a);
+                if (a.isEmpty()) {
+                    a = Optional.of(body.getType());
+                }
+                var fa = a;
+                var clauses = e.getClauses().map(clause -> {
+                    var excType = lctx.evalTypeExpression(clause.get2());
+                    var target = evalDeclarableTarget(clause.get1(), false, excType);
+                    enterScope();
+                    declareTarget(target);
+                    var clauseBody = evalExpressionEx(clause.get3(), fa);
+                    exitScope();
+                    return Tuple3.of(target, excType, clauseBody);
+                });
+                var fin = e.getFin().map(f -> evalExpressionEx(f, fa));
+                return new CJIRTry(e, a.get(), body, clauses, fin);
             }
         }, a);
         return ir;

@@ -492,7 +492,8 @@ public final class CJParser {
     }
 
     private CJAstExpression parseExpressionWithPrecedence(int precedence) {
-        // We do this check so that variable declarations only appear directly as a block item.
+        // We do this check so that variable declarations only appear directly as a
+        // block item.
         var expression = parseExpressionWithPrecedenceUnchecked(precedence);
         if (expression instanceof CJAstVariableDeclaration) {
             throw CJError.of("Variable declaration is not allowed here", expression.getMark());
@@ -1176,6 +1177,28 @@ public final class CJParser {
                 }
                 expect('}');
                 return new CJAstSwitch(mark, target, cases, fallback);
+            }
+            case CJToken.KW_THROW: {
+                var mark = getMark();
+                next();
+                var expression = parseExpression();
+                return new CJAstThrow(mark, expression);
+            }
+            case CJToken.KW_TRY: {
+                var mark = getMark();
+                next();
+                var body = parseBlock();
+                var clauses = List.<Tuple3<CJAstAssignmentTarget, CJAstTypeExpression, CJAstExpression>>of();
+                while (consume(CJToken.KW_CATCH)) {
+                    var target = parseTarget();
+                    expect(':');
+                    var excType = parseTypeExpression();
+                    var clauseBody = parseBlock();
+                    clauses.add(Tuple3.of(target, excType, clauseBody));
+                }
+                Optional<CJAstExpression> fin = consume(CJToken.KW_FINALLY) ? Optional.of(parseBlock())
+                        : Optional.empty();
+                return new CJAstTry(mark, body, clauses, fin);
             }
         }
         throw ekind("expression");

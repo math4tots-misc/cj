@@ -804,8 +804,39 @@ public final class CJJSTranslator {
             public CJJSBlob visitThrow(CJIRThrow e, Void a) {
                 var inner = translateExpression(e.getExpression());
                 var lines = inner.getLines();
-                lines.add("throw " + inner.getExpression() + ";\n");
+                var type = translateType(e.getExpression().getType());
+                lines.add("throw [" + inner.getExpression() + "," + type + "];\n");
                 return new CJJSBlob(lines, "undefined", true);
+            }
+
+            @Override
+            public CJJSBlob visitTry(CJIRTry e, Void a) {
+                var tmpvar = ctx.newTempVarName();
+                var lines = List.of("let " + tmpvar + ";\n");
+                lines.add("try{\n");
+                var body = translateExpression(e.getBody());
+                lines.addAll(body.getLines());
+                lines.add(tmpvar + "=" + body.getExpression() + ";\n");
+                if (e.getClauses().size() > 0) {
+                    lines.add("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;\n");
+                    for (int i = 0; i < e.getClauses().size(); i++) {
+                        var clause = e.getClauses().get(i);
+                        lines.add((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){\n");
+                        lines.add("const " + translateTarget(clause.get1()) + "=e;\n");
+                        var clauseBody = translateExpression(clause.get3());
+                        lines.addAll(clauseBody.getLines());
+                        lines.add(tmpvar + "=" + clauseBody.getExpression() + ";\n");
+                        lines.add("}\n");
+                    }
+                    lines.add("else{throw p;}\n");
+                }
+                lines.add("}\n");
+                if (e.getFin().isPresent()) {
+                    lines.add("finally{\n");
+                    lines.addAll(translateExpression(e.getFin().get()).toPure(ctx).getLines());
+                    lines.add("}\n");
+                }
+                return new CJJSBlob(lines, tmpvar, true);
             }
         }, null);
     }

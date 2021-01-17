@@ -79,11 +79,16 @@ public final class CJToken {
     public static final int KW_FOR = 234;
     public static final int KW_ASYNC = 235;
     public static final int KW_AWAIT = 236;
+    public static final int KW_THROW = 237;
+    public static final int KW_TRY = 238;
+    public static final int KW_CATCH = 239;
+    public static final int KW_FINALLY = 240;
 
     public static final Tuple<Integer> KEYWORD_TYPES = Tuple.of(KW_DEF, KW_CLASS, KW_TRUE, KW_FALSE, KW_NULL, KW_IF,
             KW_ELSE, KW_IMPORT, KW_WHILE, KW_BREAK, KW_CONTINUE, KW_VAR, KW_VAL, /* KW_NEW, */ KW_TRAIT, KW_NATIVE,
             KW_STATIC, KW_PRIVATE, KW_PUBLIC, KW_PACKAGE, KW_RETURN, KW_AND, KW_OR, KW_IS, KW_NOT, KW_IN, KW_THEN,
-            KW_SWITCH, KW_CASE, KW_UNION, KW_ENUM, KW_DEFAULT, KW_AS, KW_FOR, KW_ASYNC, KW_AWAIT);
+            KW_SWITCH, KW_CASE, KW_UNION, KW_ENUM, KW_DEFAULT, KW_AS, KW_FOR, KW_ASYNC, KW_AWAIT, KW_THROW, KW_TRY,
+            KW_CATCH, KW_FINALLY);
 
     public final int type;
     public final String text;
@@ -249,6 +254,14 @@ public final class CJToken {
                 return "CJToken.KW_ASYNC";
             case KW_AWAIT:
                 return "CJToken.KW_AWAIT";
+            case KW_THROW:
+                return "CJToken.KW_THROW";
+            case KW_TRY:
+                return "CJToken.KW_TRY";
+            case KW_CATCH:
+                return "CJToken.KW_CATCH";
+            case KW_FINALLY:
+                return "CJToken.KW_FINALLY";
             case '\n':
                 return "'\\n'";
             default:

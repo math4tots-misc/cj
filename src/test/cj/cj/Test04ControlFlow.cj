@@ -191,4 +191,43 @@ class Test04ControlFlow {
             Assert.equal(x, "got 3 xs")
         }
     }
+
+    @test
+    def exceptions() = {
+        {
+            val x = try {
+                throwString("hi")
+                "nothrow"
+            } catch y: String {
+                y
+            }
+            Assert.equal(x, "s=hi")
+        }
+        {
+            val x = try {
+                try {
+                    throwString("hello")
+                    "nothrow"
+                } catch z: Int { "int" }
+            } catch y: String { y }
+            Assert.equal(x, "s=hello")
+        }
+        {
+            val x = try {
+                try {
+                    throwInt(721)
+                    968
+                } catch z: Int { z }
+            } catch y: String { -1 }
+            Assert.equal(x, 721)
+        }
+    }
+
+    def throwString(s: String) = {
+        throw "s=" + s
+    }
+
+    def throwInt(i: Int) = {
+        throw i
+    }
 }
