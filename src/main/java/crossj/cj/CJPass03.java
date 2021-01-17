@@ -4,6 +4,8 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Range;
+import crossj.base.Tuple3;
+import crossj.base.Tuple4;
 
 /**
  * Pass 3
@@ -102,7 +104,7 @@ final class CJPass03 extends CJPassBaseEx {
             materializeMethod(item, methodAst, true, null);
         }
         if (item.isDeriveRepr()) {
-            deriveItemClassCheck(item, "repr");
+            deriveItemClassOrUnionCheck(item, "repr");
             var methodAst = synthesizeReprMethod(item);
             materializeMethod(item, methodAst, true, null);
         }
@@ -110,6 +112,12 @@ final class CJPass03 extends CJPassBaseEx {
 
     private static void deriveItemClassCheck(CJIRItem item, String name) {
         if (item.getKind() != CJIRItemKind.Class) {
+            throw CJError.of("derive(" + name + ") can only be applied to class items", item.getMark());
+        }
+    }
+
+    private static void deriveItemClassOrUnionCheck(CJIRItem item, String name) {
+        if (item.getKind() != CJIRItemKind.Class && item.getKind() != CJIRItemKind.Union) {
             throw CJError.of("derive(" + name + ") can only be applied to class items", item.getMark());
         }
     }
@@ -211,6 +219,17 @@ final class CJPass03 extends CJPassBaseEx {
     }
 
     private CJAstMethodDefinition synthesizeReprMethod(CJIRItem item) {
+        switch (item.getKind()) {
+            case Class:
+                return synthesizeClassReprMethod(item);
+            case Union:
+                return synthesizeUnionReprMethod(item);
+            default:
+                throw CJError.of("dreive(repr) not supported for item kind: " + item.getKind(), item.getMark());
+        }
+    }
+
+    private CJAstMethodDefinition synthesizeClassReprMethod(CJIRItem item) {
         var mark = item.getMark();
         var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
                 .map(f -> (CJAstFieldDefinition) f);
@@ -222,6 +241,25 @@ final class CJPass03 extends CJPassBaseEx {
                 List.of(newString(mark, ", "), newList(mark, fields.map(f -> newMethodCall(mark, "repr",
                         List.of(newMethodCall(mark, f.getGetterName(), List.of(selfExpr))))))));
         var body = newAdd(newString(mark, item.getShortName() + "("), newAdd(inner, newString(mark, ")")));
+        return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeUnionReprMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var cases = item.getAst().getMembers().filter(c -> c instanceof CJAstCaseDefinition)
+                .map(c -> (CJAstCaseDefinition) c);
+        var stringType = newSimpleTypeWithName(mark, "String");
+        var selfType = newSelfTypeExpression(mark);
+        var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
+        var selfExpr = newGetVar(mark, "self");
+        var body = new CJAstUnion(mark, selfExpr,
+                cases.map(c -> Tuple4.of(mark, c.getName(),
+                        Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(),
+                        newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),
+                                newJoin(mark, ", ", Range.upto(c.getTypes().size())
+                                        .map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
+                                newString(mark, ")"))))),
+                Optional.empty());
         return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
     }
 
@@ -259,8 +297,24 @@ final class CJPass03 extends CJPassBaseEx {
         return new CJAstLogicalBinop(left.getMark(), true, left, right);
     }
 
+    private CJAstExpression newJoin(CJMark mark, String sep, List<CJAstExpression> args) {
+        return newMethodCall(mark, "join", List.of(newString(mark, sep), newList(mark, args)));
+    }
+
+    private CJAstExpression newRepr(CJAstExpression e) {
+        return newMethodCall(e.getMark(), "repr", List.of(e));
+    }
+
     private CJAstExpression newAdd(CJAstExpression left, CJAstExpression right) {
         return newMethodCall(left.getMark(), "__add", List.of(left, right));
+    }
+
+    private CJAstExpression newAddList(List<CJAstExpression> exprs) {
+        var e = exprs.get(0);
+        for (var rhs : exprs.sliceFrom(1)) {
+            e = newAdd(e, rhs);
+        }
+        return e;
     }
 
     private CJAstExpression newGetVar(CJMark mark, String name) {

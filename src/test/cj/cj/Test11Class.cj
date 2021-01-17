@@ -71,4 +71,16 @@ class Test11Class {
         var mutableField : List[Int]
         val immutableField : String
     }
+
+    @test
+    def deriveUnionRepr() = {
+        Assert.equal("" + DeriveUnionRepr.foo(94), "DeriveUnionRepr.foo(94)")
+        Assert.equal("" + DeriveUnionRepr.bar("abc", 82), "DeriveUnionRepr.bar(\"abc\", 82)")
+    }
+
+    @derive(repr)
+    union DeriveUnionRepr {
+        case foo(Int)
+        case bar(String, Int)
+    }
 }
