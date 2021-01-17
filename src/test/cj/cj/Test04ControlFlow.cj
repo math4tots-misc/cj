@@ -222,7 +222,15 @@ class Test04ControlFlow {
             } catch y: String { -1 }
             Assert.equal(x, 721)
         }
-        throw Error("some error")
+        {
+            var m = "message"
+            try {
+                throw Error("some error")
+            } catch e: Error {
+                m = e.message()
+            }
+            Assert.equal(m, "some error")
+        }
     }
 
     def throwString(s: String) = {
