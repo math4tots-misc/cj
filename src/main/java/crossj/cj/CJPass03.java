@@ -198,7 +198,7 @@ final class CJPass03 extends CJPassBaseEx {
         var selfExpr = newGetVar(mark, "self");
         var otherExpr = newGetVar(mark, "other");
         var body = fields
-                .map(f -> newMethodCall(mark, "__eq", List.of(newMethodCall(mark, f.getGetterName(), List.of(selfExpr)),
+                .map(f -> newMethodCall(mark, "__eq", List.of(newGetField(selfExpr, f.getName()),
                         newMethodCall(mark, f.getGetterName(), List.of(otherExpr)))))
                 .reduce(this::newAnd);
         return synthesizeMethodWithBody(mark, "__eq", parameters, boolType, body);
@@ -299,6 +299,10 @@ final class CJPass03 extends CJPassBaseEx {
 
     private CJAstExpression newJoin(CJMark mark, String sep, List<CJAstExpression> args) {
         return newMethodCall(mark, "join", List.of(newString(mark, sep), newList(mark, args)));
+    }
+
+    private CJAstExpression newGetField(CJAstExpression owner, String name) {
+        return newMethodCall(owner.getMark(), "__get_" + name, List.of(owner));
     }
 
     private CJAstExpression newRepr(CJAstExpression e) {

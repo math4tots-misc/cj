@@ -376,7 +376,7 @@ public final class CJJSTranslator {
             @Override
             public CJJSBlob visitBlock(CJIRBlock e, Void a) {
                 var exprs = e.getExpressions();
-                var returns = !e.getType().isUnionType();
+                var returns = !e.getType().isUnitType();
                 var tmpvar = returns ? ctx.newTempVarName() : "undefined";
                 var lines = List.of(returns ? "let " + tmpvar + ";" : "");
                 lines.add("{\n");
