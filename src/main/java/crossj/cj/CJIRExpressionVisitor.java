@@ -23,4 +23,5 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitLambda(CJIRLambda e, A a);
     public abstract R visitReturn(CJIRReturn e, A a);
     public abstract R visitAwait(CJIRAwait e, A a);
+    public abstract R visitThrow(CJIRThrow e, A a);
 }

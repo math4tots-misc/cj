@@ -857,6 +857,12 @@ final class CJPass04 extends CJPassBaseEx {
                 var outerType = ((CJIRClassType) innerType).getArgs().get(0);
                 return new CJIRAwait(e, outerType, inner);
             }
+
+            @Override
+            public CJIRExpression visitThrow(CJAstThrow e, Optional<CJIRType> a) {
+                var expression = evalExpression(e.getExpression());
+                return new CJIRThrow(e, ctx.getUnitType(), expression);
+            }
         }, a);
         return ir;
     }

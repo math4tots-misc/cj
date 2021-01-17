@@ -791,13 +791,21 @@ public final class CJJSTranslator {
                 var inner = translateExpression(e.getExpression());
                 var lines = inner.getLines();
                 lines.add("return " + inner.getExpression() + ";\n");
-                return new CJJSBlob(lines, "NORETURN", false);
+                return new CJJSBlob(lines, "NORETURN", true);
             }
 
             @Override
             public CJJSBlob visitAwait(CJIRAwait e, Void a) {
                 var inner = translateExpression(e.getInner());
                 return new CJJSBlob(inner.getLines(), "(await " + inner.getExpression() + ")", false);
+            }
+
+            @Override
+            public CJJSBlob visitThrow(CJIRThrow e, Void a) {
+                var inner = translateExpression(e.getExpression());
+                var lines = inner.getLines();
+                lines.add("throw " + inner.getExpression() + ";\n");
+                return new CJJSBlob(lines, "undefined", true);
             }
         }, null);
     }
