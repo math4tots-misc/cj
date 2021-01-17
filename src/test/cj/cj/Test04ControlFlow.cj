@@ -3,6 +3,7 @@ package cj
 import cj.Test01.NestedClass
 import cj.Time as Tim
 import cj.AIO
+import cj.Error
 
 class Test04ControlFlow {
 
@@ -221,6 +222,7 @@ class Test04ControlFlow {
             } catch y: String { -1 }
             Assert.equal(x, 721)
         }
+        throw Error("some error")
     }
 
     def throwString(s: String) = {

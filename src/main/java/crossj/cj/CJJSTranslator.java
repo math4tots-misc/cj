@@ -62,7 +62,7 @@ public final class CJJSTranslator {
         if (enableStack) {
             out.append("};\n");
             emitStackData(out, jsctx);
-            out.append("try{f()}catch(e){printStackTrace();throw e;}\n");
+            out.append("try{f()}catch(e){printStackTrace();throw Array.isArray(e)?e[0]:e;}\n");
         }
         out.append("})();\n");
         return out.toString();
