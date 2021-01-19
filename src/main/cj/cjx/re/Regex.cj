@@ -347,6 +347,8 @@ class Regex {
                     val ch = self.next()
                     switch ch {
                         case '?' = Tree.char('?')
+                        case '*' = Tree.char('*')
+                        case '+' = Tree.char('+')
                         case '|' = Tree.char('|')
                         case '[' = Tree.char('[')
                         case ']' = Tree.char(']')
@@ -366,6 +368,9 @@ class Regex {
                     tree
                 }
                 case '?'
+                case '*'
+                case '+'
+                case '{'
                 case '|'
                 case ']'
                 case ')' = throw self.err("Misplaced operator: " + self.peek())

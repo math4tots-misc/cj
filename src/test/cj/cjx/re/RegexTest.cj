@@ -98,5 +98,11 @@ class RegexTest {
             Assert.equal(re.match("xyyyyyyy").get().matchText, "xyyy")
             Assert.that(not re.matches("xyyyyyyy"))
         }
+        {
+            val re = Regex("t\\+\\+")
+            Assert.that(not re.matches("t+"))
+            Assert.that(re.matches("t++"))
+            Assert.that(not re.matches("t+++"))
+        }
     }
 }
