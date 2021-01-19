@@ -20,6 +20,9 @@ class Map[K?: Hash, V?] :
         ret
     }
 
+    @variadic
+    def new(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
+
     def _rehash(self: Self, newCap: Int) = {
         if self._list.size() < newCap {
             val oldList = self._list
@@ -97,6 +100,9 @@ class Map[K?: Hash, V?] :
 
     def getOrDefault(self: Self, key: K, d: V): V = (
         if null(t) = self._getTriple(key) { t.get2() } else { d })
+
+    def getOrElse(self: Self, key: K, f: Fn[V]): V = (
+        if null(t) = self._getTriple(key) { t.get2() } else { f.call() })
 
     if V : NonNull def getOrNull(self: Self, key: K) : Nullable[V] = (
         if null(t) = self._getTriple(key) { null(t.get2()) } else { null })

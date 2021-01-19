@@ -3,6 +3,7 @@ package cj
 native class Iterator[T?] : Iterable[T] {
     @generic def iter(self: Self): Iterator[T]
     @generic if T : NonNull def next(self: Self): Nullable[T]
+    @generic def nextOrElse(self: Self, f: Fn[T]): T
     @generic def toList(self: Self): List[T]
 
     @generic def map[R?](self: Self, f: Fn[T, R]): Iterator[R]

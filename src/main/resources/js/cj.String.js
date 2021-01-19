@@ -60,4 +60,13 @@ class MC$cj$String {
             }
         }
     }
+    M$__slice(self, start, end) {
+        return self.substring(start, end);
+    }
+    M$__sliceFrom(self, start) {
+        return self.substring(start);
+    }
+    M$__sliceTo(self, end) {
+        return self.substring(0, end);
+    }
 }

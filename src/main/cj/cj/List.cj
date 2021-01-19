@@ -1,7 +1,9 @@
 package cj
 
+import cj.Collection
+
 native class List[T?] :
-        Iterable[T],
+        Collection[T],
         ToBool,
         Hash if T : Hash,
         Repr if T : Repr {

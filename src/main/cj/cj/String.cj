@@ -21,4 +21,8 @@ native class String: Repr, ToBool, Hash, Iterable[Char] {
     def charCodeAt(self: Self, i: Int): Int
     def charAt(self: Self, i: Int): Char
     def iter(self: Self): Iterator[Char]
+
+    def __slice(self: Self, start: Int, end: Int): String
+    def __sliceFrom(self: Self, start: Int): String
+    def __sliceTo(self: Self, end: Int): String
 }

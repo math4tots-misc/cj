@@ -4,33 +4,200 @@ import cj.Error
 
 class Regex {
 
+    val nfa: NFA
+
+    @variadic
+    def new(patterns: List[String]): Self = Self.fromPatterns(patterns)
+
+    def fromPatterns(patterns: List[String]): Self = Self.__malloc(NFA.fromPatterns(patterns))
+
+    def match(self: Self, string: String): Nullable[MatchResult] = self.matchFrom(string, 0)
+
+    def matchFrom(self: Self, string: String, start: Int): Nullable[MatchResult] = {
+        val nfa = self.nfa
+        var states = nfa.newStart()
+        val patternCount = nfa.patternCount
+        var i = start
+        val len = string.size()
+        var lastMatchEnd = -1
+        var lastMatchPatternIndex = -1
+        while i < len and states {
+            val rep = states.min()
+            if rep < patternCount {
+                lastMatchEnd = i
+                lastMatchPatternIndex = rep
+            }
+            val ch = string.charAt(i)
+            states = nfa.transition(states, ch.toInt())
+            i += ch.size()
+        }
+        if states {
+            val rep = states.min()
+            if rep < patternCount {
+                lastMatchEnd = i
+                lastMatchPatternIndex = rep
+            }
+        }
+        if lastMatchEnd == -1 { null } else {
+            null(MatchResult.__malloc(string, start, lastMatchEnd, lastMatchPatternIndex))
+        }
+    }
+
+    class NFA {
+        static val epsilon: Int = Graph.epsilon
+
+        ## Number of patterns in this compiled Regex
+        ##
+        ## State patternCount is the start state,
+        ## states 0..(patternCount - 1) are the accept states.
+        val patternCount: Int
+
+        ## Graph describing transitions
+        val transitionMap: List[Map[Int, Set[Int]]]
+
+        def fromTrees(trees: List[Tree]): Self = {
+            val graph = Graph()
+            for i = 0; i < trees.size(); i += 1 {
+                Assert.equal(graph.newNode(), i)
+            }
+            val startState = graph.newNode()
+            Assert.equal(startState, trees.size())
+            for i = 0; i < trees.size(); i += 1 {
+                val tree = trees[i]
+                graph.buildBlock(tree, startState, i)
+            }
+            Self.__malloc(trees.size(), graph.transitionMap)
+        }
+
+        def fromPatterns(patterns: List[String]): Self = (
+            Self.fromTrees(patterns.map(pattern -> PatternParser(pattern).parsePattern())))
+
+        def newStart(self: Self): Set[Int] = self.closure(Set(self.patternCount))
+
+        def transition(self: Self, states: Set[Int], ch: Int): Set[Int] = {
+            val map = self.transitionMap
+            self.closure(states.flatMap(state -> map[state].getOrElse(ch, () -> Set())))
+        }
+
+        def closure(self: Self, set: Set[Int]): Set[Int] = {
+            val ret = Set[Int].empty()
+            val empty = Set[Int].empty()
+            val map = self.transitionMap
+            val epsilon = Self.epsilon
+            for state in set {
+                ret.add(state)
+                ret.addAll(map[state].getOrDefault(epsilon, empty))
+            }
+            ret
+        }
+    }
+
+    class MatchResult {
+        val originalString: String
+
+        ## Index from which the match starts
+        val start: Int
+
+        ## Index at which this match ends
+        val end: Int
+
+        ## The matching pattern index
+        val matchIndex: Int
+
+        def __get_matchText(self: Self): String = self.originalString[self.start:self.end]
+    }
+
     ## NFA graph along the lines of Thompson's construction
-    class Graph {
+    private class Graph {
+        static val epsilon: Int = -2
+
         ## Transition map
-        ## maps (node) -> (char-or-edge) -> (new-node)
-        val _transitionMap: List[Map[Int, Int]]
+        ## maps (node) -> (char-or-edge) -> (new-nodes)
+        val transitionMap: List[Map[Int, Set[Int]]]
 
-        ## Accept map
-        ## maps (node) -> (matching-pattern-index)
-        ## if the node is an accepting state
-        val _acceptMap: Map[Int, Int]
-
-        def new(): Self = Self.__malloc([], Map())
+        def new(): Self = Self.__malloc([])
 
         def newNode(self: Self): Int = {
-            val node = self._transitionMap.size()
-            self._transitionMap.add(Map())
+            val node = self.transitionMap.size()
+            self.transitionMap.add(Map())
             node
         }
 
         def connect(self: Self, a: Int, ch: Int, b: Int) = {
-            self._transitionMap[a][ch] = b
+            self.transitionMap[a].getOrInsert(ch, () -> Set()).add(b)
         }
 
-        ## Mark the given node with the given accept index
-        def accept(self: Self, node: Int, index: Int) = {
-            self._acceptMap[node] = index
+        def buildBlock(self: Self, tree: Tree, var start: Int, var end: Int): Block = {
+            start = if start == -1 { self.newNode() } else { start }
+            end = if end == -1 { self.newNode() } else { end }
+            union tree {
+                case char(c) = {
+                    self.connect(start, c.toInt(), end)
+                }
+                case cat(left, right) = {
+                    val leftBlock = self.buildBlock(left, start, -1)
+                    self.buildBlock(right, leftBlock.end, end)
+                }
+                case alt(left, right) = {
+                    val leftBlock = self.buildBlock(left, -1, -1)
+                    val rightBlock = self.buildBlock(right, -1, -1)
+                    self.connect(start, Self.epsilon, leftBlock.start)
+                    self.connect(start, Self.epsilon, rightBlock.start)
+                    self.connect(leftBlock.end, Self.epsilon, end)
+                    self.connect(rightBlock.end, Self.epsilon, end)
+                }
+                case star(inner) = self.buildIntervalBlock(start, end, inner, 0, -1)
+                case plus(inner) = self.buildIntervalBlock(start, end, inner, 1, -1)
+                case optional(inner) = self.buildIntervalBlock(start, end, inner, 0, 1)
+                case interval(inner, min, max) = self.buildIntervalBlock(start, end, inner, min, max)
+            }
+            Block(start, end)
         }
+
+        private def buildIntervalBlock(
+                self: Self, var start: Int, end: Int, inner: Tree, min: Int, max: Int) = {
+            val epsilon = Self.epsilon
+            switch max {
+                case -1 = {
+                    if min == 0 {
+                        # case 1: max is infinite and min = 0
+                        # i.e. kleene star
+                        self.buildBlock(inner, start, end)
+                        self.connect(start, epsilon, end)
+                        self.connect(end, epsilon, start)
+                    } else {
+                        # case 2: max is infinite and max > 0
+                        # we build min blocks, with the last one using the overall end state.
+                        # when min = 1, this is '+'
+                        for i = 0; i + 1 < min; i += 1 {
+                            start = self.buildBlock(inner, start, -1).start
+                        }
+                        self.buildBlock(inner, start, end)
+                        self.connect(end, epsilon, start)
+                    }
+                }
+                case 0 = {
+                    # case 3: max = 0
+                    self.connect(start, epsilon, end)
+                }
+                default = {
+                    # case 4: max is finite, max > 0
+                    # when min = 0 and max = 1, this is '?'
+                    for i = 0; i < max; i += 1 {
+                        if i >= max {
+                            self.connect(start, epsilon, end)
+                        }
+                        start = self.buildBlock(inner, start, if i + 1 == max { start } else { -1 }).end
+                    }
+                }
+            }
+        }
+    }
+
+    @derive(pod)
+    class Block {
+        val start: Int
+        val end: Int
     }
 
     @derive(repr)
@@ -38,6 +205,10 @@ class Regex {
         case char(Char)
         case cat(Tree, Tree)
         case alt(Tree, Tree)
+        case star(Tree)
+        case plus(Tree)
+        case optional(Tree)
+        case interval(Tree, Int, Int)
     }
 
     private class PatternParser {
@@ -87,21 +258,32 @@ class Regex {
         }
 
         def parseAnd(self: Self): Tree = {
-            var tree = self.parseAtom()
+            var tree = self.parsePostfix()
             var repeat = true
             while repeat {
                 switch self.peek() {
-                    case '\0'
-                    case ')' = {
+                    case '|'
+                    case ')'
+                    case '\0' = {
                         repeat = false
                     }
                     default = {
-                        val rhs = self.parseAtom()
+                        val rhs = self.parsePostfix()
                         tree = Tree.cat(tree, rhs)
                     }
                 }
             }
             tree
+        }
+
+        def parsePostfix(self: Self): Tree = {
+            val inner = self.parseAtom()
+            switch self.peek() {
+                case '*' = { self.next() ; Tree.star(inner) }
+                case '+' = { self.next() ; Tree.plus(inner) }
+                case '?' = { self.next() ; Tree.optional(inner) }
+                default = inner
+            }
         }
 
         def parseAtom(self: Self): Tree = {
@@ -111,6 +293,14 @@ class Regex {
                     self.next()
                     val ch = self.next()
                     switch ch {
+                        case '?' = Tree.char('?')
+                        case '|' = Tree.char('|')
+                        case '[' = Tree.char('[')
+                        case ']' = Tree.char(']')
+                        case '(' = Tree.char('(')
+                        case ')' = Tree.char(')')
+                        case '.' = Tree.char('.')
+                        case '\n' = Tree.char('\n')
                         case '\\' = Tree.char('\\')
                         case '0' = Tree.char('\0')
                         default = throw self.err("Invalid escape char: " + ch)
@@ -122,6 +312,10 @@ class Regex {
                     self.expect(')')
                     tree
                 }
+                case '?'
+                case '|'
+                case ']'
+                case ')' = throw self.err("Misplaced operator: " + self.peek())
                 default = Tree.char(self.next())
             }
         }

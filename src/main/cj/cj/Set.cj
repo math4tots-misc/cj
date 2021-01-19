@@ -1,7 +1,9 @@
 package cj
 
+import cj.Collection
+
 class Set[T?: Hash] :
-        Iterable[T],
+        Collection[T],
         Hash,
         Repr if T : Repr {
     val _map : Map[T, T]
@@ -16,7 +18,18 @@ class Set[T?: Hash] :
         ret
     }
 
+    @variadic
+    def new(ts: List[T]): Self = Set.of(ts)
+
+    def size(self: Self): Int = self._map.size()
+
     def add(self: Self, t: T) = self._map[t] = t
+
+    def addAll[C: Iterable[T]](self: Self, ts: C) = {
+        for t in ts {
+            self.add(t)
+        }
+    }
 
     def removeOrFalse(self: Self, t: T): Bool = self._map.removeOrFalse(t)
 
@@ -32,5 +45,15 @@ class Set[T?: Hash] :
 
     if T : Repr def repr(self: Self): String = {
         "Set(" + ", ".join(self.iter().map(t -> t.repr())) + ")"
+    }
+
+    def flatMap[X?: Hash, C: Iterable[X]](self: Self, f: Fn[T, C]): Set[X] = {
+        val set = Set[X]()
+        for t in self {
+            for x in f.call(t) {
+                set.add(x)
+            }
+        }
+        set
     }
 }

@@ -19,4 +19,23 @@ trait Iterable[T?]: ToList[T] {
         }
         map
     }
+
+    def fold[R](self: Self, var r: R, f: Fn[R, T, R]): R = {
+        for t in self {
+            r = f.call(r, t)
+        }
+        r
+    }
+
+    def reduce(self: Self, f: Fn[T, T, T]): T = {
+        val iter = self.iter()
+        var ret = iter.nextOrElse(() -> IO.panic("reduce on an empty Iterable"))
+        for t in iter {
+            ret = f.call(ret, t)
+        }
+        ret
+    }
+
+    if T : Ord def min(self: Self): T = self.reduce((a, b) -> if a < b { a } else { b })
+    if T : Ord def max(self: Self): T = self.reduce((a, b) -> if a < b { b } else { a })
 }

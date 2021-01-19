@@ -9,7 +9,8 @@ import crossj.base.Tuple4;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
-    private static final int ASSIGNMENT_PRECEDENCE = getTokenPrecedence('=');
+    private static final int NORMAL_EXPRESSION_PRECEDENCE = getTokenPrecedence('=') + 5;
+    private static final int INDEX_EXPRESSION_PRECEDENCE = getTokenPrecedence(':') + 5;
     private static final int LOGICAL_NOT_PRECEDENCE = getTokenPrecedence(CJToken.EQ) + 5;
     private static final int UNARY_OP_PRECEDENCE = getTokenPrecedence('*') + 5;
 
@@ -484,7 +485,12 @@ public final class CJParser {
 
     private CJAstExpression parseExpression() {
         // by default, parsing an expression doesn't handle assignments by default.
-        return parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5);
+        return parseExpressionWithPrecedence(NORMAL_EXPRESSION_PRECEDENCE);
+    }
+
+    private CJAstExpression parseIndexExpression() {
+        // Like normal expression, but excludes ':' operator
+        return parseExpressionWithPrecedence(INDEX_EXPRESSION_PRECEDENCE);
     }
 
     private CJAstExpression parseIncrementExpression() {
@@ -556,15 +562,34 @@ public final class CJParser {
                 case '[': {
                     var mark = getMark();
                     next();
-                    var indexExpr = parseExpression();
-                    expect(']');
-                    if (consume('=')) {
-                        var valexpr = parseExpression();
-                        expr = new CJAstMethodCall(mark, Optional.empty(), "__setitem", List.of(),
-                                List.of(expr, indexExpr, valexpr));
-                    } else {
-                        expr = new CJAstMethodCall(mark, Optional.empty(), "__getitem", List.of(),
+                    if (consume(':')) {
+                        var indexExpr = parseIndexExpression();
+                        expect(']');
+                        expr = new CJAstMethodCall(mark, Optional.empty(), "__sliceTo", List.of(),
                                 List.of(expr, indexExpr));
+                    } else {
+                        var indexExpr = parseIndexExpression();
+                        if (consume(':')) {
+                            if (consume(']')) {
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__sliceFrom", List.of(),
+                                        List.of(expr, indexExpr));
+                            } else {
+                                var limitExpr = parseIndexExpression();
+                                expect(']');
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__slice", List.of(),
+                                        List.of(expr, indexExpr, limitExpr));
+                            }
+                        } else {
+                            expect(']');
+                            if (consume('=')) {
+                                var valexpr = parseExpression();
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__setitem", List.of(),
+                                        List.of(expr, indexExpr, valexpr));
+                            } else {
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__getitem", List.of(),
+                                        List.of(expr, indexExpr));
+                            }
+                        }
                     }
                     break;
                 }
@@ -982,7 +1007,7 @@ public final class CJParser {
                 var mark = getMark();
                 next();
                 var mutable = consume(CJToken.KW_VAR);
-                var condition = parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5);
+                var condition = parseExpression();
                 if (condition instanceof CJAstNullWrap && consume('=')) {
                     var wrap = (CJAstNullWrap) condition;
                     if (wrap.getInnerType().isPresent()) {
@@ -1158,10 +1183,10 @@ public final class CJParser {
                 var cases = List.<Pair<List<CJAstExpression>, CJAstExpression>>of();
                 while (!at('}') && !at(CJToken.KW_DEFAULT)) {
                     expect(CJToken.KW_CASE);
-                    var valexprs = List.of(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                    var valexprs = List.of(parseExpression());
                     skipDelimiters();
                     while (consume(CJToken.KW_CASE)) {
-                        valexprs.add(parseExpressionWithPrecedence(ASSIGNMENT_PRECEDENCE + 5));
+                        valexprs.add(parseExpression());
                         skipDelimiters();
                     }
                     expect('=');
