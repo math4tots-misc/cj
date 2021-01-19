@@ -69,4 +69,9 @@ class MC$cj$String {
     M$__sliceTo(self, end) {
         return self.substring(0, end);
     }
+
+    M$parseInt(string) {
+        const i = parseInt(string, 10);
+        return isNaN(i) ? null : i;
+    }
 }

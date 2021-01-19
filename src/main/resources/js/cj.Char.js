@@ -37,4 +37,17 @@ class MC$cj$Char {
     M$size(self) {
         return self < 0x10000 ? 1 : 2;
     }
+
+    M$isDigit(self) {
+        return '0'.codePointAt(0) <= self && self <= '9'.codePointAt(0);
+    }
+    M$isUpper(self) {
+        return 'A'.codePointAt(0) <= self && self <= 'Z'.codePointAt(0);
+    }
+    M$isLower(self) {
+        return 'a'.codePointAt(0) <= self && self <= 'z'.codePointAt(0);
+    }
+    M$isLetter(self) {
+        return this.M$isUpper(self) || this.M$isLower(self);
+    }
 }

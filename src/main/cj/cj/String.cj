@@ -25,4 +25,6 @@ native class String: Repr, ToBool, Hash, Iterable[Char] {
     def __slice(self: Self, start: Int, end: Int): String
     def __sliceFrom(self: Self, start: Int): String
     def __sliceTo(self: Self, end: Int): String
+
+    def parseInt(self: Self): Nullable[Int]
 }

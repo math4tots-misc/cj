@@ -21,6 +21,12 @@ class RegexTest {
                 tree.repr(),
                 "Tree.cat(Tree.char('a'), Tree.alt(Tree.char('b'), Tree.char('c')))")
         }
+        {
+            val tree = parseTree("xy{3,5}")
+            Assert.equal(
+                tree.repr(),
+                "Tree.cat(Tree.char('x'), Tree.interval(Tree.char('y'), 3, 5))")
+        }
     }
 
     def parseTree(pattern: String): Regex.Tree = Regex.PatternParser(pattern).parsePattern()
@@ -59,6 +65,38 @@ class RegexTest {
             Assert.equal(re.match("xyy").get().matchText, "xyy")
             Assert.equal(re.match("xyyyy").get().matchText, "xyyyy")
             Assert.that(re.match("c").isEmpty())
+        }
+        {
+            val re = Regex("xy{3,5}")
+            Assert.that(re.match("xy").isEmpty())
+            Assert.that(re.match("xyy").isEmpty())
+            Assert.equal(re.match("xyyy").get().matchText, "xyyy")
+            Assert.that(re.matches("xyyy"))
+            Assert.equal(re.match("xyyyy").get().matchText, "xyyyy")
+            Assert.that(re.matches("xyyyy"))
+            Assert.equal(re.match("xyyyyy").get().matchText, "xyyyyy")
+            Assert.that(re.matches("xyyyyy"))
+            Assert.equal(re.match("xyyyyyy").get().matchText, "xyyyyy")
+            Assert.that(not re.matches("xyyyyyy"))
+            Assert.equal(re.match("xyyyyyyy").get().matchText, "xyyyyy")
+            Assert.that(not re.matches("xyyyyyyy"))
+        }
+        {
+            val re = Regex("xy{3}")
+            Assert.that(re.match("xy").isEmpty())
+            Assert.that(not re.matches("xy"))
+            Assert.that(re.match("xyy").isEmpty())
+            Assert.that(not re.matches("xyy"))
+            Assert.equal(re.match("xyyy").get().matchText, "xyyy")
+            Assert.that(re.matches("xyyy"))
+            Assert.equal(re.match("xyyyy").get().matchText, "xyyy")
+            Assert.that(not re.matches("xyyyy"))
+            Assert.equal(re.match("xyyyyy").get().matchText, "xyyy")
+            Assert.that(not re.matches("xyyyyy"))
+            Assert.equal(re.match("xyyyyyy").get().matchText, "xyyy")
+            Assert.that(not re.matches("xyyyyyy"))
+            Assert.equal(re.match("xyyyyyyy").get().matchText, "xyyy")
+            Assert.that(not re.matches("xyyyyyyy"))
         }
     }
 }

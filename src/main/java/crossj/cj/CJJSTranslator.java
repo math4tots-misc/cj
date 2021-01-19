@@ -813,7 +813,9 @@ public final class CJJSTranslator {
             public CJJSBlob visitTry(CJIRTry e, Void a) {
                 var tmpvar = ctx.newTempVarName();
                 var lines = List.of("let " + tmpvar + ";\n");
-                lines.add("const STACK_SIZE=stack.length;\n");
+                if (ctx.isStackEnabled()) {
+                    lines.add("const STACK_SIZE=stack.length;\n");
+                }
                 lines.add("try{\n");
                 var body = translateExpression(e.getBody());
                 lines.addAll(body.getLines());
@@ -823,7 +825,9 @@ public final class CJJSTranslator {
                     for (int i = 0; i < e.getClauses().size(); i++) {
                         var clause = e.getClauses().get(i);
                         lines.add((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){\n");
-                        lines.add("while(stack.length>STACK_SIZE)stack.pop();\n");
+                        if (ctx.isStackEnabled()) {
+                            lines.add("while(stack.length>STACK_SIZE)stack.pop();\n");
+                        }
                         lines.add("const " + translateTarget(clause.get1()) + "=e;\n");
                         var clauseBody = translateExpression(clause.get3());
                         lines.addAll(clauseBody.getLines());

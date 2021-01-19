@@ -1,5 +1,6 @@
 package cjx.re
 
+import cj.StringBuilder
 import cj.Error
 
 class Regex {
@@ -11,21 +12,36 @@ class Regex {
 
     def fromPatterns(patterns: List[String]): Self = Self.__malloc(NFA.fromPatterns(patterns))
 
-    def match(self: Self, string: String): Nullable[MatchResult] = self.matchFrom(string, 0)
+    def match(self: Self, string: String): Nullable[MatchResult] = (
+        self.matchEx(string, 0, string.size(), false))
 
-    def matchFrom(self: Self, string: String, start: Int): Nullable[MatchResult] = {
+    def matchFrom(self: Self, string: String, start: Int): Nullable[MatchResult] = (
+        self.matchEx(string, start, string.size(), false))
+
+    def fullMatch(self: Self, string: String): Nullable[MatchResult] = (
+        self.matchEx(string, 0, string.size(), true))
+
+    def matches(self: Self, string: String): Bool = self.fullMatch(string).isPresent()
+
+    private def matchEx(
+            self: Self,
+            string: String,
+            start: Int,
+            end: Int,
+            fullMatch: Bool): Nullable[MatchResult] = {
         val nfa = self.nfa
         var states = nfa.newStart()
         val patternCount = nfa.patternCount
         var i = start
-        val len = string.size()
         var lastMatchEnd = -1
         var lastMatchPatternIndex = -1
-        while i < len and states {
-            val rep = states.min()
-            if rep < patternCount {
-                lastMatchEnd = i
-                lastMatchPatternIndex = rep
+        while i < end and states {
+            if not fullMatch {
+                val rep = states.min()
+                if rep < patternCount {
+                    lastMatchEnd = i
+                    lastMatchPatternIndex = rep
+                }
             }
             val ch = string.charAt(i)
             states = nfa.transition(states, ch.toInt())
@@ -89,6 +105,24 @@ class Regex {
                 ret.addAll(map[state].getOrDefault(epsilon, empty))
             }
             ret
+        }
+
+        def dump(self: Self): String = {
+            val sb = StringBuilder()
+            sb.add("NFA (start = " + self.patternCount + ")\n")
+            for i = 0; i < self.transitionMap.size(); i += 1 {
+                sb.add("  " + i + ":\n")
+                for edge in self.transitionMap[i].keys() {
+                    sb.add("    ")
+                    if edge == -2 {
+                        sb.add("epsilon")
+                    } else {
+                        sb.add(edge.toChar().toString())
+                    }
+                    sb.add(" -> " + self.transitionMap[i][edge] + "\n")
+                }
+            }
+            sb.toString()
         }
     }
 
@@ -181,13 +215,13 @@ class Regex {
                     self.connect(start, epsilon, end)
                 }
                 default = {
-                    # case 4: max is finite, max > 0
+                    # case 4: 0 < max < infinity
                     # when min = 0 and max = 1, this is '?'
                     for i = 0; i < max; i += 1 {
-                        if i >= max {
+                        if i >= min {
                             self.connect(start, epsilon, end)
                         }
-                        start = self.buildBlock(inner, start, if i + 1 == max { start } else { -1 }).end
+                        start = self.buildBlock(inner, start, if i + 1 == max { end } else { -1 }).end
                     }
                 }
             }
@@ -282,8 +316,27 @@ class Regex {
                 case '*' = { self.next() ; Tree.star(inner) }
                 case '+' = { self.next() ; Tree.plus(inner) }
                 case '?' = { self.next() ; Tree.optional(inner) }
+                case '{' = {
+                    self.next()
+                    val min = if self.at(',') { 0 } else { self.parseInt() }
+                    val max = if self.consume(',') {
+                        if self.at('}') { -1 } else { self.parseInt() }
+                    } else {
+                        min
+                    }
+                    self.expect('}')
+                    Tree.interval(inner, min, max)
+                }
                 default = inner
             }
+        }
+
+        def parseInt(self: Self): Int = {
+            val start = self.i
+            while self.peek().isDigit() {
+                self.next()
+            }
+            self.pattern[start:self.i].parseInt().get()
         }
 
         def parseAtom(self: Self): Tree = {
