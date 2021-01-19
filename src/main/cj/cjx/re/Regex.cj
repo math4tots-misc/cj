@@ -1,8 +1,13 @@
 package cjx.re
 
+import cj.Range
 import cj.StringBuilder
 import cj.Error
 
+## Simple Regex implementation
+##
+## For simplicity, all non-ASCII characters are mapped to 128.
+##
 class Regex {
 
     val nfa: NFA
@@ -37,10 +42,10 @@ class Regex {
         var lastMatchPatternIndex = -1
         while i < end and states {
             if not fullMatch {
-                val rep = states.min()
-                if rep < patternCount {
+                val representative = states.min()
+                if representative < patternCount {
                     lastMatchEnd = i
-                    lastMatchPatternIndex = rep
+                    lastMatchPatternIndex = representative
                 }
             }
             val ch = string.charAt(i)
@@ -48,10 +53,10 @@ class Regex {
             i += ch.size()
         }
         if states {
-            val rep = states.min()
-            if rep < patternCount {
+            val representative = states.min()
+            if representative < patternCount {
                 lastMatchEnd = i
-                lastMatchPatternIndex = rep
+                lastMatchPatternIndex = representative
             }
         }
         if lastMatchEnd == -1 { null } else {
@@ -60,7 +65,8 @@ class Regex {
     }
 
     class NFA {
-        static val epsilon: Int = Graph.epsilon
+        static val epsilon: Int = -2
+        static val nonAscii: Int = 128
 
         ## Number of patterns in this compiled Regex
         ##
@@ -68,11 +74,11 @@ class Regex {
         ## states 0..(patternCount - 1) are the accept states.
         val patternCount: Int
 
-        ## Graph describing transitions
+        ## NFAGraph describing transitions
         val transitionMap: List[Map[Int, Set[Int]]]
 
         def fromTrees(trees: List[Tree]): Self = {
-            val graph = Graph()
+            val graph = NFAGraph()
             for i = 0; i < trees.size(); i += 1 {
                 Assert.equal(graph.newNode(), i)
             }
@@ -90,7 +96,8 @@ class Regex {
 
         def newStart(self: Self): Set[Int] = self.closure(Set(self.patternCount))
 
-        def transition(self: Self, states: Set[Int], ch: Int): Set[Int] = {
+        def transition(self: Self, states: Set[Int], var ch: Int): Set[Int] = {
+            if ch > 127 { ch = NFA.nonAscii }
             val map = self.transitionMap
             self.closure(states.flatMap(state -> map[state].getOrElse(ch, () -> Set())))
         }
@@ -99,7 +106,7 @@ class Regex {
             val ret = Set[Int].empty()
             val empty = Set[Int].empty()
             val map = self.transitionMap
-            val epsilon = Self.epsilon
+            val epsilon = NFA.epsilon
             for state in set {
                 ret.add(state)
                 ret.addAll(map[state].getOrDefault(epsilon, empty))
@@ -112,14 +119,24 @@ class Regex {
             sb.add("NFA (start = " + self.patternCount + ")\n")
             for i = 0; i < self.transitionMap.size(); i += 1 {
                 sb.add("  " + i + ":\n")
-                for edge in self.transitionMap[i].keys() {
+                val keys = self.transitionMap[i].keys().toList()
+                for j = 0; j < keys.size(); j += 1 {
+                    val start = j
+                    val out = self.transitionMap[i][keys[j]]
+                    while (j + 1 < keys.size() and
+                            keys[j] + 1 == keys[j + 1] and
+                            out == self.transitionMap[i][keys[j + 1]]) {
+                        j += 1
+                    }
                     sb.add("    ")
-                    if edge == -2 {
+                    if j > start {
+                        sb.add("" + keys[start].toChar().repr() + "-" + keys[j - 1].toChar().repr())
+                    } else if keys[start] == NFA.epsilon {
                         sb.add("epsilon")
                     } else {
-                        sb.add(edge.toChar().toString())
+                        sb.add(keys[start].toChar().repr())
                     }
-                    sb.add(" -> " + self.transitionMap[i][edge] + "\n")
+                    sb.add(" -> " + out + "\n")
                 }
             }
             sb.toString()
@@ -142,9 +159,7 @@ class Regex {
     }
 
     ## NFA graph along the lines of Thompson's construction
-    private class Graph {
-        static val epsilon: Int = -2
-
+    private class NFAGraph {
         ## Transition map
         ## maps (node) -> (char-or-edge) -> (new-nodes)
         val transitionMap: List[Map[Int, Set[Int]]]
@@ -157,7 +172,8 @@ class Regex {
             node
         }
 
-        def connect(self: Self, a: Int, ch: Int, b: Int) = {
+        def connect(self: Self, a: Int, var ch: Int, b: Int) = {
+            if ch > 127 { ch = NFA.nonAscii }
             self.transitionMap[a].getOrInsert(ch, () -> Set()).add(b)
         }
 
@@ -175,22 +191,27 @@ class Regex {
                 case alt(left, right) = {
                     val leftBlock = self.buildBlock(left, -1, -1)
                     val rightBlock = self.buildBlock(right, -1, -1)
-                    self.connect(start, Self.epsilon, leftBlock.start)
-                    self.connect(start, Self.epsilon, rightBlock.start)
-                    self.connect(leftBlock.end, Self.epsilon, end)
-                    self.connect(rightBlock.end, Self.epsilon, end)
+                    self.connect(start, NFA.epsilon, leftBlock.start)
+                    self.connect(start, NFA.epsilon, rightBlock.start)
+                    self.connect(leftBlock.end, NFA.epsilon, end)
+                    self.connect(rightBlock.end, NFA.epsilon, end)
                 }
                 case star(inner) = self.buildIntervalBlock(start, end, inner, 0, -1)
                 case plus(inner) = self.buildIntervalBlock(start, end, inner, 1, -1)
                 case optional(inner) = self.buildIntervalBlock(start, end, inner, 0, 1)
                 case interval(inner, min, max) = self.buildIntervalBlock(start, end, inner, min, max)
+                case set(chars) = {
+                    for c in chars {
+                        self.connect(start, c.toInt(), end)
+                    }
+                }
             }
             Block(start, end)
         }
 
         private def buildIntervalBlock(
                 self: Self, var start: Int, end: Int, inner: Tree, min: Int, max: Int) = {
-            val epsilon = Self.epsilon
+            val epsilon = NFA.epsilon
             switch max {
                 case -1 = {
                     if min == 0 {
@@ -243,14 +264,23 @@ class Regex {
         case plus(Tree)
         case optional(Tree)
         case interval(Tree, Int, Int)
+        case set(Set[Int])
     }
 
     private class PatternParser {
+        private static val allLetters: Set[Int] = Range.upto(129).toSet()
+        private static val allDigits: Set[Int] = Range.inclusive('0', '9').toSet()
+        private static val allNonDigits: Set[Int] = Self.allLetters.filter(x -> x not in Self.allDigits)
+        private static val allSpace: Set[Int] = Set(' ', '\n', '\t', '\f', '\r')
+        private static val allNonSpace: Set[Int] = Self.allLetters.filter(x -> x not in Self.allSpace)
+        private static val allWord: Set[Int] = (
+            Range.inclusive('a', 'z').toSet() + Range.inclusive('A', 'Z').toSet() + Set('_'))
+        private static val allNonWord: Set[Int] = Self.allLetters.filter(x -> x not in Self.allWord)
+
         private val pattern: String
         private var i: Int
-        private val graph: Graph
 
-        def new(pattern: String): Self = Self.__malloc(pattern, 0, Graph())
+        def new(pattern: String): Self = Self.__malloc(pattern, 0)
 
         def err(self: Self, message: String): Error = Error(message)
 
@@ -345,27 +375,52 @@ class Regex {
                 case '\\' = {
                     self.next()
                     val ch = self.next()
-                    switch ch {
-                        case '?' = Tree.char('?')
-                        case '*' = Tree.char('*')
-                        case '+' = Tree.char('+')
-                        case '|' = Tree.char('|')
-                        case '[' = Tree.char('[')
-                        case ']' = Tree.char(']')
-                        case '(' = Tree.char('(')
-                        case ')' = Tree.char(')')
-                        case '.' = Tree.char('.')
-                        case '\n' = Tree.char('\n')
-                        case '\\' = Tree.char('\\')
-                        case '0' = Tree.char('\0')
-                        default = throw self.err("Invalid escape char: " + ch)
-                    }
+                    self.fromEscapeChar(ch)
                 }
                 case '(' = {
                     self.next()
                     val tree = self.parsePattern()
                     self.expect(')')
                     tree
+                }
+                case '.' = {
+                    self.next()
+                    Tree.set(Self.allLetters)
+                }
+                case '[' = {
+                    self.next()
+                    val set = Set[Int]()
+                    while not self.consume(']') {
+                        val ch = self.next()
+                        if (ch.isLetter() or ch.isDigit()) and self.peek() == '-' {
+                            self.next()
+                            val peek = self.peek()
+                            if (peek.isUpper() and ch.isUpper() or
+                                    peek.isLower() and ch.isLower() or
+                                    peek.isDigit() and ch.isDigit()) {
+                                val limit = self.next().toInt()
+                                for i = ch.toInt(); i < limit; i += 1 {
+                                    set.add(i)
+                                }
+                            } else {
+                                throw self.err("Invalid character class range: " + ch.repr() + "-" + peek.repr())
+                            }
+                        } else {
+                            switch ch {
+                                case '\\' = {
+                                    val escapeChar = self.next()
+                                    union self.fromEscapeChar(escapeChar) {
+                                        case set(escapedSet) = set.addAll(escapedSet)
+                                        case char(c) = set.add(c.toInt())
+                                        default = throw self.err(
+                                            "Invalid escape in character class: " + escapeChar.repr())
+                                    }
+                                }
+                                default = set.add(ch.toInt())
+                            }
+                        }
+                    }
+                    Tree.set(set)
                 }
                 case '?'
                 case '*'
@@ -375,6 +430,32 @@ class Regex {
                 case ']'
                 case ')' = throw self.err("Misplaced operator: " + self.peek())
                 default = Tree.char(self.next())
+            }
+        }
+
+        def fromEscapeChar(self: Self, ch: Char): Tree = {
+            switch ch {
+                case 'd' = Tree.set(Self.allDigits)
+                case 'D' = Tree.set(Self.allNonDigits)
+                case 'w' = Tree.set(Self.allWord)
+                case 'W' = Tree.set(Self.allNonWord)
+                case 's' = Tree.set(Self.allSpace)
+                case 'S' = Tree.set(Self.allNonSpace)
+                case '?' = Tree.char('?')
+                case '*' = Tree.char('*')
+                case '+' = Tree.char('+')
+                case '|' = Tree.char('|')
+                case '[' = Tree.char('[')
+                case ']' = Tree.char(']')
+                case '(' = Tree.char('(')
+                case ')' = Tree.char(')')
+                case '{' = Tree.char('{')
+                case '}' = Tree.char('}')
+                case '.' = Tree.char('.')
+                case '\n' = Tree.char('\n')
+                case '\\' = Tree.char('\\')
+                case '0' = Tree.char('\0')
+                default = throw self.err("Invalid escape char: " + ch)
             }
         }
     }

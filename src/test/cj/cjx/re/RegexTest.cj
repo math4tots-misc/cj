@@ -104,5 +104,14 @@ class RegexTest {
             Assert.that(re.matches("t++"))
             Assert.that(not re.matches("t+++"))
         }
+        {
+            val re = Regex("[a-y][A-Z]+")
+            Assert.that(re.matches("aYYYC"))
+            Assert.that(re.matches("aY"))
+            Assert.that(not re.matches("a"))
+            Assert.that(not re.matches("zJJ"))
+            Assert.that(re.matches("xJJ"))
+            Assert.that(re.matches("bABCDE"))
+        }
     }
 }

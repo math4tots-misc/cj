@@ -50,4 +50,7 @@ class MC$cj$Char {
     M$isLetter(self) {
         return this.M$isUpper(self) || this.M$isLower(self);
     }
+    M$isLetterOrDigit(self) {
+        return this.M$isLetter(self) || this.M$isDigit(self);
+    }
 }

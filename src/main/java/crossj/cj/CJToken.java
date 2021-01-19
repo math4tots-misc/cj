@@ -293,6 +293,8 @@ public final class CJToken {
                 return (int) '\t';
             case "'\\r'":
                 return (int) '\r';
+            case "'\\f'":
+                return (int) '\f';
             case "'\\0'":
                 return (int) '\0';
         }

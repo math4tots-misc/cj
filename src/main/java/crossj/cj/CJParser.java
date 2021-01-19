@@ -1171,6 +1171,7 @@ public final class CJParser {
                 } else {
                     fallback = Optional.empty();
                 }
+                skipDelimiters();
                 expect('}');
                 return new CJAstUnion(mark, target, cases, fallback);
             }

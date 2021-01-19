@@ -47,8 +47,31 @@ class Set[T?: Hash] :
         "Set(" + ", ".join(self.iter().map(t -> t.repr())) + ")"
     }
 
+    def __contains(self: Self, t: T): Bool = t in self._map
+
+    def __add(self: Self, other: Self): Self = {
+        val ret = Self.empty()
+        for t in self {
+            ret.add(t)
+        }
+        for t in other {
+            ret.add(t)
+        }
+        return ret
+    }
+
+    def filter(self: Self, f: Fn[T, Bool]): Set[T] = {
+        val set = Self.empty()
+        for t in self {
+            if f.call(t) {
+                set.add(t)
+            }
+        }
+        set
+    }
+
     def flatMap[X?: Hash, C: Iterable[X]](self: Self, f: Fn[T, C]): Set[X] = {
-        val set = Set[X]()
+        val set = Set[X].empty()
         for t in self {
             for x in f.call(t) {
                 set.add(x)

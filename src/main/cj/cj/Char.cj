@@ -21,6 +21,9 @@ native class Char: ToInt, ToChar, Hash, Repr {
     ## Checks if the character is an ascii lower case letter (a-z)
     def isLower(self: Self): Bool
 
-    ## Checks if the character is an ascii letter (A-Za-z)
+    ## Checks if the character is an ascii letter (a-zA-Z0-9)
     def isLetter(self: Self): Bool
+
+    ## Checks if the character is an ascii letter or digit (a-zA-Z0-9)
+    def isLetterOrDigit(self: Self): Bool
 }
