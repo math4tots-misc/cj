@@ -6,6 +6,7 @@ import cj.IO
 
 class Main {
     def main() = {
+        IO.eprintln("eprintln")
         IO.println("Hello world!")
 
         IO.println(Int.__add(4, 17))
