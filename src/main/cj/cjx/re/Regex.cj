@@ -10,12 +10,13 @@ import cj.Error
 ##
 class Regex {
 
-    val nfa: NFA
+    val nfa: CachingNFA
 
     @variadic
     def new(patterns: List[String]): Self = Self.fromPatterns(patterns)
 
-    def fromPatterns(patterns: List[String]): Self = Self.__malloc(NFA.fromPatterns(patterns))
+    def fromPatterns(patterns: List[String]): Self = (
+        Self.__malloc(CachingNFA(NFA.fromPatterns(patterns))))
 
     def match(self: Self, string: String): Nullable[MatchResult] = (
         self.matchEx(string, 0, string.size(), false))
@@ -42,7 +43,7 @@ class Regex {
         var lastMatchPatternIndex = -1
         while i < end and states {
             if not fullMatch {
-                val representative = states.min()
+                val representative = nfa.getRepresentative(states)
                 if representative < patternCount {
                     lastMatchEnd = i
                     lastMatchPatternIndex = representative
@@ -53,7 +54,7 @@ class Regex {
             i += ch.size()
         }
         if states {
-            val representative = states.min()
+            val representative = nfa.getRepresentative(states)
             if representative < patternCount {
                 lastMatchEnd = i
                 lastMatchPatternIndex = representative
@@ -61,6 +62,59 @@ class Regex {
         }
         if lastMatchEnd == -1 { null } else {
             null(MatchResult.__malloc(string, start, lastMatchEnd, lastMatchPatternIndex))
+        }
+    }
+
+    class CachingNFA {
+        val nfa: NFA
+        val idToStates: List[Set[Int]]
+        val statesToId: Map[Set[Int], Int]
+        val idToRepresentative: List[Int]
+        val transitionMap: List[List[Int]]
+
+        def new(nfa: NFA): Self = {
+            val self = Self.__malloc(nfa, [], Map(), [], [])
+            Assert.equal(self.getId(Set()), 0)
+            self
+        }
+
+        def __get_patternCount(self: Self): Int = self.nfa.patternCount
+
+        def getId(self: Self, states: Set[Int]): Int = {
+            if null(id) = self.statesToId.getOrNull(states) {
+                id
+            } else {
+                val id = self.idToStates.size()
+                self.idToRepresentative.add(if states.isEmpty() { self.nfa.patternCount } else {
+                    states.min()
+                })
+                self.idToStates.add(states)
+                self.statesToId[states] = id
+                self.transitionMap.add([-1] * 129)
+                id
+            }
+        }
+
+        def getRepresentative(self: Self, id: Int): Int = self.idToRepresentative[id]
+
+        def newStart(self: Self): Int = self.getId(self.nfa.newStart())
+
+        def transition(self: Self, id: Int, var ch: Int): Int = {
+            if ch > 127 { ch = NFA.nonAscii }
+            val newId = self.transitionMap[id][ch]
+            if newId == -1 {
+                val computedNewId = self.transitionNoCache(id, ch)
+                self.transitionMap[id][ch] = computedNewId
+                computedNewId
+            } else {
+                newId
+            }
+        }
+
+        def transitionNoCache(self: Self, id: Int, ch: Int): Int = {
+            val beforeStates = self.idToStates[id]
+            val afterStates = self.nfa.transition(beforeStates, ch)
+            self.getId(afterStates)
         }
     }
 
