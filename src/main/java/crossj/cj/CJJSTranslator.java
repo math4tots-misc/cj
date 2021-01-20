@@ -331,12 +331,12 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     lines.addAll(arg.getLines());
                 }
                 var allArgs = List.of(typeArgs, args.map(arg -> arg.getExpression())).flatMap(x -> x);
-                var pair = joinMethodCall(lines, e.getMark(), e.getOwner(), e.getMethodRef(), allArgs);
+                var pair = joinMethodCall(lines, e.getMark(), e.getOwner(), e.getMethodRef(), e.getArgs(), allArgs);
                 return new CJJSBlob(lines, pair.get1(), pair.get2());
             }
 
             private Pair<String, Boolean> joinMethodCall(List<String> lines, CJMark mark, CJIRType owner,
-                    CJIRMethodRef methodRef, List<String> allArgs) {
+                    CJIRMethodRef methodRef, List<CJIRExpression> args, List<String> allArgs) {
                 var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
                 switch (fullMethodName) {
                     case "cj.Int.__neg":
@@ -367,6 +367,20 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         return Pair.of("[]", false);
                     case "cj.List_.empty":
                         return Pair.of("[]", false);
+                    case "cj.List.size":
+                        Assert.equals(allArgs.size(), 1);
+                        return Pair.of(allArgs.get(0) + ".length", false);
+                    case "cj.String.__add":
+                        Assert.equals(allArgs.size(), 3);
+                        Assert.equals(args.size(), 2);
+                        switch (args.get(1).getType().toString()) {
+                            case "cj.String":
+                            case "cj.Int":
+                            case "cj.Double":
+                            case "cj.Bool":
+                                return Pair.of("(" + allArgs.get(1) + "+" + allArgs.get(2) + ")", false);
+                        }
+                        break;
                     case "cj.Fn0":
                     case "cj.Fn1":
                     case "cj.Fn2":
@@ -383,60 +397,58 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                             return Pair.of(call, false);
                         }
                     }
-                    default: {
-                        String ownerStr;
-                        if (methodRef.getMethod().isGenericSelf() && owner instanceof CJIRClassType) {
-                            ownerStr = translateItemMetaObjectName(((CJIRClassType) owner).getItem().getFullName());
-                        } else {
-                            ownerStr = translateType(owner);
+                }
+                String ownerStr;
+                if (methodRef.getMethod().isGenericSelf() && owner instanceof CJIRClassType) {
+                    ownerStr = translateItemMetaObjectName(((CJIRClassType) owner).getItem().getFullName());
+                } else {
+                    ownerStr = translateType(owner);
+                }
+
+                var extra = methodRef.getMethod().getExtra();
+
+                if (extra instanceof CJIRFieldMethodInfo) {
+                    var info = (CJIRFieldMethodInfo) extra;
+                    var field = info.getField();
+                    if (field.isStatic()) {
+                        var target = ownerStr + "." + translateFieldName(field.getName());
+                        switch (info.getKind()) {
+                            case "=":
+                                Assert.equals(allArgs.size(), 1);
+                                return Pair.of(target + info.getKind() + allArgs.last(), false);
+                            case "+=":
+                                Assert.equals(allArgs.size(), 1);
+                                return Pair.of(target + "=(" + ownerStr + "."
+                                        + translateMethodName(field.getGetterName()) + "())" + "+" + allArgs.last(),
+                                        false);
                         }
-
-                        var extra = methodRef.getMethod().getExtra();
-
-                        if (extra instanceof CJIRFieldMethodInfo) {
-                            var info = (CJIRFieldMethodInfo) extra;
-                            var field = info.getField();
-                            if (field.isStatic()) {
-                                var target = ownerStr + "." + translateFieldName(field.getName());
-                                switch (info.getKind()) {
-                                    case "=":
-                                        Assert.equals(allArgs.size(), 1);
-                                        return Pair.of(target + info.getKind() + allArgs.last(), false);
-                                    case "+=":
-                                        Assert.equals(allArgs.size(), 1);
-                                        return Pair.of(target + "=(" + ownerStr + "."
-                                                + translateMethodName(field.getGetterName()) + "())" + "+"
-                                                + allArgs.last(), false);
-                                }
-                            } else if (!field.isStatic()) {
-                                var target = isWrapperType(owner) ? allArgs.get(0)
-                                        : allArgs.get(0) + "[" + field.getIndex() + "]";
-                                switch (info.getKind()) {
-                                    case "":
-                                        Assert.equals(allArgs.size(), 1);
-                                        return Pair.of(target, false);
-                                    case "=":
-                                    case "+=":
-                                        Assert.equals(allArgs.size(), 2);
-                                        Assert.that(field.isMutable());
-                                        return Pair.of(target + info.getKind() + allArgs.last(), false);
-                                }
-                            }
-                        }
-
-                        var call = ownerStr + "." + translateMethodName(methodRef.getName()) + "("
-                                + Str.join(",", allArgs) + ")";
-
-                        if (ctx.isStackEnabled()) {
-                            var tmpvar = ctx.newTempVarName();
-                            lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
-                            lines.add("const " + tmpvar + "=" + call + ";\n");
-                            lines.add("stack.pop();\n");
-                            return Pair.of(tmpvar, true);
-                        } else {
-                            return Pair.of(call, false);
+                    } else if (!field.isStatic()) {
+                        var target = isWrapperType(owner) ? allArgs.get(0)
+                                : allArgs.get(0) + "[" + field.getIndex() + "]";
+                        switch (info.getKind()) {
+                            case "":
+                                Assert.equals(allArgs.size(), 1);
+                                return Pair.of(target, false);
+                            case "=":
+                            case "+=":
+                                Assert.equals(allArgs.size(), 2);
+                                Assert.that(field.isMutable());
+                                return Pair.of(target + info.getKind() + allArgs.last(), false);
                         }
                     }
+                }
+
+                var call = ownerStr + "." + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs)
+                        + ")";
+
+                if (ctx.isStackEnabled()) {
+                    var tmpvar = ctx.newTempVarName();
+                    lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
+                    lines.add("const " + tmpvar + "=" + call + ";\n");
+                    lines.add("stack.pop();\n");
+                    return Pair.of(tmpvar, true);
+                } else {
+                    return Pair.of(call, false);
                 }
             }
 
