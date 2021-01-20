@@ -335,8 +335,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 return new CJJSBlob(lines, pair.get1(), pair.get2());
             }
 
-            private Pair<String, Boolean> joinMethodCall(List<String> lines, CJMark mark, CJIRType owner, CJIRMethodRef methodRef,
-                    List<String> allArgs) {
+            private Pair<String, Boolean> joinMethodCall(List<String> lines, CJMark mark, CJIRType owner,
+                    CJIRMethodRef methodRef, List<String> allArgs) {
                 var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
                 switch (fullMethodName) {
                     case "cj.Int.__neg":
@@ -424,8 +424,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                             }
                         }
 
-                        var call = ownerStr + "."
-                        + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs) + ")";
+                        var call = ownerStr + "." + translateMethodName(methodRef.getName()) + "("
+                                + Str.join(",", allArgs) + ")";
 
                         if (ctx.isStackEnabled()) {
                             var tmpvar = ctx.newTempVarName();
