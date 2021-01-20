@@ -8,10 +8,3 @@ function printStackTrace() {
         console.log(`  in ${filename}:${line}:${column}`);
     }
 }
-
-function call(i, f) {
-    stack.push(i);
-    const ret = f();
-    stack.pop();
-    return ret;
-}

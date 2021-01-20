@@ -343,4 +343,18 @@ public final class Str {
     public static String hex(int value) {
         return fromIntWithBase(value, 16);
     }
+
+    public static List<Integer> chars(String string) {
+        List<Integer> list = List.of();
+        int i = 0;
+        while (i < string.length()) {
+            int codePoint = string.codePointAt(i);
+            list.add(codePoint);
+            if (codePoint != string.charAt(i)) {
+                i++;
+            }
+            i++;
+        }
+        return list;
+    }
 }
