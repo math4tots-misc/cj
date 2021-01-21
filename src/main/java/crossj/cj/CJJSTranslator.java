@@ -381,6 +381,33 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                                 return Pair.of("(" + allArgs.get(1) + "+" + allArgs.get(2) + ")", false);
                         }
                         break;
+                    case "cj.js.JSObject.field":
+                    case "cj.js.JSWrapper.field":
+                        Assert.equals(allArgs.size(), 2);
+                        return Pair.of(allArgs.get(0) + "[" + allArgs.get(1) + "]", false);
+                    case "cj.js.JSObject.setField":
+                    case "cj.js.JSWrapper.setField":
+                        Assert.equals(allArgs.size(), 4);
+                        lines.add(allArgs.get(1) + "[" + allArgs.get(2) + "]=" + allArgs.get(3) + ";\n");
+                        return Pair.of("undefined", true);
+                    case "cj.js.JSObject.call1":
+                    case "cj.js.JSObject.call":
+                    case "cj.js.JSWrapper.call": {
+                        Assert.equals(allArgs.size(), 3);
+                        var call = allArgs.get(0) + "[" + allArgs.get(1) + "](..." + allArgs.get(2) + ")";
+                        if (ctx.isStackEnabled()) {
+                            var tmpvar = ctx.newTempVarName();
+                            lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
+                            lines.add("const " + tmpvar + "=" + call + ";\n");
+                            lines.add("stack.pop();\n");
+                            return Pair.of(tmpvar, true);
+                        } else {
+                            return Pair.of(call, false);
+                        }
+                    }
+                    case "cj.js.JSObject.unsafeCast":
+                        Assert.equals(allArgs.size(), 2);
+                        return Pair.of(allArgs.get(1), false);
                     case "cj.Fn0":
                     case "cj.Fn1":
                     case "cj.Fn2":

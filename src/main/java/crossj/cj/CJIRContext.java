@@ -58,6 +58,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRType doubleType = null;
     private CJIRType stringType = null;
     private CJIRTrait toBoolTrait = null;
+    private CJIRTrait fromAnyTrait = null;
 
     @Override
     CJIRContext getGlobal() {
@@ -411,5 +412,12 @@ public final class CJIRContext extends CJIRContextBase {
             toBoolTrait = getTraitWithArgs("cj.ToBool", List.of());
         }
         return toBoolTrait;
+    }
+
+    CJIRTrait getFromAnyTrait() {
+        if (fromAnyTrait == null) {
+            fromAnyTrait = getTraitWithArgs("cj.FromAny", List.of());
+        }
+        return fromAnyTrait;
     }
 }

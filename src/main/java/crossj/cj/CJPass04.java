@@ -173,6 +173,11 @@ final class CJPass04 extends CJPassBaseEx {
         if (a.isPresent()) {
             var expectedType = a.get();
             var actualType = ir.getType();
+            if (!actualType.equals(expectedType) && expectedType.implementsTrait(ctx.getFromAnyTrait())) {
+                var methodRef = expectedType.findMethod("fromAny", expression.getMark());
+                ir = synthesizeMethodCall(expression, expectedType, methodRef, List.of(actualType), List.of(ir));
+                actualType = ir.getType();
+            }
             checkResultType(expression.getMark(), expectedType, actualType);
         }
         return ir;
