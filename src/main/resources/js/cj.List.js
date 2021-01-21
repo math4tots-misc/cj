@@ -20,9 +20,15 @@ class MC$cj$List {
         self.push(t);
     }
     M$__getitem(self, i) {
+        if (i >= self.length) {
+            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
+        }
         return self[i];
     }
     M$__setitem(self, i, t) {
+        if (i >= self.length) {
+            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
+        }
         self[i] = t;
     }
     M$removeIndex(self, i) {
