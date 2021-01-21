@@ -10,18 +10,11 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     private final List<CJAstTypeParameter> typeParameters;
     private final List<CJAstTraitDeclaration> traitDeclarations;
     private final List<CJAstItemMemberDefinition> members;
+    private final boolean simpleUnion;
 
-    CJAstItemDefinition(
-            CJMark mark,
-            String packageName,
-            List<CJAstImport> imports,
-            Optional<String> comment,
-            List<CJAstAnnotationExpression> annotations,
-            List<CJIRModifier> modifiers,
-            CJIRItemKind kind,
-            String shortName,
-            List<CJAstTypeParameter> typeParameters,
-            List<CJAstTraitDeclaration> traitDeclarations,
+    CJAstItemDefinition(CJMark mark, String packageName, List<CJAstImport> imports, Optional<String> comment,
+            List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers, CJIRItemKind kind,
+            String shortName, List<CJAstTypeParameter> typeParameters, List<CJAstTraitDeclaration> traitDeclarations,
             List<CJAstItemMemberDefinition> members) {
         super(mark, comment, annotations, modifiers, shortName);
         this.packageName = packageName;
@@ -30,6 +23,8 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
         this.typeParameters = typeParameters;
         this.traitDeclarations = traitDeclarations;
         this.members = members;
+        this.simpleUnion = kind == CJIRItemKind.Union && members.filter(c -> c instanceof CJAstCaseDefinition)
+                .map(c -> (CJAstCaseDefinition) c).all(c -> c.getTypes().isEmpty());
     }
 
     public String getPackageName() {
@@ -58,6 +53,16 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
 
     public List<CJAstItemMemberDefinition> getMembers() {
         return members;
+    }
+
+    /**
+     * Indicates that this item is a union where all of its cases have no additional
+     * data.
+     *
+     * This means that this union may be effectively treated like an enum.
+     */
+    public boolean isSimpleUnion() {
+        return simpleUnion;
     }
 
     public boolean isValidCompanionClass() {

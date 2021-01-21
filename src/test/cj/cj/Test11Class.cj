@@ -83,4 +83,66 @@ class Test11Class {
         case foo(Int)
         case bar(String, Int)
     }
+
+    union SimpleUnion {
+        case one
+        case two
+    }
+
+    @test
+    def simpleUnion() = {
+        {
+            val a = SimpleUnion.one()
+            val out = union a {
+                case one = "ONE"
+                case two = "TWO"
+            }
+            Assert.equal(out, "ONE")
+        }
+        {
+            val a = SimpleUnion.two()
+            val out = union a {
+                case one = "ONE"
+                case two = "TWO"
+            }
+            Assert.equal(out, "TWO")
+        }
+    }
+
+    union NonSimpleUnion {
+        case one(Int)
+        case two(String)
+        case three
+    }
+
+    @test
+    def nonSimpleUnion() = {
+        {
+            val a = NonSimpleUnion.one(15)
+            val out = union a {
+                case one(i) = "ONE(" + i + ")"
+                case two(s) = "TWO(" + s + ")"
+                case three = "THREE"
+            }
+            Assert.equal(out, "ONE(15)")
+        }
+        {
+            val a = NonSimpleUnion.two("qwer")
+            val out = union a {
+                case one(i) = "ONE(" + i + ")"
+                case two(s) = "TWO(" + s + ")"
+                case three = "THREE"
+            }
+            Assert.equal(out, "TWO(qwer)")
+        }
+        {
+            val a = NonSimpleUnion.three()
+            val out = union a {
+                case one(i) = "ONE(" + i + ")"
+                case two(s) = "TWO(" + s + ")"
+                case three = "THREE"
+            }
+            Assert.equal(out, "THREE")
+        }
+    }
 }

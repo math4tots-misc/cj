@@ -252,7 +252,11 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var methodName = translateMethodName(caseDefn.getName());
                 var argc = caseDefn.getTypes().size();
                 var args = Str.join(",", Range.upto(argc).map(i -> "a" + i));
-                out.append(methodName + "(" + args + "){return[" + caseDefn.getTag() + "," + args + "];}\n");
+                if (item.isSimpleUnion()) {
+                    out.append(methodName + "(" + args + "){return " + caseDefn.getTag() + ";}\n");
+                } else {
+                    out.append(methodName + "(" + args + "){return[" + caseDefn.getTag() + "," + args + "];}\n");
+                }
             }
         }
 
@@ -690,7 +694,11 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var lines = target.getLines();
                 var tmpvar = ctx.newTempVarName();
                 lines.add("let " + tmpvar + ";\n");
-                lines.add("switch((" + target.getExpression() + ")[0]){\n");
+                if (e.getTarget().getType().isSimpleUnion()) {
+                    lines.add("switch(" + target.getExpression() + "){\n");
+                } else {
+                    lines.add("switch((" + target.getExpression() + ")[0]){\n");
+                }
                 for (var entry : e.getCases()) {
                     var caseDefn = entry.get2();
                     var body = translateExpression(entry.get4());
@@ -699,7 +707,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     var mutable = entry.get3().any(d -> d.isMutable());
                     var prefix = mutable ? "let " : "const ";
                     lines.add("case " + tag + ":{\n");
-                    lines.add(prefix + "[," + Str.join(",", names) + "]=" + target.getExpression() + ";\n");
+                    if (!e.getTarget().getType().isSimpleUnion()) {
+                        lines.add(prefix + "[," + Str.join(",", names) + "]=" + target.getExpression() + ";\n");
+                    }
                     body.setValue(lines, tmpvar + "=");
                     lines.add("break;\n");
                     lines.add("}\n");

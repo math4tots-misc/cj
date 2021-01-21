@@ -103,6 +103,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         return nullable;
     }
 
+    public boolean isSimpleUnion() {
+        return ast.isSimpleUnion();
+    }
+
     public List<CJIRModifier> getModifiers() {
         return ast.getModifiers();
     }
@@ -200,8 +204,8 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     }
 
     /**
-     * Like toTraitOrClassType, but the type variables implement all traits asked for
-     * in all of this item's trait declarations.
+     * Like toTraitOrClassType, but the type variables implement all traits asked
+     * for in all of this item's trait declarations.
      */
     CJIRTraitOrClassType toFullyImplementingTraitOrClassType() {
         List<CJIRVariableType> variables = typeParameters.map(tp -> new CJIRVariableType(tp, List.of()));

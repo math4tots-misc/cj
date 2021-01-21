@@ -78,4 +78,8 @@ public interface CJIRType {
         }
         return null;
     }
+
+    default boolean isSimpleUnion() {
+        return false;
+    }
 }

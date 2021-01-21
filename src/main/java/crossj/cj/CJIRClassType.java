@@ -76,4 +76,9 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
         var other = (CJIRClassType) obj;
         return item == other.item && args.equals(other.args);
     }
+
+    @Override
+    public boolean isSimpleUnion() {
+        return item.isSimpleUnion();
+    }
 }
