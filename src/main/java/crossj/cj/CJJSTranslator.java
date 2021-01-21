@@ -34,7 +34,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             @Override
             public Void visitWWW(CJIRRunModeWWW m, Void a) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
-                out.append(mainClass + "." + translateMethodName("main") + "();\n");
+                out.append("window.onload = () => " + mainClass + "." + translateMethodName("main") + "();\n");
                 return null;
             }
 
