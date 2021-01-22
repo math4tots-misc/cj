@@ -2,7 +2,7 @@ package cj.js
 
 import cj.FromAny
 
-native class JSObject : FromAny {
+native class JSObject : FromAny, Repr {
     def field(self: Self, key: String): JSObject
     @generic def setField[T](self: Self, key: String, value: T)
     @variadic def call(self: Self, methodName: String, args: List[JSObject]): JSObject
@@ -18,4 +18,7 @@ native class JSObject : FromAny {
     @generic def _jsCast[T?, R?](t: T, cls: JSObject): R
 
     @generic def unsafeCast[T?](self: Self): T
+
+    def repr(self: Self): String
+    def toString(self: Self): String
 }

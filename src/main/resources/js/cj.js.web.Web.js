@@ -5,4 +5,10 @@ class MC$cj$js$web$Web {
     M$documentClass() {
         return Document;
     }
+    M$window() {
+        return window;
+    }
+    M$windowClass() {
+        return Window;
+    }
 }
