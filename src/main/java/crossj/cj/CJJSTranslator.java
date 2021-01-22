@@ -416,6 +416,23 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                             return Pair.of(call, false);
                         }
                     }
+                    case "cj.JSON.fromAny": {
+                        Assert.equals(allArgs.size(), 2);
+                        switch (allArgs.get(0)) {
+                            case "MO$cj$JSON":
+                            case "MO$cj$Int":
+                            case "MO$cj$Double":
+                            case "MO$cj$Bool":
+                            case "MO$cj$String":
+                            case "new MC$cj$List(MO$cj$JSON)":
+                            case "new MC$cj$List(MO$cj$Int)":
+                            case "new MC$cj$List(MO$cj$Double)":
+                            case "new MC$cj$List(MO$cj$Bool)":
+                            case "new MC$cj$List(MO$cj$String)":
+                                return Pair.of(allArgs.get(1), false);
+                        }
+                        break;
+                    }
                     case "cj.js.JSObject.unsafeCast":
                         Assert.equals(allArgs.size(), 2);
                         return Pair.of(allArgs.get(1), false);

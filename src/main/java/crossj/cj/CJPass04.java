@@ -549,11 +549,16 @@ final class CJPass04 extends CJPassBaseEx {
                 if (a.isEmpty() && e.getExpressions().isEmpty()) {
                     throw CJError.of("Could not determine type of list display", e.getMark());
                 }
+
                 var itemType = a.map(expectedType -> {
                     // TODO: Consider whether to be permissive in the case where expectedType is a
                     // Bool
                     if (!expectedType.isListType()) {
-                        throw CJError.of("Expected " + expectedType + " but got a list display", e.getMark());
+                        if (expectedType.implementsTrait(ctx.getFromAnyTrait())) {
+                            return expectedType;
+                        } else {
+                            throw CJError.of("Expected " + expectedType + " but got a list display", e.getMark());
+                        }
                     }
                     var listType = (CJIRClassType) expectedType;
                     return listType.getArgs().get(0);
