@@ -9,5 +9,7 @@ class Sample1 {
         document.title = "New Title"
         val out : HTMLDivElement = document.getElementBydId("out")
         out.innerHTML = "Hello!"
+        val out2 : HTMLDivElement = document.getElementBydId("out2")
+        out2.innerHTML = "Hello!"
     }
 }
