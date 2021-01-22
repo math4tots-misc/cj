@@ -20,5 +20,19 @@ native class JSObject : FromAny, Repr {
     @generic def unsafeCast[T?](self: Self): T
 
     def repr(self: Self): String
+
+    def isString(self: Self): Bool
+
+    ## returns self if self is a string. Throws otherwise
     def toString(self: Self): String
+
+    def isInt(self: Self): Int
+
+    ## returns self if self is a number (doubles are truncated). Throws otherwise
+    def toInt(self: Self): Int
+
+    def isDouble(self: Self): Double
+
+    ## return self if self is a number. Throws otherwise
+    def toDouble(self: Self): Double
 }

@@ -30,11 +30,34 @@ class MC$cj$js$JSObject {
     M$repr(self) {
         return JSON.stringify(self);
     }
+    M$isString(self){
+        return typeof self === 'string';
+    }
     M$toString(self) {
         if (typeof self === 'string') {
             return self;
         } else {
             throw new Error("JSObject.toString on non-string (" + self + ")");
+        }
+    }
+    M$isInt(self) {
+        return typeof self === 'number' && (self|0 === self);
+    }
+    M$toInt(self) {
+        if (typeof self === 'number') {
+            return self|0;
+        } else {
+            throw new Error("JSObject.toInt on non-number (" + self + ")");
+        }
+    }
+    M$isDouble(self) {
+        return typeof self === 'number';
+    }
+    M$toDouble(self) {
+        if (typeof self === 'number') {
+            return self;
+        } else {
+            throw new Error("JSObject.toInt on non-number (" + self + ")");
         }
     }
 }

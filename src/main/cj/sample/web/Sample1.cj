@@ -1,5 +1,6 @@
 package sample.web
 
+import cj.js.web.HTMLElement
 import cj.js.web.HTMLDivElement
 import cj.js.web.Document
 
@@ -8,6 +9,15 @@ class Sample1 {
         val document = Document.get()
         document.title = "New Title"
         val out : HTMLDivElement = document.getElementBydId("out")
-        out.innerHTML = "Hello!"
+        out.innerHTML = "Hello!<br/>"
+
+        val button : HTMLElement = document.getElementBydId("button")
+        button.onclick(event -> {
+            out.innerHTML = out.innerHTML + "clicked<br/>"
+        })
+
+        document.onkeydown(event -> {
+            out.innerHTML = out.innerHTML + "keydown " + event.key + "<br/>"
+        })
     }
 }

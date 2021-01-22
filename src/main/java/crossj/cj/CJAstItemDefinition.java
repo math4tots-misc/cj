@@ -66,10 +66,6 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     }
 
     public boolean isValidCompanionClass() {
-        if (kind != CJIRItemKind.Class || !typeParameters.isEmpty()) {
-            return false;
-        }
-        var nonStaticFields = members.filter(m -> !m.isStatic() && m instanceof CJAstFieldDefinition);
-        return nonStaticFields.isEmpty();
+        return kind == CJIRItemKind.Class && typeParameters.isEmpty();
     }
 }
