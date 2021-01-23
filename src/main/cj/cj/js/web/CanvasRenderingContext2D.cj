@@ -17,4 +17,13 @@ class CanvasRenderingContext2D : JSWrapper {
 
     def fillRect(self: Self, x: Double, y: Double, width: Double, height: Double) = (
         self.call("fillRect", x, y, width, height))
+
+    def strokeRect(self: Self, x: Double, y: Double, width: Double, height: Double) = (
+        self.call("strokeRect", x, y, width, height))
+
+    def beginPath(self: Self) = self.call("beginPath")
+    def closePath(self: Self) = self.call("closePath")
+    def stroke(self: Self) = self.call("stroke")
+    def moveTo(self: Self, x: Double, y: Double) = self.call("moveTo", x, y)
+    def lineTo(self: Self, x: Double, y: Double) = self.call("lineTo", x, y)
 }
