@@ -1,12 +1,26 @@
 class MC$cj$JSON {
+    M$new(self) {
+        return self;
+    }
     M$parse(string) {
         return JSON.parse(string);
     }
     M$_unsafeCast(TV$T, t) {
         return t;
     }
+    M$_fromUnit(unit) {
+        return null;
+    }
     M$_fromList(list) {
         return list;
+    }
+    M$_fromMap(map) {
+        const M = new MC$cj$Map(MO$cj$String, MO$cj$JSON);
+        const obj = {};
+        for (const [key, value] of M.M$pairs(map)) {
+            obj[key] = value;
+        }
+        return obj;
     }
     M$object(pairs) {
         const obj = {};
@@ -15,36 +29,16 @@ class MC$cj$JSON {
         }
         return obj;
     }
-    M$fromAny(TV$T, t) {
-        switch (TV$T) {
-            case MO$cj$JSON:
-            case MO$cj$Int:
-            case MO$cj$Double:
-            case MO$cj$Bool:
-            case MO$cj$String:
-                return t;
-            case MO$cj$Unit:
-                return null;
-            default:
-                if (TV$T.constructor === MC$cj$List) {
-                    const inner = TV$T.TV$T;
-                    switch (inner) {
-                        case MO$cj$JSON:
-                        case MO$cj$Int:
-                        case MO$cj$Double:
-                        case MO$cj$Bool:
-                        case MO$cj$String:
-                            return t;
-                    }
-                    return t.map(a => this.M$fromAny(null, a));
-                }
-        }
-        throw new Error(`Invalid type for JSON.fromAny: ${TV$T.constructor}`);
-    }
     M$__getitem(self, key) {
+        if (typeof self !== 'object') {
+            throw new Error("JSON.__getitem on non-object");
+        }
         return self[key];
     }
     M$__setitem(self, key, value) {
+        if (typeof self !== 'object') {
+            throw new Error("JSON.__setitem on non-object");
+        }
         self[key] = value;
     }
     M$repr(self) {
@@ -107,5 +101,47 @@ class MC$cj$JSON {
                 }
         }
         throw new Error(`Invalid JSON value: ${self}`)
+    }
+    M$isNull(self) {
+        return self === null;
+    }
+    M$isBool(self) {
+        return typeof self === 'boolean';
+    }
+    M$getBool(self) {
+        if (typeof self !== 'boolean') {
+            throw new Error('JSON.getBool on non-bool')
+        }
+        return self;
+    }
+    M$isNumber(self) {
+        return typeof self === 'number'
+    }
+    M$getInt(self) {
+        if (typeof self !== 'number') {
+            throw new Error('JSON.getInt on non-number');
+        }
+        return self|0;
+    }
+    M$getDouble(self) {
+        if (typeof self !== 'number') {
+            throw new Error('JSON.getDouble on non-number');
+        }
+        return self;
+    }
+    M$isString(self) {
+        return typeof self === 'string';
+    }
+    M$getString(self) {
+        if (typeof self !== 'string') {
+            throw new Error('JSON.getString on non-string');
+        }
+        return self;
+    }
+    M$isList(self) {
+        return Array.isArray(self);
+    }
+    M$isObject(self) {
+        return typeof self === 'object' && !Array.isArray(self);
     }
 }

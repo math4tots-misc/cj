@@ -13,8 +13,8 @@ class Test13JSON {
         }
         {
             val json = JSON.parse("{\"a\": 3, \"b\": [\"hello\"]}")
-            Assert.that(json != JSON.object("a": 3, "b": ["hezllo"]))
-            Assert.that(json == JSON.object("a": 3, "b": ["hello"]))
+            Assert.that(json != Map("a": 3, "b": ["hezllo"]))
+            Assert.that(json == Map("a": 3, "b": ["hello"]))
         }
     }
 }
