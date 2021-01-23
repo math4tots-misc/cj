@@ -24,6 +24,12 @@ class MC$cj$js$JSObject {
         }
         throw new Error("Expected " + cls.name + " but got " + (t ? t.constructor.name : t));
     }
+    M$_jsCastNullable(TV$T, TV$R, t, cls) {
+        if (t === null || t instanceof cls) {
+            return t;
+        }
+        throw new Error("Expected " + cls.name + " but got " + (t ? t.constructor.name : t));
+    }
     M$unsafeCast(self) {
         return self;
     }

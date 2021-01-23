@@ -17,6 +17,8 @@ native class JSObject : Repr {
     ##
     @generic def _jsCast[T?, R?](t: T, cls: JSObject): R
 
+    @generic def _jsCastNullable[T?, R](t: T, cls: JSObject): Nullable[R]
+
     @generic def unsafeCast[T?](self: Self): T
 
     def repr(self: Self): String
