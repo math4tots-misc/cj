@@ -224,10 +224,7 @@ final class CJPass04 extends CJPassBaseEx {
                     case Bool:
                         return new CJIRLiteral(e, ctx.getBoolType(), e.getKind(), e.getRawText());
                     case Char:
-                        return a.map(ctx.getIntType()::equals).getOrElse(false)
-                                ? new CJIRLiteral(e, ctx.getIntType(), CJIRLiteralKind.Int,
-                                        "" + CJToken.charLiteralToInt(e.getRawText()))
-                                : new CJIRLiteral(e, ctx.getCharType(), e.getKind(), e.getRawText());
+                        return new CJIRLiteral(e, ctx.getCharType(), e.getKind(), e.getRawText());
                     case Int:
                         return new CJIRLiteral(e, ctx.getIntType(), e.getKind(), e.getRawText());
                     case Double:

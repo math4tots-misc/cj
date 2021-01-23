@@ -445,6 +445,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     case "cj.Double._fromInt":
                     case "cj.Double.toDouble":
                     case "cj.Int.toDouble":
+                    case "cj.Int._fromChar":
                         Assert.equals(allArgs.size(), 1);
                         return Pair.of(allArgs.get(0), false);
                     case "cj.js.JSON._unsafeCast":

@@ -54,4 +54,7 @@ class MC$cj$Int {
         // TODO: check for valid ranges
         return self;
     }
+    M$_fromChar(c) {
+        return c;
+    }
 }

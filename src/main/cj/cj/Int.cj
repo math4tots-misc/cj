@@ -1,5 +1,6 @@
 package cj
 
+@implicit(Char, _fromChar)
 native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
@@ -19,4 +20,5 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar {
     def toInt(self: Self): Int
     def toDouble(self: Self): Double
     def toChar(self: Self): Char
+    def _fromChar(c: Char): Int
 }
