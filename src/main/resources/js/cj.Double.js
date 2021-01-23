@@ -17,6 +17,9 @@ class MC$cj$Double {
     M$toDouble(self) {
         return self;
     }
+    M$_fromInt(i) {
+        return i;
+    }
 
     M$__lt(self, other) {
         return self < other;

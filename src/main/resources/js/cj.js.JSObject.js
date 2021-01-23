@@ -11,7 +11,7 @@ class MC$cj$js$JSObject {
     M$call1(self, methodName, args) {
         return self[methodName](...args);
     }
-    M$fromAny(TV$T, t) {
+    M$_fromAny(TV$T, t) {
         return t;
     }
     M$instanceof(a, b) {
