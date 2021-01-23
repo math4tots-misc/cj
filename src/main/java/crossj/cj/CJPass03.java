@@ -2,7 +2,9 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.List;
+import crossj.base.Map;
 import crossj.base.Optional;
+import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Tuple3;
 import crossj.base.Tuple4;
@@ -10,7 +12,8 @@ import crossj.base.Tuple4;
 /**
  * Pass 3
  *
- * - Checks type parameter traits and trait declarations, and <br/>
+ * - Process implicit declarations - Checks type parameter traits and trait
+ * declarations, and <br/>
  * - Materializes methods
  *
  * Derived methods are also synthesized here
@@ -22,8 +25,45 @@ final class CJPass03 extends CJPassBaseEx {
 
     @Override
     void handleItem(CJIRItem item) {
+        processImplicitDeclarations(item);
         checkTypeParameterTraitsAndTraitDeclarations(item);
         materializeMembers(item);
+    }
+
+    private void processImplicitDeclarations(CJIRItem item) {
+        processTraitItemForImplicitDeclarations(item, item);
+        CJIRContextBase.walkTraitItems(item, traitItem -> {
+            processTraitItemForImplicitDeclarations(item, traitItem);
+            return null;
+        });
+    }
+
+    private void processTraitItemForImplicitDeclarations(CJIRItem item, CJIRItem traitItem) {
+        var implicitsTraitsList = item.getImplicitsTraitsList();
+        var implicitsTypeMap = item.getImplicitsTypeItemMap();
+        var seen = Map.<CJIRItem, CJIRItem>of();
+        for (var pair : traitItem.getUnprocessedImplicits()) {
+            var refItemFullName = traitItem.getShortNameMap().getOrNull(pair.get1());
+            if (refItemFullName == null) {
+                throw CJError.of("Name " + pair.get1() + " not found", item.getMark());
+            }
+            var refItem = ctx.loadItem(refItemFullName, item.getMark());
+            if (seen.containsKey(refItem)) {
+                // Duplicates, even through inheritance are not allowed.
+                // Rather than worry about proper conflict resolution mechanisms, for now
+                // I'm forbidding any scenario in which there are potentially more than one
+                // method for converting from A -> B
+                throw CJError.of("Conflicting @implicit annotations", item.getMark(), seen.get(refItem).getMark(),
+                        traitItem.getMark());
+            }
+            seen.put(refItem, traitItem);
+            var methodName = pair.get2();
+            if (refItem.isTrait()) {
+                implicitsTraitsList.add(Pair.of(refItem, methodName));
+            } else {
+                implicitsTypeMap.put(refItem, methodName);
+            }
+        }
     }
 
     /**
@@ -197,10 +237,8 @@ final class CJPass03 extends CJPassBaseEx {
                 new CJAstParameter(mark, false, "other", selfType));
         var selfExpr = newGetVar(mark, "self");
         var otherExpr = newGetVar(mark, "other");
-        var body = fields
-                .map(f -> newMethodCall(mark, "__eq", List.of(newGetField(selfExpr, f.getName()),
-                        newMethodCall(mark, f.getGetterName(), List.of(otherExpr)))))
-                .reduce(this::newAnd);
+        var body = fields.map(f -> newMethodCall(mark, "__eq", List.of(newGetField(selfExpr, f.getName()),
+                newMethodCall(mark, f.getGetterName(), List.of(otherExpr))))).reduce(this::newAnd);
         return synthesizeMethodWithBody(mark, "__eq", parameters, boolType, body);
     }
 

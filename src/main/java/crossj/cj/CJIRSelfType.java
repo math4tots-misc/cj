@@ -24,6 +24,11 @@ public final class CJIRSelfType implements CJIRType {
     }
 
     @Override
+    public boolean isAbsoluteType() {
+        return false;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof CJIRSelfType)) {
             return false;
@@ -35,5 +40,10 @@ public final class CJIRSelfType implements CJIRType {
     @Override
     public String toString() {
         return "Self";
+    }
+
+    @Override
+    public String getImplicitMethodNameForTypeOrNull(CJIRType type) {
+        return selfTrait.getImplicitMethodNameForTypeOrNull(type);
     }
 }

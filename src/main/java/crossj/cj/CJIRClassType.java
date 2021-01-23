@@ -46,6 +46,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
     }
 
     @Override
+    public boolean isAbsoluteType() {
+        return args.all(a -> a.isAbsoluteType());
+    }
+
+    @Override
     public boolean isFunctionType() {
         switch (item.getFullName()) {
             case "cj.Fn0":

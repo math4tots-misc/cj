@@ -67,4 +67,20 @@ abstract class CJIRTraitOrClassType {
     public final boolean isTrait() {
         return getItem().isTrait();
     }
+
+    public String getImplicitMethodNameForTypeOrNull(CJIRType type) {
+        if (type instanceof CJIRClassType) {
+            var methodName = getItem().getImplicitsTypeItemMap().getOrNull(((CJIRClassType) type).getItem());
+            if (methodName != null) {
+                return methodName;
+            }
+        }
+        for (var pair : getItem().getImplicitsTraitsList()) {
+            var traitItem = pair.get1();
+            if (type.getImplementingTraitByItemOrNull(traitItem) != null) {
+                return pair.get2();
+            }
+        }
+        return null;
+    }
 }

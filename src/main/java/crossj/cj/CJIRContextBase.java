@@ -23,6 +23,23 @@ public abstract class CJIRContextBase {
         }
     }
 
+    static void walkTraitItems(CJIRItem start, Func1<Void, CJIRItem> f) {
+        var stack = start.getTraitDeclarations().map(td -> td.getTrait().getItem());
+        var seenTraits = Set.fromIterable(stack);
+        seenTraits.add(start);
+        while (stack.size() > 0) {
+            var item = stack.pop();
+            f.apply(item);
+            for (var traitDeclaration : item.getTraitDeclarations()) {
+                var subitem = traitDeclaration.getTrait().getItem();
+                if (!seenTraits.contains(subitem)) {
+                    seenTraits.add(subitem);
+                    stack.add(subitem);
+                }
+            }
+        }
+    }
+
     abstract CJIRContext getGlobal();
 
     public void validateMainItem(CJIRItem item, CJMark... marks) {

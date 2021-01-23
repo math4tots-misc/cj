@@ -28,6 +28,13 @@ public interface CJIRType {
         return methodRef;
     }
 
+    /**
+     * Checks whether this type has no type variables and no trait-Self types.
+     */
+    boolean isAbsoluteType();
+
+    String getImplicitMethodNameForTypeOrNull(CJIRType type);
+
     default boolean isUnionType() {
         return false;
     }

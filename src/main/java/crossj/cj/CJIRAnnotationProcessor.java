@@ -1,6 +1,8 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
+import crossj.base.Pair;
 
 public final class CJIRAnnotationProcessor {
 
@@ -28,6 +30,7 @@ public final class CJIRAnnotationProcessor {
     private boolean genericSelf = false;
     private boolean variadic = false;
     private final List<String> deriveList = List.of();
+    private final List<Pair<String, String>> implicits = List.of();
 
     private CJIRAnnotationProcessor(CJMark mark, List<CJAstAnnotationExpression> commands) {
         for (var command : commands) {
@@ -48,25 +51,31 @@ public final class CJIRAnnotationProcessor {
     }
 
     private void cannotMarkNullable(CJAstNode ast) {
-        if (nullable){
+        if (nullable) {
             throw CJError.of(ast.getClass() + " cannot be marked nullable", ast.getMark());
         }
     }
 
     private void cannotMarkGeneric(CJAstNode ast) {
-        if (generic){
+        if (generic) {
             throw CJError.of(ast.getClass() + " cannot be marked generic", ast.getMark());
         }
     }
 
     private void cannotMarkGenericSelf(CJAstNode ast) {
-        if (genericSelf){
+        if (genericSelf) {
             throw CJError.of(ast.getClass() + " cannot be marked genericSelf", ast.getMark());
         }
     }
 
     private void cannotMarkVariadic(CJAstNode ast) {
-        if (variadic){
+        if (variadic) {
+            throw CJError.of(ast.getClass() + " cannot be marked variadic", ast.getMark());
+        }
+    }
+
+    private void cannotHaveImplicits(CJAstNode ast) {
+        if (implicits.size() > 0) {
             throw CJError.of(ast.getClass() + " cannot be marked variadic", ast.getMark());
         }
     }
@@ -81,6 +90,7 @@ public final class CJIRAnnotationProcessor {
     private void checkForMember(CJAstItemMemberDefinition ast) {
         cannotMarkDerive(ast);
         cannotMarkNullable(ast);
+        cannotHaveImplicits(ast);
         if (!(ast instanceof CJAstMethodDefinition)) {
             cannotMarkTest(ast);
             cannotMarkGeneric(ast);
@@ -94,6 +104,7 @@ public final class CJIRAnnotationProcessor {
         cannotMarkTest(ast);
         cannotMarkGenericSelf(ast);
         cannotMarkVariadic(ast);
+        cannotHaveImplicits(ast);
     }
 
     public boolean isNullable() {
@@ -118,6 +129,10 @@ public final class CJIRAnnotationProcessor {
 
     public List<String> getDeriveList() {
         return deriveList;
+    }
+
+    public List<Pair<String, String>> getImplicits() {
+        return implicits;
     }
 
     private void expectArgc(int expected, CJAstAnnotationExpression e) {
@@ -152,6 +167,13 @@ public final class CJIRAnnotationProcessor {
             case "derive":
                 deriveList.addAll(expression.getArgs().map(this::eval));
                 break;
+            case "implicit": {
+                expectArgc(2, expression);
+                var args = expression.getArgs().map(this::eval);
+                Assert.equals(args.size(), 2);
+                implicits.add(Pair.of(args.get(0), args.get(1)));
+                break;
+            }
             default:
                 throw CJError.of("Unrecognized annotation command: " + command, expression.getMark());
         }

@@ -53,6 +53,11 @@ public final class CJIRVariableType implements CJIRType {
     }
 
     @Override
+    public boolean isAbsoluteType() {
+        return false;
+    }
+
+    @Override
     public <R, A> R accept(CJIRTypeVisitor<R, A> visitor, A a) {
         return visitor.visitVariable(this, a);
     }
@@ -64,5 +69,16 @@ public final class CJIRVariableType implements CJIRType {
         }
         var other = (CJIRVariableType) obj;
         return declaration == other.declaration;
+    }
+
+    @Override
+    public String getImplicitMethodNameForTypeOrNull(CJIRType type) {
+        for (var trait : getTraits()) {
+            var methodName = trait.getImplicitMethodNameForTypeOrNull(type);
+            if (methodName != null) {
+                return methodName;
+            }
+        }
+        return null;
     }
 }

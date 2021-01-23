@@ -37,10 +37,11 @@ abstract class CJPassBase {
 
     List<CJAstTraitExpression> synthesizeTypeVariableAutoTraits(CJIRTypeParameter typeParameter) {
         var annotationProcessor = typeParameter.getAnnotation();
-        if (annotationProcessor.isNullable()) {
-            return List.of();
-        } else {
-            return List.of(new CJAstTraitExpression(typeParameter.getMark(), "NonNull", List.of()));
+        var list = List.<CJAstTraitExpression>of();
+        if (!annotationProcessor.isNullable()) {
+            list.add(new CJAstTraitExpression(typeParameter.getMark(), "NonNull", List.of()));
         }
+        list.add(new CJAstTraitExpression(typeParameter.getMark(), "Any", List.of()));
+        return list;
     }
 }

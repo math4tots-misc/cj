@@ -2,6 +2,12 @@ class MC$cj$JSON {
     M$parse(string) {
         return JSON.parse(string);
     }
+    M$_unsafeCast(TV$T, t) {
+        return t;
+    }
+    M$_fromList(list) {
+        return list;
+    }
     M$object(pairs) {
         const obj = {};
         for (const [key, value] of pairs) {

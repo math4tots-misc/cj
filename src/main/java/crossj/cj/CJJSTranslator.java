@@ -441,6 +441,10 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         }
                         break;
                     }
+                    case "cj.js.JSON.fromList":
+                        Assert.equals(allArgs.size(), 1);
+                        return Pair.of(allArgs.get(0), false);
+                    case "cj.js.JSON._unsafeCast":
                     case "cj.js.JSObject.unsafeCast":
                         Assert.equals(allArgs.size(), 2);
                         return Pair.of(allArgs.get(1), false);

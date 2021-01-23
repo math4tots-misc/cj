@@ -1,13 +1,13 @@
 package cj.js
 
-import cj.FromAny
 
-native class JSObject : FromAny, Repr {
+@implicit(Any, _fromAny)
+native class JSObject : Repr {
     def field(self: Self, key: String): JSObject
     @generic def setField[T](self: Self, key: String, value: T)
     @variadic def call(self: Self, methodName: String, args: List[JSObject]): JSObject
     def call1(self: Self, methodName: String, args: List[JSObject]): JSObject
-    @generic def fromAny[T](t: T): Self
+    @generic def _fromAny[T](t: T): Self
     def instanceof(self: Self, cls: JSObject): Bool
 
     ## Returns t as R, as long as (t instanceof cls)

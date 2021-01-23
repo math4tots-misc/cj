@@ -6,12 +6,12 @@ import crossj.base.Map;
 import crossj.base.Pair;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
-    private final boolean nullable;
     private final boolean deriveNew;
     private final boolean deriveEq;
     private final boolean deriveHash;
     private final boolean deriveRepr;
     private final boolean derivePod;
+    private final CJIRAnnotationProcessor annotations;
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
@@ -21,10 +21,12 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final Map<String, String> shortNameMap;
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private final Map<String, CJIRMethod> methodMap = Map.of();
+    private final Map<CJIRItem, String> implicitsTypeItemMap = Map.of();
+    private final List<Pair<CJIRItem, String>> implicitsTraitsList = List.of();
 
-    CJIRItem(CJAstItemDefinition ast, boolean nullable, List<String> deriveList) {
+    CJIRItem(CJAstItemDefinition ast, CJIRAnnotationProcessor annotations) {
         super(ast);
-        this.nullable = nullable;
+        this.annotations = annotations;
         this.fullName = ast.getPackageName() + "." + ast.getShortName();
         this.cases = ast.getKind() == CJIRItemKind.Union ? List.of() : null;
 
@@ -35,7 +37,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             boolean deriveHash = false;
             boolean deriveRepr = false;
             boolean derivePod = false;
-            for (var command : deriveList) {
+            for (var command : annotations.getDeriveList()) {
                 switch (command) {
                     case "new":
                         deriveNew = true;
@@ -100,7 +102,19 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     }
 
     public boolean isNullable() {
-        return nullable;
+        return annotations.isNullable();
+    }
+
+    public List<Pair<String, String>> getUnprocessedImplicits() {
+        return annotations.getImplicits();
+    }
+
+    public List<Pair<CJIRItem, String>> getImplicitsTraitsList() {
+        return implicitsTraitsList;
+    }
+
+    public Map<CJIRItem, String> getImplicitsTypeItemMap() {
+        return implicitsTypeItemMap;
     }
 
     public boolean isSimpleUnion() {

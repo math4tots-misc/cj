@@ -1,8 +1,9 @@
 package cj
 
-import cj.FromAny
-
-native class JSON : FromAny, Repr, Eq {
+@implicit(Int, _unsafeCast)
+@implicit(String, _unsafeCast)
+@implicit(List, _fromList)
+native class JSON : Repr, Eq {
 
     union Type {
         case number # 0
@@ -14,6 +15,9 @@ native class JSON : FromAny, Repr, Eq {
     }
 
     def parse(string: String): JSON
+
+    @generic def _unsafeCast[T](x: T): JSON
+    def _fromList(list: List[JSON]): JSON
 
     @variadic def object(pairs: List[Tuple[String, JSON]]): JSON
 

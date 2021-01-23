@@ -45,6 +45,11 @@ final class CJPass02 extends CJPassBase {
             // unless the class/union is explicitly marked nullable, NonNull is implied
             traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "NonNull"));
         }
+        // The Any trait always applies
+        if (!item.getFullName().equals("cj.Any")) {
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Any"));
+        }
+
         for (var traitDeclarationAst : traitDeclarationAsts) {
             var trait = lctx.evalTraitExpressionUnchecked(traitDeclarationAst.getTrait());
             var traitDeclaration = new CJIRTraitDeclaration(traitDeclarationAst, trait);

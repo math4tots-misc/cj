@@ -226,6 +226,7 @@ public final class CJParser {
         switch (peek().type) {
             case CJToken.INT:
             case CJToken.DOUBLE:
+            case CJToken.TYPE_ID:
                 name = next().text;
                 break;
             default:

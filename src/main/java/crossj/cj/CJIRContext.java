@@ -11,9 +11,9 @@ import crossj.base.Str;
 
 public final class CJIRContext extends CJIRContextBase {
 
-    static final List<String> autoImportItemNames = List.of("cj.Unit", "cj.NoReturn", "cj.Nullable", "cj.NonNull",
-            "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToChar", "cj.ToInt",
-            "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO",
+    static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
+            "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToChar",
+            "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO",
             "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
             "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4");
 
@@ -23,9 +23,10 @@ public final class CJIRContext extends CJIRContextBase {
      * These names cannot be used as type names, unless their full name corresponds
      * to one of the exceptions explicitly listed
      */
-    static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Unit", List.of("cj.Unit")),
-            Pair.of("Nullable", List.of("cj.Nullable")), Pair.of("NonNull", List.of("cj.NonNull")),
-            Pair.of("List", List.of("cj.List")), Pair.of("Map", List.of("cj.Map")), Pair.of("Set", List.of("cj.Set")),
+    static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Any", List.of("cj.Any")),
+            Pair.of("Unit", List.of("cj.Unit")), Pair.of("Nullable", List.of("cj.Nullable")),
+            Pair.of("NonNull", List.of("cj.NonNull")), Pair.of("List", List.of("cj.List")),
+            Pair.of("Map", List.of("cj.Map")), Pair.of("Set", List.of("cj.Set")),
             Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Fn0", List.of("cj.Fn0")),
             Pair.of("Fn1", List.of("cj.Fn1")), Pair.of("Fn2", List.of("cj.Fn2")), Pair.of("Fn3", List.of("cj.Fn3")),
             Pair.of("Fn4", List.of("cj.Fn4")), Pair.of("Tuple", List.of()), Pair.of("Tuple2", List.of("cj.Tuple2")),
@@ -57,8 +58,8 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRType intType = null;
     private CJIRType doubleType = null;
     private CJIRType stringType = null;
+    private CJIRTrait anyTrait = null;
     private CJIRTrait toBoolTrait = null;
-    private CJIRTrait fromAnyTrait = null;
 
     @Override
     CJIRContext getGlobal() {
@@ -96,7 +97,7 @@ public final class CJIRContext extends CJIRContextBase {
 
     private static CJIRItem itemFromAst(CJAstItemDefinition ast) {
         var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
-        return new CJIRItem(ast, annotationProcessor.isNullable(), annotationProcessor.getDeriveList());
+        return new CJIRItem(ast, annotationProcessor);
     }
 
     /**
@@ -414,10 +415,10 @@ public final class CJIRContext extends CJIRContextBase {
         return toBoolTrait;
     }
 
-    CJIRTrait getFromAnyTrait() {
-        if (fromAnyTrait == null) {
-            fromAnyTrait = getTraitWithArgs("cj.FromAny", List.of());
+    CJIRTrait getAnyTrait() {
+        if (anyTrait == null) {
+            anyTrait = getTraitWithArgs("cj.Any", List.of());
         }
-        return fromAnyTrait;
+        return anyTrait;
     }
 }
