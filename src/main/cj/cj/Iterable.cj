@@ -1,5 +1,8 @@
 package cj
 
+import cj.Float32Array
+import cj.Int16Array
+import cj.Int32Array
 import cj.ToList
 
 trait Iterable[T?]: ToList[T] {
@@ -19,6 +22,9 @@ trait Iterable[T?]: ToList[T] {
         }
         map
     }
+    def toInt16Array[C: Iterable[Int]](self: C): Int16Array = Int16Array.fromIterable(self)
+    def toInt32Array[C: Iterable[Int]](self: C): Int32Array = Int32Array.fromIterable(self)
+    def toFloat32Array[C: Iterable[Double]](self: C): Float32Array = Float32Array.fromIterable(self)
 
     def fold[R](self: Self, var r: R, f: Fn[R, T, R]): R = {
         for t in self {

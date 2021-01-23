@@ -7,9 +7,9 @@ import cj.js.JSWrapper
 
 class Window : JSWrapper, GlobalEventHandlers {
     val _obj : JSObject
-
     def cls(): JSObject = Web.windowClass()
-    def get(): Self = Web.window()
-
     def obj(self: Self): JSObject = self._obj
+
+    def get(): Self = Web.window()
+    def alert(self: Self, message: String) = self.call("alert", message)
 }

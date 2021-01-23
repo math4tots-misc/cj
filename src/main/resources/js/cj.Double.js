@@ -42,4 +42,8 @@ class MC$cj$Double {
     M$__truncdiv(self, other) {
         return (self / other)|0;
     }
+
+    M$toFixed(self, n) {
+        return self.toFixed(n);
+    }
 }

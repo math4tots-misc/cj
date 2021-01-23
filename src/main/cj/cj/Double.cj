@@ -17,4 +17,9 @@ native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble {
     def __div(self: Self, other: Self): Double
     def __mod(self: Self, other: Self): Double
     def __truncdiv(self: Self, other: Self): Int
+
+    ## formats a number using fixed-point notation, up to the specified number
+    ## digits after the decimal point.
+    ## (compare with Javascript's Number.prototype.toFixed)
+    def toFixed(self: Self, n: Int): String
 }
