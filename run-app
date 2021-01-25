@@ -1,0 +1,2 @@
+#!/bin/sh
+java -cp target/classes crossj.cj.main.JSMain -a "$@" -o target/out && open target/out/index.html
