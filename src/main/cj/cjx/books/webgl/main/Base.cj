@@ -10,7 +10,7 @@ import cj.js.web.WebGL2RenderingContext
 
 trait Base {
 
-    class Data {
+    class Data : Default {
         val window : Window
         val document : Document
         val canvas : HTMLCanvasElement
@@ -18,7 +18,7 @@ trait Base {
         var program : Nullable[WebGLProgram]
         var aVertexPosition : Nullable[Int]
 
-        def new() : Self = {
+        def default() : Self = {
             val window = Window.get()
             val document = Document.get()
             val canvas : HTMLCanvasElement = document.getElementBydId("canvas")

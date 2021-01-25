@@ -9,6 +9,7 @@ import cj.js.web.WebGL2RenderingContext
 import cj.js.web.Document
 import cj.js.web.Window
 
+@derive(default)
 class Ch02s01 : Base {
     val base : Base.Data
     var _squareVertexBuffer : Nullable[WebGLBuffer]
@@ -19,7 +20,7 @@ class Ch02s01 : Base {
     def __get_squareIndexBuffer(self: Self) : WebGLBuffer = self._squareIndexBuffer.get()
     def __get_vertices(self: Self): Float32Array = self._vertices.get()
     def __get_indices(self: Self): Int16Array = self._indices.get()
-    def new() : Self = Self.__malloc(Base.Data(), null, null, null, null)
+    def new() : Self = Self.default()
     def main() = Self().run()
 
     def run(self: Self) = {

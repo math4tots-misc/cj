@@ -400,6 +400,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                                 return Pair.of("(" + allArgs.get(1) + "+" + allArgs.get(2) + ")", false);
                         }
                         break;
+                    case "cj.Nullable.default":
+                        Assert.equals(allArgs.size(), 0);
+                        return Pair.of("null", true);
                     case "cj.Int.default":
                     case "cj.Double.default":
                     case "cj.Char.default":
