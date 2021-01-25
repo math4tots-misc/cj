@@ -6,7 +6,6 @@ import cj.js.JSWrapper
 
 class CanvasRenderingContext2D : JSWrapper {
     val _obj :  JSObject
-    def obj(self: Self): JSObject = self._obj
     def cls() : JSObject = Window.get().field("CanvasRenderingContext2D")
 
     def __get_lineWidth(self: Self): Double = self.field("lineWidth").unsafeCast()

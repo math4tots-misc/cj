@@ -8,8 +8,10 @@ import cj.js.JSWrapper
 class Window : JSWrapper, GlobalEventHandlers {
     val _obj : JSObject
     def cls(): JSObject = Web.windowClass()
-    def obj(self: Self): JSObject = self._obj
 
     def get(): Self = Web.window()
     def alert(self: Self, message: String) = self.call("alert", message)
+
+    def __get_innerWidth(self: Self): Int = self.field("innerWidth").unsafeCast()
+    def __get_innerHeight(self: Self): Int = self.field("innerHeight").unsafeCast()
 }

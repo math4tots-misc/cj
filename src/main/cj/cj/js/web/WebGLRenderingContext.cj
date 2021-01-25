@@ -1,5 +1,7 @@
 package cj.js.web
 
+import cj.js.web.WebGLProgram
+import cj.js.web.WebGLShader
 import cj.ToArrayBufferView
 import cj.js.web.WebGLBuffer
 import cj.Float32Array
@@ -25,6 +27,33 @@ trait WebGLRenderingContext : JSWrapper {
     def __get_cSTATIC_DRAW(self: Self): Int = self.field("STATIC_DRAW").unsafeCast()
     def __get_cDYNAMIC_DRAW(self: Self): Int = self.field("DYNAMIC_DRAW").unsafeCast()
     def __get_cSTREAM_DRAW(self: Self): Int = self.field("STREAM_DRAW").unsafeCast()
+
+    # c*_SHADER (type of shader)
+    def __get_cVERTEX_SHADER(self: Self): Int = self.field("VERTEX_SHADER").unsafeCast()
+    def __get_cFRAGMENT_SHADER(self: Self): Int = self.field("FRAGMENT_SHADER").unsafeCast()
+
+    # Various getShaderParameter/getProgramParameter constants
+    def __get_cDELETE_STATUS(self: Self): Int = self.field("DELETE_STATUS").unsafeCast()
+    def __get_cCOMPILE_STATUS(self: Self): Int = self.field("COMPILE_STATUS").unsafeCast()
+    def __get_cLINK_STATUS(self: Self): Int = self.field("LINK_STATUS").unsafeCast()
+    def __get_cVALIDATE_STATUS(self: Self): Int = self.field("VALIDATE_STATUS").unsafeCast()
+    def __get_cSHADER_TYPE(self: Self): Int = self.field("SHADER_TYPE").unsafeCast()
+
+    # Data type constants
+    def __get_cBYTE(self: Self): Int = self.field("BYTE").unsafeCast()
+    def __get_cSHORT(self: Self): Int = self.field("SHORT").unsafeCast()
+    def __get_cUNSIGNED_BYTE(self: Self): Int = self.field("UNSIGNED_BYTE").unsafeCast()
+    def __get_cUNSIGNED_SHORT(self: Self): Int = self.field("UNSIGNED_SHORT").unsafeCast()
+    def __get_cFLOAT(self: Self): Int = self.field("FLOAT").unsafeCast()
+
+    # Draw primitives
+    def __get_cPOINTS(self: Self): Int = self.field("POINTS").unsafeCast()
+    def __get_cLINE_STRIP(self: Self): Int = self.field("LINE_STRIP").unsafeCast()
+    def __get_cLINE_LOOP(self: Self): Int = self.field("LINE_LOOP").unsafeCast()
+    def __get_cLINES(self: Self): Int = self.field("LINES").unsafeCast()
+    def __get_cTRIANGLE_STRIP(self: Self): Int = self.field("TRIANGLE_STRIP").unsafeCast()
+    def __get_cTRIANGLE_FAN(self: Self): Int = self.field("TRIANGLE_FAN").unsafeCast()
+    def __get_cTRIANGLES(self: Self): Int = self.field("TRIANGLES").unsafeCast()
 
     # --- constants for getParameter ---
     def __get_cCOLOR_CLEAR_VALUE(self: Self): Int = self.field("COLOR_CLEAR_VALUE").unsafeCast()
@@ -56,6 +85,20 @@ trait WebGLRenderingContext : JSWrapper {
     def clear(self: Self, mask: Int) = self.call("clear", mask)
 
     # ============================================================================================
+    # =================================== DRAWING ================================================
+    # ============================================================================================
+
+    ## Renders primitives from array data
+    ## - mode: Type of primitive to render. (Possible values: POINTS, LINE_STRIP, TRIANGLES...)
+    ## - count: Number of elements to be rendered
+    ## - type: tyep of values in the element array buffer. (Possible values:
+    ##     UNSIGNED_BYTE, UNSIGNED_SHORT)
+    ## - offset: byte offset in the element array buffer. Must be a valid multiple of the size
+    ##     of the given type.
+    def drawElements(self: Self, mode: Int, count: Int, type: Int, offset: Int) = (
+        self.call("drawElements", mode, count, type, offset))
+
+    # ============================================================================================
     # =================================== BUFFERS ================================================
     # ============================================================================================
     def createBuffer(self: Self): WebGLBuffer = self.call("createBuffer").unsafeCast()
@@ -70,4 +113,86 @@ trait WebGLRenderingContext : JSWrapper {
     ## Initializes and creates the buffer object's data store.
     def bufferData[D: ToArrayBufferView](self: Self, target: Int, srcData: D, usage: Int) = (
         self.call("bufferData", target, srcData.toArrayBufferView(), usage))
+
+    # ============================================================================================
+    # =================================== SHADERS ================================================
+    # ============================================================================================
+
+    ## Creates and initializes a WebGLProgram object
+    ## (A program is a combination of vertex and fragment shaders)
+    def createProgram(self: Self): WebGLProgram = self.call("createProgram").unsafeCast()
+
+    ## Attaches either a fragment or vertex shader to a program
+    def attachShader(self: Self, program: WebGLProgram, shader: WebGLShader) = (
+        self.call("attachShader", program, shader))
+
+    ## links a given WebGLProgram, completing the process of preparing the GPU code for
+    ## the program's fragment and vertex shaders
+    def linkProgram(self: Self, program: WebGLProgram) = self.call("linkProgram", program)
+
+    ## Creates a WebGLShader that can then be configured further using shaderSource() and
+    ## compileShader().
+    def createShader(self: Self, type: Int): WebGLShader = (
+        self.call("createShader", type).unsafeCast())
+
+    ## Sets the source code of a WebGLShader
+    def shaderSource(self: Self, shader: WebGLShader, source: String) = (
+        self.call("shaderSource", shader, source))
+
+    ## Compiles a GLSL shader into binary data so that it can be used by a WebGLProgram
+    def compileShader(self: Self, shader: WebGLShader) = self.call("compileShader", shader)
+
+    def getShaderInfoLog(self: Self, shader: WebGLShader): String = (
+        self.call("getShaderInfoLog", shader).unsafeCast())
+
+    ## Sets the specified WebGLProgram as part of the current rendering state
+    def useProgram(self: Self, program: WebGLProgram) = self.call("useProgram", program)
+
+    ## Returns the location of an attribute variable in a given WebGLProgram
+    ## Returns -1 if variable name is not found.
+    def getAttribLocation(self: Self, program: WebGLProgram, name: String): Int = (
+        self.call("getAttribLocation", program, name).unsafeCast())
+
+    ## Binds the buffer currently bound to ARRAY_BUFFER to a generic vertex attribute
+    ## of the current vertex buffer object and specifies its layout
+    ## - index : the index of the vertex attribute that is to be modified
+    ## - size : number of components per vertex attribute (1, 2, 3, or 4)
+    ## - type : data type of each component in the array.
+    ##     (possible values, BYTE, SHORT, UNSIGNED_BYTE, UNSIGNED_SHORT, FLOAT)
+    def vertexAttribPointer(
+            self: Self,
+            index: Int,
+            size: Int,
+            type: Int,
+            normalized: Bool,
+            stride: Int,
+            offset: Int) = (
+        self.call("vertexAttribPointer", index, size, type, normalized, stride, offset))
+
+    def enableVertexAttribArray(self: Self, index: Int) = (
+        self.call("enableVertexAttribArray", index))
+
+    ## getShaderParameter(shader, DELETE_STATUS)
+    def spDELETE_STATUS(self: Self, shader: WebGLShader): Bool = (
+        self.call("getShaderParameter", shader, self.cDELETE_STATUS).unsafeCast())
+
+    ## getShaderParameter(shader, COMPILE_STATUS)
+    def spCOMPILE_STATUS(self: Self, shader: WebGLShader): Bool = (
+        self.call("getShaderParameter", shader, self.cCOMPILE_STATUS).unsafeCast())
+
+    ## getShaderParameter(shader, SHADER_TYPE)
+    def spSHADER_TYPE(self: Self, shader: WebGLShader): Int = (
+        self.call("getShaderParameter", shader, self.cSHADER_TYPE).unsafeCast())
+
+    ## getProgramParameter(program, DELETE_STATUS)
+    def ppDELETE_STATUS(self: Self, program: WebGLProgram): Bool = (
+        self.call("getProgramParameter", program, self.cDELETE_STATUS).unsafeCast())
+
+    ## getProgramParameter(program, LINK_STATUS)
+    def ppLINK_STATUS(self: Self, program: WebGLProgram): Bool = (
+        self.call("getProgramParameter", program, self.cLINK_STATUS).unsafeCast())
+
+    ## getProgramParameter(program, VALIDATE_STATUS)
+    def ppVALIDATE_STATUS(self: Self, program: WebGLProgram): Bool = (
+        self.call("getProgramParameter", program, self.cVALIDATE_STATUS).unsafeCast())
 }

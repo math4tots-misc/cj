@@ -8,7 +8,6 @@ import cj.js.web.HTMLElement
 
 class HTMLCanvasElement : HTMLElement {
     val _obj :  JSObject
-    def obj(self: Self): JSObject = self._obj
     def cls() : JSObject = Window.get().field("HTMLCanvasElement")
 
     def __get_width(self: Self): Int = self.field("width").unsafeCast()

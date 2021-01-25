@@ -16,6 +16,8 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar {
     def __truncdiv(a: Self, b: Self): Int
     def __div(a: Self, b: Self): Double
     def __lt(self: Self, other: Self): Bool
+    def __or(self: Self, other: Self): Self
+    def __and(self: Self, other: Self): Self
     def toBool(self: Self): Bool
     def toInt(self: Self): Int
     def toDouble(self: Self): Double

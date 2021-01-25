@@ -1,0 +1,14 @@
+package cj.js.web
+
+import cj.js.web.Window
+import cj.js.JSObject
+import cj.js.web.HTMLElement
+
+class HTMLScriptElement : HTMLElement {
+    val _obj :  JSObject
+    def cls() : JSObject = Window.get().field("HTMLScriptElement")
+
+    def __get_type(self: Self): String = self.field("type").unsafeCast()
+
+    def __get_text(self: Self): String = self.field("text").unsafeCast()
+}

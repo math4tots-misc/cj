@@ -41,6 +41,12 @@ class MC$cj$Int {
     M$__lt(self, other) {
         return self < other;
     }
+    M$__or(self, other) {
+        return self | other;
+    }
+    M$__and(self, other) {
+        return self & other;
+    }
     M$toBool(self) {
         return !!self;
     }

@@ -7,7 +7,6 @@ import cj.js.JSObject
 
 class WebGL2RenderingContext : WebGLRenderingContext {
     val _obj : JSObject
-    def obj(self: Self): JSObject = self._obj
     def cls() : JSObject = Window.get().field("WebGL2RenderingContext")
 
     # === constants ===

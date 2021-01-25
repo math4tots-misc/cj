@@ -74,4 +74,8 @@ class MC$cj$String {
         const i = parseInt(string, 10);
         return isNaN(i) ? null : i;
     }
+
+    M$trim(self) {
+        return self.trim();
+    }
 }

@@ -6,6 +6,5 @@ import cj.js.web.HTMLElement
 
 class HTMLElement_ : HTMLElement {
     val _obj :  JSObject
-    def obj(self: Self): JSObject = self._obj
     def cls() : JSObject = Window.get().field("HTMLElement")
 }

@@ -8,9 +8,7 @@ import cj.js.JSWrapper
 
 class Document : JSWrapper, GlobalEventHandlers {
     val _obj : JSObject
-
     def cls(): JSObject = Web.documentClass()
-    def obj(self: Self): JSObject = self._obj
 
     def get(): Self = Web.document()
 
