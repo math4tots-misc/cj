@@ -30,6 +30,7 @@ public final class CJIRAnnotationProcessor {
     private boolean genericSelf = false;
     private boolean variadic = false;
     private boolean default_ = false;
+    private boolean unwrap = false;
     private final List<String> deriveList = List.of();
     private final List<Pair<String, String>> implicits = List.of();
 
@@ -87,12 +88,19 @@ public final class CJIRAnnotationProcessor {
         }
     }
 
+    private void cannotMarkUnwrap(CJAstNode ast) {
+        if (default_) {
+            throw CJError.of(ast.getClass() + " cannot be marked default", ast.getMark());
+        }
+    }
+
     private void checkForItem(CJAstItemDefinition ast) {
         cannotMarkTest(ast);
         cannotMarkGeneric(ast);
         cannotMarkGenericSelf(ast);
         cannotMarkVariadic(ast);
         cannotMarkDefault(ast);
+        cannotMarkUnwrap(ast);
     }
 
     private void checkForMember(CJAstItemMemberDefinition ast) {
@@ -107,6 +115,7 @@ public final class CJIRAnnotationProcessor {
         }
         if (!(ast instanceof CJAstFieldDefinition)) {
             cannotMarkDefault(ast);
+            cannotMarkUnwrap(ast);
         }
         if (ast.isStatic()) {
             cannotMarkDefault(ast);
@@ -120,6 +129,7 @@ public final class CJIRAnnotationProcessor {
         cannotMarkVariadic(ast);
         cannotHaveImplicits(ast);
         cannotMarkDefault(ast);
+        cannotMarkUnwrap(ast);
     }
 
     public boolean isNullable() {
@@ -128,6 +138,10 @@ public final class CJIRAnnotationProcessor {
 
     public boolean isDefault() {
         return default_;
+    }
+
+    public boolean isUnwrap() {
+        return unwrap;
     }
 
     public boolean isTest() {
@@ -186,6 +200,10 @@ public final class CJIRAnnotationProcessor {
             case "default":
                 expectArgc(0, expression);
                 default_ = true;
+                break;
+            case "unwrap":
+                expectArgc(0, expression);
+                unwrap = true;
                 break;
             case "derive":
                 deriveList.addAll(expression.getArgs().map(this::eval));

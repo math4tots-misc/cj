@@ -115,6 +115,25 @@ final class CJPass03 extends CJPassBaseEx {
                         materializeMethod(item, augMethodAst, true, new CJIRFieldMethodInfo(field, "+="));
                     }
                 }
+                if (field.isUnwrap()) {
+                    if (!field.getType().isNullableType()) {
+                        throw CJError.of("Only Nullable fields may be marked unwrap", field.getMark());
+                    }
+                    if (field.isStatic()) {
+                        throw CJError.of("Static fields may not be marked unwrap", field.getMark());
+                    }
+                    if (!field.getName().startsWith("_")) {
+                        throw CJError.of("Names of unwrap fields must start with an underscore", field.getMark());
+                    }
+                    {
+                        var methodAst = synthesizeFieldUnwrapAccessMethod(item, fieldAst);
+                        materializeMethod(item, methodAst, true, null);
+                    }
+                    if (field.isMutable()) {
+                        var methodAst = synthesizeFieldUnwrapAssignmentMethod(item, fieldAst);
+                        materializeMethod(item, methodAst, true, null);
+                    }
+                }
             } else if (memberAst instanceof CJAstCaseDefinition) {
                 if (item.getKind() != CJIRItemKind.Union) {
                     throw CJError.of("Only union items may have case definitions", memberAst.getMark());
@@ -187,6 +206,19 @@ final class CJPass03 extends CJPassBaseEx {
         return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
+    private CJAstMethodDefinition synthesizeFieldUnwrapAccessMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
+        Assert.that(fieldAst.getName().startsWith("_"));
+        Assert.that(!fieldAst.isStatic());
+        Assert.equals(fieldAst.getType().getName(), "Nullable");
+        Assert.equals(fieldAst.getType().getArgs().size(), 1);
+        var mark = fieldAst.getMark();
+        var methodName = "__get_" + fieldAst.getName().substring(1);
+        var parameters = List.<CJAstParameter>of(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
+        var returnType = fieldAst.getType().getArgs().get(0);
+        return synthesizeGenericMethodWithBody(mark, methodName, parameters, returnType, newMethodCall(mark, "get",
+                List.of(newMethodCall(mark, fieldAst.getGetterName(), List.of(newGetVar(mark, "self"))))));
+    }
+
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
         var mark = fieldAst.getMark();
         var methodName = fieldAst.getSetterName();
@@ -197,6 +229,22 @@ final class CJPass03 extends CJPassBaseEx {
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
         var returnType = newUnitTypeExpression(mark);
         return synthesizeGenericMethod(mark, methodName, parameters, returnType);
+    }
+
+    private CJAstMethodDefinition synthesizeFieldUnwrapAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
+        Assert.that(fieldAst.isMutable());
+        Assert.that(fieldAst.getName().startsWith("_"));
+        Assert.that(!fieldAst.isStatic());
+        Assert.equals(fieldAst.getType().getName(), "Nullable");
+        Assert.equals(fieldAst.getType().getArgs().size(), 1);
+        var mark = fieldAst.getMark();
+        var methodName = "__set_" + fieldAst.getName().substring(1);
+        var parameters = List.<CJAstParameter>of(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)),
+                new CJAstParameter(mark, false, "value", fieldAst.getType().getArgs().get(0)));
+        var returnType = newUnitTypeExpression(mark);
+        return synthesizeGenericMethodWithBody(mark, methodName, parameters, returnType,
+                newMethodCall(mark, fieldAst.getSetterName(), List.of(newGetVar(mark, "self"),
+                        new CJAstNullWrap(mark, Optional.empty(), Optional.of(newGetVar(mark, "value"))))));
     }
 
     private CJAstMethodDefinition synthesizeFieldAugMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {

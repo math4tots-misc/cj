@@ -23,6 +23,10 @@ public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
         return annotations.isDefault();
     }
 
+    public boolean isUnwrap() {
+        return annotations.isUnwrap();
+    }
+
     public int getIndex() {
         return index;
     }

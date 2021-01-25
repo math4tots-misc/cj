@@ -12,16 +12,11 @@ import cj.js.web.Window
 @derive(default)
 class Ch02s01 : Base {
     val base : Base.Data
-    var _squareVertexBuffer : Nullable[WebGLBuffer]
-    var _squareIndexBuffer : Nullable[WebGLBuffer]
-    var _vertices : Nullable[Float32Array]
-    var _indices : Nullable[Int16Array]
-    var _aVertexPosition : Nullable[Int]
-    def __get_squareVertexBuffer(self: Self) : WebGLBuffer = self._squareVertexBuffer.get()
-    def __get_squareIndexBuffer(self: Self) : WebGLBuffer = self._squareIndexBuffer.get()
-    def __get_vertices(self: Self): Float32Array = self._vertices.get()
-    def __get_indices(self: Self): Int16Array = self._indices.get()
-    def __get_aVertexPosition(self: Self): Int = self._aVertexPosition.get()
+    @unwrap var _squareVertexBuffer : Nullable[WebGLBuffer]
+    @unwrap var _squareIndexBuffer : Nullable[WebGLBuffer]
+    @unwrap var _vertices : Nullable[Float32Array]
+    @unwrap var _indices : Nullable[Int16Array]
+    @unwrap var _aVertexPosition : Nullable[Int]
     def new() : Self = Self.default()
     def main() = Self().run()
 
@@ -34,7 +29,7 @@ class Ch02s01 : Base {
         gl.clearColor(0, 0, 0, 1)
 
         self.initProgram()
-        self._aVertexPosition = null(gl.getAttribLocation(self.program, "aVertexPosition"))
+        self.aVertexPosition = gl.getAttribLocation(self.program, "aVertexPosition")
         self.initBuffers()
         self.draw()
     }
@@ -48,18 +43,18 @@ class Ch02s01 : Base {
             0.5, 0.5, 0,
         )
         val indices = Int16Array(0, 1, 2, 0, 2, 3)
-        self._vertices = null(vertices)
-        self._indices = null(indices)
+        self.vertices = vertices
+        self.indices = indices
 
         # setting up the VBO
         val squareVertexBuffer = gl.createBuffer()
-        self._squareVertexBuffer = null(squareVertexBuffer)
+        self.squareVertexBuffer = squareVertexBuffer
         gl.bindBuffer(gl.cARRAY_BUFFER, squareVertexBuffer)
         gl.bufferData(gl.cARRAY_BUFFER, vertices, gl.cSTATIC_DRAW)
 
         # setting up the IBO
         val squareIndexBuffer = gl.createBuffer()
-        self._squareIndexBuffer = null(squareIndexBuffer)
+        self.squareIndexBuffer = squareIndexBuffer
         gl.bindBuffer(gl.cELEMENT_ARRAY_BUFFER, squareIndexBuffer)
         gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
 
