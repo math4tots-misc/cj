@@ -16,10 +16,12 @@ class Ch02s01 : Base {
     var _squareIndexBuffer : Nullable[WebGLBuffer]
     var _vertices : Nullable[Float32Array]
     var _indices : Nullable[Int16Array]
+    var _aVertexPosition : Nullable[Int]
     def __get_squareVertexBuffer(self: Self) : WebGLBuffer = self._squareVertexBuffer.get()
     def __get_squareIndexBuffer(self: Self) : WebGLBuffer = self._squareIndexBuffer.get()
     def __get_vertices(self: Self): Float32Array = self._vertices.get()
     def __get_indices(self: Self): Int16Array = self._indices.get()
+    def __get_aVertexPosition(self: Self): Int = self._aVertexPosition.get()
     def new() : Self = Self.default()
     def main() = Self().run()
 
@@ -32,6 +34,7 @@ class Ch02s01 : Base {
         gl.clearColor(0, 0, 0, 1)
 
         self.initProgram()
+        self._aVertexPosition = null(gl.getAttribLocation(self.program, "aVertexPosition"))
         self.initBuffers()
         self.draw()
     }
@@ -74,8 +77,8 @@ class Ch02s01 : Base {
 
         # use the buffers we've constructed
         gl.bindBuffer(gl.cARRAY_BUFFER, self.squareVertexBuffer)
-        gl.vertexAttribPointer(self.base.aVertexPosition.get(), 3, gl.cFLOAT, false, 0, 0)
-        gl.enableVertexAttribArray(self.base.aVertexPosition.get())
+        gl.vertexAttribPointer(self.aVertexPosition, 3, gl.cFLOAT, false, 0, 0)
+        gl.enableVertexAttribArray(self.aVertexPosition)
 
         # Bind IBO
         gl.bindBuffer(gl.cELEMENT_ARRAY_BUFFER, self.squareIndexBuffer)

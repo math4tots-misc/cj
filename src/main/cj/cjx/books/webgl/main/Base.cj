@@ -15,8 +15,7 @@ trait Base {
         val document : Document
         val canvas : HTMLCanvasElement
         val gl : WebGL2RenderingContext
-        var program : Nullable[WebGLProgram]
-        var aVertexPosition : Nullable[Int]
+        @default var _program : Nullable[WebGLProgram]
 
         def default() : Self = {
             val window = Window.get()
@@ -24,7 +23,7 @@ trait Base {
             val canvas : HTMLCanvasElement = document.getElementBydId("canvas")
             val gl = canvas.getContextWebGL()
             gl.clearColor(0, 0, 0, 1)
-            Self.__malloc(window, document, canvas, gl, null, null)
+            Self.__dmalloc(window, document, canvas, gl)
         }
     }
 
@@ -33,6 +32,7 @@ trait Base {
     def __get_document(self: Self): Document = self.base.document
     def __get_canvas(self: Self): HTMLCanvasElement = self.base.canvas
     def __get_gl(self: Self): WebGL2RenderingContext = self.base.gl
+    def __get_program(self: Self): WebGLProgram = self.base._program.get()
 
     def getShader(self: Self, id: String) : WebGLShader = {
         val document = self.document
@@ -77,7 +77,6 @@ trait Base {
         }
 
         gl.useProgram(program)
-        self.base.program = null(program)
-        self.base.aVertexPosition = null(gl.getAttribLocation(program, "aVertexPosition"))
+        self.base._program = null(program)
     }
 }
