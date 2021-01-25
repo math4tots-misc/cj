@@ -1,6 +1,9 @@
 package cj
 
-native class Buffer: Repr, Eq {
+import cj.ArrayBufferView
+import cj.ToArrayBufferView
+
+native class Buffer: Repr, Eq, ToArrayBufferView {
     ## Create a new buffer with the given size
     def withSize(n: Int): Self
 
@@ -62,4 +65,6 @@ native class Buffer: Repr, Eq {
     def repr(self: Self): String
 
     def __eq(self: Self, other: Self): Bool
+
+    def toArrayBufferView(self: Self): ArrayBufferView
 }

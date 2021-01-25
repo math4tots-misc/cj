@@ -327,6 +327,9 @@ class MC$cj$Buffer {
         }
         return true;
     }
+    M$toArrayBufferView(self) {
+        return self[0];
+    }
 }
 /**
  * Sets new size for the buffer, updating the capacity as needed.

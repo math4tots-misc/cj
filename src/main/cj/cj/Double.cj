@@ -17,6 +17,7 @@ native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble {
     def __div(self: Self, other: Self): Double
     def __mod(self: Self, other: Self): Double
     def __truncdiv(self: Self, other: Self): Int
+    def __neg(self: Self): Double
 
     ## formats a number using fixed-point notation, up to the specified number
     ## digits after the decimal point.

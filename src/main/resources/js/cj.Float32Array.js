@@ -17,4 +17,7 @@ class MC$cj$Float32Array {
     M$__setitem(self, i, v) {
         self[i] = v;
     }
+    M$toArrayBufferView(self) {
+        return self;
+    }
 }

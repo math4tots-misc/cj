@@ -17,4 +17,7 @@ class MC$cj$Int16Array {
     M$__setitem(self, i, v) {
         self[i] = v;
     }
+    M$toArrayBufferView(self) {
+        return self;
+    }
 }
