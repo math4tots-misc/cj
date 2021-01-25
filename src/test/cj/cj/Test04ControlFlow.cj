@@ -158,7 +158,7 @@ class Test04ControlFlow {
                 case 3
                 case 4
                 case 5 = "3 to 5"
-                default = "other"
+                else = "other"
             }
             Assert.equal(x, "3 to 5")
         }
@@ -177,7 +177,7 @@ class Test04ControlFlow {
         case 3
         case 4
         case 5 = "3 to 5"
-        default = "other"
+        else = "other"
     }
 
     @test

@@ -39,7 +39,7 @@ class Ch01s03 {
                     color[1].toFixed(1) + ", " +
                     color[2].toFixed(1) + ")")
             }
-            default = {
+            else = {
                 IO.println("key = " + event.key)
             }
         }

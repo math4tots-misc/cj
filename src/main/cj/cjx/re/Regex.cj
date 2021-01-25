@@ -289,7 +289,7 @@ class Regex {
                     # case 3: max = 0
                     self.connect(start, epsilon, end)
                 }
-                default = {
+                else = {
                     # case 4: 0 < max < infinity
                     # when min = 0 and max = 1, this is '?'
                     for i = 0; i < max; i += 1 {
@@ -385,7 +385,7 @@ class Regex {
                     case '\0' = {
                         repeat = false
                     }
-                    default = {
+                    else = {
                         val rhs = self.parsePostfix()
                         tree = Tree.cat(tree, rhs)
                     }
@@ -411,7 +411,7 @@ class Regex {
                     self.expect('}')
                     Tree.interval(inner, min, max)
                 }
-                default = inner
+                else = inner
             }
         }
 
@@ -466,11 +466,11 @@ class Regex {
                                     union self.fromEscapeChar(escapeChar) {
                                         case set(escapedSet) = set.addAll(escapedSet)
                                         case char(c) = set.add(c.toInt())
-                                        default = throw self.err(
+                                        else = throw self.err(
                                             "Invalid escape in character class: " + escapeChar.repr())
                                     }
                                 }
-                                default = set.add(ch.toInt())
+                                else = set.add(ch.toInt())
                             }
                         }
                     }
@@ -483,7 +483,7 @@ class Regex {
                 case '|'
                 case ']'
                 case ')' = throw self.err("Misplaced operator: " + self.peek())
-                default = Tree.char(self.next())
+                else = Tree.char(self.next())
             }
         }
 
@@ -509,7 +509,7 @@ class Regex {
                 case '\n' = Tree.char('\n')
                 case '\\' = Tree.char('\\')
                 case '0' = Tree.char('\0')
-                default = throw self.err("Invalid escape char: " + ch)
+                else = throw self.err("Invalid escape char: " + ch)
             }
         }
     }

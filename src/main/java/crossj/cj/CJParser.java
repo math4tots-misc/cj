@@ -1143,7 +1143,7 @@ public final class CJParser {
                 expect('{');
                 skipDelimiters();
                 var cases = List.<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, CJAstExpression>>of();
-                while (!at('}') && !at(CJToken.KW_DEFAULT)) {
+                while (!at('}') && !at(CJToken.KW_ELSE)) {
                     var caseMark = getMark();
                     expect(CJToken.KW_CASE);
                     var caseName = parseId();
@@ -1166,7 +1166,7 @@ public final class CJParser {
                     expectDelimiters();
                 }
                 Optional<CJAstExpression> fallback;
-                if (consume(CJToken.KW_DEFAULT)) {
+                if (consume(CJToken.KW_ELSE)) {
                     expect('=');
                     fallback = Optional.of(parseExpression());
                 } else {
@@ -1183,7 +1183,7 @@ public final class CJParser {
                 expect('{');
                 skipDelimiters();
                 var cases = List.<Pair<List<CJAstExpression>, CJAstExpression>>of();
-                while (!at('}') && !at(CJToken.KW_DEFAULT)) {
+                while (!at('}') && !at(CJToken.KW_ELSE)) {
                     expect(CJToken.KW_CASE);
                     var valexprs = List.of(parseExpression());
                     skipDelimiters();
@@ -1197,7 +1197,7 @@ public final class CJParser {
                     cases.add(Pair.of(valexprs, body));
                 }
                 var fallback = Optional.<CJAstExpression>empty();
-                if (consume(CJToken.KW_DEFAULT)) {
+                if (consume(CJToken.KW_ELSE)) {
                     expect('=');
                     fallback = Optional.of(parseExpression());
                     expectDelimiters();
