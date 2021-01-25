@@ -81,6 +81,9 @@ final class CJPass03 extends CJPassBaseEx {
                 materializeMethod(item, (CJAstMethodDefinition) memberAst, false, null);
             } else if (memberAst instanceof CJAstFieldDefinition) {
                 var fieldAst = (CJAstFieldDefinition) memberAst;
+                if (item.getKind() == CJIRItemKind.Trait) {
+                    throw CJError.of("Traits cannot have fields", fieldAst.getMark());
+                }
                 if (fieldAst.isStatic()) {
                     if (item.getTypeParameters().size() > 0) {
                         throw CJError.of("classes with type parameters cannot have static fields", fieldAst.getMark());
@@ -90,7 +93,7 @@ final class CJPass03 extends CJPassBaseEx {
                     }
                 } else {
                     if (item.getKind() != CJIRItemKind.Class) {
-                        throw CJError.of("unions and traits cannot have non-static fields", fieldAst.getMark());
+                        throw CJError.of("unions cannot have non-static fields", fieldAst.getMark());
                     }
                     if (fieldAst.getExpression().isPresent()) {
                         throw CJError.of("non-static fields may not have an initializer", fieldAst.getMark());
