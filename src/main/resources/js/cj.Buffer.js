@@ -1,54 +1,70 @@
 /**
- * @typedef {[DataView, boolean]} Buf
+ * @typedef {[DataView, boolean, number]} Buf
+ * [data, useLittleEndian, size]
  */
 class MC$cj$Buffer {
+    /**
+     * @param {ArrayBuffer} buffer
+     * @returns {Buf}
+     */
+    fromBuffer(buffer) {
+        return this.fromBufferWithEndian(buffer, true);
+    }
+
+    /**
+     * @param {ArrayBuffer} buffer
+     * @param {boolean} littleEndian
+     * @returns {Buf}
+     */
+    fromBufferWithEndian(buffer, littleEndian) {
+        return [new DataView(buffer), littleEndian, buffer.byteLength];
+    }
+
     /**
      * @param {number} n
      * @returns {Buf}
      */
     M$withSize(n) {
-        return [new DataView(new ArrayBuffer(n)), true];
+        return this.fromBuffer(new ArrayBuffer(n));
     }
     /**
      * @param {number} n
      * @returns {Buf}
      */
     M$withCapacity(n) {
-        return [new DataView(new ArrayBuffer(n), 0, 0), true];
+        return [new DataView(new ArrayBuffer(n)), true, 0];
     }
     /**
      * @returns {Buf}
      */
     M$empty() {
-        return [new DataView(new ArrayBuffer(0)), true];
+        return this.fromBuffer(new ArrayBuffer(0));
     }
     /**
      * @param {string} string
      */
     M$fromUTF8(string) {
         const typedArray = new TextEncoder().encode(string);
-        return [new DataView(typedArray.buffer), true];
+        return this.fromBuffer(typedArray.buffer);
     }
     /**
      * @param {number[]} u8s
      * @returns {Buf}
      */
     M$ofU8s(u8s) {
-        return [new DataView(new Uint8Array(u8s).buffer), true];
+        return this.fromBuffer(new Uint8Array(u8s).buffer);
     }
     /**
      * @param {Buf} pair
      */
     M$capacity(pair) {
-        const [dataView, littleEndian] = pair;
-        return dataView.buffer.byteLength;
+        return pair[0].byteLength;
     }
     /**
      * @param {Buf} pair
      */
     M$size(pair) {
-        const [dataView, littleEndian] = pair;
-        return dataView.byteLength;
+        return pair[2];
     }
     /**
      * @param {Buf} pair
@@ -122,14 +138,14 @@ class MC$cj$Buffer {
     M$cut(self, start, end) {
         const arrayBuffer = new ArrayBuffer(end - start);
         new Uint8Array(arrayBuffer).set(new Uint8Array(self[0], start, end - start));
-        return [new DataView(arrayBuffer), self[1]];
+        return this.fromBufferWithEndian(arrayBuffer, self[1]);
     }
     /**
      * @param {Buf} self
      * @param {number} start
      */
     M$cutFrom(self, start) {
-        return this.M$cut(self, start, self[0].byteLength);
+        return this.M$cut(self, start, self[2]);
     }
     /**
      * @param {Buf} self
@@ -193,7 +209,7 @@ class MC$cj$Buffer {
      * @param {Buf} other
      */
     M$setBuffer(self, i, other) {
-        new Uint8Array(self[0].buffer).set(new Uint8Array(other[0].buffer), i);
+        new Uint8Array(self[0].buffer).set(new Uint8Array(other[0].buffer, 0, other[2]), i);
     }
     /**
      * @param {Buf} self
@@ -208,7 +224,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addI8(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 1);
         self[0].setInt8(i, value);
     }
@@ -217,7 +233,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addU8(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 1);
         self[0].setUint8(i, value);
     }
@@ -226,7 +242,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addI16(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 2);
         self[0].setInt16(i, value);
     }
@@ -235,7 +251,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addU16(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 2);
         self[0].setUint16(i, value);
     }
@@ -244,7 +260,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addI32(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 4);
         self[0].setInt32(i, value);
     }
@@ -253,7 +269,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addF32(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 4);
         self[0].setFloat32(i, value);
     }
@@ -262,7 +278,7 @@ class MC$cj$Buffer {
      * @param {number} value
      */
     M$addF64(self, value) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + 8);
         self[0].setFloat64(i, value);
     }
@@ -271,7 +287,7 @@ class MC$cj$Buffer {
      * @param {Buf} other
      */
     M$addBuffer(self, other) {
-        const i = self[0].byteLength;
+        const i = self[2];
         bufferSetSize(self, i + other[0].byteLength);
         this.M$setBuffer(self, i, other);
     }
@@ -286,14 +302,14 @@ class MC$cj$Buffer {
      * @param {Buf} self
      */
     M$toString(self) {
-        return this.M$getUTF8(self, 0, self[0].byteLength);
+        return this.M$getUTF8(self, 0, self[2]);
     }
     /**
      * @param {Buf} self
      */
     M$repr(self) {
-        const out = Array.from(new Uint8Array(self[0].buffer, 0, self[0].byteLength));
-        return "Buffer.ofU8s([" + out.join(", ") + "])";
+        const out = Array.from(new Uint8Array(self[0].buffer, 0, self[2]));
+        return "Buffer.ofU8s(" + out.join(", ") + ")";
     }
     /**
      * @param {Buf} self
@@ -318,13 +334,12 @@ class MC$cj$Buffer {
  * @param {number} newSize
  */
 function bufferSetSize(pair, newSize) {
-    if (newSize > pair[0].buffer.byteLength) {
+    if (newSize > pair[0].byteLength) {
         // round (newSize * 2) up to nearest multiple of 8
         const newCap = (newSize * 2 + 7) & (-8);
         const newArrayBuffer = new ArrayBuffer(newCap);
-        new Uint8Array(newArrayBuffer).set(new Uint8Array(pair[0].buffer));
-        pair[0] = new DataView(newArrayBuffer, 0, newSize);
-    } else {
-        pair[0] = new DataView(pair[0].buffer, 0, newSize);
+        new Uint8Array(newArrayBuffer).set(new Uint8Array(pair[0].buffer, 0, pair[2]));
+        pair[0] = new DataView(newArrayBuffer);
     }
+    pair[2] = newSize;
 }

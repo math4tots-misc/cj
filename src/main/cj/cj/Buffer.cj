@@ -13,7 +13,7 @@ native class Buffer: Repr, Eq {
     ## Converts a string to a UTF-8 Buffer value
     def fromUTF8(string: String): Self
 
-    def ofU8s(u8s: List[Int]): Self
+    @variadic def ofU8s(u8s: List[Int]): Self
 
     ## Gets the capacity of this buffer in bytes
     def capacity(self: Self): Int
