@@ -5,6 +5,7 @@ import cj.Collection
 native class List[T?] :
         Collection[T],
         ToBool,
+        Default,
         Hash if T : Hash,
         Repr if T : Repr {
     @generic def empty(): Self
@@ -25,6 +26,8 @@ native class List[T?] :
     def toBool(self: Self): Bool
 
     def toList(self: Self): Self
+
+    def default(): Self
 
     if T : Hash def __eq(self: Self,  other: Self): Bool
     if T : Hash def hash(self: Self): Int

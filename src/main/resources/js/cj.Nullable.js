@@ -25,6 +25,9 @@ class MC$cj$Nullable {
     M$toBool(self) {
         return self !== null;
     }
+    M$default() {
+        return null;
+    }
     M$__eq(self, other) {
         return self === null ? other === null : (other !== null && this.TV$T.M$__eq(self, other));
     }

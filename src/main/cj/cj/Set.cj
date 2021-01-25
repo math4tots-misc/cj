@@ -4,11 +4,14 @@ import cj.Collection
 
 class Set[T?: Hash] :
         Collection[T],
+        Default,
         Hash,
         Repr if T : Repr {
     val _map : Map[T, T]
 
     @generic def empty(): Self = Self.__malloc(Map.empty())
+
+    @generic def default(): Self = Self.empty()
 
     def of(ts: List[T]): Self = {
         val ret = Self.empty()

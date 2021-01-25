@@ -63,4 +63,7 @@ class MC$cj$Int {
     M$_fromChar(c) {
         return c;
     }
+    M$default() {
+        return 0;
+    }
 }

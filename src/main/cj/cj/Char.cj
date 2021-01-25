@@ -1,6 +1,6 @@
 package cj
 
-native class Char: ToInt, ToChar, Hash, Repr {
+native class Char: ToInt, ToChar, Hash, Repr, Default {
     def toInt(self: Self): Int
     def toChar(self: Self): Char
     def __eq(self: Self, other: Self): Bool
@@ -26,4 +26,6 @@ native class Char: ToInt, ToChar, Hash, Repr {
 
     ## Checks if the character is an ascii letter or digit (a-zA-Z0-9)
     def isLetterOrDigit(self: Self): Bool
+
+    def default(): Char
 }

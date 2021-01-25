@@ -101,7 +101,9 @@ final class CJPass03 extends CJPassBaseEx {
                 }
                 var index = fieldAst.isStatic() ? -1 : item.getFields().filter(f -> !f.isStatic()).size();
                 var type = lctx.evalTypeExpression(fieldAst.getType());
-                var field = new CJIRField(fieldAst, index, type);
+                fieldAst.getAnnotations();
+                var annotations = CJIRAnnotationProcessor.processMember(fieldAst);
+                var field = new CJIRField(fieldAst, annotations, index, type);
                 item.getFields().add(field);
                 var accessMethodAst = synthesizeFieldAccessMethod(item, fieldAst);
                 materializeMethod(item, accessMethodAst, true, new CJIRFieldMethodInfo(field, ""));
@@ -149,6 +151,15 @@ final class CJPass03 extends CJPassBaseEx {
         if (item.isDeriveRepr()) {
             deriveItemClassOrUnionCheck(item, "repr");
             var methodAst = synthesizeReprMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+        if (item.isDeriveDefault()) {
+            deriveItemClassCheck(item, "default");
+            var methodAst = synthesizeDefaultMethod(item);
+            materializeMethod(item, methodAst, true, null);
+        }
+        if (!item.isDeriveNew() && item.getFields().any(f -> !f.isStatic() && f.isDefault())) {
+            var methodAst = synthesizeDmallocMethod(item);
             materializeMethod(item, methodAst, true, null);
         }
     }
@@ -221,13 +232,40 @@ final class CJPass03 extends CJPassBaseEx {
 
     private CJAstMethodDefinition synthesizeNewMethod(CJIRItem item) {
         var mark = item.getMark();
-        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
-                .map(f -> (CJAstFieldDefinition) f);
-        var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
+        var fields = item.getFields().filter(f -> !f.isStatic());
+        var nonDefaultFields = fields.filter(f -> !f.isDefault());
+        var parameters = nonDefaultFields
+                .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
         var selfType = newSelfTypeExpression(item.getMark());
-        var argexprs = fields.map(f -> newGetVar(f.getMark(), f.getName()));
+        var argexprs = fields.map(f -> f.isDefault()
+                ? new CJAstMethodCall(f.getMark(), Optional.of(f.getAst().getType()), "default", List.of(), List.of())
+                : newGetVar(f.getMark(), f.getName()));
         var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
         return synthesizeGenericMethodWithBody(mark, "new", parameters, selfType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeDmallocMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getFields().filter(f -> !f.isStatic());
+        var nonDefaultFields = fields.filter(f -> !f.isDefault());
+        var parameters = nonDefaultFields
+                .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
+        var selfType = newSelfTypeExpression(item.getMark());
+        var argexprs = fields.map(f -> f.isDefault()
+                ? new CJAstMethodCall(f.getMark(), Optional.of(f.getAst().getType()), "default", List.of(), List.of())
+                : newGetVar(f.getMark(), f.getName()));
+        var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
+        return synthesizeGenericMethodWithBody(mark, "__dmalloc", parameters, selfType, body);
+    }
+
+    private CJAstMethodDefinition synthesizeDefaultMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var fields = item.getFields().filter(f -> !f.isStatic());
+        var selfType = newSelfTypeExpression(item.getMark());
+        var argexprs = fields.map(f -> (CJAstExpression) new CJAstMethodCall(f.getMark(),
+                Optional.of(f.getAst().getType()), "default", List.of(), List.of()));
+        var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
+        return synthesizeGenericMethodWithBody(mark, "default", List.of(), selfType, body);
     }
 
     private CJAstMethodDefinition synthesizeEqMethod(CJIRItem item) {

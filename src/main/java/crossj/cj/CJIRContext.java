@@ -15,7 +15,7 @@ public final class CJIRContext extends CJIRContextBase {
             "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToChar",
             "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO",
             "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
-            "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4");
+            "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4", "cj.Default");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -32,7 +32,7 @@ public final class CJIRContext extends CJIRContextBase {
             Pair.of("Fn4", List.of("cj.Fn4")), Pair.of("Tuple", List.of()), Pair.of("Tuple2", List.of("cj.Tuple2")),
             Pair.of("Tuple3", List.of("cj.Tuple3")), Pair.of("Tuple4", List.of("cj.Tuple4")),
             Pair.of("Iterator", List.of("cj.Iterator")), Pair.of("Promise", List.of("cj.Promise")),
-            Pair.of("Self", List.of()));
+            Pair.of("Default", List.of("cj.Default")), Pair.of("Self", List.of()));
 
     /**
      * Source roots to search for cj files.

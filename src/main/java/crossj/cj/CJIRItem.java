@@ -11,6 +11,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean deriveHash;
     private final boolean deriveRepr;
     private final boolean derivePod;
+    private final boolean deriveDefault;
     private final CJIRAnnotationProcessor annotations;
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
@@ -37,6 +38,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             boolean deriveHash = false;
             boolean deriveRepr = false;
             boolean derivePod = false;
+            boolean deriveDefault = false;
             for (var command : annotations.getDeriveList()) {
                 switch (command) {
                     case "new":
@@ -59,6 +61,9 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
                         deriveRepr = true;
                         derivePod = true;
                         break;
+                    case "default":
+                        deriveDefault = true;
+                        break;
                     default:
                         throw CJError.of("Unrecognized derive command: " + command, ast.getMark());
                 }
@@ -68,6 +73,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             this.deriveHash = deriveHash;
             this.deriveRepr = deriveRepr;
             this.derivePod = derivePod;
+            this.deriveDefault = deriveDefault;
         }
 
         shortNameMap = Map.of();
@@ -99,6 +105,10 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
     public boolean isDerivePod() {
         return derivePod;
+    }
+
+    public boolean isDeriveDefault() {
+        return deriveDefault;
     }
 
     public boolean isNullable() {

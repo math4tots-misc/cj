@@ -38,6 +38,9 @@ final class CJPass02 extends CJPassBase {
         } else if (item.isDeriveEq()) {
             traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Eq"));
         }
+        if (item.isDeriveDefault()) {
+            traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Default"));
+        }
         if (item.isDeriveRepr()) {
             traitDeclarationAsts.add(newSimpleTraitDeclaration(mark, "Repr"));
         }

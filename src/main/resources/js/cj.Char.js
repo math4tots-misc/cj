@@ -53,4 +53,7 @@ class MC$cj$Char {
     M$isLetterOrDigit(self) {
         return this.M$isLetter(self) || this.M$isDigit(self);
     }
+    M$default() {
+        return 0;
+    }
 }

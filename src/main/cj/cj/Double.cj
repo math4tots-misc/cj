@@ -1,7 +1,7 @@
 package cj
 
 @implicit(Int, _fromInt)
-native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble {
+native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
@@ -23,4 +23,6 @@ native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble {
     ## digits after the decimal point.
     ## (compare with Javascript's Number.prototype.toFixed)
     def toFixed(self: Self, n: Int): String
+
+    def default(): Self
 }

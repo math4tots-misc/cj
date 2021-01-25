@@ -49,4 +49,8 @@ class MC$cj$Double {
     M$toFixed(self, n) {
         return self.toFixed(n);
     }
+
+    M$default() {
+        return 0;
+    }
 }

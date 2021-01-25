@@ -4,6 +4,7 @@ import cj.NonNull
 import cj.Range
 
 class Map[K?: Hash, V?] :
+        Default,
         Eq if V : Eq,
         Hash if V : Hash,
         Repr if K : Repr and V : Repr {
@@ -11,6 +12,8 @@ class Map[K?: Hash, V?] :
     var _list : List[List[Tuple[Int, K, V]]]
 
     @generic def empty(): Self = Self.__malloc(0, [])
+
+    @generic def default(): Self = Self.empty()
 
     def of(pairs: List[Tuple[K, V]]): Self = {
         val ret = Self.empty()

@@ -55,6 +55,9 @@ class MC$cj$List {
     M$toList(self) {
         return Array.from(self);
     }
+    M$default() {
+        return [];
+    }
     M$__eq(self, other) {
         const T = this.TV$T;
         if (self.length !== other.length) {
