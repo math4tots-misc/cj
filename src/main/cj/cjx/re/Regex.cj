@@ -234,7 +234,7 @@ class Regex {
         def buildBlock(self: Self, tree: Tree, var start: Int, var end: Int): Block = {
             start = if start == -1 { self.newNode() } else { start }
             end = if end == -1 { self.newNode() } else { end }
-            union tree {
+            when tree {
                 case char(c) = {
                     self.connect(start, c.toInt(), end)
                 }
@@ -463,7 +463,7 @@ class Regex {
                             switch ch {
                                 case '\\' = {
                                     val escapeChar = self.next()
-                                    union self.fromEscapeChar(escapeChar) {
+                                    when self.fromEscapeChar(escapeChar) {
                                         case set(escapedSet) = set.addAll(escapedSet)
                                         case char(c) = set.add(c.toInt())
                                         else = throw self.err(

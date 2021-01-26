@@ -93,7 +93,7 @@ class Test11Class {
     def simpleUnion() = {
         {
             val a = SimpleUnion.one()
-            val out = union a {
+            val out = when a {
                 case one = "ONE"
                 case two = "TWO"
             }
@@ -101,7 +101,7 @@ class Test11Class {
         }
         {
             val a = SimpleUnion.two()
-            val out = union a {
+            val out = when a {
                 case one = "ONE"
                 case two = "TWO"
             }
@@ -119,7 +119,7 @@ class Test11Class {
     def nonSimpleUnion() = {
         {
             val a = NonSimpleUnion.one(15)
-            val out = union a {
+            val out = when a {
                 case one(i) = "ONE(" + i + ")"
                 case two(s) = "TWO(" + s + ")"
                 case three = "THREE"
@@ -128,7 +128,7 @@ class Test11Class {
         }
         {
             val a = NonSimpleUnion.two("qwer")
-            val out = union a {
+            val out = when a {
                 case one(i) = "ONE(" + i + ")"
                 case two(s) = "TWO(" + s + ")"
                 case three = "THREE"
@@ -137,7 +137,7 @@ class Test11Class {
         }
         {
             val a = NonSimpleUnion.three()
-            val out = union a {
+            val out = when a {
                 case one(i) = "ONE(" + i + ")"
                 case two(s) = "TWO(" + s + ")"
                 case three = "THREE"

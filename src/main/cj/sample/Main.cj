@@ -20,7 +20,7 @@ class Main {
 
         {
             var x = SampleUnion.one(24)
-            union x {
+            when x {
                 case one(a) = IO.println("a: " + a)
                 case two(a, b) = ()
                 case three(s) = ()
@@ -65,7 +65,7 @@ class Main {
         }
     }
 
-    def foo(u: SampleUnion): Int = union u {
+    def foo(u: SampleUnion): Int = when u {
         case one(a) = a
         case two(a, b) = a * b
         case three(s) = s.size()

@@ -1140,7 +1140,7 @@ public final class CJParser {
                 var expression = parseExpression();
                 return new CJAstVariableDeclaration(mark, mutable, target, declaredType, expression);
             }
-            case CJToken.KW_UNION: {
+            case CJToken.KW_WHEN: {
                 var mark = getMark();
                 next();
                 var target = parseExpression();
