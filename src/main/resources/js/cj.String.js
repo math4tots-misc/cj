@@ -78,4 +78,8 @@ class MC$cj$String {
     M$trim(self) {
         return self.trim();
     }
+
+    M$default() {
+        return "";
+    }
 }

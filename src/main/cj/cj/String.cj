@@ -1,6 +1,6 @@
 package cj
 
-native class String: Repr, ToBool, Hash, Iterable[Char] {
+native class String: Repr, ToBool, Hash, Iterable[Char], Default {
     def toString(self: Self): Self
     def repr(self: Self): String
 
@@ -29,4 +29,6 @@ native class String: Repr, ToBool, Hash, Iterable[Char] {
     def parseInt(self: Self): Nullable[Int]
 
     def trim(self: Self): String
+
+    def default(): Self
 }
