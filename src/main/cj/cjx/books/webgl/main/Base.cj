@@ -15,7 +15,7 @@ trait Base {
         val document : Document
         val canvas : HTMLCanvasElement
         val gl : WebGL2RenderingContext
-        @default var _program : Nullable[WebGLProgram]
+        var _program : Nullable[WebGLProgram] = null
 
         def default() : Self = {
             val window = Window.get()
@@ -23,7 +23,7 @@ trait Base {
             val canvas : HTMLCanvasElement = document.getElementBydId("canvas")
             val gl = canvas.getContextWebGL()
             gl.clearColor(0, 0, 0, 1)
-            Self.__dmalloc(window, document, canvas, gl)
+            Self.__malloc(window, document, canvas, gl)
         }
     }
 

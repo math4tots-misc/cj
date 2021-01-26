@@ -21,10 +21,10 @@ class Ch02s04 : Base {
 
     val base : Base.Data
     var renderingMode : String
-    @unwrap var _indices: Nullable[Int16Array]
-    @unwrap var _trapezoidVAO: Nullable[WebGLVertexArrayObject]
-    @unwrap var _trapezoidIndexBuffer: Nullable[WebGLBuffer]
-    @unwrap var _aVertexPosition : Nullable[Int]
+    @lateinit var indices: Int16Array
+    @lateinit var trapezoidVAO: WebGLVertexArrayObject
+    @lateinit var trapezoidIndexBuffer: WebGLBuffer
+    @lateinit var aVertexPosition :Int
     def main() = Self.default().run()
 
     def run(self: Self) = {

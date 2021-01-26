@@ -29,8 +29,7 @@ public final class CJIRAnnotationProcessor {
     private boolean generic = false;
     private boolean genericSelf = false;
     private boolean variadic = false;
-    private boolean default_ = false;
-    private boolean unwrap = false;
+    private boolean lateinit = false;
     private final List<String> deriveList = List.of();
     private final List<Pair<String, String>> implicits = List.of();
 
@@ -82,15 +81,9 @@ public final class CJIRAnnotationProcessor {
         }
     }
 
-    private void cannotMarkDefault(CJAstNode ast) {
-        if (default_) {
-            throw CJError.of(ast.getClass() + " cannot be marked default", ast.getMark());
-        }
-    }
-
-    private void cannotMarkUnwrap(CJAstNode ast) {
-        if (default_) {
-            throw CJError.of(ast.getClass() + " cannot be marked default", ast.getMark());
+    private void cannotMarkLateinit(CJAstNode ast) {
+        if (lateinit) {
+            throw CJError.of(ast.getClass() + " cannot be marked lateinit", ast.getMark());
         }
     }
 
@@ -99,8 +92,7 @@ public final class CJIRAnnotationProcessor {
         cannotMarkGeneric(ast);
         cannotMarkGenericSelf(ast);
         cannotMarkVariadic(ast);
-        cannotMarkDefault(ast);
-        cannotMarkUnwrap(ast);
+        cannotMarkLateinit(ast);
     }
 
     private void checkForMember(CJAstItemMemberDefinition ast) {
@@ -114,11 +106,7 @@ public final class CJIRAnnotationProcessor {
             cannotMarkVariadic(ast);
         }
         if (!(ast instanceof CJAstFieldDefinition)) {
-            cannotMarkDefault(ast);
-            cannotMarkUnwrap(ast);
-        }
-        if (ast.isStatic()) {
-            cannotMarkDefault(ast);
+            cannotMarkLateinit(ast);
         }
     }
 
@@ -128,20 +116,15 @@ public final class CJIRAnnotationProcessor {
         cannotMarkGenericSelf(ast);
         cannotMarkVariadic(ast);
         cannotHaveImplicits(ast);
-        cannotMarkDefault(ast);
-        cannotMarkUnwrap(ast);
+        cannotMarkLateinit(ast);
     }
 
     public boolean isNullable() {
         return nullable;
     }
 
-    public boolean isDefault() {
-        return default_;
-    }
-
-    public boolean isUnwrap() {
-        return unwrap;
+    public boolean isLateinit() {
+        return lateinit;
     }
 
     public boolean isTest() {
@@ -197,13 +180,9 @@ public final class CJIRAnnotationProcessor {
                 expectArgc(0, expression);
                 variadic = true;
                 break;
-            case "default":
+            case "lateinit":
                 expectArgc(0, expression);
-                default_ = true;
-                break;
-            case "unwrap":
-                expectArgc(0, expression);
-                unwrap = true;
+                lateinit = true;
                 break;
             case "derive":
                 deriveList.addAll(expression.getArgs().map(this::eval));

@@ -1,6 +1,5 @@
 package crossj.cj;
 
-import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
@@ -71,11 +70,6 @@ final class CJPass03 extends CJPassBaseEx {
      */
     private void materializeMembers(CJIRItem item) {
 
-        if (item.getKind() == CJIRItemKind.Class) {
-            var mallocMethodAst = synthesizeMallocMethod(item);
-            materializeMethod(item, mallocMethodAst, true, null);
-        }
-
         for (var memberAst : item.getAst().getMembers()) {
             if (memberAst instanceof CJAstMethodDefinition) {
                 materializeMethod(item, (CJAstMethodDefinition) memberAst, false, null);
@@ -88,15 +82,9 @@ final class CJPass03 extends CJPassBaseEx {
                     if (item.getTypeParameters().size() > 0) {
                         throw CJError.of("classes with type parameters cannot have static fields", fieldAst.getMark());
                     }
-                    if (fieldAst.getExpression().isEmpty()) {
-                        throw CJError.of("static fields must always have an initializer", fieldAst.getMark());
-                    }
                 } else {
                     if (item.getKind() != CJIRItemKind.Class) {
                         throw CJError.of("unions cannot have non-static fields", fieldAst.getMark());
-                    }
-                    if (fieldAst.getExpression().isPresent()) {
-                        throw CJError.of("non-static fields may not have an initializer", fieldAst.getMark());
                     }
                 }
                 var index = fieldAst.isStatic() ? -1 : item.getFields().filter(f -> !f.isStatic()).size();
@@ -104,6 +92,17 @@ final class CJPass03 extends CJPassBaseEx {
                 fieldAst.getAnnotations();
                 var annotations = CJIRAnnotationProcessor.processMember(fieldAst);
                 var field = new CJIRField(fieldAst, annotations, index, type);
+                if (field.isLateinit() && !field.isMutable()) {
+                    throw CJError.of("lateinit fields must be mutable", field.getMark());
+                }
+                if (field.isLateinit() && fieldAst.getExpression().isPresent()) {
+                    throw CJError.of("lateinit fields cannot be initialized", field.getMark());
+                }
+                if (!field.isLateinit() && fieldAst.isStatic() && fieldAst.getExpression().isEmpty()) {
+                    if (fieldAst.getExpression().isEmpty()) {
+                        throw CJError.of("static fields must always have an initializer", fieldAst.getMark());
+                    }
+                }
                 item.getFields().add(field);
                 var accessMethodAst = synthesizeFieldAccessMethod(item, fieldAst);
                 materializeMethod(item, accessMethodAst, true, new CJIRFieldMethodInfo(field, ""));
@@ -113,25 +112,6 @@ final class CJPass03 extends CJPassBaseEx {
                     if (field.getType().equals(ctx.getIntType())) {
                         var augMethodAst = synthesizeFieldAugMethod(item, fieldAst);
                         materializeMethod(item, augMethodAst, true, new CJIRFieldMethodInfo(field, "+="));
-                    }
-                }
-                if (field.isUnwrap()) {
-                    if (!field.getType().isNullableType()) {
-                        throw CJError.of("Only Nullable fields may be marked unwrap", field.getMark());
-                    }
-                    if (field.isStatic()) {
-                        throw CJError.of("Static fields may not be marked unwrap", field.getMark());
-                    }
-                    if (!field.getName().startsWith("_")) {
-                        throw CJError.of("Names of unwrap fields must start with an underscore", field.getMark());
-                    }
-                    {
-                        var methodAst = synthesizeFieldUnwrapAccessMethod(item, fieldAst);
-                        materializeMethod(item, methodAst, true, null);
-                    }
-                    if (field.isMutable()) {
-                        var methodAst = synthesizeFieldUnwrapAssignmentMethod(item, fieldAst);
-                        materializeMethod(item, methodAst, true, null);
                     }
                 }
             } else if (memberAst instanceof CJAstCaseDefinition) {
@@ -150,6 +130,11 @@ final class CJPass03 extends CJPassBaseEx {
             } else {
                 throw CJError.of("TODO: materializeMembers " + memberAst.getClass().getName(), memberAst.getMark());
             }
+        }
+
+        if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
+            var mallocMethodAst = synthesizeMallocMethod(item);
+            materializeMethod(item, mallocMethodAst, true, null);
         }
 
         if (item.isDeriveNew()) {
@@ -177,10 +162,6 @@ final class CJPass03 extends CJPassBaseEx {
             var methodAst = synthesizeDefaultMethod(item);
             materializeMethod(item, methodAst, true, null);
         }
-        if (!item.isDeriveNew() && item.getFields().any(f -> !f.isStatic() && f.isDefault())) {
-            var methodAst = synthesizeDmallocMethod(item);
-            materializeMethod(item, methodAst, true, null);
-        }
     }
 
     private static void deriveItemClassCheck(CJIRItem item, String name) {
@@ -206,19 +187,6 @@ final class CJPass03 extends CJPassBaseEx {
         return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
 
-    private CJAstMethodDefinition synthesizeFieldUnwrapAccessMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
-        Assert.that(fieldAst.getName().startsWith("_"));
-        Assert.that(!fieldAst.isStatic());
-        Assert.equals(fieldAst.getType().getName(), "Nullable");
-        Assert.equals(fieldAst.getType().getArgs().size(), 1);
-        var mark = fieldAst.getMark();
-        var methodName = "__get_" + fieldAst.getName().substring(1);
-        var parameters = List.<CJAstParameter>of(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
-        var returnType = fieldAst.getType().getArgs().get(0);
-        return synthesizeGenericMethodWithBody(mark, methodName, parameters, returnType, newMethodCall(mark, "get",
-                List.of(newMethodCall(mark, fieldAst.getGetterName(), List.of(newGetVar(mark, "self"))))));
-    }
-
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
         var mark = fieldAst.getMark();
         var methodName = fieldAst.getSetterName();
@@ -229,22 +197,6 @@ final class CJPass03 extends CJPassBaseEx {
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
         var returnType = newUnitTypeExpression(mark);
         return synthesizeGenericMethod(mark, methodName, parameters, returnType);
-    }
-
-    private CJAstMethodDefinition synthesizeFieldUnwrapAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
-        Assert.that(fieldAst.isMutable());
-        Assert.that(fieldAst.getName().startsWith("_"));
-        Assert.that(!fieldAst.isStatic());
-        Assert.equals(fieldAst.getType().getName(), "Nullable");
-        Assert.equals(fieldAst.getType().getArgs().size(), 1);
-        var mark = fieldAst.getMark();
-        var methodName = "__set_" + fieldAst.getName().substring(1);
-        var parameters = List.<CJAstParameter>of(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)),
-                new CJAstParameter(mark, false, "value", fieldAst.getType().getArgs().get(0)));
-        var returnType = newUnitTypeExpression(mark);
-        return synthesizeGenericMethodWithBody(mark, methodName, parameters, returnType,
-                newMethodCall(mark, fieldAst.getSetterName(), List.of(newGetVar(mark, "self"),
-                        new CJAstNullWrap(mark, Optional.empty(), Optional.of(newGetVar(mark, "value"))))));
     }
 
     private CJAstMethodDefinition synthesizeFieldAugMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -260,12 +212,12 @@ final class CJPass03 extends CJPassBaseEx {
     }
 
     private CJAstMethodDefinition synthesizeMallocMethod(CJIRItem item) {
-        var fields = item.getAst().getMembers().filter(f -> !f.isStatic() && f instanceof CJAstFieldDefinition)
-                .map(f -> (CJAstFieldDefinition) f);
-        Assert.that(fields.all(f -> !f.isStatic()));
+        var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
+        var argFields = nonStaticFields.filter(f -> f.includeInMalloc());
         var mark = item.getMark();
         var methodName = "__malloc";
-        var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
+        var parameters = argFields.map(f -> f.getAst())
+                .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getType()));
         var returnType = newSelfTypeExpression(item.getMark());
         return synthesizeGenericMethod(mark, methodName, parameters, returnType);
     }
@@ -280,35 +232,18 @@ final class CJPass03 extends CJPassBaseEx {
 
     private CJAstMethodDefinition synthesizeNewMethod(CJIRItem item) {
         var mark = item.getMark();
-        var fields = item.getFields().filter(f -> !f.isStatic());
-        var nonDefaultFields = fields.filter(f -> !f.isDefault());
-        var parameters = nonDefaultFields
+        var fields = item.getFields().filter(f -> f.includeInMalloc());
+        var parameters = fields
                 .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
         var selfType = newSelfTypeExpression(item.getMark());
-        var argexprs = fields.map(f -> f.isDefault()
-                ? new CJAstMethodCall(f.getMark(), Optional.of(f.getAst().getType()), "default", List.of(), List.of())
-                : newGetVar(f.getMark(), f.getName()));
+        var argexprs = fields.map(f -> newGetVar(f.getMark(), f.getName()));
         var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
         return synthesizeGenericMethodWithBody(mark, "new", parameters, selfType, body);
     }
 
-    private CJAstMethodDefinition synthesizeDmallocMethod(CJIRItem item) {
-        var mark = item.getMark();
-        var fields = item.getFields().filter(f -> !f.isStatic());
-        var nonDefaultFields = fields.filter(f -> !f.isDefault());
-        var parameters = nonDefaultFields
-                .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
-        var selfType = newSelfTypeExpression(item.getMark());
-        var argexprs = fields.map(f -> f.isDefault()
-                ? new CJAstMethodCall(f.getMark(), Optional.of(f.getAst().getType()), "default", List.of(), List.of())
-                : newGetVar(f.getMark(), f.getName()));
-        var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
-        return synthesizeGenericMethodWithBody(mark, "__dmalloc", parameters, selfType, body);
-    }
-
     private CJAstMethodDefinition synthesizeDefaultMethod(CJIRItem item) {
         var mark = item.getMark();
-        var fields = item.getFields().filter(f -> !f.isStatic());
+        var fields = item.getFields().filter(f -> f.includeInMalloc());
         var selfType = newSelfTypeExpression(item.getMark());
         var argexprs = fields.map(f -> (CJAstExpression) new CJAstMethodCall(f.getMark(),
                 Optional.of(f.getAst().getType()), "default", List.of(), List.of()));

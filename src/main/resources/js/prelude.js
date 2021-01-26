@@ -20,6 +20,13 @@ function defined(x) {
     return x;
 }
 
+function checkLateinit(x) {
+    if (x === undefined) {
+        throw new Error("lateinit field used before set");
+    }
+    return x;
+}
+
 /**
  * tests whether two type objects are equal
  * @param {*} a

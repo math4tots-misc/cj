@@ -35,4 +35,8 @@ public final class CJIRReifiedMethodRef {
     public CJIRType getReturnType() {
         return methodRef.getMethod().getReturnType().apply(binding);
     }
+
+    public String getName() {
+        return methodRef.getName();
+    }
 }

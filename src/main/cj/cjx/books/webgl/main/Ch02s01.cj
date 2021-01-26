@@ -12,11 +12,11 @@ import cj.js.web.Window
 @derive(default)
 class Ch02s01 : Base {
     val base : Base.Data
-    @unwrap var _squareVertexBuffer : Nullable[WebGLBuffer]
-    @unwrap var _squareIndexBuffer : Nullable[WebGLBuffer]
-    @unwrap var _vertices : Nullable[Float32Array]
-    @unwrap var _indices : Nullable[Int16Array]
-    @unwrap var _aVertexPosition : Nullable[Int]
+    @lateinit var squareVertexBuffer : WebGLBuffer
+    @lateinit var squareIndexBuffer : WebGLBuffer
+    @lateinit var vertices : Float32Array
+    @lateinit var indices : Int16Array
+    @lateinit var aVertexPosition : Int
     def new() : Self = Self.default()
     def main() = Self().run()
 

@@ -19,12 +19,12 @@ public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
         return ast.isMutable();
     }
 
-    public boolean isDefault() {
-        return annotations.isDefault();
+    public boolean isLateinit() {
+        return annotations.isLateinit();
     }
 
-    public boolean isUnwrap() {
-        return annotations.isUnwrap();
+    public boolean includeInMalloc() {
+        return !isLateinit() && ast.getExpression().isEmpty();
     }
 
     public int getIndex() {

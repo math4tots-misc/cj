@@ -158,8 +158,32 @@ class Test11Class {
 
     @derive(new)
     class ImplicitLocals {
-        @default var x : Int
+        var x : Int = 0
 
         def add(self: Self, y: Int) : Int = x + y
+    }
+
+    @test
+    def staticLateInit() = {
+        Assert.throws(() -> StaticLateInit.x)
+        StaticLateInit.x = "xxx"
+        Assert.equal(StaticLateInit.x, "xxx")
+    }
+
+    class StaticLateInit {
+        @lateinit static var x : String
+    }
+
+    @test
+    def nonStaticLateInit() = {
+        val obj = NonStaticLateInit()
+        Assert.throws(() -> obj.x)
+        obj.x = [6, 7, 8]
+        Assert.equal(obj.x, [6, 7, 8])
+    }
+
+    @derive(new)
+    class NonStaticLateInit {
+        @lateinit var x : List[Int]
     }
 }

@@ -154,7 +154,7 @@ final class CJPass04 extends CJPassBaseEx {
         var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, ast.getMark());
         var parameterTypes = reifiedMethodRef.getParameterTypes();
         Assert.that(!methodRef.getMethod().isVariadic());
-        checkArgc(parameterTypes, args, ast.getMark());
+        checkArgc(reifiedMethodRef.getName(), parameterTypes, args, ast.getMark());
         for (int i = 0; i < args.size(); i++) {
             var parameterType = parameterTypes.get(i);
             var arg = args.get(i);
@@ -171,7 +171,7 @@ final class CJPass04 extends CJPassBaseEx {
         var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, ast.getMark());
         var parameterTypes = reifiedMethodRef.getParameterTypes();
         Assert.that(!methodRef.getMethod().isVariadic());
-        checkArgc(parameterTypes, args, ast.getMark());
+        checkArgc(reifiedMethodRef.getName(), parameterTypes, args, ast.getMark());
         for (int i = 0; i < args.size(); i++) {
             var parameterType = parameterTypes.get(i);
             var arg = args.get(i);
@@ -332,7 +332,7 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, e.getMark());
                 var parameterTypes = reifiedMethodRef.getParameterTypes();
-                checkArgc(parameterTypes, argAsts, e.getMark());
+                checkArgc(e.getName(), parameterTypes, argAsts, e.getMark());
                 while (args.size() < parameterTypes.size()) {
                     var parameterType = parameterTypes.get(args.size());
                     var argAst = argAsts.get(args.size());
@@ -920,11 +920,11 @@ final class CJPass04 extends CJPassBaseEx {
         }, null);
     }
 
-    private void checkArgc(List<CJIRType> parameterTypes, List<?> exprs, CJMark mark) {
+    private void checkArgc(String name, List<CJIRType> parameterTypes, List<?> exprs, CJMark mark) {
         var expected = parameterTypes.size();
         var actual = exprs.size();
         if (expected != actual) {
-            throw CJError.of("Expected " + expected + " args but got " + actual, mark);
+            throw CJError.of("Expected " + expected + " args but got " + actual + " for " + name, mark);
         }
     }
 

@@ -209,9 +209,13 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             var fieldName = translateFieldName(field.getName());
             out.append(getterMethodName + "(){\n");
             out.append("if (!('" + fieldName + "' in this)){\n");
-            var blob = translateExpression(field.getExpression().get());
-            blob.getLines().forEach(out::append);
-            out.append("this." + fieldName + "=" + blob.getExpression() + ";\n");
+            if (field.isLateinit()) {
+                out.append("throw new Error('lateinit field used before init')");
+            } else {
+                var blob = translateExpression(field.getExpression().get());
+                blob.getLines().forEach(out::append);
+                out.append("this." + fieldName + "=" + blob.getExpression() + ";\n");
+            }
             out.append("}\n");
             out.append("return this." + fieldName + ";\n");
             out.append("}\n");
@@ -224,6 +228,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         // for (non-union) classes: emit non-static fields and malloc
         if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
             var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
+            var argFields = nonStaticFields.filter(f -> f.includeInMalloc());
             if (isWrapperItem(item)) {
                 // wrapper type
                 // there is exactly 1 non-static field, and it is immutable
@@ -238,7 +243,11 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 for (var field : nonStaticFields) {
                     var index = field.getIndex();
                     var getterMethodName = translateMethodName(field.getGetterName());
-                    out.append(getterMethodName + "(a){return a[" + index + "]}\n");
+                    if (field.isLateinit()) {
+                        out.append(getterMethodName + "(a){return defined(a[" + index + "])}\n");
+                    } else {
+                        out.append(getterMethodName + "(a){return a[" + index + "]}\n");
+                    }
                     if (field.isMutable()) {
                         var setterMethodName = translateMethodName(field.getSetterName());
                         out.append(setterMethodName + "(a,x){a[" + index + "]=x}\n");
@@ -248,8 +257,31 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 if (nonStaticFields.isEmpty()) {
                     out.append(mallocMethodName + "(){return undefined;}\n");
                 } else {
-                    var argnames = Str.join(",", Range.upto(nonStaticFields.size()).map(i -> "a" + i));
-                    out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
+                    var argnames = Str.join(",", Range.upto(argFields.size()).map(i -> "a" + i));
+                    if (nonStaticFields.all(f -> f.includeInMalloc())) {
+                        out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
+                    } else {
+                        out.append(mallocMethodName + "(" + argnames + "){\n");
+                        var values = List.<String>of();
+                        {
+                            int i = 0;
+                            for (var field : nonStaticFields) {
+                                if (field.includeInMalloc()) {
+                                    values.add("a" + (i++));
+                                } else if (field.isLateinit()) {
+                                    values.add("undefined");
+                                } else {
+                                    var expr = translateExpression(field.getExpression().get()).toPure(ctx);
+                                    for (var line : expr.getLines()) {
+                                        out.append(line);
+                                    }
+                                    values.add(expr.getExpression());
+                                }
+                            }
+                        }
+                        out.append("return [" + Str.join(",", values) + "];\n");
+                        out.append("}\n");
+                    }
                 }
             }
         }
@@ -503,6 +535,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         switch (info.getKind()) {
                             case "":
                                 Assert.equals(allArgs.size(), 1);
+                                if (field.isLateinit()) {
+                                    break;
+                                }
                                 return Pair.of(target, false);
                             case "=":
                             case "+=":
