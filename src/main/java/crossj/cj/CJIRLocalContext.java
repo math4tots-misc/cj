@@ -170,4 +170,8 @@ public final class CJIRLocalContext extends CJIRContextBase {
         }
         return new CJIRVariableType(typeParameter, additionalTraits);
     }
+
+    CJIRType getSelfType() {
+        return selfType;
+    }
 }

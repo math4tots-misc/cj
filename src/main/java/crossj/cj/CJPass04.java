@@ -361,11 +361,63 @@ final class CJPass04 extends CJPassBaseEx {
 
             @Override
             public CJIRExpression visitVariableAccess(CJAstVariableAccess e, Optional<CJIRType> a) {
+                var target = findLocalOrNull(e.getName());
+                if (target != null) {
+                    return new CJIRVariableAccess(e, target);
+                }
+                if (!e.getName().equals("self")) {
+                    // Check for Self.* and self.* variables
+                    var selfType = lctx.getSelfType();
+                    var methodRef = selfType.findMethodOrNull("__get_" + e.getName());
+                    if (methodRef != null) {
+                        var method = methodRef.getMethod();
+                        if (method.getParameters().size() == 0) {
+                            return synthesizeMethodCall(e, selfType, methodRef, List.of(), List.of());
+                        } else if (method.getParameters().size() == 1) {
+                            var selfDecl = findLocalOrNull("self");
+                            if (selfDecl == null) {
+                                throw CJError.of(
+                                        "Non-static field " + e.getName() + " cannot be used without a 'self' in scope",
+                                        e.getMark());
+                            }
+                            return synthesizeMethodCall(e, selfType, methodRef, List.of(),
+                                    List.of(new CJIRVariableAccess(e, selfDecl)));
+                        }
+                    }
+                }
                 return new CJIRVariableAccess(e, findLocal(e.getName(), e.getMark()));
             }
 
             @Override
             public CJIRExpression visitAssignment(CJAstAssignment e, Optional<CJIRType> a) {
+                if (e.getTarget() instanceof CJAstNameAssignmentTarget) {
+                    // Check for Self.* and self.* variables
+                    var nameMark = e.getTarget().getMark();
+                    var name = ((CJAstNameAssignmentTarget) e.getTarget()).getName();
+                    var decl = findLocalOrNull(name);
+                    if (decl == null) {
+                        var selfType = lctx.getSelfType();
+                        var methodRef = selfType.findMethodOrNull("__set_" + name);
+                        if (methodRef != null) {
+                            var method = methodRef.getMethod();
+                            if (method.getParameters().size() == 1) {
+                                return evalUnitExpression(new CJAstMethodCall(e.getMark(),
+                                        Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())),
+                                        "__set_" + name, List.of(), List.of(e.getExpression())));
+                            } else if (method.getParameters().size() == 2) {
+                                var selfDecl = findLocalOrNull("self");
+                                if (selfDecl == null) {
+                                    throw CJError.of("Non-static field " + name
+                                            + " cannot be assigned without a 'self' in scope", nameMark);
+                                }
+                                return evalUnitExpression(new CJAstMethodCall(e.getMark(),
+                                        Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())),
+                                        "__set_" + name, List.of(),
+                                        List.of(new CJAstVariableAccess(e.getMark(), "self"), e.getExpression())));
+                            }
+                        }
+                    }
+                }
                 var target = evalAssignableTarget(e.getTarget());
                 var expr = evalExpressionWithType(e.getExpression(), target.getTargetType());
                 return new CJIRAssignment(e, target.getTargetType(), target, expr);

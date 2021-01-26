@@ -145,4 +145,21 @@ class Test11Class {
             Assert.equal(out, "THREE")
         }
     }
+
+    @test
+    def implicitLocals() = {
+        {
+            val obj = ImplicitLocals()
+            Assert.equal(obj.add(3), 3)
+            obj.x = 17
+            Assert.equal(obj.add(3), 20)
+        }
+    }
+
+    @derive(new)
+    class ImplicitLocals {
+        @default var x : Int
+
+        def add(self: Self, y: Int) : Int = x + y
+    }
 }
