@@ -1,5 +1,3 @@
-const { isObject } = require("util");
-
 /**
  * @typedef {[DataView, boolean, number]} Buf
  * [data, useLittleEndian, size]
