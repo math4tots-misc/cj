@@ -1,5 +1,6 @@
 package cj.js.web
 
+import cj.js.web.WebGLVertexArrayObject
 import cj.js.web.WebGLRenderingContext
 import cj.js.JSWrapper
 import cj.js.web.Window
@@ -30,4 +31,13 @@ class WebGL2RenderingContext : WebGLRenderingContext {
     def __get_cSTATIC_COPY(self: Self): Int = self.field("STATIC_COPY").unsafeCast()
     def __get_cDYNAMIC_COPY(self: Self): Int = self.field("DYNAMIC_COPY").unsafeCast()
     def __get_cSTREAM_COPY(self: Self): Int = self.field("STREAM_COPY").unsafeCast()
+
+    # *VertexArray methods
+    def createVertexArray(self: Self): WebGLVertexArrayObject = (
+        self.call("createVertexArray").unsafeCast())
+
+    def bindVertexArray(self: Self, vertexArray: WebGLVertexArrayObject) = (
+        self.call("bindVertexArray", vertexArray))
+
+    def unbindVertexArray(self: Self) = self.call("bindVertexArray", null[WebGLVertexArrayObject])
 }

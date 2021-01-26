@@ -1,0 +1,46 @@
+<html>
+
+<head>
+    <style>
+        canvas {
+            border: 0;
+        }
+        body {
+            margin: 0;
+        }
+    </style>
+    <!-- vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+    #version 300 es
+    precision mediump float;
+
+    // Supplied vertex position attribute
+    in vec3 aVertexPosition;
+
+    void main(void) {
+      // Set the position in clipspace coordinates
+      gl_Position = vec4(aVertexPosition, 1.0);
+    }
+  </script>
+
+    <!-- fragment Shader -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+    #version 300 es
+    precision mediump float;
+
+    // Color that is the result of this shader
+    out vec4 fragColor;
+
+    void main(void) {
+      // Set the result as red
+      fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+  </script>
+</head>
+
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script src="main.js"></script>
+</body>
+
+</html>
