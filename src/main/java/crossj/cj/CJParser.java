@@ -411,7 +411,14 @@ public final class CJParser {
         var name = parseId();
         expect(':');
         var type = parseTypeExpression();
-        var expression = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
+        Optional<CJAstExpression> expression = Optional.empty();
+        if (consume('=')) {
+            if (consume('?')) {
+                annotations.add(new CJAstAnnotationExpression(mark, "lateinit", List.of()));
+            } else {
+                expression = Optional.of(parseExpression());
+            }
+        }
         expectDelimiters();
         return new CJAstFieldDefinition(mark, comment, annotations, modifiers, mutable, name, type, expression);
     }

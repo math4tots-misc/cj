@@ -186,4 +186,17 @@ class Test11Class {
     class NonStaticLateInit {
         @lateinit var x : List[Int]
     }
+
+    @test
+    def alternativeSyntaxForLateinit() {
+        var obj = AlternativeLateinit()
+        Assert.throws(() -> obj.y)
+        obj.y = 99
+        Assert.equal(obj.y, 99)
+    }
+
+    @derive(new)
+    class AlternativeLateinit {
+        var y : Int = ?
+    }
 }
