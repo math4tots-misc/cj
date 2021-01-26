@@ -18,6 +18,9 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default {
     def __lt(self: Self, other: Self): Bool
     def __or(self: Self, other: Self): Self
     def __and(self: Self, other: Self): Self
+    def __lshift(self: Self, n: Self): Self
+    def __rshift(self: Self, n: Self): Self
+    def __rshiftu(self: Self, n: Self): Self
     def toBool(self: Self): Bool
     def toInt(self: Self): Int
     def toDouble(self: Self): Double

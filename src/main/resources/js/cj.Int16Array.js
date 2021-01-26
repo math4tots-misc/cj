@@ -2,6 +2,9 @@ class MC$cj$Int16Array {
     M$new(list) {
         return new Int16Array(list);
     }
+    M$withSize(n) {
+        return new Int16Array(n);
+    }
     M$fromIterable(TV$C, c) {
         return new Int16Array(TV$C.M$iter(c));
     }

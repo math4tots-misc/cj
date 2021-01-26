@@ -522,7 +522,28 @@ final class CJPass04 extends CJPassBaseEx {
                 } else {
                     var expectedType = a.get();
                     if (!expectedType.isTupleType()) {
-                        throw CJError.of("Expected " + expectedType + " but got a tuple display", e.getMark());
+                        CJIRItem tupleItem;
+                        switch (e.getExpressions().size()) {
+                            case 2:
+                                tupleItem = ctx.getTuple2Item();
+                                break;
+                            case 3:
+                                tupleItem = ctx.getTuple3Item();
+                                break;
+                            case 4:
+                                tupleItem = ctx.getTuple4Item();
+                                break;
+                            default:
+                                throw CJError.of("Tuple 2, 3, or 4 expected but got " + e.getExpressions().size(),
+                                        e.getMark());
+                        }
+                        var newExpectedType = getNewExpectedTypeBasedOnImplicits(e.getMark(), a.get(), tupleItem);
+                        if (newExpectedType.isPresent()) {
+                            expectedType = newExpectedType.get();
+                            Assert.that(expectedType.isTupleType());
+                        } else {
+                            throw CJError.of("Expected " + expectedType + " but got a tuple display", e.getMark());
+                        }
                     }
                     var displayItemName = "cj.Tuple" + e.getExpressions().size();
                     var classType = (CJIRClassType) expectedType;

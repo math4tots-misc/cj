@@ -47,6 +47,15 @@ class MC$cj$Int {
     M$__and(self, other) {
         return self & other;
     }
+    M$__lshift(self, n) {
+        return self << n;
+    }
+    M$__rshift(self, n) {
+        return self >> n;
+    }
+    M$__rshiftu(self, n) {
+        return self >>> n;
+    }
     M$toBool(self) {
         return !!self;
     }

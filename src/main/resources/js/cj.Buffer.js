@@ -1,3 +1,5 @@
+const { isObject } = require("util");
+
 /**
  * @typedef {[DataView, boolean, number]} Buf
  * [data, useLittleEndian, size]
@@ -244,7 +246,7 @@ class MC$cj$Buffer {
     M$addI16(self, value) {
         const i = self[2];
         bufferSetSize(self, i + 2);
-        self[0].setInt16(i, value);
+        self[0].setInt16(i, value, self[1]);
     }
     /**
      * @param {Buf} self
@@ -253,7 +255,7 @@ class MC$cj$Buffer {
     M$addU16(self, value) {
         const i = self[2];
         bufferSetSize(self, i + 2);
-        self[0].setUint16(i, value);
+        self[0].setUint16(i, value, self[1]);
     }
     /**
      * @param {Buf} self
@@ -262,7 +264,7 @@ class MC$cj$Buffer {
     M$addI32(self, value) {
         const i = self[2];
         bufferSetSize(self, i + 4);
-        self[0].setInt32(i, value);
+        self[0].setInt32(i, value, self[1]);
     }
     /**
      * @param {Buf} self
@@ -271,7 +273,7 @@ class MC$cj$Buffer {
     M$addF32(self, value) {
         const i = self[2];
         bufferSetSize(self, i + 4);
-        self[0].setFloat32(i, value);
+        self[0].setFloat32(i, value, self[1]);
     }
     /**
      * @param {Buf} self
@@ -280,7 +282,7 @@ class MC$cj$Buffer {
     M$addF64(self, value) {
         const i = self[2];
         bufferSetSize(self, i + 8);
-        self[0].setFloat64(i, value);
+        self[0].setFloat64(i, value, self[1]);
     }
     /**
      * @param {Buf} self

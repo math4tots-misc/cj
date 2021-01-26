@@ -452,7 +452,8 @@ public final class CJParser {
         var typeParameters = parseTypeParameters(false);
         var parameters = parseParameters();
         var returnType = consume(':') ? Optional.of(parseTypeExpression()) : Optional.<CJAstTypeExpression>empty();
-        var body = consume('=') ? Optional.of(parseExpression()) : Optional.<CJAstExpression>empty();
+        Optional<CJAstExpression> body = consume('=') ? Optional.of(parseExpression())
+                : at('{') ? Optional.of(parseBlock()) : Optional.empty();
         expectDelimiters();
         return new CJAstMethodDefinition(mark, comment, annotations, conditions, modifiers, name, typeParameters,
                 parameters, returnType, body);
@@ -581,14 +582,17 @@ public final class CJParser {
                                         List.of(expr, indexExpr, limitExpr));
                             }
                         } else {
+                            var allArgs = List.of(expr, indexExpr);
+                            while (consume(',')) {
+                                allArgs.add(parseIndexExpression());
+                            }
                             expect(']');
                             if (consume('=')) {
                                 var valexpr = parseExpression();
-                                expr = new CJAstMethodCall(mark, Optional.empty(), "__setitem", List.of(),
-                                        List.of(expr, indexExpr, valexpr));
+                                allArgs.add(valexpr);
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__setitem", List.of(), allArgs);
                             } else {
-                                expr = new CJAstMethodCall(mark, Optional.empty(), "__getitem", List.of(),
-                                        List.of(expr, indexExpr));
+                                expr = new CJAstMethodCall(mark, Optional.empty(), "__getitem", List.of(), allArgs);
                             }
                         }
                     }

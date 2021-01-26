@@ -370,6 +370,16 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         return Pair.of("((" + Str.join("/", allArgs) + ")|0)", false);
                     case "cj.Int.__div":
                         return Pair.of("(" + Str.join("/", allArgs) + ")", false);
+                    case "cj.Int.__or":
+                        return Pair.of("(" + Str.join("|", allArgs) + ")", false);
+                    case "cj.Int.__and":
+                        return Pair.of("(" + Str.join("&", allArgs) + ")", false);
+                    case "cj.Int.__lshift":
+                        return Pair.of("(" + Str.join("<<", allArgs) + ")", false);
+                    case "cj.Int.__rshift":
+                        return Pair.of("(" + Str.join(">>", allArgs) + ")", false);
+                    case "cj.Int.__rshiftu":
+                        return Pair.of("(" + Str.join(">>>", allArgs) + ")", false);
                     case "cj.Double.__neg":
                         return Pair.of("(-" + allArgs.get(0) + ")", false);
                     case "cj.Double.__add":

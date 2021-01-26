@@ -2,6 +2,9 @@ class MC$cj$Float32Array {
     M$new(list) {
         return new Float32Array(list);
     }
+    M$withSize(n) {
+        return new Float32Array(n);
+    }
     M$fromIterable(TV$C, c) {
         return new Float32Array(TV$C.M$iter(c));
     }

@@ -7,6 +7,7 @@ import cj.Collection
 ## In Javascript, wraps Int16Array
 native class Int16Array : Collection[Int], Default, ToArrayBufferView {
     @variadic def new(list: List[Int]): Self
+    def withSize(n: Int): Self
     def fromIterable[C: Iterable[Int]](c: C): Self
     def iter(self: Self): Iterator[Int]
     def size(self: Self): Int
