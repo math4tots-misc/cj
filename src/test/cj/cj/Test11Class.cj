@@ -199,4 +199,13 @@ class Test11Class {
     class AlternativeLateinit {
         var y : Int = ?
     }
+
+    @test
+    def inferredFieldType() {
+        Assert.equal(InferredFieldType.s, "hello")
+    }
+
+    class InferredFieldType {
+        static val s = "hello"
+    }
 }

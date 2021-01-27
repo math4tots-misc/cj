@@ -409,15 +409,27 @@ public final class CJParser {
         var mutable = next().type == CJToken.KW_VAR;
         var mark = getMark();
         var name = parseId();
-        expect(':');
-        var type = parseTypeExpression();
-        Optional<CJAstExpression> expression = Optional.empty();
-        if (consume('=')) {
-            if (consume('?')) {
-                annotations.add(new CJAstAnnotationExpression(mark, "lateinit", List.of()));
-            } else {
-                expression = Optional.of(parseExpression());
+        CJAstTypeExpression type;
+        Optional<CJAstExpression> expression;
+        if (consume(':')) {
+            type = parseTypeExpression();
+            expression = Optional.empty();
+            if (consume('=')) {
+                if (consume('?')) {
+                    annotations.add(new CJAstAnnotationExpression(mark, "lateinit", List.of()));
+                } else {
+                    expression = Optional.of(parseExpression());
+                }
             }
+        } else {
+            expect('=');
+            var e = parseExpression();
+            var inferredType = inferType(e);
+            if (inferredType.isEmpty()) {
+                throw CJError.of("A type annotation is needed for this field", mark);
+            }
+            type = inferredType.get();
+            expression = Optional.of(e);
         }
         expectDelimiters();
         return new CJAstFieldDefinition(mark, comment, annotations, modifiers, mutable, name, type, expression);
@@ -519,6 +531,38 @@ public final class CJParser {
             throw CJError.of("Variable declaration is not allowed here", expression.getMark());
         }
         return expression;
+    }
+
+    /**
+     * For just the most trivial cases, in some places, infer an expression's type
+     * during the parse
+     */
+    private Optional<CJAstTypeExpression> inferType(CJAstExpression expression) {
+        var mark = expression.getMark();
+        if (expression instanceof CJAstLiteral) {
+            var literal = (CJAstLiteral) expression;
+            switch (literal.getKind()) {
+                case Unit:
+                    return Optional.of(new CJAstTypeExpression(mark, "Unit", List.of()));
+                case Bool:
+                    return Optional.of(new CJAstTypeExpression(mark, "Bool", List.of()));
+                case Int:
+                    return Optional.of(new CJAstTypeExpression(mark, "Int", List.of()));
+                case Double:
+                    return Optional.of(new CJAstTypeExpression(mark, "Double", List.of()));
+                case Char:
+                    return Optional.of(new CJAstTypeExpression(mark, "Char", List.of()));
+                case String:
+                    return Optional.of(new CJAstTypeExpression(mark, "String", List.of()));
+            }
+        } else if (expression instanceof CJAstListDisplay) {
+            var list = (CJAstListDisplay) expression;
+            if (list.getExpressions().size() > 0) {
+                return inferType(list.getExpressions().get(0))
+                        .map(t -> new CJAstTypeExpression(mark, "List", List.of(t)));
+            }
+        }
+        return Optional.empty();
     }
 
     private CJAstExpression parseExpressionWithPrecedenceUnchecked(int precedence) {
