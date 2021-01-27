@@ -23,12 +23,7 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
 
     private def addWithFactor(self, dest: Int, src: Int, factor: Double) {
         if factor != 0 {
-            val destRow = rows[dest]
-            val srcRow = rows[src]
-            val c = srcRow.size()
-            for i = 0; i < c; i++ {
-                destRow[i] = destRow[i] + srcRow[i] * factor
-            }
+            rows[dest].addWithFactor(rows[src], factor)
             listener.addWithFactor(dest, src, factor)
         }
     }

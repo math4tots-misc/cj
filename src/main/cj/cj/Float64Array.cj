@@ -28,4 +28,7 @@ native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Approxi
     def __eq(self: Self, other: Self): Bool
     def approximates(self: Self, other: Self, tolerance: Double): Bool
     def repr(self: Self): String
+
+    def scale(self: Self, factor: Double)
+    def addWithFactor(self: Self, other: Self, factor: Double)
 }

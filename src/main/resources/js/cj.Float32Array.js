@@ -73,4 +73,20 @@ class MC$cj$Float32Array {
     M$repr(self) {
         return "Float64Array(" + Array.from(self).join(", ") + ")";
     }
+    M$scale(self, factor) {
+        const len = self.length;
+        for (let i = 0; i < len; i++) {
+            self[i] *= factor;
+        }
+    }
+    M$addWithFactor(self, other, factor) {
+        const len = self.length;
+        if (len !== other.length) {
+            throw new Error(
+                `addWithFactor mismatched dimensions (${len}, ${other.length})`);
+        }
+        for (let i = 0; i < len; i++) {
+            self[i] += other[i] * factor;
+        }
+    }
 }
