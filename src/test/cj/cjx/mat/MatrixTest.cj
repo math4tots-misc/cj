@@ -19,4 +19,13 @@ class MatrixTest {
             Assert.equal(m2.repr(), "Matrix([3, 4, 5], [7, 8, 9])")
         }
     }
+
+    @test
+    def multiply() = {
+        {
+            val a = Matrix([1, 2, 3], [4, 5, 6])
+            val b = Matrix([8, 9], [10, 11], [12, 13])
+            Assert.equal(a * b, Matrix([36, 39], [45, 48]))
+        }
+    }
 }

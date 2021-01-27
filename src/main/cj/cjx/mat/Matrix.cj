@@ -29,6 +29,9 @@ class Matrix : Hash, Repr {
         __malloc(c, data)
     }
 
+    def __getitem(self: Self, ri: Int, ci: Int): Double = data[ri * c + ci]
+    def __setitem(self: Self, ri: Int, ci: Int, value: Double) = { data[ri * c + ci] = value }
+
     def __add(self: Self, other: Self): Self = {
         val c = c
         val data = data
@@ -42,6 +45,27 @@ class Matrix : Hash, Repr {
             out[i] = data[i] + otherData[i]
         }
         __malloc(c, out)
+    }
+
+    def __mul(self: Self, other: Self): Self = {
+        if c != other.r {
+            throw Error("Invalid dimensions for Matrix.__mul")
+        }
+        val data = data
+        val odata = other.data
+        val m = c
+        val nr = r
+        val nc = other.c
+        val out = Float64Array.withSize(nr * nc)
+        for ri = 0; ri < nr; ri += 1 {
+            for ci = 0; ci < nc; ci += 1 {
+                val i = ri * nc + ci
+                for j = 0; j < m; j += 1 {
+                    out[i] = out[i] + data[ri * m + j] + odata[j * nc + ci]
+                }
+            }
+        }
+        __malloc(nc, out)
     }
 
     def rows(self: Self): List[List[Double]] = {
