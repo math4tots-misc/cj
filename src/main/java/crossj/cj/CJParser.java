@@ -483,8 +483,13 @@ public final class CJParser {
         var mutable = consume(CJToken.KW_VAR);
         var mark = getMark();
         var name = parseId();
-        expect(':');
-        var type = parseTypeExpression();
+        CJAstTypeExpression type;
+        if (!at(':') && name.equals("self")) {
+            type = new CJAstTypeExpression(mark, "Self", List.of());
+        } else {
+            expect(':');
+            type = parseTypeExpression();
+        }
         return new CJAstParameter(mark, mutable, name, type);
     }
 
