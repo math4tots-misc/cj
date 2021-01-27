@@ -67,8 +67,8 @@ class Bitmap {
         Assert.equal(out.size(), 14 + 40)
 
         # -- pixel data --
-        for y = 0; y < height; y += 1 {
-            for x = 0; x < width; x += 1 {
+        for y = 0; y < height; y++ {
+            for x = 0; x < width; x++ {
                 out.addI32(self[x, y].toI32ARGB())
             }
         }

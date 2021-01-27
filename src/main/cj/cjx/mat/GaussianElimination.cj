@@ -26,7 +26,7 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
             val destRow = rows[dest]
             val srcRow = rows[src]
             val c = srcRow.size()
-            for i = 0; i < c; i += 1 {
+            for i = 0; i < c; i++ {
                 destRow[i] = destRow[i] + srcRow[i] * factor
             }
             listener.addWithFactor(dest, src, factor)
@@ -41,14 +41,14 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
         val nrows = rows.size()
         val ncols = rows[0].size()
 
-        for c = 0; c < ncols; c += 1 {
+        for c = 0; c < ncols; c++ {
             # make rows[c, c] = 1 and rows[r, c] = 0 for all other r
 
             # for numerical stability, find the row with largest coefficient for
             # column c among those remaining (i.e. find the pivot)
             var bestRow = 0
             var bestValue = 0.0
-            for r = c; r < nrows; r += 1 {
+            for r = c; r < nrows; r++ {
                 val value = rows[r][c].abs()
                 if value > bestValue {
                     bestRow = r
@@ -66,7 +66,7 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
 
             # clear out column c for all rows c+1 to end.
             val srcCoef = rows[c][c]
-            for r = c + 1; r < nrows; r += 1 {
+            for r = c + 1; r < nrows; r++ {
                 val dstCoef = rows[r][c]
                 addWithFactor(r, c, -dstCoef/srcCoef)
             }
@@ -82,7 +82,7 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
         for c = ncols - 1; c >= 0; c -= 1 {
             # clear out all entries [r, c] for r < c
             val srcCoef = rows[c][c]
-            for r = 0; r < c; r += 1 {
+            for r = 0; r < c; r++ {
                 val dstCoef = rows[r][c]
                 val factor = -dstCoef/srcCoef
                 if factor != 0 {
@@ -92,7 +92,7 @@ class GaussianElimination[Listener : GaussianEliminationListener] {
         }
 
         # Now we should have a diagonal matrix -- just apply scaling
-        for i = 0; i < ncols; i += 1 {
+        for i = 0; i < ncols; i++ {
             listener.scale(i, 1.0 / rows[i][i])
         }
 

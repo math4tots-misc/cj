@@ -133,7 +133,7 @@ class Test04ControlFlow {
     def classicForLoop() = {
         {
             val out = List[Int].empty()
-            for i = 15; i < 20; i += 1 {
+            for i = 15; i < 20; i++ {
                 out.add(i)
             }
             Assert.equal(out, [15, 16, 17, 18, 19])

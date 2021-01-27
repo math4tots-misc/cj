@@ -45,14 +45,12 @@ class Map[K?: Hash, V?] :
         val list = self._list
         val index = Self._getIndex(hash, list.size())
         val bucket = list[index]
-        var i = 0
-        while i < bucket.size() {
+        for i = 0; i < bucket.size(); i++ {
             val entry = bucket[i]
             if hash == entry.get0() and entry.get1() == key {
                 bucket[i] = triple
                 return ()
             }
-            i += 1
         }
         self._size += 1
         bucket.add(triple)
@@ -132,7 +130,7 @@ class Map[K?: Hash, V?] :
         val hash = key.hash()
         val index = Self._getIndex(hash, self._list.size())
         val bucket = self._list[index]
-        for i = 0; i < bucket.size(); i += 1 {
+        for i = 0; i < bucket.size(); i++ {
             val triple = bucket[i]
             if triple.get0() == hash and triple.get1() == key {
                 self._size += -1

@@ -133,12 +133,12 @@ class Regex {
 
         def fromTrees(trees: List[Tree]): Self = {
             val graph = NFAGraph()
-            for i = 0; i < trees.size(); i += 1 {
+            for i = 0; i < trees.size(); i++ {
                 Assert.equal(graph.newNode(), i)
             }
             val startState = graph.newNode()
             Assert.equal(startState, trees.size())
-            for i = 0; i < trees.size(); i += 1 {
+            for i = 0; i < trees.size(); i++ {
                 val tree = trees[i]
                 graph.buildBlock(tree, startState, i)
             }
@@ -171,16 +171,16 @@ class Regex {
         def dump(self: Self): String = {
             val sb = StringBuilder()
             sb.add("NFA (start = " + self.patternCount + ")\n")
-            for i = 0; i < self.transitionMap.size(); i += 1 {
+            for i = 0; i < self.transitionMap.size(); i++ {
                 sb.add("  " + i + ":\n")
                 val keys = self.transitionMap[i].keys().toList()
-                for j = 0; j < keys.size(); j += 1 {
+                for j = 0; j < keys.size(); j++ {
                     val start = j
                     val out = self.transitionMap[i][keys[j]]
                     while (j + 1 < keys.size() and
                             keys[j] + 1 == keys[j + 1] and
                             out == self.transitionMap[i][keys[j + 1]]) {
-                        j += 1
+                        j++
                     }
                     sb.add("    ")
                     if j > start {
@@ -278,7 +278,7 @@ class Regex {
                         # case 2: max is infinite and max > 0
                         # we build min blocks, with the last one using the overall end state.
                         # when min = 1, this is '+'
-                        for i = 0; i + 1 < min; i += 1 {
+                        for i = 0; i + 1 < min; i++ {
                             start = self.buildBlock(inner, start, -1).start
                         }
                         self.buildBlock(inner, start, end)
@@ -292,7 +292,7 @@ class Regex {
                 else = {
                     # case 4: 0 < max < infinity
                     # when min = 0 and max = 1, this is '?'
-                    for i = 0; i < max; i += 1 {
+                    for i = 0; i < max; i++ {
                         if i >= min {
                             self.connect(start, epsilon, end)
                         }
@@ -453,7 +453,7 @@ class Regex {
                                     peek.isLower() and ch.isLower() or
                                     peek.isDigit() and ch.isDigit()) {
                                 val limit = self.next().toInt()
-                                for i = ch.toInt(); i < limit; i += 1 {
+                                for i = ch.toInt(); i < limit; i++ {
                                     set.add(i)
                                 }
                             } else {
