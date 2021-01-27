@@ -14,6 +14,9 @@ class MC$cj$Int {
     M$__neg(a) {
         return -a;
     }
+    M$abs(a) {
+        return Math.abs(a);
+    }
     M$__invert(a) {
         return ~a;
     }

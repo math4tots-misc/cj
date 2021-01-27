@@ -7,6 +7,7 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default {
     def hash(self: Self): Int
     def __pos(a: Self): Int
     def __neg(a: Self): Int
+    def abs(a: Self): Int
     def __invert(a: Self): Int
     def __add(a: Self, b: Self): Int
     def __sub(a: Self, b: Self): Int

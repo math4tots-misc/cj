@@ -45,6 +45,9 @@ class MC$cj$Double {
     M$__neg(self) {
         return -self;
     }
+    M$abs(self) {
+        return Math.abs(self);
+    }
 
     M$toFixed(self, n) {
         return self.toFixed(n);
