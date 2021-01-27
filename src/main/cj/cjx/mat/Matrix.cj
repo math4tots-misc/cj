@@ -138,6 +138,23 @@ class Matrix : Hash, Approximate, Repr {
 
     def isSquare(self): Bool = c == r
 
+    def transpose(self): Self = {
+        val c = c
+        val r = r
+        val data = data
+        val nr = c
+        val nc = r
+        val out = Float64Array.withSize(nr * nc)
+        var i = 0
+        for ci = 0; ci < c; ci++ {
+            for ri = 0; ri < r; ri++ {
+                out[i] = data[ri * c + ci]
+                i++
+            }
+        }
+        __malloc(nc, out)
+    }
+
     def determinant(self: Self): Double = {
         _checkSquare("Non-square matrix found in determinant")
         val data = data

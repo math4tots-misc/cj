@@ -129,6 +129,26 @@ class MatrixTest {
     }
 
     @test
+    def transpose() {
+        {
+            val a = Matrix(
+                [0, 9, 3, 0],
+                [9, 8, 0, 8],
+                [1, 8, 5, 3],
+                [0, 0, 5, 8])
+            Assert.equal(a.transpose(), Matrix(
+                [0, 9, 1, 0],
+                [9, 8, 8, 0],
+                [3, 0, 5, 5],
+                [0, 8, 3, 8]))
+        }
+        {
+            val i = Matrix.identity(4)
+            Assert.equal(i.transpose(), i)
+        }
+    }
+
+    @test
     def inverse() {
         {
             # Testing an invertible matrix for invertibility
@@ -221,12 +241,12 @@ class MatrixTest {
                 [ 7,  0,  5,  4],
                 [ 6, -2,  0,  5])
             val c = a * b
-            # appx(b * slowInv(b).get(), Matrix.identity(4))
-            # appx(slowInv(b).get() * b, Matrix.identity(4))
+            appx(b * slowInv(b).get(), Matrix.identity(4))
+            appx(slowInv(b).get() * b, Matrix.identity(4))
             appx(c * slowInv(b).get(), a)
-            # appx(b * b.inverse().get(), Matrix.identity(4))
-            # appx(b.inverse().get() * b, Matrix.identity(4))
-            # appx(c * b.inverse().get(), a)
+            appx(b * b.inverse().get(), Matrix.identity(4))
+            appx(b.inverse().get() * b, Matrix.identity(4))
+            appx(c * b.inverse().get(), a)
         }
     }
 
