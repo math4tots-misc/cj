@@ -17,6 +17,8 @@ native class List[T?] :
     @generic def __getitem(self: Self, i: Int): T
     @generic def __setitem(self: Self, i: Int, t: T)
     @generic def removeIndex(self: Self, i: Int): T
+    @generic def insert(self: Self, i: Int, t: T)
+    @generic def last(self: Self): T
 
     @generic def __mul(self: Self, n: Int): Self
 

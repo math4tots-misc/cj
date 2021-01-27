@@ -30,9 +30,16 @@ class MC$cj$List {
         self[i] = t;
     }
     M$removeIndex(self, i) {
-        let value = self[i];
-        self.splice(i, 1);
-        return value;
+        return self.splice(i, 1)[0];
+    }
+    M$insert(self, i, t) {
+        self.splice(i, 0, t);
+    }
+    M$last(self) {
+        if (self.length === 0) {
+            throw new Error(`Index out of bounds (last() on empty list)`);
+        }
+        return self[self.length - 1];
     }
     M$__mul(self, n) {
         const ret = [];

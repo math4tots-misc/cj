@@ -23,4 +23,32 @@ class MC$cj$Float64Array {
     M$toArrayBufferView(self) {
         return self;
     }
+    M$clone(self) {
+        return new Float64Array(self);
+    }
+    M$hash(self) {
+        let hash = 1;
+        for (const item of self) {
+            hash = combineHash(hash, MO$cj$Double.M$hash(item));
+        }
+        return hash;
+    }
+    M$__eq(self, other) {
+        if (self === other) {
+            return true;
+        }
+        const len = self.length;
+        if (len !== other.length) {
+            return false;
+        }
+        for (let i = 0; i < len; i++) {
+            if (self[i] !== other[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    M$repr(self) {
+        return "Float64Array(" + Array.from(self).join(", ") + ")";
+    }
 }
