@@ -8,14 +8,21 @@ public final class CJAstMethodCall extends CJAstExpression {
     private final String name;
     private final List<CJAstTypeExpression> typeArgs;
     private final List<CJAstExpression> args;
+    private final boolean receiverOmitted;
 
     CJAstMethodCall(CJMark mark, Optional<CJAstTypeExpression> owner, String name, List<CJAstTypeExpression> typeArgs,
-            List<CJAstExpression> args) {
+            List<CJAstExpression> args, boolean receiverOmitted) {
         super(mark);
         this.owner = owner;
         this.name = name;
         this.typeArgs = typeArgs;
         this.args = args;
+        this.receiverOmitted = receiverOmitted;
+    }
+
+    CJAstMethodCall(CJMark mark, Optional<CJAstTypeExpression> owner, String name, List<CJAstTypeExpression> typeArgs,
+            List<CJAstExpression> args) {
+        this(mark, owner, name, typeArgs, args, false);
     }
 
     public Optional<CJAstTypeExpression> getOwner() {
@@ -32,6 +39,10 @@ public final class CJAstMethodCall extends CJAstExpression {
 
     public List<CJAstExpression> getArgs() {
         return args;
+    }
+
+    public boolean isReceiverOmitted() {
+        return receiverOmitted;
     }
 
     @Override

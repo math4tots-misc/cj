@@ -1011,7 +1011,7 @@ public final class CJParser {
                     var typeArgs = parseTypeArgs();
                     var args = parseArgs();
                     return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Self", List.of())),
-                            methodName, typeArgs, args);
+                            methodName, typeArgs, args, true);
                 } else {
                     return new CJAstVariableAccess(getMark(), parseId());
                 }

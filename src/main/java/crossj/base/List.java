@@ -231,6 +231,10 @@ public final class List<T> implements XIterable<T>, Comparable<List<T>> {
         return list.contains(t);
     }
 
+    public void insert(int i, T t) {
+        list.add(i, t);
+    }
+
     public void add(T t) {
         list.add(t);
     }

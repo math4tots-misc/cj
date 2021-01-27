@@ -281,6 +281,19 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var methodRef = owner.findMethod(e.getName(), e.getMark());
 
+                if (e.isReceiverOmitted()) {
+                    // This is an unqualified method name.
+                    // In this case, check if the first parameter is named 'self'.
+                    // If so, implicitly add 'self' as the first argument
+                    Assert.that(e.getOwner().isPresent());
+                    Assert.that(args.isEmpty());
+                    var method = methodRef.getMethod();
+                    var parameters = method.getParameters();
+                    if (!parameters.isEmpty() && parameters.get(0).getName().equals("self")) {
+                        argAsts.insert(0, new CJAstVariableAccess(e.getMark(), "self"));
+                    }
+                }
+
                 // The returned method call might be used with an implicit method call
                 // to account for that, we preemptively check here whether the conditions
                 // are ripe for a conversion method call. An d if so, we see if it's possible
