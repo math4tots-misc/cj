@@ -585,6 +585,16 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 return new CJJSBlob(lines, "undefined", true);
             }
 
+            private boolean isOne(CJIRExpression e) {
+                if (e instanceof CJIRLiteral) {
+                    var lit = (CJIRLiteral) e;
+                    if (lit.getKind().equals(CJIRLiteralKind.Int) && lit.getRawText().equals("1")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             @Override
             public CJJSBlob visitAugmentedAssignment(CJIRAugmentedAssignment e, Void a) {
                 var target = translateLocalVariableName(e.getTarget().getName());
@@ -607,7 +617,13 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
                 }
                 var lines = augexpr.getLines();
-                lines.add(target + op + augexpr.getExpression() + ";\n");
+                if (e.getKind() == CJIRAugAssignKind.Add && isOne(e.getExpression())) {
+                    lines.add(target + "++;\n");
+                } else if (e.getKind() == CJIRAugAssignKind.Subtract && isOne(e.getExpression())) {
+                    lines.add(target + "--;\n");
+                } else {
+                    lines.add(target + op + augexpr.getExpression() + ";\n");
+                }
                 return new CJJSBlob(lines, "undefined", true);
             }
 

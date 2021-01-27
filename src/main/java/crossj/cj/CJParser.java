@@ -1018,7 +1018,26 @@ public final class CJParser {
                     return new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Self", List.of())),
                             methodName, typeArgs, args, true);
                 } else {
-                    return new CJAstVariableAccess(getMark(), parseId());
+                    var mark = getMark();
+                    var name = parseId();
+                    switch (peek().type) {
+                        case CJToken.PLUSPLUS:
+                        case CJToken.MINUSMINUS: {
+                            CJIRAugAssignKind kind = null;
+                            switch (next().type) {
+                                case CJToken.PLUSPLUS:
+                                    kind = CJIRAugAssignKind.Add;
+                                    break;
+                                case CJToken.MINUSMINUS:
+                                    kind = CJIRAugAssignKind.Subtract;
+                                    break;
+                            }
+                            Assert.that(kind != null);
+                            return new CJAstAugmentedAssignment(mark, name, kind,
+                                    new CJAstLiteral(mark, CJIRLiteralKind.Int, "1"));
+                        }
+                    }
+                    return new CJAstVariableAccess(mark, name);
                 }
             case CJToken.KW_IF: {
                 var mark = getMark();

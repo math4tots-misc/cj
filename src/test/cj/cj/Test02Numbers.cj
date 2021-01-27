@@ -39,4 +39,17 @@ class Test02Numbers {
         Assert.approximate(1.0, 1, 1e-14)
         Assert.approximate(1.0, 1.0000000000000001, 1e-14)
     }
+
+    @test
+    def plusplus() {
+        var i = 3
+        Assert.equal(i, 3)
+        i++
+        Assert.equal(i, 4)
+
+        var j = 10
+        Assert.equal(j, 10)
+        j--
+        Assert.equal(j, 9)
+    }
 }

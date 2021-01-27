@@ -37,6 +37,8 @@ public final class CJLexer {
         b.add("//", m -> symtok(CJToken.TRUNCDIV, m));
         b.add("->", m -> symtok(CJToken.RIGHT_ARROW, m));
         b.add("\\*\\*", m -> symtok(CJToken.POWER, m));
+        b.add("\\+\\+", m -> symtok(CJToken.PLUSPLUS, m));
+        b.add("--", m -> symtok(CJToken.MINUSMINUS, m));
         b.add("\\+=", m -> symtok(CJToken.PLUS_EQ, m));
         b.add("-=", m -> symtok(CJToken.MINUS_EQ, m));
         b.add("\\*=", m -> symtok(CJToken.STAR_EQ, m));

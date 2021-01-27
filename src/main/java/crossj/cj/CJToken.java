@@ -21,7 +21,9 @@ public final class CJToken {
     public static final int TYPE_ID = 7;
     public static final int COMMENT = 8;
 
-    // multi-character symbols (16-31)
+    // multi-character symbols (14-31)
+    public static final int MINUSMINUS = 14;
+    public static final int PLUSPLUS = 15;
     public static final int RSHIFTU = 16;
     public static final int EQ = 17;
     public static final int NE = 18;
@@ -150,6 +152,10 @@ public final class CJToken {
                 return "CJToken.TYPE_ID";
             case COMMENT:
                 return "CJToken.COMMENT";
+            case MINUSMINUS:
+                return "CJToken.MINUSMINUS";
+            case PLUSPLUS:
+                return "CJToken.PLUSPLUS";
             case RSHIFTU:
                 return "CJToken.RSHIFTU";
             case EQ:
