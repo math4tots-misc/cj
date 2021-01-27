@@ -41,6 +41,11 @@ class MC$cj$List {
         }
         return self[self.length - 1];
     }
+    M$swap(self, i, j) {
+        const tmp = self[i];
+        self[i] = self[j];
+        self[j] = tmp;
+    }
     M$__mul(self, n) {
         const ret = [];
         for (let i = 0; i < n; i++) {

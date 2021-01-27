@@ -83,4 +83,13 @@ class Test03List {
             Assert.equal(map, Map(2: "b", 1: "a"))
         }
     }
+
+    @test
+    def swap() {
+        {
+            val list = [1, 2]
+            list.swap(0, 1)
+            Assert.equal(list, [2, 1])
+        }
+    }
 }
