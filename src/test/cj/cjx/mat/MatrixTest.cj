@@ -248,6 +248,36 @@ class MatrixTest {
             appx(b.inverse().get() * b, Matrix.identity(4))
             appx(c * b.inverse().get(), a)
         }
+        {
+            # Invert a 3x3 matrix
+            val a = Matrix(
+                [ 9,  3,  9],
+                [-5, -2, -3],
+                [-4,  9,  4])
+            val b = a.inverse().get()
+
+            val expectedB = Matrix(
+                [-0.09048, -0.32857, -0.04286],
+                [-0.15238, -0.34286,  0.08571],
+                [ 0.25238,  0.44286,  0.01429])
+
+            Assert.approximate(b, expectedB, 0.00001)
+            Assert.approximate(slowInv(a).get(), expectedB, 0.00001)
+        }
+        {
+            # Invert a 2x2 matrix
+            val a = Matrix(
+                [ 3,  9],
+                [-2, -3])
+            val b = a.inverse().get()
+
+            val expectedB = Matrix(
+                [-0.33333, -1.00000],
+                [ 0.22222,  0.33333])
+
+            Assert.approximate(b, expectedB, 0.00001)
+            Assert.approximate(slowInv(a).get(), expectedB, 0.00001)
+        }
     }
 
 }
