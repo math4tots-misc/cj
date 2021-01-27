@@ -23,6 +23,13 @@ class MC$cj$Float32Array {
     M$toArrayBufferView(self) {
         return self;
     }
+    M$map(self, f) {
+        const out = this.M$clone(self);
+        for (let i = 0; i < out.length; i++) {
+            out[i] = f(self[i]);
+        }
+        return out;
+    }
     M$clone(self) {
         return new Float32Array(self);
     }

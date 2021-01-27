@@ -16,6 +16,8 @@ native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Repr {
 
     def toArrayBufferView(self: Self) : ArrayBufferView
 
+    def map(self: Self, f: Fn[Double, Double]): Self
+
     def clone(self: Self): Self
 
     def hash(self: Self): Int

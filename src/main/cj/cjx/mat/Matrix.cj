@@ -68,6 +68,8 @@ class Matrix : Hash, Repr {
         __malloc(nc, out)
     }
 
+    def scale(self: Self, factor: Double): Self = __malloc(c, data.map(x -> x * factor))
+
     def rows(self: Self): List[List[Double]] = {
         val rs: List[List[Double]] = []
         for ri = 0; ri < r; ri += 1 {
