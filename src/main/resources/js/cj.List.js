@@ -46,6 +46,15 @@ class MC$cj$List {
         self[i] = self[j];
         self[j] = tmp;
     }
+    M$__slice(self, start, end) {
+        return self.slice(start, end);
+    }
+    M$__sliceFrom(self, start) {
+        return self.slice(start);
+    }
+    M$__sliceTo(self, end) {
+        return self.slice(0, end);
+    }
     M$__mul(self, n) {
         const ret = [];
         for (let i = 0; i < n; i++) {

@@ -20,6 +20,15 @@ class MC$cj$Float64Array {
     M$__setitem(self, i, v) {
         self[i] = v;
     }
+    M$__slice(self, start, end) {
+        return self.slice(start, end);
+    }
+    M$__sliceFrom(self, start) {
+        return self.slice(start);
+    }
+    M$__sliceTo(self, end) {
+        return self.slice(0, end);
+    }
     M$toArrayBufferView(self) {
         return self;
     }

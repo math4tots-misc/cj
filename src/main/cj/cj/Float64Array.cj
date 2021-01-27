@@ -13,6 +13,9 @@ native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Repr {
     def size(self: Self): Int
     def __getitem(self: Self, i: Int): Double
     def __setitem(self: Self, i: Int, v: Double)
+    def __slice(self: Self, start: Int, end: Int): Self
+    def __sliceFrom(self: Self, start: Int): Self
+    def __sliceTo(self: Self, end: Int): Self
 
     def toArrayBufferView(self: Self) : ArrayBufferView
 

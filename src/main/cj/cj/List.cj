@@ -20,6 +20,9 @@ native class List[T?] :
     @generic def insert(self: Self, i: Int, t: T)
     @generic def last(self: Self): T
     @generic def swap(self, i: Int, j: Int)
+    @generic def __slice(self, start: Int, end: Int): Self
+    @generic def __sliceFrom(self, start: Int): Self
+    @generic def __sliceTo(self, end: Int): Self
 
     @generic def __mul(self: Self, n: Int): Self
 
