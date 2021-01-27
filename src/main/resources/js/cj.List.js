@@ -99,6 +99,18 @@ class MC$cj$List {
         }
         return hash;
     }
+    M$approximates(self, other, tolerance) {
+        const T = this.TV$T;
+        if (self.length !== other.length) {
+            return false;
+        }
+        for (let i = 0; i < self.length; i++) {
+            if (!T.M$approximates(self[i], other[i], tolerance)) {
+                return false;
+            }
+        }
+        return true;
+    }
     M$repr(self) {
         const TV$T = this.TV$T;
         return "[" + self.map(t => TV$T.M$repr(t)).join(", ") + "]";

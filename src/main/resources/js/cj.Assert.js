@@ -16,6 +16,13 @@ class MC$cj$Assert {
             throw new Error("Assertion failed: expected " + astr + " to equal " + bstr);
         }
     }
+    M$approximate(TV$T, a, b, tolerance) {
+        if (!TV$T.M$approximates(a, b, tolerance)) {
+            const astr = TV$T.M$repr(a);
+            const bstr = TV$T.M$repr(b);
+            throw new Error("Assertion failed: expected " + astr + " to approximate " + bstr);
+        }
+    }
     M$throws(f) {
         let thrown = false;
         const LEN = stack.length;

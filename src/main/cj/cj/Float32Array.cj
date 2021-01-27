@@ -1,11 +1,12 @@
 package cj
 
+import cj.Approximate
 import cj.ArrayBufferView
 import cj.ToArrayBufferView
 import cj.Collection
 
 ## On Javascript targets, wraps Float32Array
-native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Repr {
+native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approximate, Repr {
     @variadic def new(list: List[Double]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Double]](c: C): Self
@@ -22,5 +23,6 @@ native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Repr {
 
     def hash(self: Self): Int
     def __eq(self: Self, other: Self): Bool
+    def approximates(self: Self, other: Self, tolerance: Double): Bool
     def repr(self: Self): String
 }

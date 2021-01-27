@@ -48,3 +48,16 @@ function typeEq(a, b) {
     }
     return true;
 }
+
+/**
+ * Tests whether two numbers are approximately equal
+ *
+ * In general, this is a tricky problem, but we use some defaults for the casual case
+ *
+ * @param {number} a
+ * @param {number} b
+ * @param {number} tolerance
+ */
+function appx(a, b, tolerance) {
+    return Math.abs(a - b) < tolerance
+}

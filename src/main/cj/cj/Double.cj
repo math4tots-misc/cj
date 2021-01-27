@@ -1,9 +1,12 @@
 package cj
 
+import cj.Approximate
+
 @implicit(Int, _fromInt)
-native class Double: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default {
+native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Default {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
+    def approximates(self: Self, other: Self, tolerance: Double): Bool
     def hash(self: Self): Int
     def toBool(self: Self): Bool
     def toInt(self: Self): Int

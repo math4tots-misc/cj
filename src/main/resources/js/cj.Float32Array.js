@@ -55,6 +55,21 @@ class MC$cj$Float32Array {
         }
         return true;
     }
+    M$approximates(self, other, tolerance) {
+        if (self === other) {
+            return true;
+        }
+        const len = self.length;
+        if (len !== other.length) {
+            return false;
+        }
+        for (let i = 0; i < len; i++) {
+            if (!appx(self[i], other[i], tolerance)) {
+                return false;
+            }
+        }
+        return true;
+    }
     M$repr(self) {
         return "Float64Array(" + Array.from(self).join(", ") + ")";
     }

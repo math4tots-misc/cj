@@ -1,5 +1,6 @@
 package cj
 
+import cj.Approximate
 import cj.Collection
 
 native class List[T?] :
@@ -7,6 +8,7 @@ native class List[T?] :
         ToBool,
         Default,
         Hash if T : Hash,
+        Approximate if T : Approximate,
         Repr if T : Repr {
     @generic def empty(): Self
 
@@ -37,5 +39,6 @@ native class List[T?] :
 
     if T : Hash def __eq(self: Self,  other: Self): Bool
     if T : Hash def hash(self: Self): Int
+    if T : Approximate def approximates(self: Self, other: Self, tolerance: Double): Int
     if T : Repr def repr(self: Self): String
 }

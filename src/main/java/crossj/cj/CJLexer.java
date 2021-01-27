@@ -10,7 +10,8 @@ public final class CJLexer {
 
     private static Lexer<CJToken> buildLexer() {
         var b = Lexer.<CJToken>builder();
-        b.add("\\d+\\.\\d*|\\.\\d+", m -> tok(CJToken.DOUBLE, m));
+        b.add("(\\d+\\.\\d*|\\.\\d+)(e|E-?\\d+)?", m -> tok(CJToken.DOUBLE, m));
+        b.add("\\d+(e|E)-?\\d+", m -> tok(CJToken.DOUBLE, m));
         b.add("0x[0-9A-Fa-f]+", m -> tok(CJToken.INT, m)); // hex literals
         b.add("\\d+", m -> tok(CJToken.INT, m));
         for (int type : CJToken.KEYWORD_TYPES) {

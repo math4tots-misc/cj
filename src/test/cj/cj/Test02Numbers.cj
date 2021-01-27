@@ -30,4 +30,13 @@ class Test02Numbers {
         foo.instanceField += 92
         Assert.equal(foo.instanceField, 116)
     }
+
+    @test
+    def approximate() = {
+        Assert.that((1.0).approximates(1.00001, 0.001))
+        Assert.approximate(1.0, 1.000001, 0.001)
+        Assert.approximate(1.0, 1, 0.001)
+        Assert.approximate(1.0, 1, 1e-14)
+        Assert.approximate(1.0, 1.0000000000000001, 1e-14)
+    }
 }
