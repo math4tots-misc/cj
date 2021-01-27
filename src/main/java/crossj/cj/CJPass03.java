@@ -233,8 +233,7 @@ final class CJPass03 extends CJPassBaseEx {
     private CJAstMethodDefinition synthesizeNewMethod(CJIRItem item) {
         var mark = item.getMark();
         var fields = item.getFields().filter(f -> f.includeInMalloc());
-        var parameters = fields
-                .map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
+        var parameters = fields.map(f -> new CJAstParameter(f.getMark(), false, f.getName(), f.getAst().getType()));
         var selfType = newSelfTypeExpression(item.getMark());
         var argexprs = fields.map(f -> newGetVar(f.getMark(), f.getName()));
         var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);

@@ -261,6 +261,16 @@ final class CJPass04 extends CJPassBaseEx {
                 return new CJIRBlock(e, newExprs.last().getType(), newExprs);
             }
 
+            private boolean isPrivateCompatible(CJAstMethodCall e, CJIRType owner) {
+                if (e.isReceiverOmitted()) {
+                    return true;
+                }
+                if (owner instanceof CJIRClassType && ((CJIRClassType) owner).getItem() == lctx.getItem()) {
+                    return true;
+                }
+                return false;
+            }
+
             @Override
             public CJIRExpression visitMethodCall(CJAstMethodCall e, Optional<CJIRType> a) {
                 List<CJIRType> typeArgs;
@@ -280,6 +290,11 @@ final class CJPass04 extends CJPassBaseEx {
                     owner = lctx.evalTypeExpression(e.getOwner().get());
                 }
                 var methodRef = owner.findMethod(e.getName(), e.getMark());
+
+                if (methodRef.getMethod().isPrivate() && !isPrivateCompatible(e, owner)) {
+                    var name = owner + "." + methodRef.getName();
+                    throw CJError.of(name + " is private and cannot be called here", e.getMark());
+                }
 
                 if (e.isReceiverOmitted()) {
                     // This is an unqualified method name.
