@@ -32,19 +32,37 @@ class Matrix : Hash, Repr {
     def __getitem(self: Self, ri: Int, ci: Int): Double = data[ri * c + ci]
     def __setitem(self: Self, ri: Int, ci: Int, value: Double) = { data[ri * c + ci] = value }
 
-    def __add(self: Self, other: Self): Self = {
-        val c = c
-        val data = data
-        val otherData = other.data
-        val len = data.size()
-        if c != other.c or len != otherData.size() {
-            throw Error("Invalid dimensions for Matrix.__add")
+    private def _checkDim(self: Self, other: Self, msg: String) {
+        if c != other.c or data.size() != other.data.size() {
+            throw Error(msg)
         }
+    }
+
+    private def _checkSquare(self: Self, msg: String) {
+        if c != r {
+            throw Error(msg)
+        }
+    }
+
+    private def _pairwise(self: Self, other: Self, f: Fn[Double, Double, Double]): Self = {
+        val data = data
+        val odata = other.data
+        val len = data.size()
         val out = Float64Array.withSize(len)
         for i = 0; i < len; i += 1 {
-            out[i] = data[i] + otherData[i]
+            out[i] = f.call(data[i], odata[i])
         }
         __malloc(c, out)
+    }
+
+    def __add(self: Self, other: Self): Self = {
+        _checkDim(other, "Invalid dimensions for Matrix.__add")
+        _pairwise(other, (a, b) -> a + b)
+    }
+
+    def __sub(self: Self, other: Self): Self = {
+        _checkDim(other, "Invalid dimensions for Matrix.__sub")
+        _pairwise(other, (a, b) -> a - b)
     }
 
     def __mul(self: Self, other: Self): Self = {
@@ -70,12 +88,14 @@ class Matrix : Hash, Repr {
 
     def scale(self: Self, factor: Double): Self = __malloc(c, data.map(x -> x * factor))
 
-    def rows(self: Self): List[List[Double]] = {
-        val rs: List[List[Double]] = []
+    def __neg(self: Self): Self = scale(-1)
+
+    def rows(self: Self): List[Float64Array] = {
+        val rs: List[Float64Array] = []
         for ri = 0; ri < r; ri += 1 {
-            rs.add([])
+            rs.add(Float64Array.withSize(c))
             for ci = 0; ci < c; ci += 1 {
-                rs.last().add(data[ri * c + ci])
+                rs.last()[ci] = data[ri * c + ci]
             }
         }
         rs
@@ -85,5 +105,5 @@ class Matrix : Hash, Repr {
 
     def __eq(self: Self, other: Self): Bool = c == other.c and data == other.data
 
-    def repr(self: Self): String = "Matrix(" + ", ".join(rows()) + ")"
+    def repr(self: Self): String = "Matrix(" + ", ".join(rows().map(row -> row.toList())) + ")"
 }
