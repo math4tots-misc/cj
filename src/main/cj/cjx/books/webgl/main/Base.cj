@@ -79,4 +79,11 @@ trait Base {
         gl.useProgram(program)
         self.base._program = null(program)
     }
+
+    def render(self) = {
+        window.requestAnimationFrame(ts -> self.render())
+        self.draw()
+    }
+
+    def draw(self)
 }

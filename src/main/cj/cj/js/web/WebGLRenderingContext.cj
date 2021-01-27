@@ -1,5 +1,6 @@
 package cj.js.web
 
+import cj.js.web.WebGLUniformLocation
 import cj.js.web.WebGLProgram
 import cj.js.web.WebGLShader
 import cj.ToArrayBufferView
@@ -39,6 +40,10 @@ trait WebGLRenderingContext : JSWrapper {
     def __get_cVALIDATE_STATUS(self: Self): Int = self.field("VALIDATE_STATUS").unsafeCast()
     def __get_cSHADER_TYPE(self: Self): Int = self.field("SHADER_TYPE").unsafeCast()
 
+    # getBufferParameter constants
+    def __get_cBUFFER_SIZE(self: Self): Int = self.field("BUFFER_SIZE").unsafeCast()
+    def __get_cBUFFER_USAGE(self: Self): Int = self.field("BUFFER_USAGE").unsafeCast()
+
     # Data type constants
     def __get_cBYTE(self: Self): Int = self.field("BYTE").unsafeCast()
     def __get_cSHORT(self: Self): Int = self.field("SHORT").unsafeCast()
@@ -57,12 +62,20 @@ trait WebGLRenderingContext : JSWrapper {
 
     # --- constants for getParameter ---
     def __get_cCOLOR_CLEAR_VALUE(self: Self): Int = self.field("COLOR_CLEAR_VALUE").unsafeCast()
+    def __get_cARRAY_BUFFER_BINDING(self: Self): Int = (
+        self.field("ARRAY_BUFFER_BINDING").unsafeCast())
+    def __get_cELEMENT_ARRAY_BUFFER_BINDING(self: Self): Int = (
+        self.field("ELEMENT_ARRAY_BUFFER_BINDING").unsafeCast())
 
     # === params ===
     # properties starting with 'p'
     # wraps the 'getParameter' method
     def __get_pCOLOR_CLEAR_VALUE(self: Self): Float32Array = (
         self.call("getParameter", self.cCOLOR_CLEAR_VALUE).unsafeCast())
+    def __get_pARRAY_BUFFER_BINDING(self): WebGLBuffer = (
+        self.call("getParameter", self.cARRAY_BUFFER_BINDING).unsafeCast())
+    def __get_pELEMENT_ARRAY_BUFFER_BINDING(self): WebGLBuffer = (
+        self.call("getParameter", self.cELEMENT_ARRAY_BUFFER_BINDING).unsafeCast())
 
     ## Sets the viewport, which specifies the affine transformation of x and y from normalized
     ## device coordinates to window coordinates.
@@ -113,6 +126,16 @@ trait WebGLRenderingContext : JSWrapper {
     ## Initializes and creates the buffer object's data store.
     def bufferData[D: ToArrayBufferView](self: Self, target: Int, srcData: D, usage: Int) = (
         self.call("bufferData", target, srcData.toArrayBufferView(), usage))
+
+    def isBuffer(self, buffer: WebGLBuffer): Bool = call("isBuffer", buffer).unsafeCast()
+
+    ## getBufferParameter(target, BUFFER_SIZE)
+    def bpBUFFER_SIZE(self, target: Int): Int = (
+        call("getBufferParameter", target, self.cBUFFER_SIZE).unsafeCast())
+
+    ## getBufferParameter(target, BUFFER_USAGE)
+    def bpBUFFER_USAGE(self, target: Int): Int = (
+        call("getBufferParameter", target, self.cBUFFER_USAGE).unsafeCast())
 
     # ============================================================================================
     # =================================== SHADERS ================================================
@@ -171,6 +194,18 @@ trait WebGLRenderingContext : JSWrapper {
 
     def enableVertexAttribArray(self: Self, index: Int) = (
         self.call("enableVertexAttribArray", index))
+
+    def getUniformLocation(self, program: WebGLProgram, name: String): Nullable[WebGLUniformLocation] = (
+        self.call("getUniformLocation", program, name).unsafeCast())
+
+    def uniformMatrix2fv(self, location: WebGLUniformLocation, transpose: Bool, value: Float32Array) = (
+        self.call("uniformMatrix2fv", location, transpose, value))
+
+    def uniformMatrix3fv(self, location: WebGLUniformLocation, transpose: Bool, value: Float32Array) = (
+        self.call("uniformMatrix3fv", location, transpose, value))
+
+    def uniformMatrix4fv(self, location: WebGLUniformLocation, transpose: Bool, value: Float32Array) = (
+        self.call("uniformMatrix4fv", location, transpose, value))
 
     ## getShaderParameter(shader, DELETE_STATUS)
     def spDELETE_STATUS(self: Self, shader: WebGLShader): Bool = (

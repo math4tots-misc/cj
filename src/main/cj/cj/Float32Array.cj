@@ -1,5 +1,6 @@
 package cj
 
+import cj.Float64Array
 import cj.Approximate
 import cj.ArrayBufferView
 import cj.ToArrayBufferView
@@ -28,4 +29,6 @@ native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approxi
 
     def scale(self: Self, factor: Double)
     def addWithFactor(self: Self, other: Self, factor: Double)
+
+    def toFloat64Array(self): Float64Array
 }

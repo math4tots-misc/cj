@@ -119,11 +119,6 @@ class Ch02s04 : Base {
         gl.unbindVertexArray()
     }
 
-    def render(self: Self) = {
-        window.requestAnimationFrame(ts -> self.render())
-        self.draw()
-    }
-
     def initControls(self: Self) = {
         window.onkeydown(event -> {
             switch event.key {

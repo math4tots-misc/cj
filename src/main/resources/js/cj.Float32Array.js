@@ -89,4 +89,7 @@ class MC$cj$Float32Array {
             self[i] += other[i] * factor;
         }
     }
+    M$toFloat64Array(self) {
+        return new Float64Array(self);
+    }
 }

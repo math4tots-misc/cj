@@ -1,5 +1,6 @@
 package cjx.mat
 
+import cj.Float32Array
 import cjx.mat.InverseMatrixSolver
 import cj.Approximate
 import cjx.mat.DeterminantSolver
@@ -18,6 +19,8 @@ class Matrix : Hash, Approximate, Repr {
     def __get_r(self: Self): Int = data.size() // c
 
     @variadic def new(rows: List[List[Double]]): Self = fromRows(rows)
+
+    def _fromParts(c: Int, data: Float64Array): Self = __malloc(c, data)
 
     def fromColumns(columns: List[List[Double]]): Self = {
         val c = columns.size()
@@ -342,4 +345,6 @@ class Matrix : Hash, Approximate, Repr {
         c == other.c and data.approximates(other.data, tolerance))
 
     def repr(self: Self): String = "Matrix(" + ", ".join(rows().map(row -> row.toList())) + ")"
+
+    def toFloat32Array(self): Float32Array = data.toFloat32Array()
 }
