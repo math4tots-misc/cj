@@ -296,7 +296,7 @@ final class CJPass04 extends CJPassBaseEx {
 
                 // The returned method call might be used with an implicit method call
                 // to account for that, we preemptively check here whether the conditions
-                // are ripe for a conversion method call. An d if so, we see if it's possible
+                // are ripe for a conversion method call. And if so, we see if it's possible
                 // to use that method's argument type as the expected type instead.
                 if (a.isPresent()) {
                     var mrtype = methodRef.getMethod().getReturnType();
