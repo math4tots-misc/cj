@@ -184,7 +184,11 @@ final class CJPass03 extends CJPassBaseEx {
             parameters.add(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
         }
         var returnType = fieldAst.getType();
-        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
+        var method = synthesizeGenericMethod(mark, methodName, parameters, returnType);
+        if (fieldAst.isPrivate()) {
+            method.getModifiers().add(CJIRModifier.Private);
+        }
+        return method;
     }
 
     private CJAstMethodDefinition synthesizeFieldAssignmentMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {
@@ -196,7 +200,11 @@ final class CJPass03 extends CJPassBaseEx {
         }
         parameters.add(new CJAstParameter(mark, false, "value", fieldAst.getType()));
         var returnType = newUnitTypeExpression(mark);
-        return synthesizeGenericMethod(mark, methodName, parameters, returnType);
+        var method = synthesizeGenericMethod(mark, methodName, parameters, returnType);
+        if (fieldAst.isPrivate()) {
+            method.getModifiers().add(CJIRModifier.Private);
+        }
+        return method;
     }
 
     private CJAstMethodDefinition synthesizeFieldAugMethod(CJIRItem item, CJAstFieldDefinition fieldAst) {

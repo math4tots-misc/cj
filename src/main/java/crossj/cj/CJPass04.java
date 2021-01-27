@@ -261,11 +261,11 @@ final class CJPass04 extends CJPassBaseEx {
                 return new CJIRBlock(e, newExprs.last().getType(), newExprs);
             }
 
-            private boolean isPrivateCompatible(CJAstMethodCall e, CJIRType owner) {
+            private boolean isPrivateCompatible(CJAstMethodCall e, CJIRMethodRef methodRef) {
                 if (e.isReceiverOmitted()) {
                     return true;
                 }
-                if (owner instanceof CJIRClassType && ((CJIRClassType) owner).getItem() == lctx.getItem()) {
+                if (methodRef.getOwner().getItem() == lctx.getItem()) {
                     return true;
                 }
                 return false;
@@ -291,8 +291,8 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var methodRef = owner.findMethod(e.getName(), e.getMark());
 
-                if (methodRef.getMethod().isPrivate() && !isPrivateCompatible(e, owner)) {
-                    var name = owner + "." + methodRef.getName();
+                if (methodRef.getMethod().isPrivate() && !isPrivateCompatible(e, methodRef)) {
+                    var name = methodRef.getOwner() + "." + methodRef.getName();
                     throw CJError.of(name + " is private and cannot be called here", e.getMark());
                 }
 

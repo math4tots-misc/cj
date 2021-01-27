@@ -18,4 +18,8 @@ public abstract class CJIRItemMember<N extends CJAstItemMemberDefinition> extend
     public final boolean isStatic() {
         return ast.isStatic();
     }
+
+    public final boolean isPrivate() {
+        return ast.isPrivate();
+    }
 }

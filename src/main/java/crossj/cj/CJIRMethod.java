@@ -31,10 +31,6 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
         }
     }
 
-    public boolean isPrivate() {
-        return getModifiers().contains(CJIRModifier.Private);
-    }
-
     public boolean isTest() {
         return annotation.isTest();
     }

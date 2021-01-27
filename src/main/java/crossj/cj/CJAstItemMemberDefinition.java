@@ -37,4 +37,8 @@ public abstract class CJAstItemMemberDefinition extends CJAstNode {
     public final boolean isStatic() {
         return modifiers.contains(CJIRModifier.Static);
     }
+
+    public final boolean isPrivate() {
+        return modifiers.contains(CJIRModifier.Private);
+    }
 }
