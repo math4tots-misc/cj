@@ -1,4 +1,4 @@
 #!/bin/sh
 
 # Run a CJ class
-java -cp target/classes crossj.cj.main.JSMain -m "$@" -o target/out.js && node target/out.js
+java -cp target/classes crossj.cj.main.JSMain -m "$1" -o target/out.js && node target/out.js "${@:2}"
