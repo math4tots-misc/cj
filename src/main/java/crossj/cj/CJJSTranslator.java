@@ -183,12 +183,18 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 : new CJIRClassType(item, item.getTypeParameters().map(tp -> new CJIRVariableType(tp, List.of()))));
     }
 
+    private boolean inAsyncContext = false;
+
     private void emitItem() {
         if (item.isNative()) {
             out.append(IO.readFile(FS.join(jsroot, item.getFullName() + ".js")));
         } else {
             emitMetaClass();
         }
+    }
+
+    private boolean isStackEnabled() {
+        return !inAsyncContext && ctx.isStackEnabled();
     }
 
     private void emitMetaClass() {
@@ -309,6 +315,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
                 var prefix = method.isAsync() ? "async " : "";
                 out.append(prefix + methodName + "(" + Str.join(",", allArgNames) + "){\n");
+                inAsyncContext = method.isAsync();
                 var body = translateExpression(optionalBody.get());
                 for (var line : body.getLines()) {
                     out.append(line);
@@ -321,6 +328,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     out.append("return " + body.getExpression() + ";\n");
                 }
                 out.append("}\n");
+                inAsyncContext = false;
             }
         }
         out.append("}\n");
@@ -374,7 +382,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                         : translateTypeArgs(e.getMethodRef().getMethod().getTypeParameters(), e.getTypeArgs());
                 var args = e.getArgs().map(CJJSTranslator.this::translateExpression);
                 args = args.all(arg -> arg.isSimple()) ? args : args.map(arg -> arg.toPure(ctx));
-                if (ctx.isStackEnabled()) {
+                if (isStackEnabled()) {
                     args = args.map(arg -> arg.toPure(ctx));
                 }
                 var lines = List.<String>of();
@@ -467,7 +475,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     case "cj.js.JSWrapper.call": {
                         Assert.equals(allArgs.size(), 3);
                         var call = allArgs.get(0) + "[" + allArgs.get(1) + "](..." + allArgs.get(2) + ")";
-                        if (ctx.isStackEnabled()) {
+                        if (isStackEnabled()) {
                             var tmpvar = ctx.newTempVarName();
                             lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
                             lines.add("const " + tmpvar + "=" + call + ";\n");
@@ -494,7 +502,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     case "cj.Fn3":
                     case "cj.Fn4": {
                         var call = allArgs.get(0) + "(" + Str.join(",", allArgs.sliceFrom(1)) + ")";
-                        if (ctx.isStackEnabled()) {
+                        if (isStackEnabled()) {
                             var tmpvar = ctx.newTempVarName();
                             lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
                             lines.add("const " + tmpvar + "=" + call + ";\n");
@@ -551,7 +559,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var call = ownerStr + "." + translateMethodName(methodRef.getName()) + "(" + Str.join(",", allArgs)
                         + ")";
 
-                if (ctx.isStackEnabled()) {
+                if (isStackEnabled()) {
                     var tmpvar = ctx.newTempVarName();
                     lines.add("stack.push(" + ctx.addMark(mark) + ");\n");
                     lines.add("const " + tmpvar + "=" + call + ";\n");
@@ -904,7 +912,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             public CJJSBlob visitTry(CJIRTry e, Void a) {
                 var tmpvar = ctx.newTempVarName();
                 var lines = List.of("let " + tmpvar + ";\n");
-                if (ctx.isStackEnabled()) {
+                if (isStackEnabled()) {
                     lines.add("const STACK_SIZE=stack.length;\n");
                 }
                 lines.add("try{\n");
@@ -916,7 +924,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     for (int i = 0; i < e.getClauses().size(); i++) {
                         var clause = e.getClauses().get(i);
                         lines.add((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){\n");
-                        if (ctx.isStackEnabled()) {
+                        if (isStackEnabled()) {
                             lines.add("while(stack.length>STACK_SIZE)stack.pop();\n");
                         }
                         lines.add("const " + translateTarget(clause.get1()) + "=e;\n");
