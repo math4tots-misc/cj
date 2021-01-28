@@ -1,16 +1,16 @@
 class MC$cj$net$HTTP {
     M$get(url) {
-        if (typeof XMLHTTPRequest !== 'undefined') {
-            const request = new XMLHTTPRequest();
+        if (typeof XMLHttpRequest !== 'undefined') {
+            const request = new XMLHttpRequest();
             const promise = new Promise((resolve, reject) => {
                 request.onreadystatechange = () => {
-                    if (request.readyState === XMLHTTPRequest.DONE) {
+                    if (request.readyState === XMLHttpRequest.DONE) {
                         // local files, status is 0 upon success in Mozilla Firefox
                         const status = request.status;
                         if (status === 0 || (status >= 200 && status < 400)) {
                             resolve(request.responseText);
                         } else {
-                            reject(new Error("XMLHTTPRequest error: " + status));
+                            reject(new Error("XMLHttpRequest error: " + status));
                         }
                     }
                 };
