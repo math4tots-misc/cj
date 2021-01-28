@@ -205,7 +205,10 @@ final class CJPass04 extends CJPassBaseEx {
     }
 
     private void checkResultType(CJMark mark, CJIRType expectedType, CJIRType actualType) {
-        if (expectedType.equals(ctx.getUnitType()) || actualType.equals(ctx.getNoReturnType())) {
+        if (expectedType.equals(ctx.getUnitType()) && actualType.isPromiseType()) {
+            // Dangling Promise
+            throw CJError.of("Unused Promise (call 'done()' if result is not needed)", mark);
+        } else if (expectedType.equals(ctx.getUnitType()) || actualType.equals(ctx.getNoReturnType())) {
             // when the expected type is Unit or the expression's type is NoReturn,
             // by default we forgo the check.
         } else if (!expectedType.equals(actualType)) {

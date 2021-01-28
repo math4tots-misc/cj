@@ -20,7 +20,7 @@ class Test04ControlFlow {
 
     @test
     def async_() = {
-        Self.sampleAsync()
+        Self.sampleAsync().done()
     }
 
     async def sampleAsync(): Promise[Unit] = {
