@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# run a CJ app (see list in src/main/app)
+# Like 'run-app', but will actually start a Python http server
+# so that local resources may be accessed
+java -cp target/classes crossj.cj.main.JSMain -a "$@" -o target/out && \
+    ( (sleep 1 && open "http://localhost:8000") &) && \
+    ( cd target/out && python3 -m http.server )
