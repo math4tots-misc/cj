@@ -847,7 +847,7 @@ final class CJPass04 extends CJPassBaseEx {
                 if (!inAsyncContext()) {
                     throw CJError.of("Await can only be used from inside an async method", e.getMark());
                 }
-                var optionalExpectedInnerType = a.map(ctx::getPromiseType);
+                var optionalExpectedInnerType = a.map(t -> ctx.getPromiseType(t, e.getMark()));
                 var inner = evalExpressionEx(e.getInner(), optionalExpectedInnerType);
                 var innerType = inner.getType();
                 if (!innerType.isPromiseType()) {
