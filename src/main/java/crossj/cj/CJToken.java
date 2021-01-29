@@ -71,7 +71,7 @@ public final class CJToken {
     public static final int KW_IS = 224;
     public static final int KW_NOT = 225;
     public static final int KW_IN = 226;
-    public static final int KW_THEN = 227;
+    // public static final int KW_THEN = 227;
     public static final int KW_SWITCH = 228;
     public static final int KW_CASE = 229;
     public static final int KW_UNION = 230;
@@ -88,7 +88,7 @@ public final class CJToken {
 
     public static final Tuple<Integer> KEYWORD_TYPES = Tuple.of(KW_DEF, KW_CLASS, KW_TRUE, KW_FALSE, KW_NULL, KW_IF,
             KW_ELSE, KW_IMPORT, KW_WHILE, KW_BREAK, KW_CONTINUE, KW_VAR, KW_VAL, /* KW_NEW, */ KW_TRAIT, KW_NATIVE,
-            KW_STATIC, KW_PRIVATE, KW_PUBLIC, KW_PACKAGE, KW_RETURN, KW_AND, KW_OR, KW_IS, KW_NOT, KW_IN, KW_THEN,
+            KW_STATIC, KW_PRIVATE, KW_PUBLIC, KW_PACKAGE, KW_RETURN, KW_AND, KW_OR, KW_IS, KW_NOT, KW_IN, /* KW_THEN, */
             KW_SWITCH, KW_CASE, KW_UNION, KW_ENUM, KW_WHEN, KW_AS, KW_FOR, KW_ASYNC, KW_AWAIT, KW_THROW, KW_TRY,
             KW_CATCH, KW_FINALLY);
 
@@ -240,8 +240,8 @@ public final class CJToken {
                 return "CJToken.KW_NOT";
             case KW_IN:
                 return "CJToken.KW_IN";
-            case KW_THEN:
-                return "CJToken.KW_THEN";
+            // case KW_THEN:
+            // return "CJToken.KW_THEN";
             case KW_SWITCH:
                 return "CJToken.KW_SWITCH";
             case KW_CASE:

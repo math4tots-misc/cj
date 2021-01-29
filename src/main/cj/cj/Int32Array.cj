@@ -5,7 +5,7 @@ import cj.ToArrayBufferView
 import cj.Collection
 
 ## In Javascript, wraps Int32Array
-native class Int32Array : Collection[Int], Default, ToArrayBufferView {
+native class Int32Array : Collection[Int], Default, ToArrayBufferView, Repr, Default {
     @variadic def new(list: List[Int]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Int]](c: C): Self
@@ -15,4 +15,6 @@ native class Int32Array : Collection[Int], Default, ToArrayBufferView {
     def __setitem(self: Self, i: Int, v: Int)
     def default(): Self
     def toArrayBufferView(self: Self): ArrayBufferView
+    def repr(self): String
+    def default(): Self
 }

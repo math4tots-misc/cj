@@ -4,7 +4,7 @@ native class String: Repr, ToBool, Hash, Iterable[Char], Default {
     def toString(self: Self): Self
     def repr(self: Self): String
 
-    def __add[T: ToString](self: Self, other: T): Self
+    def __add[T?: ToString](self: Self, other: T): Self
 
     ## Number of char codes in this string.
     ## NOTE: If the default encoding is UTF-16, this is neither the number of bytes
@@ -16,7 +16,7 @@ native class String: Repr, ToBool, Hash, Iterable[Char], Default {
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
 
-    def join[T: ToString, C: Iterable[T]](self: Self, parts: C): String
+    def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String
 
     def charCodeAt(self: Self, i: Int): Int
     def charAt(self: Self, i: Int): Char

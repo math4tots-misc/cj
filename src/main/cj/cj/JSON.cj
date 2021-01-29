@@ -1,5 +1,6 @@
 package cj
 
+import cj.Int16Array
 import cj.Float64Array
 import cj.Float32Array
 
@@ -53,4 +54,5 @@ native class JSON : Repr, Eq {
 
     def toFloat32Array(self): Float32Array
     def toFloat64Array(self): Float64Array
+    def toInt16Array(self): Int16Array
 }

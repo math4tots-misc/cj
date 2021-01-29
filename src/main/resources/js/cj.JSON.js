@@ -150,4 +150,7 @@ class MC$cj$JSON {
     M$toFloat64Array(self) {
         return Float64Array.from(self);
     }
+    M$toInt16Array(self) {
+        return Int16Array.from(self);
+    }
 }

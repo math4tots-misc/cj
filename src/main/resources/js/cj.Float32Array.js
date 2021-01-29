@@ -71,7 +71,7 @@ class MC$cj$Float32Array {
         return true;
     }
     M$repr(self) {
-        return "Float64Array(" + Array.from(self).join(", ") + ")";
+        return "Float32Array(" + Array.from(self).join(", ") + ")";
     }
     M$scale(self, factor) {
         const len = self.length;
@@ -91,5 +91,8 @@ class MC$cj$Float32Array {
     }
     M$toFloat64Array(self) {
         return new Float64Array(self);
+    }
+    M$default() {
+        return new Float32Array();
     }
 }

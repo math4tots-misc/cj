@@ -207,6 +207,15 @@ trait WebGLRenderingContext : JSWrapper {
     def uniformMatrix4fv(self, location: WebGLUniformLocation, transpose: Bool, value: Float32Array) = (
         self.call("uniformMatrix4fv", location, transpose, value))
 
+    def uniform1fv(self, location: WebGLUniformLocation, data: Float32Array) = (
+        call("uniform1fv", location, data))
+    def uniform2fv(self, location: WebGLUniformLocation, data: Float32Array) = (
+        call("uniform2fv", location, data))
+    def uniform3fv(self, location: WebGLUniformLocation, data: Float32Array) = (
+        call("uniform3fv", location, data))
+    def uniform4fv(self, location: WebGLUniformLocation, data: Float32Array) = (
+        call("uniform4fv", location, data))
+
     ## getShaderParameter(shader, DELETE_STATUS)
     def spDELETE_STATUS(self: Self, shader: WebGLShader): Bool = (
         self.call("getShaderParameter", shader, self.cDELETE_STATUS).unsafeCast())

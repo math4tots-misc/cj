@@ -7,7 +7,7 @@ import cj.ToArrayBufferView
 import cj.Collection
 
 ## On Javascript targets, wraps Float64Array
-native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Approximate, Repr {
+native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Approximate, Repr, Default {
     @variadic def new(list: List[Double]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Double]](c: C): Self
@@ -34,4 +34,6 @@ native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Approxi
     def addWithFactor(self: Self, other: Self, factor: Double)
 
     def toFloat32Array(self): Float32Array
+
+    def default(): Self
 }

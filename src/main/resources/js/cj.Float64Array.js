@@ -101,4 +101,7 @@ class MC$cj$Float64Array {
     M$toFloat32Array(self) {
         return new Float32Array(self);
     }
+    M$default() {
+        return new Float64Array();
+    }
 }

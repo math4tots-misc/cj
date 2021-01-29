@@ -26,4 +26,10 @@ class MC$cj$Int16Array {
     M$toArrayBufferView(self) {
         return self;
     }
+    M$repr(self) {
+        return "Int16Array(" + Array.from(self).join(", ") + ")";
+    }
+    M$default() {
+        return new Int16Array();
+    }
 }
