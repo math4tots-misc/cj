@@ -144,4 +144,10 @@ class MC$cj$JSON {
     M$isObject(self) {
         return typeof self === 'object' && !Array.isArray(self);
     }
+    M$toFloat32Array(self) {
+        return Float32Array.from(self);
+    }
+    M$toFloat64Array(self) {
+        return Float64Array.from(self);
+    }
 }

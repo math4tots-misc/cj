@@ -1,5 +1,8 @@
 package cj
 
+import cj.Float64Array
+import cj.Float32Array
+
 @implicit(Unit, _fromUnit)
 @implicit(Bool, _unsafeCast)
 @implicit(Int, _unsafeCast)
@@ -47,4 +50,7 @@ native class JSON : Repr, Eq {
     def getString(self: Self): String
     def isList(self: Self): Bool
     def isObject(self: Self): Bool
+
+    def toFloat32Array(self): Float32Array
+    def toFloat64Array(self): Float64Array
 }
