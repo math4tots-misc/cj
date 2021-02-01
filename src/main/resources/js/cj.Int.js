@@ -29,9 +29,6 @@ class MC$cj$Int {
     M$__mul(a, b) {
         return (a * b)|0;
     }
-    M$__mod(a, b) {
-        return (a + b)|0;
-    }
     M$__rem(a, b) {
         return (a % b)|0;
     }
@@ -40,6 +37,9 @@ class MC$cj$Int {
     }
     M$__div(a, b) {
         return a / b;
+    }
+    M$__pow(a, b) {
+        return a ** b;
     }
     M$__lt(self, other) {
         return self < other;

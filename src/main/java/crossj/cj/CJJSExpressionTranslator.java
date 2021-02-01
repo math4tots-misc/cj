@@ -30,6 +30,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     case Int:
                     case Double:
                     case String:
+                    case BigInt:
                         return e.getRawText();
                 }
                 throw CJError.of("TODO: " + e.getKind(), e.getMark());

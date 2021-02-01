@@ -39,11 +39,14 @@ class MC$cj$Double {
     M$__div(self, other) {
         return self / other;
     }
-    M$__mod(self, other) {
+    M$__rem(self, other) {
         return self % other;
     }
     M$__truncdiv(self, other) {
         return (self / other)|0;
+    }
+    M$__pow(self, other) {
+        return self ** other;
     }
     M$__neg(self) {
         return -self;

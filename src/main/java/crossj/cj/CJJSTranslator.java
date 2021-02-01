@@ -342,15 +342,13 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 switch (e.getKind()) {
                     case Unit:
                         return CJJSBlob.inline("undefined", true);
-                    case Bool:
-                        return CJJSBlob.inline(e.getRawText(), true);
                     case Char:
                         return CJJSBlob.inline("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()), true);
+                    case Bool:
                     case Int:
-                        return CJJSBlob.inline(e.getRawText(), true);
                     case Double:
-                        return CJJSBlob.inline(e.getRawText(), true);
                     case String:
+                    case BigInt:
                         return CJJSBlob.inline(e.getRawText(), true);
                 }
                 throw CJError.of("TODO: " + e.getKind(), e.getMark());

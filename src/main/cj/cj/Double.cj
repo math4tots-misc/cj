@@ -18,8 +18,9 @@ native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Defa
     def __sub(self: Self, other: Self): Double
     def __mul(self: Self, other: Self): Double
     def __div(self: Self, other: Self): Double
-    def __mod(self: Self, other: Self): Double
+    def __rem(self: Self, other: Self): Double
     def __truncdiv(self: Self, other: Self): Int
+    def __pow(self: Self, other: Self): Self
     def __neg(self: Self): Double
     def abs(self: Self): Double
 

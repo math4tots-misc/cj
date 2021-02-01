@@ -70,6 +70,10 @@ class MC$cj$String {
         return self.substring(0, end);
     }
 
+    M$__mul(self, n) {
+        return self.repeat(n);
+    }
+
     M$parseInt(string) {
         const i = parseInt(string, 10);
         return isNaN(i) ? null : i;

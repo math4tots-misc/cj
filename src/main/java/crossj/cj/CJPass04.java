@@ -234,6 +234,8 @@ final class CJPass04 extends CJPassBaseEx {
                         return new CJIRLiteral(e, ctx.getDoubleType(), e.getKind(), e.getRawText());
                     case String:
                         return new CJIRLiteral(e, ctx.getStringType(), e.getKind(), e.getRawText());
+                    case BigInt:
+                        return new CJIRLiteral(e, ctx.getBigIntType(), e.getKind(), e.getRawText());
                 }
                 throw CJError.of("TODO evalExpression-visitBlock", e.getMark());
             }

@@ -7,4 +7,5 @@ public enum CJIRLiteralKind {
     Int,
     Double,
     String,
+    BigInt,
 }

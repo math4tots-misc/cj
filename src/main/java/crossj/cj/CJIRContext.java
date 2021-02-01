@@ -12,10 +12,10 @@ import crossj.base.Str;
 public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
-            "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.Repr", "cj.ToBool", "cj.ToChar",
-            "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set", "cj.Assert", "cj.IO",
-            "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2",
-            "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4", "cj.Default");
+            "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.BigInt", "cj.Repr", "cj.ToBool",
+            "cj.ToChar", "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set",
+            "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0",
+            "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4", "cj.Default");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -58,6 +58,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRType intType = null;
     private CJIRType doubleType = null;
     private CJIRType stringType = null;
+    private CJIRType bigIntType = null;
     private CJIRTrait anyTrait = null;
     private CJIRTrait toBoolTrait = null;
 
@@ -405,6 +406,13 @@ public final class CJIRContext extends CJIRContextBase {
             stringType = getTypeWithArgs("cj.String", List.of());
         }
         return stringType;
+    }
+
+    CJIRType getBigIntType() {
+        if (bigIntType == null) {
+            bigIntType = getTypeWithArgs("cj.BigInt", List.of());
+        }
+        return bigIntType;
     }
 
     @Override

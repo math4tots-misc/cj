@@ -554,6 +554,8 @@ public final class CJParser {
                     return Optional.of(new CJAstTypeExpression(mark, "Char", List.of()));
                 case String:
                     return Optional.of(new CJAstTypeExpression(mark, "String", List.of()));
+                case BigInt:
+                    return Optional.of(new CJAstTypeExpression(mark, "BigInt", List.of()));
             }
         } else if (expression instanceof CJAstListDisplay) {
             var list = (CJAstListDisplay) expression;
@@ -1008,6 +1010,8 @@ public final class CJParser {
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.Double, next().text);
             case CJToken.STRING:
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.String, next().text);
+            case CJToken.BIGINT:
+                return new CJAstLiteral(getMark(), CJIRLiteralKind.BigInt, next().text);
             case CJToken.TYPE_ID: {
                 var owner = parseTypeExpression();
                 if (at('(')) {

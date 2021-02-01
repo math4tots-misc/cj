@@ -12,10 +12,10 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default {
     def __add(a: Self, b: Self): Int
     def __sub(a: Self, b: Self): Int
     def __mul(a: Self, b: Self): Int
-    def __mod(a: Self, b: Self): Int
     def __rem(a: Self, b: Self): Int
     def __truncdiv(a: Self, b: Self): Int
-    def __div(a: Self, b: Self): Double
+    def __div(a: Self, b: Double): Double
+    def __pow(a: Self, b: Double): Double
     def __lt(self: Self, other: Self): Bool
     def __or(self: Self, other: Self): Self
     def __and(self: Self, other: Self): Self
