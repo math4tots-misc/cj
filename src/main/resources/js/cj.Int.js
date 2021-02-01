@@ -78,4 +78,19 @@ class MC$cj$Int {
     M$default() {
         return 0;
     }
+    M$__get_zero() {
+        return 0;
+    }
+    M$__get_one() {
+        return 1;
+    }
+    M$edivrem(a, b) {
+        return [this.M$ediv(a, b), this.M$erem(a, b)];
+    }
+    M$ediv(a, n) {
+        return sgn(n) * Math.floor(a / Math.abs(n));
+    }
+    M$erem(a, n) {
+        return a - Math.abs(n) * Math.floor(a / Math.abs(n));
+    }
 }

@@ -1,7 +1,9 @@
 package cj
 
+import cj.EuclideanDomain
+
 @implicit(Char, _fromChar)
-native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default {
+native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, EuclideanDomain {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
@@ -28,4 +30,11 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default {
     def toChar(self: Self): Char
     def _fromChar(c: Char): Int
     def default(): Int
+
+    # For EuclideanDomain
+    def __get_zero(): Self
+    def __get_one(): Self
+    def edivrem(self, other: Self): Tuple[Self, Self]
+    def ediv(self, other: Self): Self
+    def erem(self, other: Self): Self
 }

@@ -61,3 +61,7 @@ function typeEq(a, b) {
 function appx(a, b, tolerance) {
     return Math.abs(a - b) < tolerance
 }
+
+function sgn(x) {
+    return x > 0 ? 1 : x < 0 ? -1 : 0;
+}

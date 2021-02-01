@@ -52,4 +52,25 @@ class Test02Numbers {
         j--
         Assert.equal(j, 9)
     }
+
+    @test
+    def gcd() {
+        Assert.equal(Int.gcd(2, 5), 1)
+        Assert.equal(Int.gcd(14, 21), 7)
+
+        # negative numbers
+        Assert.equal(Int.gcd(-14, 42), 14)
+        Assert.equal(Int.gcd(14, -42), 14)
+        Assert.equal(Int.gcd(-14, -42), 14)
+
+        # misc sample cases from the internet
+        # https://users-cs.au.dk/chili/PBI04/ExamplePrograms/gcd_function_test.py
+        {
+            Assert.equal(Int.gcd(13, 13), 13)
+            Assert.equal(Int.gcd(37, 600), 1)
+            Assert.equal(Int.gcd(20, 100), 20)
+            Assert.equal(Int.gcd(100, 20), 20)
+            Assert.equal(Int.gcd(624129, 2061517), 18913)
+        }
+    }
 }
