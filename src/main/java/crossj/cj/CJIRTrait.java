@@ -3,25 +3,12 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRTrait extends CJIRTraitOrClassType {
-    private final CJIRItem item;
-    private final List<CJIRType> args;
-
     CJIRTrait(CJIRItem item, List<CJIRType> args) {
-        this.item = item;
-        this.args = args;
-    }
-
-    @Override
-    public CJIRItem getItem() {
-        return item;
-    }
-
-    public List<CJIRType> getArgs() {
-        return args;
+        super(item, args);
     }
 
     public CJIRTrait apply(CJIRBinding binding, CJMark... marks) {
-        return new CJIRTrait(item, args.map(arg -> binding.apply(arg, marks)));
+        return new CJIRTrait(getItem(), getArgs().map(arg -> binding.apply(arg, marks)));
     }
 
     @Override
@@ -30,11 +17,11 @@ public final class CJIRTrait extends CJIRTraitOrClassType {
             return false;
         }
         var other = (CJIRTrait) obj;
-        return item == other.item && args.equals(other.args);
+        return getItem() == other.getItem() && getArgs().equals(other.getArgs());
     }
 
     CJIRTrait getImplementingTraitByItemOrNull(CJIRItem item) {
-        if (this.item == item) {
+        if (getItem() == item) {
             return this;
         }
         for (var subtrait : getTraits()) {

@@ -49,6 +49,11 @@ public final class CJIRVariableType implements CJIRType {
 
     @Override
     public String toString() {
+        throw new Error("Use CJIRType.toRawQualifiedName() instead");
+    }
+
+    @Override
+    public String toRawQualifiedName() {
         return getName();
     }
 

@@ -1,13 +1,24 @@
 package crossj.cj;
 
 import crossj.base.List;
-import crossj.base.Str;
 
 abstract class CJIRTraitOrClassType {
     private CJIRBinding binding = null;
+    private final CJIRItem item;
+    private final List<CJIRType> args;
 
-    public abstract CJIRItem getItem();
-    public abstract List<CJIRType> getArgs();
+    CJIRTraitOrClassType(CJIRItem item, List<CJIRType> args) {
+        this.item = item;
+        this.args = args;
+    }
+
+    public final CJIRItem getItem() {
+        return item;
+    }
+
+    public final List<CJIRType> getArgs() {
+        return args;
+    }
 
     CJIRBinding getBinding() {
         if (binding == null) {
@@ -48,8 +59,7 @@ abstract class CJIRTraitOrClassType {
 
     @Override
     public final String toString() {
-        var args = getArgs().map(arg -> getBinding().tryApply(arg));
-        return getItem().getFullName() + (args.isEmpty() ? "" : "[" + Str.join(",", args) + "]");
+        throw new Error("Use CJIRType.toRawQualifiedName() instead");
     }
 
     public final List<CJIRMethodRef> getMethodRefs() {

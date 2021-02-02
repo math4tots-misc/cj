@@ -62,4 +62,11 @@ class MC$cj$Double {
     M$default() {
         return 0;
     }
+
+    M$__get_zero() {
+        return 0;
+    }
+    M$__get_one() {
+        return 1;
+    }
 }

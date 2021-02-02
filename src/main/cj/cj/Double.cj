@@ -1,9 +1,10 @@
 package cj
 
+import cj.Field
 import cj.Approximate
 
 @implicit(Int, _fromInt)
-native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Default {
+native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Default, Field {
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def approximates(self: Self, other: Self, tolerance: Double): Bool
@@ -30,4 +31,8 @@ native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Defa
     def toFixed(self: Self, n: Int): String
 
     def default(): Self
+
+    # for Field trait
+    def __get_zero(): Self
+    def __get_one(): Self
 }

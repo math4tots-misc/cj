@@ -3,56 +3,53 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRType {
-    private final CJIRItem item;
-    private final List<CJIRType> args;
-
     CJIRClassType(CJIRItem item, List<CJIRType> args) {
-        this.item = item;
-        this.args = args;
-    }
-
-    @Override
-    public CJIRItem getItem() {
-        return item;
-    }
-
-    public List<CJIRType> getArgs() {
-        return args;
+        super(item, args);
     }
 
     @Override
     public boolean isUnionType() {
-        return item.getKind() == CJIRItemKind.Union;
+        return getItem().getKind() == CJIRItemKind.Union;
     }
 
     @Override
     public boolean isListType() {
-        return item.getFullName().equals("cj.List");
+        return getItem().getFullName().equals("cj.List");
     }
 
     @Override
     public boolean isTupleType() {
-        return item.getFullName().startsWith("cj.Tuple");
+        return getItem().getFullName().startsWith("cj.Tuple");
     }
 
     @Override
     public boolean isNullableType() {
-        return item.getFullName().equals("cj.Nullable");
+        return getItem().getFullName().equals("cj.Nullable");
+    }
+
+    @Override
+    public boolean isUnitType() {
+        return getItem().getFullName().equals("cj.Unit");
+    }
+
+    @Override
+    public boolean isNoReturnType() {
+        return getItem().getFullName().equals("cj.NoReturn");
     }
 
     @Override
     public boolean isPromiseType() {
-        return item.getFullName().equals("cj.Promise");
+        return getItem().getFullName().equals("cj.Promise");
     }
 
     @Override
     public boolean isAbsoluteType() {
-        return args.all(a -> a.isAbsoluteType());
+        return getArgs().all(a -> a.isAbsoluteType());
     }
 
     @Override
     public boolean isFunctionType() {
-        switch (item.getFullName()) {
+        switch (getItem().getFullName()) {
             case "cj.Fn0":
             case "cj.Fn1":
             case "cj.Fn2":
@@ -61,6 +58,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public String toRawQualifiedName() {
+        return getItem().getFullName();
     }
 
     @Override
@@ -79,11 +81,11 @@ public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRTyp
             return false;
         }
         var other = (CJIRClassType) obj;
-        return item == other.item && args.equals(other.args);
+        return getItem() == other.getItem() && getArgs().equals(other.getArgs());
     }
 
     @Override
     public boolean isSimpleUnion() {
-        return item.isSimpleUnion();
+        return getItem().isSimpleUnion();
     }
 }

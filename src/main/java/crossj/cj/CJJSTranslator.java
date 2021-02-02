@@ -440,7 +440,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     case "cj.String.__add":
                         Assert.equals(allArgs.size(), 3);
                         Assert.equals(args.size(), 2);
-                        switch (args.get(1).getType().toString()) {
+                        switch (args.get(1).getType().toRawQualifiedName()) {
                             case "cj.String":
                             case "cj.Int":
                             case "cj.Double":

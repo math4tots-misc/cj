@@ -39,6 +39,11 @@ public final class CJIRSelfType implements CJIRType {
 
     @Override
     public String toString() {
+        throw new Error("Use CJIRType.toRawQualifiedName() instead");
+    }
+
+    @Override
+    public String toRawQualifiedName() {
         return "Self";
     }
 

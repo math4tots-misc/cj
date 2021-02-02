@@ -56,16 +56,18 @@ public interface CJIRType {
     }
 
     default boolean isUnitType() {
-        return toString().equals("cj.Unit");
+        return false;
     }
 
     default boolean isNoReturnType() {
-        return toString().equals("cj.NoReturn");
+        return false;
     }
 
     default boolean isFunctionType() {
         return false;
     }
+
+    String toRawQualifiedName();
 
     default boolean implementsTrait(CJIRTrait trait) {
         for (var subtrait : getTraits()) {
