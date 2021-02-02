@@ -1,6 +1,6 @@
 package cj
 
-import cj.EuclideanDomain
+import cj.math.EuclideanDomain
 
 @implicit(Char, _fromChar)
 native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, EuclideanDomain {

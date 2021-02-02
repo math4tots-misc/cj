@@ -1,6 +1,6 @@
 package cj
 
-import cj.Field
+import cj.math.Field
 import cj.Approximate
 
 @implicit(Int, _fromInt)

@@ -1,4 +1,4 @@
-package cj
+package cj.math
 
 trait EuclideanDomain : Eq {
     def __get_zero(): Self

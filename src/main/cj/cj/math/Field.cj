@@ -1,6 +1,6 @@
-package cj
+package cj.math
 
-import cj.EuclideanDomain
+import cj.math.EuclideanDomain
 
 trait Field : EuclideanDomain {
 
