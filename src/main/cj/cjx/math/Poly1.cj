@@ -28,6 +28,16 @@ class Poly1[R : CommutativeRing] :
     def __get_one(): Self = Self(R.one)
     def __get_x(): Self = Self(R.zero, R.one)
 
+    def apply(self, x: R): R = {
+        var result = R.zero
+        var factor = R.one
+        for c in coefs {
+            result = result + c * factor
+            factor = factor * x
+        }
+        result
+    }
+
     def degree(self) : Int = if coefs { coefs.size() - 1 } else { 0 }
 
     def __eq(self, other: Self): Bool = coefs == other.coefs
