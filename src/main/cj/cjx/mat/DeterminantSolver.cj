@@ -1,7 +1,7 @@
 package cjx.mat
 
 import cjx.mat.GaussianEliminationListener
-import cjx.mat.Matrix
+import cjx.mat.Matx
 import cjx.mat.GaussianElimination
 
 class DeterminantSolver : GaussianEliminationListener {
@@ -24,7 +24,7 @@ class DeterminantSolver : GaussianEliminationListener {
         }
     }
 
-    def solve(matrix: Matrix) : Double {
+    def solve(matrix: Matx) : Double {
         val solver = __malloc()
         GaussianElimination[Self].execute(matrix, solver)
         if solver.denominator == 0 { 0.0 } else { 1.0 / solver.denominator }

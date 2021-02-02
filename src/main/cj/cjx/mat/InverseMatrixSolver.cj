@@ -1,7 +1,7 @@
 package cjx.mat
 
 import cjx.mat.GaussianElimination
-import cjx.mat.Matrix
+import cjx.mat.Matx
 import cj.Float64Array
 import cjx.mat.GaussianEliminationListener
 
@@ -9,7 +9,7 @@ class InverseMatrixSolver : GaussianEliminationListener {
     private var invertible = true
     private val rows : List[Float64Array]
 
-    def new(n: Int): Self = __malloc(Matrix.identity(n).rows())
+    def new(n: Int): Self = __malloc(Matx.identity(n).rows())
 
     def swap(self, i: Int, j: Int) {
         rows.swap(i, j)
@@ -27,10 +27,10 @@ class InverseMatrixSolver : GaussianEliminationListener {
         self.invertible = invertible
     }
 
-    def invert(matrix: Matrix) : Nullable[Matrix] {
+    def invert(matrix: Matx) : Nullable[Matx] {
         Assert.withMessage(matrix.isSquare(), "InverseMatrixSolver requires a square matrix")
         val solver = Self(matrix.c)
         GaussianElimination[Self].execute(matrix, solver)
-        if solver.invertible { null(Matrix.fromRowArrays(solver.rows)) } else { null }
+        if solver.invertible { null(Matx.fromRowArrays(solver.rows)) } else { null }
     }
 }

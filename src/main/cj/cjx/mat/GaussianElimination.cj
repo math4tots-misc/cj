@@ -1,12 +1,12 @@
 package cjx.mat
 
 import cjx.mat.GaussianEliminationListener
-import cjx.mat.Matrix
+import cjx.mat.Matx
 import cj.Float64Array
 
 ## Performs gaussian elimination to reduced row echelon form
 class GaussianElimination[Listener : GaussianEliminationListener] {
-    def execute(matrix: Matrix, listener: Listener) {
+    def execute(matrix: Matx, listener: Listener) {
         val gelim = __malloc(listener, matrix.rows())
         gelim.run()
     }

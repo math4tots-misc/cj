@@ -2,7 +2,7 @@ package cjx.mat
 
 import cj.Float64Array
 import cj.Math
-import cjx.mat.Matrix
+import cjx.mat.Matx
 
 ## Some utilities ported from github.com/toji/gl-matrix
 class Mat4 {
@@ -16,7 +16,7 @@ class Mat4 {
     ## - near: Near bound of the frustum
     ## - far: Far bound of the frustum, can be infinity
     ##
-    def perspective(fovy: Double, aspect: Double, near: Double, far: Double): Matrix = {
+    def perspective(fovy: Double, aspect: Double, near: Double, far: Double): Matx = {
         val f = 1.0 / Math.tan(fovy / 2)
         val out = Float64Array(
             f / aspect, 0, 0, 0,
@@ -31,11 +31,11 @@ class Mat4 {
             out[10] = -1
             out[14] = -2.0 * near
         }
-        Matrix._fromParts(4, out)
+        Matx._fromParts(4, out)
     }
 
     ## Translate a mat4 by the given vector
-    def translate(a: Matrix, v: Tuple[Double, Double, Double]): Matrix = {
+    def translate(a: Matx, v: Tuple[Double, Double, Double]): Matx = {
         val (x, y, z) = v
         val data = a.data
         val a00 = data[0]
@@ -69,6 +69,6 @@ class Mat4 {
             a02 * x + a12 * y + a22 * z + data[14],
             a03 * x + a13 * y + a23 * z + data[15])
 
-        Matrix._fromParts(4, out)
+        Matx._fromParts(4, out)
     }
 }

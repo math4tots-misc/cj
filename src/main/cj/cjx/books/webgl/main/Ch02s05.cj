@@ -4,7 +4,7 @@ import cj.js.web.HTMLElement
 import cj.js.web.WebGLUniformLocation
 import cjx.mat.Mat4
 import cj.Float32Array
-import cjx.mat.Matrix
+import cjx.mat.Matx
 import cj.js.web.WebGLBuffer
 import cj.js.web.WebGLVertexArrayObject
 import cj.Int16Array
@@ -24,8 +24,8 @@ class Ch02s05 : Base {
     var iboUsage = 0
     var isVerticesVbo = false
     var isConeVertexBufferVbo = false
-    var projectionMatrix : Matrix = Matrix.identity(4)
-    var modelViewMatrix : Matrix = Matrix.identity(4)
+    var projectionMatrix : Matx = Matx.identity(4)
+    var modelViewMatrix : Matx = Matx.identity(4)
     var uProjectionMatrix : WebGLUniformLocation = ?
     var uModelViewMatrix : WebGLUniformLocation = ?
     var aVertexPosition = 0
@@ -111,7 +111,7 @@ class Ch02s05 : Base {
         gl.viewport(0, 0, canvas.width, canvas.height)
 
         projectionMatrix = Mat4.perspective(45, canvas.width / canvas.height, 0.1, 10000)
-        modelViewMatrix = Mat4.translate(Matrix.identity(4), (0, 0, -5))
+        modelViewMatrix = Mat4.translate(Matx.identity(4), (0, 0, -5))
 
         gl.uniformMatrix4fv(uProjectionMatrix, false, projectionMatrix.toFloat32Array())
         gl.uniformMatrix4fv(uModelViewMatrix, false, modelViewMatrix.toFloat32Array())

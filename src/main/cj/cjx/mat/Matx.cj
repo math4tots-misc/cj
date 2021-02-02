@@ -7,8 +7,8 @@ import cjx.mat.DeterminantSolver
 import cj.Error
 import cj.Float64Array
 
-## A simple double precision floating point Matrix
-class Matrix : Hash, Approximate, Repr {
+## A simple double precision floating point Matx
+class Matx : Hash, Approximate, Repr {
     ## Number of columns in this matrix
     val c : Int
 
@@ -103,18 +103,18 @@ class Matrix : Hash, Approximate, Repr {
     }
 
     def __add(self: Self, other: Self): Self = {
-        _checkDim(other, "Invalid dimensions for Matrix.__add")
+        _checkDim(other, "Invalid dimensions for Matx.__add")
         _pairwise(other, (a, b) -> a + b)
     }
 
     def __sub(self: Self, other: Self): Self = {
-        _checkDim(other, "Invalid dimensions for Matrix.__sub")
+        _checkDim(other, "Invalid dimensions for Matx.__sub")
         _pairwise(other, (a, b) -> a - b)
     }
 
     def __mul(self: Self, other: Self): Self = {
         if c != other.r {
-            throw Error("Invalid dimensions for Matrix.__mul")
+            throw Error("Invalid dimensions for Matx.__mul")
         }
         val data = data
         val odata = other.data
@@ -344,7 +344,7 @@ class Matrix : Hash, Approximate, Repr {
     def approximates(self: Self, other: Self, tolerance: Double): Bool = (
         c == other.c and data.approximates(other.data, tolerance))
 
-    def repr(self: Self): String = "Matrix(" + ", ".join(rows().map(row -> row.toList())) + ")"
+    def repr(self: Self): String = "Matx(" + ", ".join(rows().map(row -> row.toList())) + ")"
 
     def toFloat32Array(self): Float32Array = data.toFloat32Array()
 }
