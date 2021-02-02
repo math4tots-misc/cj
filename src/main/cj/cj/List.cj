@@ -7,6 +7,7 @@ native class List[T?] :
         Collection[T],
         ToBool,
         Default,
+        Eq if T : Eq,
         Hash if T : Hash,
         Approximate if T : Approximate,
         Repr if T : Repr {
@@ -16,6 +17,7 @@ native class List[T?] :
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
     @generic def add(self: Self, t: T)
+    @generic def pop(self): T
     @generic def __getitem(self: Self, i: Int): T
     @generic def __setitem(self: Self, i: Int, t: T)
     @generic def removeIndex(self: Self, i: Int): T
@@ -37,7 +39,7 @@ native class List[T?] :
 
     def default(): Self
 
-    if T : Hash def __eq(self: Self,  other: Self): Bool
+    if T : Eq def __eq(self: Self,  other: Self): Bool
     if T : Hash def hash(self: Self): Int
     if T : Approximate def approximates(self: Self, other: Self, tolerance: Double): Int
     if T : Repr def repr(self: Self): String

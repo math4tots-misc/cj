@@ -35,4 +35,10 @@ class MC$cj$Math {
     M$atan2(y, x) {
         return Math.atan2(y, x);
     }
+    M$min(TV$X, a, b) {
+        return TV$X.M$__lt(a, b) ? a : b;
+    }
+    M$max(TV$X, a, b) {
+        return TV$X.M$__lt(a, b) ? b : a;
+    }
 }

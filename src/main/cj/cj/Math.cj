@@ -19,4 +19,7 @@ native class Math {
     def acos(r: Double): Double
     def atan(r: Double): Double
     def atan2(y: Double, x: Double): Double
+
+    def min[X: Ord](a: X, b: X): X
+    def max[X: Ord](a: X, b: X): X
 }

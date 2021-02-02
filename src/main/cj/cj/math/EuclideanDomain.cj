@@ -1,20 +1,8 @@
 package cj.math
 
-trait EuclideanDomain : Eq {
-    def __get_zero(): Self
-    def __get_one(): Self
+import cj.math.CommutativeRing
 
-    ## Computes the additive inverse
-    def __neg(self): Self
-
-    ## Commutative addition operation
-    def __add(self, other: Self): Self
-
-    ## Commutative multiplication operation
-    def __mul(self, other: Self): Self
-
-    def __sub(self, other: Self): Self = self + -other
-
+trait EuclideanDomain : CommutativeRing {
     ## Euclidean division with remainder.
     ## This may or may not be the same as __div and __rem
     def edivrem(self, other: Self): Tuple[Self, Self]

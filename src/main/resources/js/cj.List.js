@@ -17,6 +17,9 @@ class MC$cj$List {
     M$add(self, t) {
         self.push(t);
     }
+    M$pop(self) {
+        return self.pop();
+    }
     M$__getitem(self, i) {
         if (i >= self.length) {
             throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);

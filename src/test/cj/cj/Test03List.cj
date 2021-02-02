@@ -110,4 +110,11 @@ class Test03List {
             Assert.equal(list[2:4], Float64Array(7.7, 8.8))
         }
     }
+
+    @test
+    def pop() {
+        val list = [1, 2, 3]
+        Assert.equal(list.pop(), 3)
+        Assert.equal(list, [1, 2])
+    }
 }
