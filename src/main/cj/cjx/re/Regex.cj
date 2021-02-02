@@ -29,39 +29,87 @@ class Regex {
 
     def matches(self: Self, string: String): Bool = self.fullMatch(string).isPresent()
 
+    def matcher(self: Self, string: String): Matcher = (
+        Matcher.__malloc(nfa, string, false, string.size(), 0, 1, 1))
+
     private def matchEx(
             self: Self,
             string: String,
             start: Int,
             end: Int,
             fullMatch: Bool): Nullable[MatchResult] = {
-        val nfa = self.nfa
-        var states = nfa.newStart()
-        val patternCount = nfa.patternCount
-        var i = start
-        var lastMatchEnd = -1
-        var lastMatchPatternIndex = -1
-        while i < end and states {
-            if not fullMatch {
+        Matcher.__malloc(nfa, string, fullMatch, end, start, 1, 1).match()
+    }
+
+    class Matcher {
+        val nfa: CachingNFA
+        val string: String
+        val fullMatch: Bool
+        val end: Int
+        var i: Int
+        var line: Int
+        var column: Int
+
+        def eof(self): Bool = i >= string.size()
+
+        def match(self): Nullable[MatchResult] = {
+            val nfa = nfa
+            val fullMatch = fullMatch
+            val string = string
+            val end = end
+            var i = i
+            val start = i
+            val startLine = line
+            val startColumn = column
+            var line = line
+            var column = column
+            var states = nfa.newStart()
+            val patternCount = nfa.patternCount
+            var lastMatchEnd = -1
+            var lastMatchPatternIndex = -1
+            var lastMatchEndLine = -1
+            var lastMatchEndColumn = -1
+            while i < end and states {
+                if not fullMatch {
+                    val representative = nfa.getRepresentative(states)
+                    if representative < patternCount {
+                        lastMatchEnd = i
+                        lastMatchPatternIndex = representative
+                        lastMatchEndLine = line
+                        lastMatchEndColumn = column
+                    }
+                }
+                val ch = string.charAt(i)
+                states = nfa.transition(states, ch.toInt())
+                i = i + ch.size()
+                if ch == '\n' {
+                    line += 1
+                    column = 1
+                } else {
+                    column += 1
+                }
+            }
+            if states {
                 val representative = nfa.getRepresentative(states)
                 if representative < patternCount {
                     lastMatchEnd = i
                     lastMatchPatternIndex = representative
+                    lastMatchEndLine = line
+                    lastMatchEndColumn = column
                 }
             }
-            val ch = string.charAt(i)
-            states = nfa.transition(states, ch.toInt())
-            i += ch.size()
-        }
-        if states {
-            val representative = nfa.getRepresentative(states)
-            if representative < patternCount {
-                lastMatchEnd = i
-                lastMatchPatternIndex = representative
+            if lastMatchEnd == -1 { null } else {
+                self.i = lastMatchEnd
+                self.line = lastMatchEndLine
+                self.column = lastMatchEndColumn
+                null(MatchResult.__malloc(
+                    string,
+                    start,
+                    lastMatchEnd,
+                    lastMatchPatternIndex,
+                    startLine,
+                    startColumn))
             }
-        }
-        if lastMatchEnd == -1 { null } else {
-            null(MatchResult.__malloc(string, start, lastMatchEnd, lastMatchPatternIndex))
         }
     }
 
@@ -116,6 +164,8 @@ class Regex {
             val afterStates = self.nfa.transition(beforeStates, ch)
             self.getId(afterStates)
         }
+
+        def dump(self): String = nfa.dump()
     }
 
     class NFA {
@@ -140,7 +190,9 @@ class Regex {
             Assert.equal(startState, trees.size())
             for i = 0; i < trees.size(); i++ {
                 val tree = trees[i]
-                graph.buildBlock(tree, startState, i)
+                val block = graph.buildBlock(tree, -1, -1)
+                graph.connect(startState, epsilon, block.start)
+                graph.connect(block.end, epsilon, i)
             }
             Self.__malloc(trees.size(), graph.transitionMap)
         }
@@ -161,9 +213,17 @@ class Regex {
             val empty = Set[Int].empty()
             val map = self.transitionMap
             val epsilon = NFA.epsilon
-            for state in set {
+            val seen = set.toSet()
+            val stack = set.toList()
+            while stack {
+                val state = stack.pop()
                 ret.add(state)
-                ret.addAll(map[state].getOrDefault(epsilon, empty))
+                for childState in map[state].getOrDefault(epsilon, empty) {
+                    if childState not in seen {
+                        seen.add(childState)
+                        stack.add(childState)
+                    }
+                }
             }
             ret
         }
@@ -172,7 +232,13 @@ class Regex {
             val sb = StringBuilder()
             sb.add("NFA (start = " + self.patternCount + ")\n")
             for i = 0; i < self.transitionMap.size(); i++ {
-                sb.add("  " + i + ":\n")
+                sb.add("  " + i)
+                if i < patternCount {
+                    sb.add(" (accept)")
+                } else if i == patternCount {
+                    sb.add(" (start)")
+                }
+                sb.add(":\n")
                 val keys = self.transitionMap[i].keys().toList()
                 for j = 0; j < keys.size(); j++ {
                     val start = j
@@ -184,7 +250,7 @@ class Regex {
                     }
                     sb.add("    ")
                     if j > start {
-                        sb.add("" + keys[start].toChar().repr() + "-" + keys[j - 1].toChar().repr())
+                        sb.add("" + keys[start].toChar().repr() + "-" + keys[j].toChar().repr())
                     } else if keys[start] == NFA.epsilon {
                         sb.add("epsilon")
                     } else {
@@ -197,7 +263,7 @@ class Regex {
         }
     }
 
-    class MatchResult {
+    class MatchResult : Repr {
         val originalString: String
 
         ## Index from which the match starts
@@ -209,7 +275,21 @@ class Regex {
         ## The matching pattern index
         val matchIndex: Int
 
+        ## Line number of the start of this match
+        val line: Int
+
+        ## Column number of the start of this match
+        val column: Int
+
         def __get_matchText(self: Self): String = self.originalString[self.start:self.end]
+
+        def repr(self): String = (
+            "MatchResult(" +
+            matchText.repr() +
+            ", " + matchIndex +
+            ", " + line +
+            ", " + column +
+            ")")
     }
 
     ## NFA graph along the lines of Thompson's construction
@@ -453,7 +533,7 @@ class Regex {
                                     peek.isLower() and ch.isLower() or
                                     peek.isDigit() and ch.isDigit()) {
                                 val limit = self.next().toInt()
-                                for i = ch.toInt(); i < limit; i++ {
+                                for i = ch.toInt(); i <= limit; i++ {
                                     set.add(i)
                                 }
                             } else {

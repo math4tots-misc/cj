@@ -113,5 +113,41 @@ class RegexTest {
             Assert.that(re.matches("xJJ"))
             Assert.that(re.matches("bABCDE"))
         }
+        {
+            val re = Regex("[a-z]+")
+            Assert.that(re.matches("ccc"))
+            Assert.that(re.matches("zzz"))
+        }
+        {
+            val re = Regex("[c-z]+")
+            Assert.that(re.matches("ccc"))
+            Assert.that(re.matches("zzz"))
+            Assert.that(re.matches("yy"))
+            Assert.that(re.matches("cczzyy"))
+        }
+    }
+
+    @test
+    def matcher() {
+        {
+            val re = Regex("a+", "b+", "ab+", "[c-z]+", "\n")
+            val m = re.matcher("aaaxabbbazz\nasdf")
+            val results : List[String] = []
+            while not m.eof() {
+                val mr = m.match().get()
+                results.add(mr.toString())
+                IO.println(mr)
+            }
+            Assert.equal(results, [
+                "MatchResult(\"aaa\", 0, 1, 1)",
+                "MatchResult(\"x\", 3, 1, 4)",
+                "MatchResult(\"abbb\", 2, 1, 5)",
+                "MatchResult(\"a\", 0, 1, 9)",
+                "MatchResult(\"zz\", 3, 1, 10)",
+                "MatchResult(\"\\n\", 4, 1, 12)",
+                "MatchResult(\"a\", 0, 2, 1)",
+                "MatchResult(\"sdf\", 3, 2, 2)",
+            ])
+        }
     }
 }
