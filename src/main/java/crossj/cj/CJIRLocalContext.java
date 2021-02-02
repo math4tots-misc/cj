@@ -74,6 +74,9 @@ public final class CJIRLocalContext extends CJIRContextBase {
         var name = typeExpression.getName();
         switch (name) {
             case "Fn":
+                if (typeExpression.getArgs().isEmpty()) {
+                    throw CJError.of("Fn type requires at least one type argument", typeExpression.getMark());
+                }
                 name += typeExpression.getArgs().size() - 1;
                 break;
             case "Tuple":
