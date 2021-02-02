@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
@@ -110,6 +111,7 @@ final class CJPass04 extends CJPassBaseEx {
             return;
         }
         var bodyAst = method.getAst().getBody().get();
+        Assert.that(locals.isEmpty());
         enterMethod(method);
         enterScope();
         for (var parameter : method.getParameters()) {
@@ -118,6 +120,10 @@ final class CJPass04 extends CJPassBaseEx {
         var body = evalExpressionWithType(bodyAst, method.getInnerReturnType());
         exitScope();
         exitMethod();
+        if (!locals.isEmpty()) {
+            IO.println(lctx.getItem().getFullName() + "." + method.getName() + " -> " + locals);
+        }
+        Assert.that(locals.isEmpty());
         method.setBody(body);
     }
 
@@ -249,6 +255,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var noReturnType = ctx.getNoReturnType();
                 var exprs = e.getExpressions();
                 if (exprs.size() == 0) {
+                    exitScope();
                     return new CJIRLiteral(e, ctx.getUnitType(), CJIRLiteralKind.Unit, "");
                 }
                 var newExprs = List.<CJIRExpression>of();
