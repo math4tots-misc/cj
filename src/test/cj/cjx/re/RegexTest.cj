@@ -136,7 +136,6 @@ class RegexTest {
             while not m.eof() {
                 val mr = m.match().get()
                 results.add(mr.toString())
-                IO.println(mr)
             }
             Assert.equal(results, [
                 "MatchResult(\"aaa\", 0, 1, 1)",
