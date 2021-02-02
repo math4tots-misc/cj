@@ -17,6 +17,11 @@ class MC$cj$List {
     M$add(self, t) {
         self.push(t);
     }
+    M$addAll(TV$C, self, ts) {
+        for (const t of TV$C.M$iter(ts)) {
+            self.push(t);
+        }
+    }
     M$pop(self) {
         return self.pop();
     }

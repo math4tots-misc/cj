@@ -117,4 +117,11 @@ class Test03List {
         Assert.equal(list.pop(), 3)
         Assert.equal(list, [1, 2])
     }
+
+    @test
+    def addAll() {
+        val list = ["a", "b", "c"]
+        list.addAll(["x", "y", "z"])
+        Assert.equal(list, ["a", "b", "c", "x", "y", "z"])
+    }
 }

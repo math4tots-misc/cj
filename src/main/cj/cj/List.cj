@@ -17,6 +17,7 @@ native class List[T?] :
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
     @generic def add(self: Self, t: T)
+    @genericSelf def addAll[C: Iterable[T]](self: Self, ts: C)
     @generic def pop(self): T
     @generic def __getitem(self: Self, i: Int): T
     @generic def __setitem(self: Self, i: Int, t: T)
