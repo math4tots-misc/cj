@@ -1,6 +1,10 @@
 package cj
 
-native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default {
+import cj.math.Rational
+import cj.math.EuclideanDomain
+
+@implicit(Int, fromInt)
+native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, EuclideanDomain {
     def fromString(s: String): Self
     def fromInt(i: Int): Self
     def repr(self): String
@@ -16,6 +20,7 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default {
     def __mul(self, other: Self): Self
     def __rem(self, other: Self): Self
     def __truncdiv(self, other: Self): Self
+    def __div(self, other: Self): Rational
     def ipow(self, n: Int): Self
     def __lt(self, other: Self): Bool
     def __or(self, other: Self): Self
@@ -26,4 +31,12 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default {
     def toInt(self): Int
     def toDouble(self): Double
     def default(): Self
+    def isNegative(self): Bool
+
+    # for EuclideanDomain
+    def __get_zero(): Self
+    def __get_one(): Self
+    def edivrem(self, other: Self): Tuple[Self, Self]
+    def ediv(self, other: Self): Self
+    def erem(self, other: Self): Self
 }

@@ -29,4 +29,26 @@ class Test15BigInt {
             Assert.equal(x.toString(), "1" + "0" * 50)
         }
     }
+
+    @test
+    def gcd() {
+        # The same tests as in Tes02Numbers
+        Assert.equal(BigInt.gcd(2n, 5n), 1n)
+        Assert.equal(BigInt.gcd(14n, 21n), 7n)
+
+        # negative numbers
+        Assert.equal(BigInt.gcd(-14n, 42n), 14n)
+        Assert.equal(BigInt.gcd(14n, -42n), 14n)
+        Assert.equal(BigInt.gcd(-14n, -42n), 14n)
+
+        # misc sample cases from the internet
+        # https://users-cs.au.dk/chili/PBI04/ExamplePrograms/gcd_function_test.py
+        {
+            Assert.equal(BigInt.gcd(13n, 13n), 13n)
+            Assert.equal(BigInt.gcd(37n, 600n), 1n)
+            Assert.equal(BigInt.gcd(20n, 100n), 20n)
+            Assert.equal(BigInt.gcd(100n, 20n), 20n)
+            Assert.equal(BigInt.gcd(624129n, 2061517n), 18913n)
+        }
+    }
 }

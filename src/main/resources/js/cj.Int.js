@@ -88,7 +88,7 @@ class MC$cj$Int {
         return [this.M$ediv(a, b), this.M$erem(a, b)];
     }
     M$ediv(a, n) {
-        return sgn(n) * Math.floor(a / Math.abs(n));
+        return (n < 0 ? -1 : 1) * Math.floor(a / Math.abs(n));
     }
     M$erem(a, n) {
         return a - Math.abs(n) * Math.floor(a / Math.abs(n));

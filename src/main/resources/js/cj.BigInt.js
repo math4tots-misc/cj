@@ -44,6 +44,9 @@ class MC$cj$BigInt {
     M$__truncdiv(self, other) {
         return self / other;
     }
+    M$__div(self, other) {
+        return MO$cj$math$Rational.M$new(self, other);
+    }
     M$ipow(self, n) {
         return self ** BigInt(n);
     }
@@ -74,4 +77,28 @@ class MC$cj$BigInt {
     M$default() {
         return 0n;
     }
+    M$isNegative(self) {
+        return self < 0;
+    }
+
+    M$__get_zero() {
+        return 0n;
+    }
+    M$__get_one() {
+        return 1n;
+    }
+    M$edivrem(a, b) {
+        return [this.M$ediv(a, b), this.M$erem(a, b)];
+    }
+    M$ediv(a, n) {
+        return (n < 0n ? -1n : 1n) * this.floordiv(a, this.M$abs(n));
+    }
+    M$erem(a, n) {
+        return a - this.M$abs(n) * this.floordiv(a, this.M$abs(n));
+    }
+    floordiv(a, b) {
+        const d = a/b;
+        return (a < 0n && b > 0n || a > 0n && b < 0n) && a % b !== 0n ? d - 1n : d;
+    }
 }
+

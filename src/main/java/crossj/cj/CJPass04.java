@@ -212,7 +212,10 @@ final class CJPass04 extends CJPassBaseEx {
             // when the expected type is Unit or the expression's type is NoReturn,
             // by default we forgo the check.
         } else if (!expectedType.equals(actualType)) {
-            throw CJError.of("Expected " + expectedType + " but got " + actualType, mark);
+            // TODO: Better type name
+            throw CJError.of(
+                    "Expected " + expectedType.toRawQualifiedName() + " but got " + actualType.toRawQualifiedName(),
+                    mark);
         }
     }
 
