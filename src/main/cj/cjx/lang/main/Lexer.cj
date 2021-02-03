@@ -1,11 +1,11 @@
-package cjx.lang
+package cjx.lang.main
 
 import cj.FS
 import cj.Argv
 import cjx.lang.CJLexer
 
 ## Sample main class that will simply lex and print each token in the given file
-class LexerMain {
+class Lexer {
     def main() {
         val (filename, data) = if Argv() {
             val filename = Argv()[0]
