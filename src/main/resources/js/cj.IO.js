@@ -8,4 +8,8 @@ class MC$cj$IO {
     M$panic(TV$T, t) {
         throw new Error(TV$T.M$toString(t));
     }
+    M$input() {
+        const fs = require('fs');
+        return fs.readFileSync(0, {encoding: 'utf-8'});
+    }
 }

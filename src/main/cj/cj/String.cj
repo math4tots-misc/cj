@@ -36,6 +36,8 @@ native class String: Repr, ToBool, Hash, Iterable[Char], Default {
     def endsWithAt(self, suffix: String, endIndex: Int): Bool
 
     def trim(self: Self): String
+    def lower(self): String
+    def upper(self): String
 
     def default(): Self
 }

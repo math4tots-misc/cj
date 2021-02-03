@@ -19,7 +19,7 @@ class CJLexer {
         b.add("0x[0-9A-Fa-f]+", m -> tok(CJToken.tINT, m)) # hex literals
         b.add("\\d+", m -> tok(CJToken.tINT, m))
         for type in CJToken.keywordTypes {
-            b.add(CJToken.keywordString(type), m -> tok(type, m))
+            b.add(CJToken.keywordString(type), m -> symtok(type, m))
         }
         b.add("[A-Z]\\w*", m -> tok(CJToken.tTYPEID, m))
         b.add("[a-z_]\\w*", m -> tok(CJToken.tID, m))
@@ -60,7 +60,9 @@ class CJLexer {
         # whitespace
         b.add("[^\\S\n]+", m -> [])
 
-        b.onerr(m -> {
+        b.onEOF(m -> [CJToken(CJToken.tEOF, "", m.line, m.column)])
+
+        b.onError(m -> {
             val mark = CJMark(m.filename, m.line, m.column)
             throw CJError("Unrecognized token", [mark])
         })
@@ -79,9 +81,5 @@ class CJLexer {
     private def symtok(type: Int, m: Regex.MatchResult): List[CJToken] = [
         CJToken(type, "", m.line, m.column)]
 
-    def lex(filename: String, string: String): List[CJToken] = {
-        val tokens = lexer.lex(filename, string)
-        tokens.add(CJToken(CJToken.tEOF, "", 1, 1))
-        tokens
-    }
+    def lex(filename: String, string: String): List[CJToken] = lexer.lex(filename, string)
 }

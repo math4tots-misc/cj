@@ -6,24 +6,31 @@ import cjx.re.Regex
 class Lexer[Token] {
     val regex: Regex
     val callbacks: List[Fn[Regex.MatchResult, List[Token]]]
-    val onerr: Fn[Regex.Matcher, Unit]
+    val onError: Fn[Regex.Matcher, Unit]
+    var onEOF: Fn[Regex.Matcher, List[Token]]
 
     class Builder[Token] {
         val patterns: List[String] = []
         val callbacks: List[Fn[Regex.MatchResult, List[Token]]] = []
-        var onerr: Fn[Regex.Matcher, Unit] = m -> throw Error("Unrecognized token")
+        var onError: Fn[Regex.Matcher, Unit] = m -> throw Error("Unrecognized token")
+        var onEOF: Fn[Regex.Matcher, List[Token]] = m -> []
 
         def add(self, pattern: String, callback: Fn[Regex.MatchResult, List[Token]]) {
             patterns.add(pattern)
             callbacks.add(callback)
         }
 
-        def onerr(self, f: Fn[Regex.Matcher, Unit]) {
-            self.onerr = f
+        def onError(self, f: Fn[Regex.Matcher, Unit]) {
+            self.onError = f
+        }
+
+        ## On EOF
+        def onEOF(self, f: Fn[Regex.Matcher, List[Token]]) {
+            self.onEOF = f
         }
 
         def build(self): Lexer[Token] = (
-            Lexer[Token].__malloc(Regex.fromPatterns(patterns), callbacks, onerr))
+            Lexer[Token].__malloc(Regex.fromPatterns(patterns), callbacks, onError, onEOF))
     }
 
     def builder(): Builder[Token] = Builder[Token].__malloc()
@@ -36,10 +43,11 @@ class Lexer[Token] {
             if null(matchResult) = matcher.match() {
                 tokens.addAll(callbacks[matchResult.matchIndex].call(matchResult))
             } else {
-                onerr.call(matcher)
+                onError.call(matcher)
                 ok = false
             }
         }
+        tokens.addAll(onEOF.call(matcher))
         tokens
     }
 }

@@ -95,6 +95,12 @@ class MC$cj$String {
     M$trim(self) {
         return self.trim();
     }
+    M$lower(self) {
+        return self.toLowerCase();
+    }
+    M$upper(self) {
+        return self.toUpperCase();
+    }
 
     M$default() {
         return "";

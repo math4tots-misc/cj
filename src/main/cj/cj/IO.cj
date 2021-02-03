@@ -4,4 +4,7 @@ native class IO {
     def println[T?: ToString](t: T)
     def eprintln[T?: ToString](t: T)
     def panic[T?: ToString](t: T): NoReturn
+
+    ## Read all of stdin as a string
+    def input(): String
 }

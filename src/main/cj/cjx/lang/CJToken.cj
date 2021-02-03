@@ -96,7 +96,7 @@ class CJToken : Repr {
     def keywordString(type: Int): String = {
         val str = typeRepr(type)
         Assert.withMessage(str.startsWith("kw"), str)
-        str["kw".size():]
+        str["kw".size():].lower()
     }
 
     def typeRepr(type: Int): String = switch type {
