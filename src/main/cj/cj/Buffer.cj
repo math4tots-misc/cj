@@ -1,5 +1,6 @@
 package cj
 
+import cj.BigInt
 import cj.ArrayBufferView
 import cj.ToArrayBufferView
 
@@ -32,6 +33,9 @@ native class Buffer: Repr, Eq, ToArrayBufferView {
     def getI16(self: Self, i: Int): Int
     def getU16(self: Self, i: Int): Int
     def getI32(self: Self, i: Int): Int
+    def getU32(self: Self, i: Int): Double
+    def getI64(self: Self, i: Int): BigInt
+    def getU64(self: Self, i: Int): BigInt
     def getF32(self: Self, i: Int): Double
     def getF64(self: Self, i: Int): Double
     def getUTF8(self: Self, start: Int, end: Int): String
@@ -44,6 +48,9 @@ native class Buffer: Repr, Eq, ToArrayBufferView {
     def setI16(self: Self, i: Int, value: Int)
     def setU16(self: Self, i: Int, value: Int)
     def setI32(self: Self, i: Int, value: Int)
+    def setU32(self: Self, i: Int, value: Double)
+    def setI64(self: Self, i: Int, value: BigInt)
+    def setU64(self: Self, i: Int, value: BigInt)
     def setF32(self: Self, i: Int, value: Double)
     def setF64(self: Self, i: Int, value: Double)
     def setBuffer(self: Self, i: Int, other: Self)
@@ -54,6 +61,9 @@ native class Buffer: Repr, Eq, ToArrayBufferView {
     def addI16(self: Self, value: Int)
     def addU16(self: Self, value: Int)
     def addI32(self: Self, value: Int)
+    def addU32(self: Self, value: Double)
+    def addI64(self: Self, value: BigInt)
+    def addU64(self: Self, value: BigInt)
     def addF32(self: Self, value: Double)
     def addF64(self: Self, value: Double)
     def addBuffer(self: Self, other: Self)

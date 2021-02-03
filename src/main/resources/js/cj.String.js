@@ -44,6 +44,9 @@ class MC$cj$String {
     M$__lt(self, other) {
         return self < other;
     }
+    M$__contains(self, other) {
+        self.includes(other);
+    }
     M$join(TV$T, TV$C, self, parts) {
         return Array.from(TV$C.M$iter(parts)).map(t => TV$T.M$toString(t)).join(self);
     }

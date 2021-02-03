@@ -112,6 +112,27 @@ class MC$cj$Buffer {
      * @param {Buf} self
      * @param {number} i
      */
+    M$getU32(self, i) {
+        return self[0].getUint32(i, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     */
+    M$getI64(self, i) {
+        return self[0].getBigInt64(i, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     */
+    M$getU64(self, i) {
+        return self[0].getBigUint64(i, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     */
     M$getF32(self, i) {
         return self[0].getFloat32(i, self[1]);
     }
@@ -192,6 +213,30 @@ class MC$cj$Buffer {
      * @param {number} i
      * @param {number} value
      */
+    M$setU32(self, i, value) {
+        self[0].setUint32(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     * @param {BigInt} value
+     */
+    M$setI64(self, i, value) {
+        self[0].setBigInt64(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     * @param {BigInt} value
+     */
+    M$setU64(self, i, value) {
+        self[0].setBigUint64(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} i
+     * @param {number} value
+     */
     M$setF32(self, i, value) {
         self[0].setFloat32(i, value, self[1]);
     }
@@ -263,6 +308,33 @@ class MC$cj$Buffer {
         const i = self[2];
         bufferSetSize(self, i + 4);
         self[0].setInt32(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {number} value
+     */
+    M$addU32(self, value) {
+        const i = self[2];
+        bufferSetSize(self, i + 4);
+        self[0].setUint32(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {BigInt} value
+     */
+    M$addI64(self, value) {
+        const i = self[2];
+        bufferSetSize(self, i + 8);
+        self[0].setBigInt64(i, value, self[1]);
+    }
+    /**
+     * @param {Buf} self
+     * @param {BigInt} value
+     */
+    M$addU64(self, value) {
+        const i = self[2];
+        bufferSetSize(self, i + 8);
+        self[0].setBigUint64(i, value, self[1]);
     }
     /**
      * @param {Buf} self

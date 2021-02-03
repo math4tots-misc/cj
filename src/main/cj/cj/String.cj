@@ -17,6 +17,8 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def hash(self: Self): Int
     def __lt(self, other: Self): Bool
 
+    def __contains(self, other: Self): Bool
+
     def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String
 
     def charCodeAt(self: Self, i: Int): Int

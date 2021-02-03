@@ -13,6 +13,6 @@ class MC$cj$FS {
         fs.writeFileSync(p, data);
     }
     M$writeFileBytes(p, data) {
-        this.M$writeFile(p, data[0]);
+        this.M$writeFile(p, new DataView(data[0].buffer, 0, data[2]));
     }
 }

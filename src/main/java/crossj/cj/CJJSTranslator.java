@@ -244,7 +244,17 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var getterMethodName = translateMethodName(field.getGetterName());
                 out.append(getterMethodName + "(a){return a}\n");
                 var mallocMethodName = translateMethodName("__malloc");
-                out.append(mallocMethodName + "(a){return a}\n");
+                if (field.getExpression().isPresent()) {
+                    var expr = translateExpression(field.getExpression().get());
+                    out.append(mallocMethodName + "(){\n");
+                    for (var line : expr.getLines()) {
+                        out.append(line);
+                    }
+                    out.append("return " + expr.getExpression() + ";\n");
+                    out.append("}\n");
+                } else {
+                    out.append(mallocMethodName + "(a){return a}\n");
+                }
             } else {
                 for (var field : nonStaticFields) {
                     var index = field.getIndex();
@@ -820,7 +830,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 if (e.getFallback().isPresent()) {
                     var fallback = translateExpression(e.getFallback().get());
                     lines.add("default:{\n");
-                    fallback.dropValue(lines);
+                    fallback.setValue(lines, tmpvar + "=");
                     lines.add("}\n");
                 } else {
                     lines.add("default:throw new Error(\"Invalid tag\");\n");
