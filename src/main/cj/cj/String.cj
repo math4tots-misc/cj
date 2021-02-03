@@ -1,6 +1,6 @@
 package cj
 
-native class String: Repr, ToBool, Hash, Iterable[Char], Default {
+native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def toString(self: Self): Self
     def repr(self: Self): String
 
@@ -15,6 +15,7 @@ native class String: Repr, ToBool, Hash, Iterable[Char], Default {
 
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int
+    def __lt(self, other: Self): Bool
 
     def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String
 

@@ -124,4 +124,18 @@ class Test03List {
         list.addAll(["x", "y", "z"])
         Assert.equal(list, ["a", "b", "c", "x", "y", "z"])
     }
+
+    @test
+    def sort() {
+        {
+            val list = [1, 2, 3, 4, 11, 111, 12, 22, 444]
+            list.sort()
+            Assert.equal(list, [1, 2, 3, 4, 11, 12, 22, 111, 444])
+        }
+        {
+            val list = ["1", "2", "3", "4", "11", "111", "12", "22", "444"]
+            list.sort()
+            Assert.equal(list, ["1", "11", "111", "12", "2", "22", "3", "4", "444"])
+        }
+    }
 }

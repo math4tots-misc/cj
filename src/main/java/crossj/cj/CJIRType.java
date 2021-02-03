@@ -23,7 +23,7 @@ public interface CJIRType {
     default CJIRMethodRef findMethod(String shortName, CJMark... marks) {
         var methodRef = findMethodOrNull(shortName);
         if (methodRef == null) {
-            throw CJError.of("Method " + Repr.of(shortName) + " not found in " + toRawQualifiedName(), marks);
+            throw CJError.of("Method " + Repr.of(shortName) + " not found in " + repr(), marks);
         }
         return methodRef;
     }

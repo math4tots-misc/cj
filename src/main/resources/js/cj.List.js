@@ -87,6 +87,10 @@ class MC$cj$List {
     M$default() {
         return [];
     }
+    M$sort(self) {
+        const TV$T = this.TV$T;
+        self.sort((a, b) => TV$T.M$__cmp(a, b));
+    }
     M$__eq(self, other) {
         const T = this.TV$T;
         if (self.length !== other.length) {

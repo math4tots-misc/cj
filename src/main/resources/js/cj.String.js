@@ -41,6 +41,9 @@ class MC$cj$String {
         }
         return h;
     }
+    M$__lt(self, other) {
+        return self < other;
+    }
     M$join(TV$T, TV$C, self, parts) {
         return Array.from(TV$C.M$iter(parts)).map(t => TV$T.M$toString(t)).join(self);
     }
