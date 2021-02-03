@@ -1,9 +1,9 @@
-package cjx.mat
+package cjx.math.mat
 
-import cjx.mat.InverseMatrixSolver
+import cjx.math.mat.InverseMatrixSolver
 import cj.Approximate
-import cjx.mat.DeterminantSolver
-import cjx.mat.Matx
+import cjx.math.mat.DeterminantSolver
+import cjx.math.mat.Matx
 
 class MatrixTest {
     # Some tests from the "Ray Tracer Challenge" book

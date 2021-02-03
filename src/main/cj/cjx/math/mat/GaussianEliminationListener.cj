@@ -1,4 +1,4 @@
-package cjx.mat
+package cjx.math.mat
 
 trait GaussianEliminationListener {
     ## Callback for when two rows are swapped

@@ -1,8 +1,8 @@
-package cjx.mat
+package cjx.math.mat
 
 import cj.Float64Array
 import cj.Math
-import cjx.mat.Matx
+import cjx.math.mat.Matx
 
 ## Some utilities ported from github.com/toji/gl-matrix
 class Mat4 {

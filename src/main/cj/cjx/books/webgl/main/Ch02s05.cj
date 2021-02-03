@@ -2,9 +2,9 @@ package cjx.books.webgl.main
 
 import cj.js.web.HTMLElement
 import cj.js.web.WebGLUniformLocation
-import cjx.mat.Mat4
+import cjx.math.mat.Mat4
 import cj.Float32Array
-import cjx.mat.Matx
+import cjx.math.mat.Matx
 import cj.js.web.WebGLBuffer
 import cj.js.web.WebGLVertexArrayObject
 import cj.Int16Array

@@ -1,9 +1,9 @@
-package cjx.mat
+package cjx.math.mat
 
-import cjx.mat.GaussianElimination
-import cjx.mat.Matx
+import cjx.math.mat.GaussianElimination
+import cjx.math.mat.Matx
 import cj.Float64Array
-import cjx.mat.GaussianEliminationListener
+import cjx.math.mat.GaussianEliminationListener
 
 class InverseMatrixSolver : GaussianEliminationListener {
     private var invertible = true

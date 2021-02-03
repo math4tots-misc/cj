@@ -1,9 +1,9 @@
-package cjx.mat
+package cjx.math.mat
 
 import cj.Float32Array
-import cjx.mat.InverseMatrixSolver
+import cjx.math.mat.InverseMatrixSolver
 import cj.Approximate
-import cjx.mat.DeterminantSolver
+import cjx.math.mat.DeterminantSolver
 import cj.Error
 import cj.Float64Array
 

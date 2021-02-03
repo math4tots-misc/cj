@@ -1,7 +1,7 @@
-package cjx.mat
+package cjx.math.mat
 
-import cjx.mat.GaussianEliminationListener
-import cjx.mat.Matx
+import cjx.math.mat.GaussianEliminationListener
+import cjx.math.mat.Matx
 import cj.Float64Array
 
 ## Performs gaussian elimination to reduced row echelon form

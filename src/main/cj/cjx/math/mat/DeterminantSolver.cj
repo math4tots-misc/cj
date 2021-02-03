@@ -1,8 +1,8 @@
-package cjx.mat
+package cjx.math.mat
 
-import cjx.mat.GaussianEliminationListener
-import cjx.mat.Matx
-import cjx.mat.GaussianElimination
+import cjx.math.mat.GaussianEliminationListener
+import cjx.math.mat.Matx
+import cjx.math.mat.GaussianElimination
 
 class DeterminantSolver : GaussianEliminationListener {
     private var denominator : Double = 1
