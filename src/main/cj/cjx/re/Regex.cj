@@ -10,6 +10,8 @@ import cj.Error
 ##
 class Regex {
 
+    static val defaultFilename = "<string>"
+
     val nfa: CachingNFA
 
     @variadic
@@ -30,7 +32,10 @@ class Regex {
     def matches(self: Self, string: String): Bool = self.fullMatch(string).isPresent()
 
     def matcher(self: Self, string: String): Matcher = (
-        Matcher.__malloc(nfa, string, false, string.size(), 0, 1, 1))
+        Matcher.__malloc(nfa, defaultFilename, string, false, string.size(), 0, 1, 1))
+
+    def matcherWithFilename(self: Self, filename: String, string: String): Matcher = (
+        Matcher.__malloc(nfa, filename, string, false, string.size(), 0, 1, 1))
 
     private def matchEx(
             self: Self,
@@ -38,11 +43,12 @@ class Regex {
             start: Int,
             end: Int,
             fullMatch: Bool): Nullable[MatchResult] = {
-        Matcher.__malloc(nfa, string, fullMatch, end, start, 1, 1).match()
+        Matcher.__malloc(nfa, defaultFilename, string, fullMatch, end, start, 1, 1).match()
     }
 
     class Matcher {
         val nfa: CachingNFA
+        val filename: String
         val string: String
         val fullMatch: Bool
         val end: Int
@@ -529,6 +535,7 @@ class Regex {
                 case '[' = {
                     self.next()
                     val set = Set[Int]()
+                    val negate = consume('^')
                     while not self.consume(']') {
                         val ch = self.next()
                         if (ch.isLetter() or ch.isDigit()) and self.peek() == '-' {
@@ -559,7 +566,7 @@ class Regex {
                             }
                         }
                     }
-                    Tree.set(set)
+                    Tree.set(if negate { allLetters.filter(x -> x not in set) } else { set })
                 }
                 case '?'
                 case '*'

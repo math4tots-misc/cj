@@ -28,8 +28,8 @@ class Lexer[Token] {
 
     def builder(): Builder[Token] = Builder[Token].__malloc()
 
-    def lex(self, string: String): List[Token] = {
-        val matcher = regex.matcher(string)
+    def lex(self, filename: String, string: String): List[Token] = {
+        val matcher = regex.matcherWithFilename(filename, string)
         val tokens: List[Token] = []
         var ok = true
         while ok and not matcher.eof() {
