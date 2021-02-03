@@ -79,6 +79,19 @@ class MC$cj$String {
         return isNaN(i) ? null : i;
     }
 
+    M$startsWith(self, prefix) {
+        return self.startsWith(prefix);
+    }
+    M$startsWithAt(self, prefix, startIndex) {
+        return self.startsWith(prefix, startIndex);
+    }
+    M$endsWith(self, suffix) {
+        return self.endsWith(suffix);
+    }
+    M$endsWithAt(self, suffix, endIndex) {
+        return self.endsWith(suffix, endIndex);
+    }
+
     M$trim(self) {
         return self.trim();
     }

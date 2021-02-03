@@ -1063,8 +1063,8 @@ final class CJPass04 extends CJPassBaseEx {
                     for (var bound : variableType.getDeclaration().getTraits()) {
                         var givenImplTrait = given.getImplementingTraitByItemOrNull(bound.getItem());
                         if (givenImplTrait == null) {
-                            throw CJError.of(given + " does not implement required bound " + bound, inferMark,
-                                    variableType.getDeclaration().getMark());
+                            throw CJError.of(given.repr() + " does not implement required bound " + bound.repr(),
+                                    inferMark, variableType.getDeclaration().getMark());
                         }
                         for (int i = 0; i < bound.getArgs().size(); i++) {
                             var typeFromBound = bound.getArgs().get(i);

@@ -48,6 +48,11 @@ public final class CJIRSelfType implements CJIRType {
     }
 
     @Override
+    public String repr() {
+        return "Self";
+    }
+
+    @Override
     public String getImplicitMethodNameForTypeOrNull(CJIRType type) {
         return selfTrait.getImplicitMethodNameForTypeOrNull(type);
     }

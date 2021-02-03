@@ -11,7 +11,7 @@ import crossj.base.Tuple;
 public final class CJToken {
     // various token types
 
-    // general categories (1-15)
+    // general categories (1-10)
     public static final int EOF = 1;
     public static final int DOUBLE = 2;
     public static final int INT = 3;
@@ -274,7 +274,7 @@ public final class CJToken {
             case '\n':
                 return "'\\n'";
             default:
-                if (type >= 32 || type <= 127) {
+                if (type >= 32 && type <= 127) {
                     return "'" + Str.fromCodePoint(type) + "'";
                 } else {
                     return "Unknown(" + type + ")";

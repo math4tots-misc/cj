@@ -98,7 +98,12 @@ class Regex {
                     lastMatchEndColumn = column
                 }
             }
-            if lastMatchEnd == -1 { null } else {
+            if lastMatchEnd == -1 {
+                self.i = start
+                self.line = startLine
+                self.column = startColumn
+                null
+            } else {
                 self.i = lastMatchEnd
                 self.line = lastMatchEndLine
                 self.column = lastMatchEndColumn

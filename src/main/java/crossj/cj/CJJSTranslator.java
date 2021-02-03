@@ -526,6 +526,15 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     if (field.isStatic()) {
                         var target = ownerStr + "." + translateFieldName(field.getName());
                         switch (info.getKind()) {
+                            case "":
+                                if (!field.isMutable() && field.getExpression().isPresent() &&
+                                        field.getExpression().get() instanceof CJIRLiteral) {
+                                    var literal = (CJIRLiteral) field.getExpression().get();
+                                    var result = visitLiteral(literal, null);
+                                    Assert.that(result.getLines().isEmpty());
+                                    return Pair.of(result.getExpression(), true);
+                                }
+                                break;
                             case "=":
                                 Assert.equals(allArgs.size(), 1);
                                 return Pair.of(target + info.getKind() + allArgs.last(), false);

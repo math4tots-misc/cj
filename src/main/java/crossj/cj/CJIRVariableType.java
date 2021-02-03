@@ -58,6 +58,11 @@ public final class CJIRVariableType implements CJIRType {
     }
 
     @Override
+    public String repr() {
+        return getName();
+    }
+
+    @Override
     public boolean isAbsoluteType() {
         return false;
     }

@@ -31,6 +31,19 @@ abstract class CJIRTraitOrClassType {
         return getItem().getBindingWithSelfType(selfType, getArgs());
     }
 
+    public final String repr() {
+        var sb = new StringBuilder();
+        sb.append(getItem().getFullName());
+        if (getArgs().size() > 0) {
+            sb.append("[");
+            for (var arg : getArgs()) {
+                sb.append(arg.repr());
+            }
+            sb.append("]");
+        }
+        return sb.toString();
+    }
+
     public List<CJIRTrait> getTraits() {
         var traits = List.<CJIRTrait>of();
         var binding = getBinding();

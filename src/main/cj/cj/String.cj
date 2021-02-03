@@ -30,6 +30,11 @@ native class String: Repr, ToBool, Hash, Iterable[Char], Default {
 
     def parseInt(self: Self): Nullable[Int]
 
+    def startsWith(self, prefix: String): Bool
+    def startsWithAt(self, prefix: String, startIndex: Int): Bool
+    def endsWith(self, suffix: String): Bool
+    def endsWithAt(self, suffix: String, endIndex: Int): Bool
+
     def trim(self: Self): String
 
     def default(): Self

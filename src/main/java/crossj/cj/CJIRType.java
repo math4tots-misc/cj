@@ -69,6 +69,8 @@ public interface CJIRType {
 
     String toRawQualifiedName();
 
+    String repr();
+
     default boolean implementsTrait(CJIRTrait trait) {
         for (var subtrait : getTraits()) {
             if (subtrait.extendsTrait(trait)) {
