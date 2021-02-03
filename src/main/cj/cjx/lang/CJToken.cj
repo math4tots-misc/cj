@@ -91,15 +91,15 @@ class CJToken : Repr {
     val column : Int
 
     def repr(self): String = (
-        "CJToken(" + typeString(type) + ", " + text.repr() + ", " + line + ", " + column + ")")
+        "CJToken(" + typeRepr(type) + ", " + text.repr() + ", " + line + ", " + column + ")")
 
     def keywordString(type: Int): String = {
-        val str = typeString(type)
+        val str = typeRepr(type)
         Assert.withMessage(str.startsWith("kw"), str)
         str["kw".size():]
     }
 
-    def typeString(type: Int): String = switch type {
+    def typeRepr(type: Int): String = switch type {
         case tEOF = "tEOF"
         case tDOUBLE = "tDOUBLE"
         case tINT = "tINT"
@@ -166,7 +166,7 @@ class CJToken : Repr {
         case kwCATCH = "kwCATCH"
         case kwFINALLY = "kwFINALLY"
         case '\n' = "'\\n'"
-        else = if type >= 32 and type <= 127 { type.toChar().toString() } else {
+        else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"
         }
     }
