@@ -36,6 +36,11 @@ trait Iterable[T?]: ToList[T] {
         ret
     }
 
+    if T : Ord def sorted(self): List[T] = {
+        val list = toList()
+        list.sort()
+        list
+    }
     if T : Ord def min(self: Self): T = self.reduce((a, b) -> if a < b { a } else { b })
     if T : Ord def max(self: Self): T = self.reduce((a, b) -> if a < b { b } else { a })
 }

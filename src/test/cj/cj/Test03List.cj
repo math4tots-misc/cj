@@ -137,5 +137,10 @@ class Test03List {
             list.sort()
             Assert.equal(list, ["1", "11", "111", "12", "2", "22", "3", "4", "444"])
         }
+        {
+            val set = Set(1, 3, 5, 7, 6, 4, 2)
+            Assert.equal(set.sorted(), [1, 2, 3, 4, 5, 6, 7])
+            Assert.equal(set, Set(1, 2, 3, 4, 5, 6, 7))
+        }
     }
 }
