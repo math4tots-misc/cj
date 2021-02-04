@@ -14,7 +14,7 @@ class CJLexer {
         val b = Lexer[CJToken].builder()
         b.add("(\\d+\\.\\d*|\\.\\d+)(e|E-?\\d+)?", m -> tok(CJToken.tDOUBLE, m))
         b.add("\\d+(e|E)-?\\d+", m -> tok(CJToken.tDOUBLE, m))
-        # b.add("0x[0-9A-Fa-f]n+", m -> tok(CJToken.tBIGINT, m)) # hex literals
+        b.add("0x[0-9A-Fa-f]+n", m -> tok(CJToken.tBIGINT, m)) # hex literals
         b.add("\\d+n", m -> tok(CJToken.tBIGINT, m))
         b.add("0x[0-9A-Fa-f]+", m -> tok(CJToken.tINT, m)) # hex literals
         b.add("\\d+", m -> tok(CJToken.tINT, m))

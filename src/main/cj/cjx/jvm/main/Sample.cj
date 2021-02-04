@@ -129,7 +129,7 @@ class Sample {
             }
         }
 
-        def add(self, info: CpInfo): Int {
+        private def add(self, info: CpInfo): Int {
             val id = infos.size() + 1
             infos.add(info)
             id

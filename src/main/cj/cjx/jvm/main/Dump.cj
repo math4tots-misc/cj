@@ -142,7 +142,7 @@ class Dump {
         val thisClass = reader.getU16()
         println("thisClass = " + classref(thisClass))
 
-        val superClass =reader.getU16()
+        val superClass = reader.getU16()
         println("superClass = " + classref(superClass))
 
         val interfacesCount = reader.getU16()
