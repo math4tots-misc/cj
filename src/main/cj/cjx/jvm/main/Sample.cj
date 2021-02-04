@@ -26,6 +26,9 @@ class Sample {
 
     ## Access flags
     static val cACC_PUBLIC = 0x0001
+    static val cACC_PRIVATE = 0x0002
+    static val cACC_PROTECTED = 0x0004
+    static val cACC_STATIC = 0x0008
     static val cACC_FINAL = 0x0010
     static val cACC_SUPER = 0x0020 # treat superclass methods specially w/invokespecial
     static val cACC_INTERFACE = 0x0200 # interface, not a class
@@ -40,28 +43,57 @@ class Sample {
 
         Assert.withMessage("." not in fullClassName, "Use '/' instead of '.' in class names")
 
-        val cp = ConstantPool()
-        val thisClass = cp.classref(fullClassName)
-        val superClass = cp.classref("java/lang/Object")
-        IO.println("cpsize = " + cp.count())
+        val ctx = Context()
+        val thisClass = ctx.classref(fullClassName)
+        val superClass = ctx.classref("java/lang/Object")
+        val mainCode = ctx.code(1)
+        mainCode.vreturn()
+        val mainMethod = ctx.method(
+            cACC_PUBLIC | cACC_STATIC,
+            "main",
+            "([Ljava/lang/String;)V")
+        mainMethod.add(mainCode)
 
         val b = Buffer.empty()
         b.useLittleEndian(false)
         b.addU32(0xCAFEBABE) # magic
         b.addU16(0x00) # minor version
         b.addU16(0x33) # major version (Java SE 7)
-        cp.emit(b) # constantPoolCount and constantPool[]
+        ctx.cp.emit(b) # constantPoolCount and constantPool[]
         b.addU16(cACC_PUBLIC | cACC_SUPER) # access flags
         b.addU16(thisClass)
         b.addU16(superClass)
         b.addU16(0) # interfacesCount (none for now)
         b.addU16(0) # fieldsCount (none for now)
-        b.addU16(0) # methodsCount (none for now)
+        ctx.emitMethods(b)
         b.addU16(0) # attribuesCount (none for now)
         FS.writeFileBytes(path, b)
     }
 
     @derive(new)
+    class Context {
+        val cp: ConstantPool = Default()
+        val methods: List[MethodInfo] = []
+
+        def classref(self, fullClassName: String): Int = cp.classref(fullClassName)
+
+        def method(self, accessFlags: Int, name: String, descriptor: String): MethodInfo = {
+            val method = MethodInfo(accessFlags, cp.utf8(name), cp.utf8(descriptor))
+            methods.add(method)
+            method
+        }
+
+        def code(self, argc: Int): Code = Code(self, argc)
+
+        def emitMethods(self, out: Buffer) {
+            out.addU16(methods.size())
+            for method in methods {
+                method.emit(out)
+            }
+        }
+    }
+
+    @derive(new, default)
     class ConstantPool {
         val infos: List[CpInfo] = []
         val classrefMap: Map[String, Int] = Map()
@@ -182,5 +214,111 @@ class Sample {
                 }
             }
         }
+    }
+
+    @derive(new)
+    class MethodInfo {
+        val accessFlags: Int
+        val nameIndex: Int
+        val descriptorIndex: Int
+        val attributes: List[AttributeInfo] = []
+
+        def emit(self, out: Buffer) {
+            out.addU16(accessFlags)
+            out.addU16(nameIndex)
+            out.addU16(descriptorIndex)
+            out.addU16(attributes.size())
+            for attribute in attributes {
+                attribute.emit(out)
+            }
+        }
+
+        def add[C: ToAttribute](self, c: C) {
+            self.attributes.add(c.toAttribute())
+        }
+    }
+
+    trait ToAttribute {
+        def toAttribute(self): AttributeInfo
+    }
+
+    @derive(new)
+    class AttributeInfo {
+        val attributeNameIndex: Int
+        val data: AttributeInfoData
+
+        def emit(self, out: Buffer) {
+            out.addU16(attributeNameIndex)
+            val updatePos = out.size()
+            out.addU32(0)
+            val startPos = out.size()
+            data.emit(out)
+            val endPos = out.size()
+            out.setU32(updatePos, endPos - startPos)
+        }
+    }
+
+    union AttributeInfoData {
+        case code(CodeAttribute)
+        def emit(self, out: Buffer) = when self {
+            case code(code) = code.emit(out)
+        }
+    }
+
+    @derive(new)
+    class CodeAttribute {
+        val maxStack: Int
+        val maxLocals: Int
+        val code: Buffer
+        val exceptionTable: List[ExceptionTableEntry] = []
+        val attributes: List[AttributeInfo] = []
+
+        def emit(self, out: Buffer) {
+            out.addU16(maxStack)
+            out.addU16(maxLocals)
+            IO.println("code.size() = " + code.size())
+            out.addU32(code.size())
+            out.addBuffer(code)
+            out.addU16(exceptionTable.size())
+            for entry in exceptionTable {
+                entry.emit(out)
+            }
+            out.addU16(attributes.size())
+            for attribute in attributes {
+                attribute.emit(out)
+            }
+        }
+    }
+
+    class ExceptionTableEntry {
+        val startPc: Int
+        val endPc: Int
+        val handlerPc: Int
+        val catchType: Int
+
+        def emit(self, out: Buffer) {
+            throw "TODO"
+        }
+    }
+
+    ## Bytecode builder
+    @derive(new)
+    class Code : ToAttribute {
+        val ctx: Context
+        var maxLocals : Int
+        var maxStack = 0
+        val buffer: Buffer = Buffer.empty()
+
+        def vreturn(self) {
+            buffer.addU8(0xb1)
+        }
+
+        def toCodeAttribute(self): CodeAttribute = {
+            CodeAttribute(maxStack, maxLocals, buffer)
+        }
+
+        def toAttribute(self): AttributeInfo = AttributeInfo(
+            ctx.cp.utf8("Code"),
+            AttributeInfoData.code(toCodeAttribute()))
     }
 }
