@@ -68,20 +68,11 @@ class Sample {
 
         ## Gets the constantPoolCount value as required by the class file spec
         def count(self): Int = {
-            # 1 + infos.map(i -> when i {
-            #     case long(i) = 2
-            #     case double(f) = 2
-            #     else = 1
-            # }).fold(0, (a, b) -> a + b)
-            var total = 1
-            for info in infos {
-                total += when info {
-                    case long(i) = 2
-                    case double(i) = 2
-                    else = 1
-                }
-            }
-            total
+            1 + infos.map(i -> when i {
+                case long(i) = 2
+                case double(f) = 2
+                else = 1
+            }).fold(0, (a, b) -> a + b)
         }
 
         def emit(self, out: Buffer) {
