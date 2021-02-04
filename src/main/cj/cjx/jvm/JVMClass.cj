@@ -1,5 +1,6 @@
 package cjx.jvm
 
+import cjx.jvm.OpcodeInfo
 import cj.StringBuilder
 import cj.BigInt
 import cj.Error
@@ -243,8 +244,8 @@ class JVMClass {
         out.indent()
         val reader = BufferReader(code)
         while reader {
-            val position = reader.i.hex().rpad(6, " ")
-            out.start(position + ": ")
+            val pos = reader.i
+            out.start(pos.hex().rpad(6, " ") + ": ")
             val opcode = reader.getU8()
             if encounteredUnrecognizedOpcode {
                 # It's not safe to assume the rest of the code is properly interpreted
@@ -252,48 +253,73 @@ class JVMClass {
                 out.end(opcode.hex())
             } else {
                 switch opcode {
-                    case 0x00 = out.end("00 nop")
-                    case 0x01 = out.end("01 aconst_null")
-                    case 0x02 = out.end("02 iconst_m1")
-                    case 0x03 = out.end("03 iconst_0")
-                    case 0x04 = out.end("04 iconst_1")
-                    case 0x05 = out.end("05 iconst_2")
-                    case 0x06 = out.end("06 iconst_3")
-                    case 0x07 = out.end("07 iconst_4")
-                    case 0x08 = out.end("08 iconst_5")
+                    case 0x10 = {
+                        # Push byte as integer value
+                        # This is the only opcode that has a direct i8 argument
+                        val value = reader.getI8()
+                        out.end("10 bipush " + value)
+                    }
+                    case 0x11 = {
+                        # Push short as integer value
+                        # This is the only opcode that has a direct i16 value
+                        val value = reader.getI16()
+                        out.end("11 sipush " + value)
+                    }
                     case 0x12 = {
+                        # Load a constant
+                        # This is the only opcode that has an 8-bit cp-index argument
                         val index = reader.getU8()
                         out.end("12 ldc " + cp.getConst(index))
                     }
-                    case 0x13 = {
-                        # Note, long or double not allowed with ldc or ldc_w
-                        val index = reader.getU16()
-                        out.end("13 ldc_w " + cp.getConst(index))
+                    case 0x84 = {
+                        # iinc - increment
+                        # this is the only opcode that has this signature
+                        val index = reader.getU8()
+                        val value = reader.getI8()
+                        out.end("84 iinc " + index + " " + value)
                     }
-                    case 0x14 = {
-                        # Like ldc_w, but for long or double
-                        val index = reader.getU16()
-                        out.end("14 ldc2_w" + cp.getConst(index))
+                    case 0xc4 = {
+                        # wide modifier for local variable opcodes
+                        val nextOpcode = reader.getU8()
+                        if nextOpcode == 0x84 {
+                            # i.e. modified iinc
+                            val index = reader.getU16()
+                            val value = reader.getI16()
+                            out.end("c4 84 iinc_w " + index + " " + value)
+                        } else {
+                            val opcodeName = OpcodeInfo.oneU8LocalArgOpcode[nextOpcode] + "_w"
+                            val index = reader.getU16()
+                            out.end(
+                                "c4 " + nextOpcode.hex().lpad(2, "0") + " " +
+                                opcodeName + " " + index)
+                        }
                     }
-                    case 0x2A = out.end("2A aload_0")
-                    case 0xB2 = {
-                        val fieldrefIndex = reader.getU16()
-                        val fieldref = cp.getMember(fieldrefIndex)
-                        out.end("B2 getstatic " + fieldref)
-                    }
-                    case 0xB6 = {
-                        val index = reader.getU16()
-                        val methodref = cp.getMember(index)
-                        out.end("B6 invokevirtual " + methodref)
-                    }
-                    case 0xB7 = {
-                        val methodref = cp.getMember(reader.getU16())
-                        out.end("B7 invokespecial " + methodref)
-                    }
-                    case 0xB1 = out.end("B1 return")
                     else = {
-                        out.end("Unrecognized opcode: 0x" + opcode.hex().lpad(2, "0"))
-                        encounteredUnrecognizedOpcode = true
+                        val opcodeHex = opcode.hex().lpad(2, "0")
+                        if opcode in OpcodeInfo.zeroArgOpcodes {
+                            val opcodeName = OpcodeInfo.zeroArgOpcodes[opcode]
+                            out.end(opcodeHex + " " + opcodeName)
+                        } else if opcode in OpcodeInfo.oneU16BranchArgOpcode {
+                            val opcodeName = OpcodeInfo.oneU16BranchArgOpcode[opcode]
+                            val offset = reader.getU16()
+                            val dest = pos + offset
+                            val destHex = dest.hex()
+                            out.end(
+                                opcodeHex + " " + opcodeName +
+                                " offset=" + offset +
+                                " -> " + destHex)
+                        } else if opcode in OpcodeInfo.oneU16ConstArgOpcode {
+                            val opcodeName = OpcodeInfo.oneU16ConstArgOpcode[opcode]
+                            val index = reader.getU16()
+                            out.end(opcodeHex + " " + opcodeName + " " + cp.getConst(index))
+                        } else if opcode in OpcodeInfo.oneU8LocalArgOpcode {
+                            val opcodeName = OpcodeInfo.oneU8LocalArgOpcode[opcode]
+                            val index = reader.getU8()
+                            out.end(opcodeHex + " " + opcodeName + " " + index)
+                        } else {
+                            out.end("Unrecognized opcode: 0x" + opcodeHex)
+                            encounteredUnrecognizedOpcode = true
+                        }
                     }
                 }
             }
@@ -524,12 +550,15 @@ class JVMClass {
 
         def getConstNoCache(self, index: Int): String = when infos[index - 1] {
             case utf8(string) = "utf8(" + string.repr() + ")"
-            case string(i) = "string(" + getUtf8(i).repr() + ")"
             case integer(i) = "int(" + i + ")"
             case float(f) = "float(" + f + ")"
             case long(i) = "long(" + i + ")"
             case double(f) = "double(" + f + ")"
             case classref(c) = "class(" + getUtf8(c) + ")"
+            case string(i) = "string(" + getUtf8(i).repr() + ")"
+            case fieldref(ci, nti) = getMember(index)
+            case methodref(ci, nti) = getMember(index)
+            case interfaceMethodref(ci, nti) = getMember(index)
             else = throw Error("Unsupported constant pool index entry " + index)
         }
 
