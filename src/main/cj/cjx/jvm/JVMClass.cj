@@ -22,6 +22,9 @@ class JVMClass {
     static val cMethodref = 10
     static val cInterfaceMethodref = 11
     static val cNameAndType = 12
+    static val cMethodHandle = 15
+    static val cMethodType = 16
+    static val cInvokeDynamic = 18
 
     ## Access flags
     static val cACC_PUBLIC = 0x0001
@@ -71,12 +74,16 @@ class JVMClass {
             majorVersionToString(majorVersion) +
             " (" + majorVersion.hex() + ")")
         val constantPoolSize = cp.count()
-        out.line("constantPoolSize = " + constantPoolSize + " - 1")
-        out.indent()
-        for i = 1; i < constantPoolSize; i++ {
-            dumpCpInfo(out, i, cp.infos[i - 1])
+
+        if out.includeConstantPool {
+            out.line("constantPoolSize = " + constantPoolSize + " - 1")
+            out.indent()
+            for i = 1; i < constantPoolSize; i++ {
+                dumpCpInfo(out, i, cp.infos[i - 1])
+            }
+            out.dedent()
         }
-        out.dedent()
+
         out.line("accessFlags = " + translateFlags(accessFlags))
         out.line("thisClass = " + cp.getClassref(thisClass))
         out.line("superClass = " + cp.getClassref(superClass))
@@ -139,7 +146,7 @@ class JVMClass {
             case long(i) = out.end("Long ".rpad(16, " ") + i)
             case double(f) = out.end("Double ".rpad(16, " ") + f)
             case classref(i) = out.end("Class ".rpad(16, " ") + cp.getUtf8(i))
-            case string(i) = out.end("String ".rpad(16, " ") + cp.getUtf8(i))
+            case string(i) = out.end("String ".rpad(16, " ") + cp.getUtf8(i).repr())
             case fieldref(classIndex, nameAndTypeIndex) = {
                 val className = cp.getClassref(classIndex)
                 val (name, type) = cp.getNameAndType(nameAndTypeIndex)
@@ -160,6 +167,9 @@ class JVMClass {
                 val descriptor = cp.getUtf8(descriptorIndex)
                 out.end("NameAndType ".rpad(16, " ") + name + ":" + descriptor)
             }
+            case methodHandle(x, y) = out.end("MethodHandle " + x + " " + y) # TODO
+            case methodType(x) = out.end("MethodType " + x) # TODO
+            case invokeDynamic(x, y) = out.end("InvokeDynamic " + x + " " + y) # TODO
         }
     }
 
@@ -278,6 +288,37 @@ class JVMClass {
                         val value = reader.getI8()
                         out.end("84 iinc " + index + " " + value)
                     }
+                    case 0xB9 = {
+                        # invokeinterface -- has a funky signature
+                        # in that it duplicates the invocation arg length in
+                        # its opcode argument (in addition to its descriptor)
+                        val index = reader.getU16()
+                        val argc = reader.getU8()
+                        Assert.equal(reader.getU8(), 0)
+                        out.end("B9 invokeinterface " + cp.getConst(index) + " " + argc)
+                    }
+                    case 0xBA = {
+                        # invokedynamic -- requires 2 extra 0 bytes for some reason
+                        val index = reader.getU16()
+                        Assert.equal(reader.getU16(), 0)
+                        out.end("BA invokedynamic " + cp.getConst(index))
+                    }
+                    case 0xBC = {
+                        # create new primitive array
+                        val atype = reader.getU8()
+                        val atypeName = switch atype {
+                            case 4 = "boolean"
+                            case 5 = "char"
+                            case 6 = "float"
+                            case 7 = "double"
+                            case 8 = "byte"
+                            case 9 = "short"
+                            case 10 = "int"
+                            case 11 = "long"
+                            else = "unknown(" + atype + ")"
+                        }
+                        out.end("BC newarray " + atypeName + " (atype=" + atype + ")")
+                    }
                     case 0xc4 = {
                         # wide modifier for local variable opcodes
                         val nextOpcode = reader.getU8()
@@ -301,7 +342,7 @@ class JVMClass {
                             out.end(opcodeHex + " " + opcodeName)
                         } else if opcode in OpcodeInfo.oneU16BranchArgOpcode {
                             val opcodeName = OpcodeInfo.oneU16BranchArgOpcode[opcode]
-                            val offset = reader.getU16()
+                            val offset = reader.getI16()
                             val dest = pos + offset
                             val destHex = dest.hex()
                             out.end(
@@ -425,6 +466,20 @@ class JVMClass {
                     val descriptorIndex = reader.getU16()
                     CpInfo.nameAndType(nameIndex, descriptorIndex)
                 }
+                case (JVMClass.cMethodHandle) = {
+                    val referenceKind = reader.getU8()
+                    val referenceIndex = reader.getU16()
+                    CpInfo.methodHandle(referenceKind, referenceIndex)
+                }
+                case (JVMClass.cMethodType) = {
+                    val descriptorIndex = reader.getU16()
+                    CpInfo.methodType(descriptorIndex)
+                }
+                case (JVMClass.cInvokeDynamic) = {
+                    val bootstrapMethodAttrIndex = reader.getU16()
+                    val nameAndTypeIndex = reader.getU16()
+                    CpInfo.invokeDynamic(bootstrapMethodAttrIndex, nameAndTypeIndex)
+                }
                 else = throw Error("Unrecognized cpinfo tag: " + tag)
             }
         }
@@ -488,6 +543,7 @@ class JVMClass {
             val maxLocals = reader.getU16()
             val codeLength = reader.getI32()
             val code = reader.getBuffer(codeLength)
+            code.useLittleEndian(false)
             val exceptionTableLength = reader.getU16()
             val exceptionTable: List[ExceptionTableEntry] = []
             for i = 0; i < exceptionTableLength; i++ {
@@ -559,7 +615,10 @@ class JVMClass {
             case fieldref(ci, nti) = getMember(index)
             case methodref(ci, nti) = getMember(index)
             case interfaceMethodref(ci, nti) = getMember(index)
-            else = throw Error("Unsupported constant pool index entry " + index)
+            case nameAndType(ni, ti) = "nameAndType(" + getUtf8(ni) + ", " + getUtf8(ti) + ")"
+            case methodHandle(rk, ri) = "methodHandle(" + rk + ", " + ri + ")"
+            case methodType(di) = "methodType(" + getUtf8(di) + ")"
+            case invokeDynamic(bi, nti) = "invokeDynamic(" + bi + ", " + getConst(nti) + ")"
         }
 
         def getUtf8(self, index: Int): String = when infos[index - 1] {
@@ -689,6 +748,15 @@ class JVMClass {
         ## (name-index, descriptor-index (index to utf8 entry))
         case nameAndType(Int, Int)
 
+        ## (reference-kind (u1), reference-index)
+        case methodHandle(Int, Int)
+
+        ## (descriptor-index)
+        case methodType(Int)
+
+        ## (bootstrap-method-attr-index, name-and-type-index)
+        case invokeDynamic(Int, Int)
+
         def __get_tag(self): Int = when self {
             case utf8(data) = JVMClass.cUtf8
             case integer(i) = JVMClass.cInteger
@@ -701,6 +769,9 @@ class JVMClass {
             case methodref(ci, nti) = JVMClass.cMethodref
             case interfaceMethodref(ci, nti) = JVMClass.cInterfaceMethodref
             case nameAndType(ni, di) = JVMClass.cNameAndType
+            case methodHandle(rk, ri) = JVMClass.cMethodHandle
+            case methodType(di) = JVMClass.cMethodType
+            case invokeDynamic(bmai, nati) = JVMClass.cInvokeDynamic
         }
 
         def emit(self, out: Buffer) {
@@ -736,6 +807,17 @@ class JVMClass {
                 case nameAndType(nameIndex, descriptorIndex) = {
                     out.addU16(nameIndex)
                     out.addU16(descriptorIndex)
+                }
+                case methodHandle(referenceKind, referenceIndex) = {
+                    out.addU8(referenceKind)
+                    out.addU16(referenceIndex)
+                }
+                case methodType(descriptorIndex) = {
+                    out.addU16(descriptorIndex)
+                }
+                case invokeDynamic(bootstrapMethodAttrIndex, nameAndTypeIndex) = {
+                    out.addU16(bootstrapMethodAttrIndex)
+                    out.addU16(nameAndTypeIndex)
                 }
             }
         }
@@ -789,6 +871,7 @@ class JVMClass {
     class Writer {
         val sb: StringBuilder = StringBuilder()
         var depth = 0
+        var includeConstantPool = true
 
         def indent(self) {
             depth = depth + 1

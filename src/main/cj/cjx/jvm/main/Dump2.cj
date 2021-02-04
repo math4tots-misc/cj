@@ -7,10 +7,15 @@ import cj.Argv
 ## Like cjx.jvm.main.Dump, but uses the JVMClass class to parse and dump
 class Dump2 {
     def main() {
-        val path = Argv()[0]
-        val buffer = FS.readFileBytes(path)
-        val cls = JVMClass.fromBuffer(buffer)
-        cls.path = path
-        IO.println(cls.inspect())
+        var includeConstantPool = false
+        for path in Argv() {
+            val writer = JVMClass.Writer()
+            writer.includeConstantPool = includeConstantPool
+            val buffer = FS.readFileBytes(path)
+            val cls = JVMClass.fromBuffer(buffer)
+            cls.path = path
+            cls.dumpstr(writer)
+            IO.println(writer.sb.toString())
+        }
     }
 }
