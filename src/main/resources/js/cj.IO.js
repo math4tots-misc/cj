@@ -2,6 +2,13 @@ class MC$cj$IO {
     M$println(TV$T, t) {
         console.log(TV$T.M$toString(t));
     }
+    M$print(TV$T, t) {
+        if (typeof process !== 'undefined') {
+            process.stdout.write(TV$T.M$toString(t));
+        } else {
+            console.log(TV$T.M$toString(t));
+        }
+    }
     M$eprintln(TV$T, t) {
         console.error(TV$T.M$toString(t));
     }

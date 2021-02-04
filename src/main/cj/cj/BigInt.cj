@@ -4,9 +4,23 @@ import cj.math.Rational
 import cj.math.EuclideanDomain
 
 @implicit(Int, fromInt)
+@implicit(Double, fromDouble)
 native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, EuclideanDomain {
+
+    @implicit(Int, fromInt)
+    @implicit(Double, fromDouble)
+    @implicit(String, fromString)
+    class Converter {
+        val x: BigInt
+        def fromInt(i: Int): Self = __malloc(i)
+        def fromDouble(f: Int): Self = __malloc(f)
+        def fromString(s: String): Self = __malloc(BigInt.fromString(s))
+    }
+
+    def new(x: Converter): Self
     def fromString(s: String): Self
     def fromInt(i: Int): Self
+    def fromDouble(d: Double): Self
     def repr(self): String
     def toString(self): String
     def __eq(self, other: Self): Bool
@@ -32,6 +46,7 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, Euclidea
     def toDouble(self): Double
     def default(): Self
     def isNegative(self): Bool
+    def hex(self): String
 
     # for EuclideanDomain
     def __get_zero(): Self

@@ -46,13 +46,16 @@ class Sample {
         val ctx = Context()
         val thisClass = ctx.classref(fullClassName)
         val superClass = ctx.classref("java/lang/Object")
-        val mainCode = ctx.code(1)
-        mainCode.vreturn()
-        val mainMethod = ctx.method(
-            cACC_PUBLIC | cACC_STATIC,
-            "main",
-            "([Ljava/lang/String;)V")
-        mainMethod.add(mainCode)
+
+        {
+            val code = ctx.code(1)
+            code.vreturn()
+            val mainMethod = ctx.method(
+                cACC_PUBLIC | cACC_STATIC,
+                "main",
+                "([Ljava/lang/String;)V")
+            mainMethod.add(code)
+        }
 
         val b = Buffer.empty()
         b.useLittleEndian(false)
@@ -276,13 +279,19 @@ class Sample {
         def emit(self, out: Buffer) {
             out.addU16(maxStack)
             out.addU16(maxLocals)
-            IO.println("code.size() = " + code.size())
             out.addU32(code.size())
-            out.addBuffer(code)
+            {
+                val start = out.size()
+                out.addBuffer(code)
+                val end = out.size()
+                Assert.equal(code.size(), end - start)
+            }
+            Assert.equal(exceptionTable.size(), 0) # TODO
             out.addU16(exceptionTable.size())
             for entry in exceptionTable {
                 entry.emit(out)
             }
+            Assert.equal(attributes.size(), 0) # TODO
             out.addU16(attributes.size())
             for attribute in attributes {
                 attribute.emit(out)

@@ -80,6 +80,20 @@ class MC$cj$String {
         return self.repeat(n);
     }
 
+    M$lpad(self, length, prefix) {
+        while (self.length + prefix.length < length) {
+            self = prefix + self;
+        }
+        return self;
+    }
+
+    M$rpad(self, length, suffix) {
+        while (self.length + suffix.length < length) {
+            self += suffix;
+        }
+        return self;
+    }
+
     M$parseInt(string) {
         const i = parseInt(string, 10);
         return isNaN(i) ? null : i;

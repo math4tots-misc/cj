@@ -31,6 +31,14 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
 
     def __mul(self, n: Int): String
 
+    ## Return a new string repeatedly padded with the given prefix until the
+    ## final length is at least as long as length
+    def lpad(self, length: Int, prefix: String): String
+
+    ## Return a new string repeatedly padded with the given suffix until the
+    ## final length is at least as long as length
+    def rpad(self, length: Int, suffix: String): String
+
     def parseInt(self: Self): Nullable[Int]
 
     def startsWith(self, prefix: String): Bool

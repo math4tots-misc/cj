@@ -159,7 +159,11 @@ class MC$cj$Buffer {
      * @param {number} end
      */
     M$getUTF8(self, start, end) {
-        return new TextDecoder().decode(new Uint8Array(self[0].buffer, start, end));
+        const outerBuf = self[0];
+        const buffer = outerBuf.buffer;
+        const actualStart = outerBuf.byteOffset + start;
+        const length = end - start;
+        return new TextDecoder().decode(new Uint8Array(buffer, actualStart, length));
     }
     /**
      * @param {Buf} self
@@ -167,8 +171,12 @@ class MC$cj$Buffer {
      * @param {number} end
      */
     M$cut(self, start, end) {
+        const outerBuf = self[0];
+        const buffer = outerBuf.buffer;
+        const actualStart = outerBuf.byteOffset + start;
+        const length = end - start;
         const arrayBuffer = new ArrayBuffer(end - start);
-        new Uint8Array(arrayBuffer).set(new Uint8Array(self[0], start, end - start));
+        new Uint8Array(arrayBuffer).set(new Uint8Array(buffer, actualStart, length));
         return this.fromBufferWithEndian(arrayBuffer, self[1]);
     }
     /**
@@ -370,7 +378,7 @@ class MC$cj$Buffer {
      */
     M$addBuffer(self, other) {
         const i = self[2];
-        bufferSetSize(self, i + other[0].byteLength);
+        bufferSetSize(self, i + other[2]);
         this.M$setBuffer(self, i, other);
     }
     /**

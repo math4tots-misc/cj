@@ -1,9 +1,15 @@
 class MC$cj$BigInt {
+    M$new(x) {
+        return x;
+    }
     M$fromString(s) {
         return BigInt(s);
     }
     M$fromInt(i) {
         return BigInt(i);
+    }
+    M$fromDouble(f) {
+        return BigInt(f);
     }
     M$repr(self) {
         return self + 'n';
@@ -79,6 +85,9 @@ class MC$cj$BigInt {
     }
     M$isNegative(self) {
         return self < 0;
+    }
+    M$hex(self) {
+        return '0x' + self.toString(16).toUpperCase();
     }
 
     M$__get_zero() {

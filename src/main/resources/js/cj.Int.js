@@ -78,6 +78,9 @@ class MC$cj$Int {
     M$default() {
         return 0;
     }
+    M$hex(self) {
+        return '0x' + self.toString(16).toUpperCase();
+    }
     M$__get_zero() {
         return 0;
     }

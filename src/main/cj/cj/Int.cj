@@ -30,6 +30,7 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     def toChar(self: Self): Char
     def _fromChar(c: Char): Int
     def default(): Int
+    def hex(self): String
 
     # For EuclideanDomain
     def __get_zero(): Self
