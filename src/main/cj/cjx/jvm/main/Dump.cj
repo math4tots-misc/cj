@@ -59,6 +59,9 @@ class Dump {
     ## of their values
     val primitiveMap: Map[Int, String] = Map()
 
+    ## Caches the entries into the constant pool when requested as a value
+    val constCache: Map[Int, String] = Map()
+
     var depth = 0
 
     def main() {
@@ -90,7 +93,7 @@ class Dump {
 
         # Check magic
         val magic: BigInt = reader.getU32()
-        Assert.equal(magic.hex(), "0xCAFEBABE")
+        Assert.equal(magic.hex(), "CAFEBABE")
         println("magic " + magic.hex())
 
         println("minor version = " + reader.getU16())
@@ -214,6 +217,23 @@ class Dump {
     def nameAndType(self, id: Int): Tuple[String, String] = {
         val (nameId, descriptorId) = nameAndTypeMap[id]
         (utf8(nameId), utf8(descriptorId))
+    }
+
+    def const(self, id: Int): String = {
+        if id not in constCache {
+            constCache[id] = constNoCache(id)
+        }
+        constCache[id]
+    }
+
+    def constNoCache(self, id: Int): String = {
+        if id in stringMap {
+            "string(" + utf8(stringMap[id]).repr() + ")"
+        } else if id in classrefMap {
+            "class(" + classref(id) + ")"
+        } else {
+            primitiveMap[id]
+        }
     }
 
     def fillConstantInfo(self, i: Int) {
@@ -391,8 +411,48 @@ class Dump {
         while reader {
             val opcode = reader.getU8()
             switch opcode {
+                case 0x00 = println("00 nop")
+                case 0x01 = println("01 aconst_null")
+                case 0x02 = println("02 iconst_m1")
+                case 0x03 = println("03 iconst_0")
+                case 0x04 = println("04 iconst_1")
+                case 0x05 = println("05 iconst_2")
+                case 0x06 = println("06 iconst_3")
+                case 0x07 = println("07 iconst_4")
+                case 0x08 = println("08 iconst_5")
+                case 0x12 = {
+                    val index = reader.getU8()
+                    println("12 ldc " + const(index))
+                }
+                case 0x13 = {
+                    # Note, long or double not allowed with ldc or ldc_w
+                    val index = reader.getU16()
+                    println("13 ldc_w " + const(index))
+                }
+                case 0x14 = {
+                    # Like ldc_w, but for long or double
+                    val index = reader.getU16()
+                    println("14 ldc2_w" + const(index))
+                }
+                case 0x2A = println("2A aload_0")
+                case 0xB2 = {
+                    val fieldrefIndex = reader.getU16()
+                    IO.println("fieldrefIndex = " + fieldrefIndex)
+                    val fieldref = member(fieldrefIndex)
+                    println("B2 getstatic " + fieldref)
+                }
+                case 0xB6 = {
+                    val index = reader.getU16()
+                    val methodref = member(index)
+                    println("B6 invokevirtual " + methodref)
+                }
+                case 0xB7 = {
+                    val methodref = member(reader.getU16())
+                    println("B7 invokespecial " + methodref)
+                }
+                case 0xB1 = println("B1 return")
                 else = {
-                    println("Unrecognized opcode: " + opcode.hex())
+                    println("Unrecognized opcode: 0x" + opcode.hex().lpad(2, "0"))
                 }
             }
         }

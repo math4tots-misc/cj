@@ -81,14 +81,14 @@ class MC$cj$String {
     }
 
     M$lpad(self, length, prefix) {
-        while (self.length + prefix.length < length) {
+        while (self.length < length) {
             self = prefix + self;
         }
         return self;
     }
 
     M$rpad(self, length, suffix) {
-        while (self.length + suffix.length < length) {
+        while (self.length < length) {
             self += suffix;
         }
         return self;

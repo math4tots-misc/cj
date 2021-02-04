@@ -79,7 +79,7 @@ class MC$cj$Int {
         return 0;
     }
     M$hex(self) {
-        return '0x' + self.toString(16).toUpperCase();
+        return self.toString(16).toUpperCase();
     }
     M$__get_zero() {
         return 0;

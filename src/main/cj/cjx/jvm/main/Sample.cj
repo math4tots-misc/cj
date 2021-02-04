@@ -1,5 +1,6 @@
 package cjx.jvm.main
 
+import cj.Math
 import cj.BigInt
 import cj.Argv
 import cj.FS
@@ -48,7 +49,12 @@ class Sample {
         val superClass = ctx.classref("java/lang/Object")
 
         {
-            val code = ctx.code(1)
+            val code = ctx.code()
+            code.maxStack = 5
+            code.maxLocals = 1
+            code.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")
+            code.ldstr("Hello world!")
+            code.invokevirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
             code.vreturn()
             val mainMethod = ctx.method(
                 cACC_PUBLIC | cACC_STATIC,
@@ -86,7 +92,7 @@ class Sample {
             method
         }
 
-        def code(self, argc: Int): Code = Code(self, argc)
+        def code(self): Code = Code(self)
 
         def emitMethods(self, out: Buffer) {
             out.addU16(methods.size())
@@ -100,6 +106,12 @@ class Sample {
     class ConstantPool {
         val infos: List[CpInfo] = []
         val classrefMap: Map[String, Int] = Map()
+        val utf8Map: Map[String, Int] = Map()
+        val stringMap: Map[String, Int] = Map()
+        val nameAndTypeMap: Map[Tuple[String, String], Int] = Map()
+        val methodrefMap: Map[Tuple[String, String, String], Int] = Map()
+        val fieldrefMap: Map[Tuple[String, String, String], Int] = Map()
+        val interfaceMethodrefMap: Map[Tuple[String, String, String], Int] = Map()
 
         ## Gets the constantPoolCount value as required by the class file spec
         def count(self): Int = {
@@ -123,13 +135,61 @@ class Sample {
             id
         }
 
-        def utf8(self, data: String): Int = add(CpInfo.utf8(data))
+        def utf8(self, data: String): Int = {
+            if data not in utf8Map {
+                utf8Map[data] = add(CpInfo.utf8(data))
+            }
+            utf8Map[data]
+        }
 
         def classref(self, fullName: String): Int = {
             if fullName not in classrefMap {
                 classrefMap[fullName] = add(CpInfo.classref(utf8(fullName)))
             }
             classrefMap[fullName]
+        }
+
+        def string(self, data: String): Int = {
+            if data not in stringMap {
+                val utf8index = utf8(data)
+                stringMap[data] = add(CpInfo.string(utf8index))
+            }
+            stringMap[data]
+        }
+
+        def nameAndType(self, name: String, descriptor: String): Int = {
+            val key = (name, descriptor)
+            if key not in nameAndTypeMap {
+                nameAndTypeMap[key] = add(CpInfo.nameAndType(utf8(name), utf8(descriptor)))
+            }
+            nameAndTypeMap[key]
+        }
+
+        def methodref(self, className: String, name: String, descriptor: String): Int = {
+            val key = (className, name, descriptor)
+            if key not in methodrefMap {
+                methodrefMap[key] = add(CpInfo.methodref(
+                    classref(className), nameAndType(name, descriptor)))
+            }
+            methodrefMap[key]
+        }
+
+        def fieldref(self, className: String, name: String, descriptor: String): Int = {
+            val key = (className, name, descriptor)
+            if key not in fieldrefMap {
+                fieldrefMap[key] = add(CpInfo.fieldref(
+                    classref(className), nameAndType(name, descriptor)))
+            }
+            fieldrefMap[key]
+        }
+
+        def interfaceMethodref(self, className: String, name: String, descriptor: String): Int = {
+            val key = (className, name, descriptor)
+            if key not in interfaceMethodrefMap {
+                interfaceMethodrefMap[key] = add(CpInfo.interfaceMethodref(
+                    classref(className), nameAndType(name, descriptor)))
+            }
+            interfaceMethodrefMap[key]
         }
     }
 
@@ -310,16 +370,58 @@ class Sample {
         }
     }
 
+    class Opcode {
+        static val ldc = 0x12
+        static val ldc_w = 0x13
+        static val ldc2_w = 0x14
+        static val getstatic = 0xB2
+        static val invokevirtual = 0xB6
+    }
+
     ## Bytecode builder
     @derive(new)
     class Code : ToAttribute {
         val ctx: Context
-        var maxLocals : Int
+        var maxLocals = 0
         var maxStack = 0
-        val buffer: Buffer = Buffer.empty()
+        val buffer: Buffer = {
+            val b = Buffer.empty()
+            b.useLittleEndian(false)
+            b
+        }
 
+        ## Return void
         def vreturn(self) {
+            # return opcode
             buffer.addU8(0xb1)
+        }
+
+        ## Load a constant string onto the stack
+        def ldstr(self, string: String) {
+            ldc(ctx.cp.string(string))
+        }
+
+        ## Load a constant onto the stack given its index in the constant pool
+        def ldc(self, index: Int) {
+            if index < 128 {
+                buffer.addU8(Opcode.ldc)
+                buffer.addU8(index)
+            } else {
+                buffer.addU8(Opcode.ldc_w)
+                buffer.addU16(index)
+            }
+        }
+
+        def getstatic(self, className: String, fieldName: String, type: String) {
+            val index = ctx.cp.fieldref(className, fieldName, type)
+            buffer.addU8(Opcode.getstatic)
+            buffer.addU16(index)
+        }
+
+        def invokevirtual(self, className: String, methodName: String, type: String) {
+            val index = ctx.cp.methodref(className, methodName, type)
+            buffer.addU8(Opcode.invokevirtual)
+            buffer.addU16(index)
         }
 
         def toCodeAttribute(self): CodeAttribute = {
