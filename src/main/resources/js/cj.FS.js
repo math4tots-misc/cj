@@ -3,7 +3,8 @@ class MC$cj$FS {
         return require('fs').readFileSync(p, 'utf-8');
     }
     M$readFileBytes(p) {
-        return MO$cj$Buffer.fromBuffer(require('fs').readFileSync(p).buffer);
+        const b = require('fs').readFileSync(p);
+        return MO$cj$Buffer.fromBufferSlice(b.buffer, b.byteOffset, b.byteLength);
     }
     M$writeFile(p, data) {
         const path = require('path');

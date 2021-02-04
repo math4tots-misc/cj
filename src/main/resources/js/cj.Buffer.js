@@ -13,6 +13,16 @@ class MC$cj$Buffer {
 
     /**
      * @param {ArrayBuffer} buffer
+     * @param {number} byteOffset
+     * @param {number} length
+     * @returns {Buf}
+     */
+    fromBufferSlice(buffer, byteOffset, length) {
+        return [new DataView(buffer, byteOffset, length), true, length];
+    }
+
+    /**
+     * @param {ArrayBuffer} buffer
      * @param {boolean} littleEndian
      * @returns {Buf}
      */
