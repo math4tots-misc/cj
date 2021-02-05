@@ -115,6 +115,63 @@ class JVMCodeBuilder {
         }
     }
 
+    ## load int from a local variable
+    def iload(self, index: Int) = _localvarOp(
+        index, Opcode.iload_0, Opcode.iload_1, Opcode.iload_2, Opcode.iload_3, Opcode.iload)
+
+    ## load long from a local variable
+    def lload(self, index: Int) = _localvarOp(
+        index, Opcode.lload_0, Opcode.lload_1, Opcode.lload_2, Opcode.lload_3, Opcode.lload)
+
+    ## load float from a local variable
+    def fload(self, index: Int) = _localvarOp(
+        index, Opcode.fload_0, Opcode.fload_1, Opcode.fload_2, Opcode.fload_3, Opcode.fload)
+
+    ## load double from a local variable
+    def dload(self, index: Int) = _localvarOp(
+        index, Opcode.dload_0, Opcode.dload_1, Opcode.dload_2, Opcode.dload_3, Opcode.dload)
+
+    ## load a reference from a local variable
+    def aload(self, index: Int) = _localvarOp(
+        index, Opcode.aload_0, Opcode.aload_1, Opcode.aload_2, Opcode.aload_3, Opcode.aload)
+
+    ## store int to a local variable
+    def istore(self, index: Int) = _localvarOp(
+        index, Opcode.istore_0, Opcode.istore_1, Opcode.istore_2, Opcode.istore_3, Opcode.istore)
+
+    ## store long to a local variable
+    def lstore(self, index: Int) = _localvarOp(
+        index, Opcode.lstore_0, Opcode.lstore_1, Opcode.lstore_2, Opcode.lstore_3, Opcode.lstore)
+
+    ## store float to a local variable
+    def fstore(self, index: Int) = _localvarOp(
+        index, Opcode.fstore_0, Opcode.fstore_1, Opcode.fstore_2, Opcode.fstore_3, Opcode.fstore)
+
+    ## store double to a local variable
+    def dstore(self, index: Int) = _localvarOp(
+        index, Opcode.dstore_0, Opcode.dstore_1, Opcode.dstore_2, Opcode.dstore_3, Opcode.dstore)
+
+    ## store a reference to a local variable
+    def astore(self, index: Int) = _localvarOp(
+        index, Opcode.astore_0, Opcode.astore_1, Opcode.astore_2, Opcode.astore_3, Opcode.astore)
+
+    private def _localvarOp(self, index: Int, op0: Int, op1: Int, op2: Int, op3: Int, op: Int) {
+        switch index {
+            case 0 = code.addU8(op0)
+            case 1 = code.addU8(op1)
+            case 2 = code.addU8(op2)
+            case 3 = code.addU8(op3)
+            else = if index < 128 {
+                code.addU8(op)
+                code.addU8(index)
+            } else {
+                code.addU8(Opcode.wide)
+                code.addU8(op)
+                code.addU16(index)
+            }
+        }
+    }
+
     def nop(self) {
         code.addU8(Opcode.nop)
     }

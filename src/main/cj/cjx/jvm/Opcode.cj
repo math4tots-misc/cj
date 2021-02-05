@@ -28,6 +28,7 @@ class Opcode {
     static val anewarray = 0xbd
     static val checkcast = 0xc0
     static val instanceof = 0xc1
+    static val wide = 0xc4
     static val ifeq = 0x99
     static val ifne = 0x9a
     static val iflt = 0x9b
