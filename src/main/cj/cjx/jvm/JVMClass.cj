@@ -1,6 +1,7 @@
 package cjx.jvm
 
-import cjx.jvm.OpcodeInfo
+import cjx.jvm.JVMCodeBuilder
+import cjx.jvm.Opcode
 import cj.StringBuilder
 import cj.BigInt
 import cj.Error
@@ -378,7 +379,7 @@ class JVMClass {
                             val value = reader.getI16()
                             out.end("c4 84 iinc_w " + index + " " + value)
                         } else {
-                            val opcodeName = OpcodeInfo.oneU8LocalArgOpcode[nextOpcode] + "_w"
+                            val opcodeName = Opcode.oneU8LocalArgOpcode[nextOpcode] + "_w"
                             val index = reader.getU16()
                             out.end(
                                 "c4 " + nextOpcode.hex().lpad(2, "0") + " " +
@@ -387,11 +388,11 @@ class JVMClass {
                     }
                     else = {
                         val opcodeHex = opcode.hex().lpad(2, "0")
-                        if opcode in OpcodeInfo.zeroArgOpcodes {
-                            val opcodeName = OpcodeInfo.zeroArgOpcodes[opcode]
+                        if opcode in Opcode.zeroArgOpcodes {
+                            val opcodeName = Opcode.zeroArgOpcodes[opcode]
                             out.end(opcodeHex + " " + opcodeName)
-                        } else if opcode in OpcodeInfo.oneU16BranchArgOpcode {
-                            val opcodeName = OpcodeInfo.oneU16BranchArgOpcode[opcode]
+                        } else if opcode in Opcode.oneU16BranchArgOpcode {
+                            val opcodeName = Opcode.oneU16BranchArgOpcode[opcode]
                             val offset = reader.getI16()
                             val dest = pos + offset
                             val destHex = dest.hex()
@@ -399,12 +400,12 @@ class JVMClass {
                                 opcodeHex + " " + opcodeName +
                                 " offset=" + offset +
                                 " -> " + destHex)
-                        } else if opcode in OpcodeInfo.oneU16ConstArgOpcode {
-                            val opcodeName = OpcodeInfo.oneU16ConstArgOpcode[opcode]
+                        } else if opcode in Opcode.oneU16ConstArgOpcode {
+                            val opcodeName = Opcode.oneU16ConstArgOpcode[opcode]
                             val index = reader.getU16()
                             out.end(opcodeHex + " " + opcodeName + " " + cp.getConst(index))
-                        } else if opcode in OpcodeInfo.oneU8LocalArgOpcode {
-                            val opcodeName = OpcodeInfo.oneU8LocalArgOpcode[opcode]
+                        } else if opcode in Opcode.oneU8LocalArgOpcode {
+                            val opcodeName = Opcode.oneU8LocalArgOpcode[opcode]
                             val index = reader.getU8()
                             out.end(opcodeHex + " " + opcodeName + " " + index)
                         } else {
@@ -1104,8 +1105,8 @@ class JVMClass {
             descriptorIndex = cls.cp.utf8(descriptor)
         }
 
-        def addCode(self, f: Fn[CodeBuilder, Unit]) {
-            val codeBuilder = CodeBuilder(self)
+        def addCode(self, f: Fn[JVMCodeBuilder, Unit]) {
+            val codeBuilder = JVMCodeBuilder(self)
             f.call(codeBuilder)
             code = null(codeBuilder.build())
         }
@@ -1118,75 +1119,6 @@ class JVMClass {
                     AttributeInfoData.code(cattr)))
             }
             MethodInfo(accessFlags, nameIndex, descriptorIndex, attributes)
-        }
-    }
-
-    @derive(new)
-    class CodeBuilder {
-        val methodBuilder: MethodBuilder
-        var maxStack: Int = 0
-        var maxLocals: Int = 0
-        val code: Buffer = {
-            val b = Buffer.empty()
-            b.useLittleEndian(false)
-            b
-        }
-        val exceptionTable: List[ExceptionTableEntry] = []
-        val lineNumberTable: List[LineNumberTableEntry] = []
-
-        def __get_cls(self): JVMClass = methodBuilder.cls
-
-        def markLine(self, lineNumber: Int) {
-            lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
-        }
-
-        def return_(self) {
-            code.addU8(OpcodeInfo.return_)
-        }
-
-        ## Load a constant string onto the stack
-        def ldstr(self, string: String) {
-            ldc(cls.cp.string(string))
-        }
-
-        ## Load a constant onto the stack given its index in the constant pool
-        def ldc(self, index: Int) {
-            if index < 128 {
-                code.addU8(OpcodeInfo.ldc)
-                code.addU8(index)
-            } else {
-                code.addU8(OpcodeInfo.ldc_w)
-                code.addU16(index)
-            }
-        }
-
-        def getstatic(self, className: String, fieldName: String, type: String) {
-            val index = cls.cp.fieldref(className, fieldName, type)
-            code.addU8(OpcodeInfo.getstatic)
-            code.addU16(index)
-        }
-
-        def invokevirtual(self, className: String, methodName: String, type: String) {
-            val index = cls.cp.methodref(className, methodName, type)
-            code.addU8(OpcodeInfo.invokevirtual)
-            code.addU16(index)
-        }
-
-        def invokestatic(self, className: String, methodName: String, type: String) {
-            val index = cls.cp.methodref(className, methodName, type)
-            code.addU8(OpcodeInfo.invokestatic)
-            code.addU16(index)
-        }
-
-        def build(self) : CodeAttribute {
-            val cattr = CodeAttribute(maxStack, maxLocals, code, exceptionTable, [])
-            if lineNumberTable {
-                cattr.attributes.add(AttributeInfo(
-                    cls.cp.utf8("LineNumberTable"),
-                    AttributeInfoData.lineNumberTable(
-                        LineNumberTableAttribute(lineNumberTable))))
-            }
-            cattr
         }
     }
 

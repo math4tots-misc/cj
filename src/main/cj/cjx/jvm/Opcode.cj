@@ -2,7 +2,7 @@ package cjx.jvm
 
 
 ## Information about various opcodes
-class OpcodeInfo {
+class Opcode {
     static val iload = 0x15
     static val lload = 0x16
     static val fload = 0x17
