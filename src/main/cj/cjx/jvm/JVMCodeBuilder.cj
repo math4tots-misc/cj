@@ -6,6 +6,7 @@ import cjx.jvm.Opcode
 import cjx.jvm.JVMClass
 import cjx.jvm.JVMClass.ExceptionTableEntry
 import cjx.jvm.JVMClass.LineNumberTableEntry
+import cjx.jvm.JVMClass.LocalVariableTableEntry
 import cjx.jvm.JVMClass.CodeAttribute
 import cjx.jvm.JVMClass.AttributeInfo
 import cjx.jvm.JVMClass.AttributeInfoData
@@ -22,6 +23,7 @@ class JVMCodeBuilder {
     }
     val exceptionTable: List[ExceptionTableEntry] = []
     val lineNumberTable: List[LineNumberTableEntry] = []
+    val localVariableTable: List[LocalVariableTableEntry] = []
 
     def __get_cls(self): JVMClass = methodBuilder.cls
 
@@ -37,6 +39,11 @@ class JVMCodeBuilder {
             cattr.attributes.add(AttributeInfo(
                 cls.cp.utf8("LineNumberTable"),
                 AttributeInfoData.lineNumberTable(lineNumberTable)))
+        }
+        if localVariableTable {
+            cattr.attributes.add(AttributeInfo(
+                cls.cp.utf8("LocalVariableTable"),
+                AttributeInfoData.localVariableTable(localVariableTable)))
         }
         cattr
     }
