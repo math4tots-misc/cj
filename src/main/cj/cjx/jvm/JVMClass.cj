@@ -250,7 +250,11 @@ class JVMClass {
                         "startPc = " + entry.startPc +
                         ", endPc = " + entry.endPc +
                         ", handlerPc = " + entry.handlerPc +
-                        ", catchType = " + cp.getClassref(entry.catchType))
+                        ", catchType = " + if entry.catchType == 0 {
+                            "finally"
+                        } else {
+                            cp.getClassref(entry.catchType)
+                        })
                 }
                 out.dedent()
                 dumpAttributeList(out, cattr.attributes)
@@ -592,8 +596,10 @@ class JVMClass {
         def parseConstantPool(self): ConstantPool {
             val constantPoolSize = reader.getU16()
             val cp = ConstantPool()
-            for i = 1; i < constantPoolSize; i++ {
-                cp.add(parseCpInfo())
+            for i = 1; i < constantPoolSize; {
+                val cpInfo = parseCpInfo()
+                cp.add(cpInfo)
+                i += cpInfo.slotCount()
             }
             cp
         }
@@ -699,6 +705,7 @@ class JVMClass {
             val attributeNameIndex = reader.getU16()
             val length = reader.getI32()
             val attributeName = cp.getUtf8(attributeNameIndex)
+            val attributeBodyStart = reader.i
             val data = switch attributeName {
                 case "ConstantValue" = AttributeInfoData.constantValue(
                     parseConstantValueAttribute())
@@ -711,6 +718,8 @@ class JVMClass {
                     parseLocalVariableTableAttribute())
                 else = AttributeInfoData.unknown(reader.getBuffer(length))
             }
+            val attributeBodyEnd = reader.i
+            Assert.equal(length, attributeBodyEnd - attributeBodyStart)
             AttributeInfo(attributeNameIndex, data)
         }
 
@@ -793,7 +802,7 @@ class JVMClass {
         ## Gets the constantPoolCount value as required by the class file spec
         def count(self): Int = {
             1 + infos.map(i -> when i {
-                case long(i) = 2
+                case long(x) = 2
                 case double(f) = 2
                 else = 1
             }).fold(0, (a, b) -> a + b)
@@ -809,10 +818,9 @@ class JVMClass {
         def add(self, info: CpInfo): Int {
             val id = infos.size() + 1
             infos.add(info)
-            when info {
-                case double(f) = infos.add(CpInfo.empty())
-                case long(f) = infos.add(CpInfo.empty())
-                else = {}
+            switch info.slotCount() {
+                case 2 = infos.add(CpInfo.empty())
+                case 1 = {}
             }
             id
         }
@@ -825,7 +833,7 @@ class JVMClass {
             constMap[index]
         }
 
-        def getConstNoCache(self, index: Int): String = when infos[index - 1] {
+        def getConstNoCache(self, index: Int): String = when _getInfo(index) {
             case utf8(string) = "utf8(" + string.repr() + ")"
             case integer(i) = "int(" + i + ")"
             case float(f) = "float(" + f + ")"
@@ -843,7 +851,17 @@ class JVMClass {
             case invokeDynamic(bi, nti) = "invokeDynamic(" + bi + ", " + getConst(nti) + ")"
         }
 
-        def getUtf8(self, index: Int): String = when infos[index - 1] {
+        def _getInfo(self, index: Int): CpInfo {
+            val adjustedIndex = index - 1
+            if adjustedIndex < 0 or adjustedIndex >= infos.size() {
+                throw Error(
+                    "Invalid index into constant pool: " + index +
+                    " (cpsize=" + (infos.size() + 1) + " - 1)")
+            }
+            infos[adjustedIndex]
+        }
+
+        def getUtf8(self, index: Int): String = when _getInfo(index) {
             case utf8(string) = string
             else = throw Error("Invalid utf8 constant pool index " + index)
         }
@@ -855,7 +873,7 @@ class JVMClass {
             utf8Map[data]
         }
 
-        def getClassref(self, index: Int): String = when infos[index - 1] {
+        def getClassref(self, index: Int): String = when _getInfo(index) {
             case classref(i) = getUtf8(i)
             else = throw Error("Invalid classref constant pool index " + index)
         }
@@ -903,7 +921,7 @@ class JVMClass {
             doubleMap[f]
         }
 
-        def getNameAndType(self, index: Int): Tuple[String, String] = when infos[index - 1] {
+        def getNameAndType(self, index: Int): Tuple[String, String] = when _getInfo(index) {
             case nameAndType(nameIndex, descriptorIndex) = (
                 getUtf8(nameIndex), getUtf8(descriptorIndex))
             else = throw Error("Invalid nameAndType constant pool index " + index)
@@ -918,7 +936,7 @@ class JVMClass {
         }
 
         def getMemberTriple(self, index: Int): Tuple[String, String, String] = {
-            val (i, j) = when infos[index - 1] {
+            val (i, j) = when _getInfo(index) {
                 case fieldref(i, j) = (i, j)
                 case methodref(i, j) = (i, j)
                 case interfaceMethodref(i, j) = (i, j)
@@ -1080,6 +1098,12 @@ class JVMClass {
                 }
             }
         }
+
+        def slotCount(self): Int = when self {
+            case long(i) = 2
+            case double(f) = 2
+            else = 1
+        }
     }
 
     @derive(new)
@@ -1132,7 +1156,7 @@ class JVMClass {
         val attributes: List[AttributeInfo]
     }
 
-    @derive(new)
+    @derive(new, repr)
     class ExceptionTableEntry {
         val startPc: Int
         val endPc: Int
