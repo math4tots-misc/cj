@@ -437,7 +437,7 @@ class Dump {
                 case 0x2A = println("2A aload_0")
                 case 0xB2 = {
                     val fieldrefIndex = reader.getU16()
-                    IO.println("fieldrefIndex = " + fieldrefIndex)
+                    # IO.println("fieldrefIndex = " + fieldrefIndex)
                     val fieldref = member(fieldrefIndex)
                     println("B2 getstatic " + fieldref)
                 }

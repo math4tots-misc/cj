@@ -438,6 +438,92 @@ class JVMClass {
         else = "Unknown (" + version + ")"
     }
 
+    ## Write out the contents of this class file into a Buffer
+    def toBuffer(self): Buffer {
+        val out = Buffer.empty()
+        out.useLittleEndian(false)
+        emit(out)
+        out
+    }
+
+    def emit(self, out: Buffer) {
+        out.addU32(0xCAFEBABE)
+        out.addU16(minorVersion)
+        out.addU16(majorVersion)
+        cp.emit(out)
+        out.addU16(accessFlags)
+        out.addU16(thisClass)
+        out.addU16(superClass)
+        out.addU16(interfaces.size())
+        for iface in interfaces {
+            out.addU16(iface)
+        }
+        out.addU16(fields.size())
+        for field in fields {
+            emitField(out, field)
+        }
+        out.addU16(methods.size())
+        for method in methods {
+            emitMethod(out, method)
+        }
+        emitAttributeList(out, attributes)
+    }
+
+    def emitField(self, out: Buffer, field: FieldInfo) {
+        out.addU16(field.accessFlags)
+        out.addU16(field.nameIndex)
+        out.addU16(field.descriptorIndex)
+        emitAttributeList(out, field.attributes)
+    }
+
+    def emitMethod(self, out: Buffer, method: MethodInfo) {
+        out.addU16(method.accessFlags)
+        out.addU16(method.nameIndex)
+        out.addU16(method.descriptorIndex)
+        emitAttributeList(out, method.attributes)
+    }
+
+    def emitAttributeList(self, out: Buffer, attributes: List[AttributeInfo]) {
+        out.addU16(attributes.size())
+        for attribute in attributes {
+            emitAttribute(out, attribute)
+        }
+    }
+
+    def emitAttribute(self, out: Buffer, attribute: AttributeInfo) {
+        out.addU16(attribute.attributeNameIndex)
+        val attributeLengthPosition = out.size()
+        out.addI32(0) # attributeLength
+        val attributeBodyStart = out.size()
+        when attribute.data {
+            case constantValue(cvattr) = out.addU16(cvattr.constantValueIndex)
+            case code(cattr) = {
+                out.addU16(cattr.maxStack)
+                out.addU16(cattr.maxLocals)
+                out.addI32(cattr.code.size())
+                out.addBuffer(cattr.code)
+                out.addU16(cattr.exceptionTable.size())
+                for entry in cattr.exceptionTable {
+                    out.addU16(entry.startPc)
+                    out.addU16(entry.endPc)
+                    out.addU16(entry.handlerPc)
+                    out.addU16(entry.catchType)
+                }
+                emitAttributeList(out, cattr.attributes)
+            }
+            case lineNumberTable(lntattr) = {
+                out.addU16(lntattr.lineNumberTable.size())
+                for entry in lntattr.lineNumberTable {
+                    out.addU16(entry.startPc)
+                    out.addU16(entry.lineNumber)
+                }
+            }
+            case unknown(data) = out.addBuffer(data)
+        }
+        val attributeBodyEnd = out.size()
+        out.setI32(attributeLengthPosition, attributeBodyEnd - attributeBodyStart)
+    }
+
     class Parser {
         val reader: BufferReader
         var cp: ConstantPool = ?
@@ -952,6 +1038,108 @@ class JVMClass {
     class LineNumberTableEntry {
         val startPc: Int
         val lineNumber: Int
+    }
+
+    def addMethod(self, f: Fn[MethodBuilder, Unit]) {
+        val methodBuilder = MethodBuilder(self)
+        f.call(methodBuilder)
+        methods.add(methodBuilder.build())
+    }
+
+    @derive(new)
+    class MethodBuilder {
+        val cls: JVMClass
+        var accessFlags: Int = ?
+        var nameIndex: Int = ?
+        var descriptorIndex: Int = ?
+        var code: Nullable[CodeAttribute] = null
+
+        def __set_name(self, name: String) {
+            nameIndex = cls.cp.utf8(name)
+        }
+
+        def __set_descriptor(self, descriptor: String) {
+            descriptorIndex = cls.cp.utf8(descriptor)
+        }
+
+        def addCode(self, f: Fn[CodeBuilder, Unit]) {
+            val codeBuilder = CodeBuilder(self)
+            f.call(codeBuilder)
+            code = null(codeBuilder.build())
+        }
+
+        def build(self): MethodInfo {
+            val attributes: List[AttributeInfo] = []
+            if null(cattr) = code {
+                attributes.add(AttributeInfo(
+                    cls.cp.utf8("Code"),
+                    AttributeInfoData.code(cattr)))
+            }
+            MethodInfo(accessFlags, nameIndex, descriptorIndex, attributes)
+        }
+    }
+
+    @derive(new)
+    class CodeBuilder {
+        val methodBuilder: MethodBuilder
+        var maxStack: Int = 0
+        var maxLocals: Int = 0
+        val code: Buffer = {
+            val b = Buffer.empty()
+            b.useLittleEndian(false)
+            b
+        }
+        val exceptionTable: List[ExceptionTableEntry] = []
+        val lineNumberTable: List[LineNumberTableEntry] = []
+
+        def __get_cls(self): JVMClass = methodBuilder.cls
+
+        def markLine(self, lineNumber: Int) {
+            lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
+        }
+
+        def return_(self) {
+            code.addU8(OpcodeInfo.return_)
+        }
+
+        ## Load a constant string onto the stack
+        def ldstr(self, string: String) {
+            ldc(cls.cp.string(string))
+        }
+
+        ## Load a constant onto the stack given its index in the constant pool
+        def ldc(self, index: Int) {
+            if index < 128 {
+                code.addU8(OpcodeInfo.ldc)
+                code.addU8(index)
+            } else {
+                code.addU8(OpcodeInfo.ldc_w)
+                code.addU16(index)
+            }
+        }
+
+        def getstatic(self, className: String, fieldName: String, type: String) {
+            val index = cls.cp.fieldref(className, fieldName, type)
+            code.addU8(OpcodeInfo.getstatic)
+            code.addU16(index)
+        }
+
+        def invokevirtual(self, className: String, methodName: String, type: String) {
+            val index = cls.cp.methodref(className, methodName, type)
+            code.addU8(OpcodeInfo.invokevirtual)
+            code.addU16(index)
+        }
+
+        def build(self) : CodeAttribute {
+            val cattr = CodeAttribute(maxStack, maxLocals, code, exceptionTable, [])
+            if lineNumberTable {
+                cattr.attributes.add(AttributeInfo(
+                    cls.cp.utf8("LineNumberTable"),
+                    AttributeInfoData.lineNumberTable(
+                        LineNumberTableAttribute(lineNumberTable))))
+            }
+            cattr
+        }
     }
 
     @derive(new)
