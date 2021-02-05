@@ -145,6 +145,7 @@ class JVMClass {
             case float(f) = out.end("Float ".rpad(16, " ") + f)
             case long(i) = out.end("Long ".rpad(16, " ") + i)
             case double(f) = out.end("Double ".rpad(16, " ") + f)
+            case empty = ()
             case classref(i) = out.end("Class ".rpad(16, " ") + cp.getUtf8(i))
             case string(i) = out.end("String ".rpad(16, " ") + cp.getUtf8(i).repr())
             case fieldref(classIndex, nameAndTypeIndex) = {
@@ -748,6 +749,11 @@ class JVMClass {
         def add(self, info: CpInfo): Int {
             val id = infos.size() + 1
             infos.add(info)
+            when info {
+                case double(f) = infos.add(CpInfo.empty())
+                case long(f) = infos.add(CpInfo.empty())
+                else = {}
+            }
             id
         }
 
@@ -765,6 +771,7 @@ class JVMClass {
             case float(f) = "float(" + f + ")"
             case long(i) = "long(" + i + ")"
             case double(f) = "double(" + f + ")"
+            case empty() = "empty()"
             case classref(c) = "class(" + getUtf8(c) + ")"
             case string(i) = "string(" + getUtf8(i).repr() + ")"
             case fieldref(ci, nti) = getMember(index)
@@ -885,6 +892,9 @@ class JVMClass {
         ## 64-bit float constant (IEEE 754)
         case double(Double)
 
+        ## Empty slots for long and double slots
+        case empty()
+
         ## (name-index)
         case classref(Int)
 
@@ -918,6 +928,7 @@ class JVMClass {
             case float(f) = JVMClass.cFloat
             case long(i) = JVMClass.cLong
             case double(f) = JVMClass.cDouble
+            case empty() = throw Error("Tried to get tag on empty CpInfo")
             case classref(nameIndex) = JVMClass.cClassref
             case string(utf8Index) = JVMClass.cString
             case fieldref(ci, nti) = JVMClass.cFieldref
@@ -930,6 +941,10 @@ class JVMClass {
         }
 
         def emit(self, out: Buffer) {
+            when self {
+                case empty() = return ()
+                else = ()
+            }
             out.addU8(tag)
             when self {
                 case utf8(string) = {
@@ -940,6 +955,7 @@ class JVMClass {
                 case integer(i) = out.addI32(i)
                 case float(f) = out.addF32(f)
                 case long(i) = out.addI64(i)
+                case empty() = ()
                 case double(f) = out.addF64(f)
                 case classref(nameIndex) = {
                     out.addU16(nameIndex)
@@ -1040,6 +1056,32 @@ class JVMClass {
         val lineNumber: Int
     }
 
+    def addField(self, f: Fn[FieldBuilder, Unit]) {
+        val fieldBuilder = FieldBuilder(self)
+        f.call(fieldBuilder)
+        fields.add(fieldBuilder.build())
+    }
+
+    @derive(new)
+    class FieldBuilder {
+        val cls: JVMClass
+        var accessFlags: Int = ?
+        var nameIndex: Int = ?
+        var descriptorIndex: Int = ?
+
+        def __set_name(self, name: String) {
+            nameIndex = cls.cp.utf8(name)
+        }
+
+        def __set_descriptor(self, descriptor: String) {
+            descriptorIndex = cls.cp.utf8(descriptor)
+        }
+
+        def build(self): FieldInfo {
+            FieldInfo(accessFlags, nameIndex, descriptorIndex, [])
+        }
+    }
+
     def addMethod(self, f: Fn[MethodBuilder, Unit]) {
         val methodBuilder = MethodBuilder(self)
         f.call(methodBuilder)
@@ -1127,6 +1169,12 @@ class JVMClass {
         def invokevirtual(self, className: String, methodName: String, type: String) {
             val index = cls.cp.methodref(className, methodName, type)
             code.addU8(OpcodeInfo.invokevirtual)
+            code.addU16(index)
+        }
+
+        def invokestatic(self, className: String, methodName: String, type: String) {
+            val index = cls.cp.methodref(className, methodName, type)
+            code.addU8(OpcodeInfo.invokestatic)
             code.addU16(index)
         }
 
