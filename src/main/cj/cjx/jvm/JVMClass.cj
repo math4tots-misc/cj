@@ -233,6 +233,9 @@ class JVMClass {
             case constantValue(cvattr) = {
                 out.line("  value = " + cp.getConst(cvattr.constantValueIndex))
             }
+            case sourceFile(sfattr) = {
+                out.line("  sourceFile = " + cp.getUtf8(sfattr.sourcefileIndex).repr())
+            }
             case code(cattr) = {
                 out.line("maxStack = " + cattr.maxStack)
                 out.line("maxLocals = " + cattr.maxLocals)
@@ -254,7 +257,7 @@ class JVMClass {
                 out.line("lineNumberTableLength = " + lntattr.lineNumberTable.size())
                 out.indent()
                 for entry in lntattr.lineNumberTable {
-                    out.line("startPc = 0x" + entry.startPc + ", lineNumber = " + entry.lineNumber)
+                    out.line("startPc = 0x" + entry.startPc.hex() + ", lineNumber = " + entry.lineNumber)
                 }
                 out.dedent()
             }
@@ -499,6 +502,7 @@ class JVMClass {
         val attributeBodyStart = out.size()
         when attribute.data {
             case constantValue(cvattr) = out.addU16(cvattr.constantValueIndex)
+            case sourceFile(sfattr) = out.addU16(sfattr.sourcefileIndex)
             case code(cattr) = {
                 out.addU16(cattr.maxStack)
                 out.addU16(cattr.maxLocals)
@@ -671,6 +675,8 @@ class JVMClass {
             val data = switch attributeName {
                 case "ConstantValue" = AttributeInfoData.constantValue(
                     parseConstantValueAttribute())
+                case "SourceFile" = AttributeInfoData.sourceFile(
+                    parseSourceFileAttribute())
                 case "Code" = AttributeInfoData.code(parseCodeAttribute())
                 case "LineNumberTable" = AttributeInfoData.lineNumberTable(
                     parseLineNumberTableAttribute())
@@ -682,6 +688,11 @@ class JVMClass {
         def parseConstantValueAttribute(self): ConstantValueAttribute {
             val constantValueIndex = reader.getU16()
             ConstantValueAttribute(constantValueIndex)
+        }
+
+        def parseSourceFileAttribute(self): SourceFileAttribute {
+            val sourcefileIndex = reader.getU16()
+            SourceFileAttribute(sourcefileIndex)
         }
 
         def parseCodeAttribute(self): CodeAttribute {
@@ -1051,6 +1062,7 @@ class JVMClass {
 
     union AttributeInfoData {
         case constantValue(ConstantValueAttribute)
+        case sourceFile(SourceFileAttribute)
         case code(CodeAttribute)
         case lineNumberTable(LineNumberTableAttribute)
         case unknown(Buffer)
@@ -1059,6 +1071,11 @@ class JVMClass {
     @derive(new)
     class ConstantValueAttribute {
         val constantValueIndex: Int
+    }
+
+    @derive(new)
+    class SourceFileAttribute {
+        val sourcefileIndex: Int
     }
 
     @derive(new)
