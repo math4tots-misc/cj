@@ -9,7 +9,6 @@ import cjx.jvm.JVMClass.LineNumberTableEntry
 import cjx.jvm.JVMClass.CodeAttribute
 import cjx.jvm.JVMClass.AttributeInfo
 import cjx.jvm.JVMClass.AttributeInfoData
-import cjx.jvm.JVMClass.LineNumberTableAttribute
 
 @derive(new)
 class JVMCodeBuilder {
@@ -27,7 +26,9 @@ class JVMCodeBuilder {
     def __get_cls(self): JVMClass = methodBuilder.cls
 
     def markLine(self, lineNumber: Int) {
-        lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
+        if not (lineNumberTable and lineNumberTable.last().lineNumber != lineNumber) {
+            lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
+        }
     }
 
     def build(self) : CodeAttribute {
@@ -35,8 +36,7 @@ class JVMCodeBuilder {
         if lineNumberTable {
             cattr.attributes.add(AttributeInfo(
                 cls.cp.utf8("LineNumberTable"),
-                AttributeInfoData.lineNumberTable(
-                    LineNumberTableAttribute(lineNumberTable))))
+                AttributeInfoData.lineNumberTable(lineNumberTable)))
         }
         cattr
     }

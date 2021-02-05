@@ -67,7 +67,9 @@ class JVMClass {
     }
 
     def dumpstr(self, out: Writer) {
-        out.line("Inspecting " + path)
+        if path and path != "<unknown>" {
+            out.line("Inspecting " + path)
+        }
         out.indent()
         out.line("minor version = " + minorVersion)
         out.line(
@@ -253,11 +255,26 @@ class JVMClass {
                 out.dedent()
                 dumpAttributeList(out, cattr.attributes)
             }
-            case lineNumberTable(lntattr) = {
-                out.line("lineNumberTableLength = " + lntattr.lineNumberTable.size())
+            case lineNumberTable(entries) = {
+                out.line("lineNumberTableLength = " + entries.size())
                 out.indent()
-                for entry in lntattr.lineNumberTable {
+                for entry in entries {
                     out.line("startPc = 0x" + entry.startPc.hex() + ", lineNumber = " + entry.lineNumber)
+                }
+                out.dedent()
+            }
+            case localVariableTable(entries) = {
+                out.line("localVariableTableLength = " + entries.size())
+                out.indent()
+                for entry in entries {
+                    val startPc = entry.startPc
+                    val endPc = startPc + entry.length
+                    out.line(
+                        cp.getUtf8(entry.nameIndex) +
+                        " " + entry.index +
+                        " 0x" + startPc.hex() + " - 0x" + endPc.hex() +
+                        " (" + entry.length + ")" +
+                        " " + cp.getUtf8(entry.descriptorIndex))
                 }
                 out.dedent()
             }
@@ -517,11 +534,21 @@ class JVMClass {
                 }
                 emitAttributeList(out, cattr.attributes)
             }
-            case lineNumberTable(lntattr) = {
-                out.addU16(lntattr.lineNumberTable.size())
-                for entry in lntattr.lineNumberTable {
+            case lineNumberTable(entries) = {
+                out.addU16(entries.size())
+                for entry in entries {
                     out.addU16(entry.startPc)
                     out.addU16(entry.lineNumber)
+                }
+            }
+            case localVariableTable(entries) = {
+                out.addU16(entries.size())
+                for entry in entries {
+                    out.addU16(entry.startPc)
+                    out.addU16(entry.length)
+                    out.addU16(entry.nameIndex)
+                    out.addU16(entry.descriptorIndex)
+                    out.addU16(entry.index)
                 }
             }
             case unknown(data) = out.addBuffer(data)
@@ -680,6 +707,8 @@ class JVMClass {
                 case "Code" = AttributeInfoData.code(parseCodeAttribute())
                 case "LineNumberTable" = AttributeInfoData.lineNumberTable(
                     parseLineNumberTableAttribute())
+                case "LocalVariableTable" = AttributeInfoData.localVariableTable(
+                    parseLocalVariableTableAttribute())
                 else = AttributeInfoData.unknown(reader.getBuffer(length))
             }
             AttributeInfo(attributeNameIndex, data)
@@ -718,7 +747,7 @@ class JVMClass {
             ExceptionTableEntry(startPc, endPc, handlerPc, catchType)
         }
 
-        def parseLineNumberTableAttribute(self): LineNumberTableAttribute {
+        def parseLineNumberTableAttribute(self): List[LineNumberTableEntry] {
             val lineNumberTableLength = reader.getU16()
             val entries: List[LineNumberTableEntry] = []
             for i = 0; i < lineNumberTableLength; i++ {
@@ -726,7 +755,22 @@ class JVMClass {
                 val lineNumber = reader.getU16()
                 entries.add(LineNumberTableEntry(startPc, lineNumber))
             }
-            LineNumberTableAttribute(entries)
+            entries
+        }
+
+        def parseLocalVariableTableAttribute(self): List[LocalVariableTableEntry] {
+            val lineNumberTableLength = reader.getU16()
+            val entries: List[LocalVariableTableEntry] = []
+            for i = 0; i < lineNumberTableLength; i++ {
+                val startPc = reader.getU16()
+                val length = reader.getU16()
+                val nameIndex = reader.getU16()
+                val descriptorIndex = reader.getU16()
+                val index = reader.getU16()
+                entries.add(LocalVariableTableEntry(
+                    startPc, length, nameIndex, descriptorIndex, index))
+            }
+            entries
         }
     }
 
@@ -1064,7 +1108,8 @@ class JVMClass {
         case constantValue(ConstantValueAttribute)
         case sourceFile(SourceFileAttribute)
         case code(CodeAttribute)
-        case lineNumberTable(LineNumberTableAttribute)
+        case lineNumberTable(List[LineNumberTableEntry])
+        case localVariableTable(List[LocalVariableTableEntry])
         case unknown(Buffer)
     }
 
@@ -1096,14 +1141,18 @@ class JVMClass {
     }
 
     @derive(new)
-    class LineNumberTableAttribute {
-        val lineNumberTable: List[LineNumberTableEntry]
-    }
-
-    @derive(new)
     class LineNumberTableEntry {
         val startPc: Int
         val lineNumber: Int
+    }
+
+    @derive(new)
+    class LocalVariableTableEntry {
+        val startPc: Int
+        val length: Int
+        val nameIndex: Int
+        val descriptorIndex: Int
+        val index: Int
     }
 
     def addField(self, f: Fn[FieldBuilder, Unit]) {

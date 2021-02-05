@@ -1,5 +1,6 @@
 package cjx.jvm.main
 
+import cj.Error
 import cj.FS
 import cjx.jvm.JVMClass
 import cj.Argv
@@ -9,11 +10,11 @@ class Dump2 {
     def main() {
         var includeConstantPool = false
         for path in Argv() {
+            IO.println("=== " + path + " ===")
             val writer = JVMClass.Writer()
             writer.includeConstantPool = includeConstantPool
             val buffer = FS.readFileBytes(path)
             val cls = JVMClass.fromBuffer(buffer)
-            cls.path = path
             cls.dumpstr(writer)
             IO.println(writer.sb.toString())
         }
