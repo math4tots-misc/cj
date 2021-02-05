@@ -228,6 +228,9 @@ class JVMClass {
         val attributeName = cp.getUtf8(attribute.attributeNameIndex)
         out.line("Attribute " + attributeName)
         when attribute.data {
+            case constantValue(cvattr) = {
+                out.line("  value = " + cp.getConst(cvattr.constantValueIndex))
+            }
             case code(cattr) = {
                 out.line("maxStack = " + cattr.maxStack)
                 out.line("maxLocals = " + cattr.maxLocals)
@@ -578,12 +581,19 @@ class JVMClass {
             val length = reader.getI32()
             val attributeName = cp.getUtf8(attributeNameIndex)
             val data = switch attributeName {
+                case "ConstantValue" = AttributeInfoData.constantValue(
+                    parseConstantValueAttribute())
                 case "Code" = AttributeInfoData.code(parseCodeAttribute())
                 case "LineNumberTable" = AttributeInfoData.lineNumberTable(
                     parseLineNumberTableAttribute())
                 else = AttributeInfoData.unknown(reader.getBuffer(length))
             }
             AttributeInfo(attributeNameIndex, data)
+        }
+
+        def parseConstantValueAttribute(self): ConstantValueAttribute {
+            val constantValueIndex = reader.getU16()
+            ConstantValueAttribute(constantValueIndex)
         }
 
         def parseCodeAttribute(self): CodeAttribute {
@@ -905,9 +915,15 @@ class JVMClass {
     }
 
     union AttributeInfoData {
+        case constantValue(ConstantValueAttribute)
         case code(CodeAttribute)
         case lineNumberTable(LineNumberTableAttribute)
         case unknown(Buffer)
+    }
+
+    @derive(new)
+    class ConstantValueAttribute {
+        val constantValueIndex: Int
     }
 
     @derive(new)
