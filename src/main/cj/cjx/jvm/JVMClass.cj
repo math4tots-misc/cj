@@ -44,7 +44,7 @@ class JVMClass {
 
     var path: String = "<unknown>"
     var minorVersion: Int = 0
-    var majorVersion: Int = 0x33 # Java SE 7
+    var majorVersion: Int = 0x32 # Java SE 6.0 (7+ would require StackMapTable attribute)
     var cp: ConstantPool = ConstantPool()
     var accessFlags: Int = cACC_PUBLIC
     var thisClass: Int = 0 # must be filled in
