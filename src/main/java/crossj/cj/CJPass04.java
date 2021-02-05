@@ -716,13 +716,13 @@ final class CJPass04 extends CJPassBaseEx {
                     var caseVars = caseAst.get3();
                     var caseBody = caseAst.get4();
                     var tag = caseTagsByName.getOrNull(caseName);
+                    if (tag == null) {
+                        throw CJError.of(caseName + " is not a case in " + type.repr(), caseMark);
+                    }
                     if (sieve.get(tag)) {
                         throw CJError.of("Duplicate entry for " + caseName, caseMark);
                     }
                     sieve.set(tag, true);
-                    if (tag == null) {
-                        throw CJError.of(caseName + " is not a case in " + type, caseMark);
-                    }
                     var caseDefn = casesByTag.get(tag);
                     if (caseDefn.getTypes().size() != caseVars.size()) {
                         throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
@@ -778,7 +778,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var switchPermittedTypes = List.of(ctx.getIntType(), ctx.getCharType(), ctx.getStringType());
                 // TODO: Reconsider this
                 if (!switchPermittedTypes.contains(targetType)) {
-                    throw CJError.of(targetType + " may not be used in a switch", e.getMark());
+                    throw CJError.of(targetType.repr() + " may not be used in a switch", e.getMark());
                 }
                 var cases = List.<Pair<List<CJIRExpression>, CJIRExpression>>of();
                 for (var case_ : e.getCases()) {

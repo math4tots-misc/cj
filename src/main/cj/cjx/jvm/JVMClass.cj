@@ -730,6 +730,10 @@ class JVMClass {
         val fieldrefMap: Map[Tuple[String, String, String], Int] = Map()
         val interfaceMethodrefMap: Map[Tuple[String, String, String], Int] = Map()
         val constMap: Map[Int, String] = Map()
+        val integerMap: Map[Int, Int] = Map()
+        val longMap: Map[BigInt, Int] = Map()
+        val floatMap: Map[Double, Int] = Map()
+        val doubleMap: Map[Double, Int] = Map()
 
         ## Gets the constantPoolCount value as required by the class file spec
         def count(self): Int = {
@@ -814,6 +818,34 @@ class JVMClass {
                 stringMap[data] = add(CpInfo.string(utf8index))
             }
             stringMap[data]
+        }
+
+        def integer(self, i: Int): Int = {
+            if i not in integerMap {
+                integerMap[i] = add(CpInfo.integer(i))
+            }
+            integerMap[i]
+        }
+
+        def long(self, i: BigInt): Int = {
+            if i not in longMap {
+                longMap[i] = add(CpInfo.long(i))
+            }
+            longMap[i]
+        }
+
+        def float(self, f: Double): Int = {
+            if f not in floatMap {
+                floatMap[f] = add(CpInfo.float(f))
+            }
+            floatMap[f]
+        }
+
+        def double(self, f: Double): Int = {
+            if f not in doubleMap {
+                doubleMap[f] = add(CpInfo.double(f))
+            }
+            doubleMap[f]
         }
 
         def getNameAndType(self, index: Int): Tuple[String, String] = when infos[index - 1] {

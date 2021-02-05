@@ -28,7 +28,7 @@ class Sample2 {
                 code.maxLocals = 1
 
                 code.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")
-                code.ldstr("Hello worldxxx!")
+                code.ldc("Hello worldxxx!")
                 code.invokevirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
 
                 code.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")
