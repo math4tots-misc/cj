@@ -13,6 +13,12 @@ class BufferReader : ToBool {
         i = i + n
     }
 
+    def skipToMultipleOf(self, n: Int) {
+        if i % n != 0 {
+            i = i + (n - (i % n))
+        }
+    }
+
     def peekUTF8(self, len: Int): String = buffer.getUTF8(i, i + len)
     def peekBuffer(self, len: Int): Buffer = buffer.cut(i, i + len)
     def peekI8(self): Int = buffer.getI8(i)

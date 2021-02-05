@@ -245,6 +245,14 @@ class JVMClass {
                 out.dedent()
                 dumpAttributeList(out, cattr.attributes)
             }
+            case lineNumberTable(lntattr) = {
+                out.line("lineNumberTableLength = " + lntattr.lineNumberTable.size())
+                out.indent()
+                for entry in lntattr.lineNumberTable {
+                    out.line("startPc = 0x" + entry.startPc + ", lineNumber = " + entry.lineNumber)
+                }
+                out.dedent()
+            }
             case unknown(buffer) = out.line("  (unknown)")
         }
     }
@@ -287,6 +295,44 @@ class JVMClass {
                         val index = reader.getU8()
                         val value = reader.getI8()
                         out.end("84 iinc " + index + " " + value)
+                    }
+                    case 0xAA = {
+                        # tableswitch
+                        reader.skipToMultipleOf(4) # padding
+                        val default = reader.getI32()
+                        val low = reader.getI32()
+                        val high = reader.getI32()
+                        out.end("AA tableswitch " + " " + low + " - " + high)
+                        out.indent()
+                        out.line("default = " + default + " -> 0x" + (pos + default).hex())
+                        for i = low; i <= high; i++ {
+                            val offset = reader.getI32()
+                            val target = pos + offset
+                            out.line(
+                                "" + i.repr().lpad(8, " ") +
+                                ": offset=" + offset +
+                                " -> 0x" + target.hex())
+                        }
+                        out.dedent()
+                    }
+                    case 0xAB = {
+                        # lookupswitch
+                        reader.skipToMultipleOf(4) # padding
+                        val default = reader.getI32()
+                        val npairs = reader.getI32()
+                        out.end("AB lookupswitch npairs=" + npairs)
+                        out.indent()
+                        out.line("default = " + default + " -> 0x" + (pos + default).hex())
+                        for i = 0; i < npairs; i++ {
+                            val match = reader.getI32()
+                            val offset = reader.getI32()
+                            val target = pos + offset
+                            out.line(
+                                "" + match.repr().lpad(8, " ") +
+                                ": offset=" + offset +
+                                " -> 0x" + target.hex())
+                        }
+                        out.dedent()
                     }
                     case 0xB9 = {
                         # invokeinterface -- has a funky signature
@@ -533,6 +579,8 @@ class JVMClass {
             val attributeName = cp.getUtf8(attributeNameIndex)
             val data = switch attributeName {
                 case "Code" = AttributeInfoData.code(parseCodeAttribute())
+                case "LineNumberTable" = AttributeInfoData.lineNumberTable(
+                    parseLineNumberTableAttribute())
                 else = AttributeInfoData.unknown(reader.getBuffer(length))
             }
             AttributeInfo(attributeNameIndex, data)
@@ -559,6 +607,17 @@ class JVMClass {
             val handlerPc = reader.getU16()
             val catchType = reader.getU16()
             ExceptionTableEntry(startPc, endPc, handlerPc, catchType)
+        }
+
+        def parseLineNumberTableAttribute(self): LineNumberTableAttribute {
+            val lineNumberTableLength = reader.getU16()
+            val entries: List[LineNumberTableEntry] = []
+            for i = 0; i < lineNumberTableLength; i++ {
+                val startPc = reader.getU16()
+                val lineNumber = reader.getU16()
+                entries.add(LineNumberTableEntry(startPc, lineNumber))
+            }
+            LineNumberTableAttribute(entries)
         }
     }
 
@@ -847,6 +906,7 @@ class JVMClass {
 
     union AttributeInfoData {
         case code(CodeAttribute)
+        case lineNumberTable(LineNumberTableAttribute)
         case unknown(Buffer)
     }
 
@@ -865,6 +925,17 @@ class JVMClass {
         val endPc: Int
         val handlerPc: Int
         val catchType: Int
+    }
+
+    @derive(new)
+    class LineNumberTableAttribute {
+        val lineNumberTable: List[LineNumberTableEntry]
+    }
+
+    @derive(new)
+    class LineNumberTableEntry {
+        val startPc: Int
+        val lineNumber: Int
     }
 
     @derive(new)
