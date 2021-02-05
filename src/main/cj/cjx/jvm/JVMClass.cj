@@ -75,7 +75,7 @@ class JVMClass {
         out.line(
             "major version = " +
             majorVersionToString(majorVersion) +
-            " (" + majorVersion.hex() + ")")
+            " (0x" + majorVersion.hex() + ")")
         val constantPoolSize = cp.count()
 
         if out.includeConstantPool {
