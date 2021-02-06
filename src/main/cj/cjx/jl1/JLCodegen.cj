@@ -76,6 +76,7 @@ class JLCodegen {
         ## Maps local variable ids to their JVM local variable slot
         val localMap: Map[Int, Int] = Map()
         var localSize: Int = 0
+        var maxLocal: Int = 0 # TODO: compare with JVMCodeBuilder's inferred maxLocal
 
         var stackSize: Int = 0
 
@@ -90,6 +91,9 @@ class JLCodegen {
             Assert.that(localvar.id not in localMap)
             val slot = localSize
             localSize = localSize + localvar.type.getJVMSlotSize()
+            if localSize > maxLocal {
+                maxLocal = localSize
+            }
             localMap[localvar.id] = slot
         }
 

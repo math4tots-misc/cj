@@ -33,12 +33,17 @@ class JVMCodeBuilder {
         }
     }
 
-    private def computeArgumentCount(descriptor: String): Int {
+    private def computeArgumentSlotCount(descriptor: String): Int {
         var argc = 0
         var i = 1
         while i < descriptor.size() and descriptor.charAt(i) != ')' {
 
-            argc++
+            # long and double take 2 slots
+            switch descriptor.charAt(i) {
+                case 'D'
+                case 'J' = { argc += 2 }
+                else = { argc++ }
+            }
 
             while descriptor.charAt(i) == '[' {
                 i++
@@ -59,7 +64,7 @@ class JVMCodeBuilder {
         # Check 'this' and method parameters for a lower bound on maxLocals
         var maxLocals = if methodBuilder.accessFlags & JVMClass.cACC_STATIC {
             0
-        } else { 1 } + computeArgumentCount(methodBuilder.descriptor)
+        } else { 1 } + computeArgumentSlotCount(methodBuilder.descriptor)
 
         # Check the opcodes for another lower bound on maxLocals
         for i = 0; i < code.size(); i += Opcode.instructionSize(code, i) {
@@ -69,18 +74,20 @@ class JVMCodeBuilder {
                 case (Opcode.iload_1) = 1
                 case (Opcode.iload_2) = 2
                 case (Opcode.iload_3) = 3
-                case (Opcode.lload_0) = 0
-                case (Opcode.lload_1) = 1
-                case (Opcode.lload_2) = 2
-                case (Opcode.lload_3) = 3
+                case (Opcode.lload_0) = 0 + 1 # (long takes 2 slots)
+                case (Opcode.lload_1) = 1 + 1 # (long takes 2 slots)
+                case (Opcode.lload_2) = 2 + 1 # (long takes 2 slots)
+                case (Opcode.lload_3) = 3 + 1 # (long takes 2 slots)
+                case (Opcode.lload) = code.getU8(i + 1) + 1 # (long takes 2 slots)
                 case (Opcode.fload_0) = 0
                 case (Opcode.fload_1) = 1
                 case (Opcode.fload_2) = 2
                 case (Opcode.fload_3) = 3
-                case (Opcode.dload_0) = 0
-                case (Opcode.dload_1) = 1
-                case (Opcode.dload_2) = 2
-                case (Opcode.dload_3) = 3
+                case (Opcode.dload_0) = 0 + 1 # (double takes 2 slots)
+                case (Opcode.dload_1) = 1 + 1 # (double takes 2 slots)
+                case (Opcode.dload_2) = 2 + 1 # (double takes 2 slots)
+                case (Opcode.dload_3) = 3 + 1 # (double takes 2 slots)
+                case (Opcode.dload) = code.getU8(i + 1) + 1 # (double takes 2 slots)
                 case (Opcode.aload_0) = 0
                 case (Opcode.aload_1) = 1
                 case (Opcode.aload_2) = 2
@@ -89,18 +96,20 @@ class JVMCodeBuilder {
                 case (Opcode.istore_1) = 1
                 case (Opcode.istore_2) = 2
                 case (Opcode.istore_3) = 3
-                case (Opcode.lstore_0) = 0
-                case (Opcode.lstore_1) = 1
-                case (Opcode.lstore_2) = 2
-                case (Opcode.lstore_3) = 3
+                case (Opcode.lstore_0) = 0 + 1 # (long takes 2 slots)
+                case (Opcode.lstore_1) = 1 + 1 # (long takes 2 slots)
+                case (Opcode.lstore_2) = 2 + 1 # (long takes 2 slots)
+                case (Opcode.lstore_3) = 3 + 1 # (long takes 2 slots)
+                case (Opcode.lstore) = code.getU8(i + 1) + 1 # (long takes 2 slots)
                 case (Opcode.fstore_0) = 0
                 case (Opcode.fstore_1) = 1
                 case (Opcode.fstore_2) = 2
                 case (Opcode.fstore_3) = 3
-                case (Opcode.dstore_0) = 0
-                case (Opcode.dstore_1) = 1
-                case (Opcode.dstore_2) = 2
-                case (Opcode.dstore_3) = 3
+                case (Opcode.dstore_0) = 0 + 1 # (double takes 2 slots)
+                case (Opcode.dstore_1) = 1 + 1 # (double takes 2 slots)
+                case (Opcode.dstore_2) = 2 + 1 # (double takes 2 slots)
+                case (Opcode.dstore_3) = 3 + 1 # (double takes 2 slots)
+                case (Opcode.dstore) = code.getU8(i + 1) + 1 # (double takes 2 slots)
                 case (Opcode.astore_0) = 0
                 case (Opcode.astore_1) = 1
                 case (Opcode.astore_2) = 2
