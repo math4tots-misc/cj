@@ -87,6 +87,19 @@ class MC$cj$List {
     M$default() {
         return [];
     }
+    M$flatMap(TV$T, TV$C, self, f) {
+        const list = [];
+        for (const t of self) {
+            const c = f(t);
+            for (const r of TV$C.M$iter(c)) {
+                list.push(r);
+            }
+        }
+        return list;
+    }
+    M$flatten(TV$I, TV$C, self) {
+        return this.M$flatMap(null, TV$C, x => x);
+    }
     M$__contains(self, t) {
         const TV$T = this.TV$T;
         for (const k of self) {

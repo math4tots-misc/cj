@@ -1,5 +1,6 @@
 package cjx.jvm
 
+import cj.BufferReader
 import cjx.jvm.JVMConstValue
 import cj.Buffer
 import cjx.jvm.Opcode

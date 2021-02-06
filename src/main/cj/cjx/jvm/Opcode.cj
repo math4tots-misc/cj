@@ -1,5 +1,7 @@
 package cjx.jvm
 
+import cj.Buffer
+
 
 ## Information about various opcodes
 class Opcode {
@@ -197,6 +199,54 @@ class Opcode {
     static val breakpoint = 0xca
     static val impdep1 = 0xfe
     static val impdep2 = 0xff
+
+    static val bipush = 0x10
+    static val sipush = 0x11
+    static val iinc = 0x84
+    static val tableswitch = 0xaa
+    static val lookupswitch = 0xab
+
+    # ## Gets the length of the instruction at the given index in the buffer
+    # ## For stepping over instructions
+    # def instructionSize(buffer: Buffer, i: Int): Int {
+    #     val opcode = buffer.getU8(i)
+    #     switch opcode {
+    #         case wide = if buffer.getU8(i + 1) == iinc {
+    #                 # iinc_w has 2 u16 args
+    #                 5
+    #             } else {
+    #                 # other 'wide' opcodes have exactly 1 u16 arg
+    #                 3
+    #             }
+    #         case tableswitch = {
+    #             val padding = paddingToNearestMultipleOf4(i + 1)
+    #             val low = buffer.getI32(i + 1 + padding + 4)
+    #             val high = buffer.getI32(i + 1 + padding + 8)
+    #             1 + padding + 3 * 4 + (high - low + 1) * 4
+    #         }
+    #         case lookupswitch = {
+    #             val padding = paddingToNearestMultipleOf4(i + 1)
+    #             val npairs = buffer.getI32(i + 1 + padding + 4)
+    #             1 + padding + 3 * 4
+    #         }
+    #         else = if opcode in zeroArgOpcodes {
+    #                 1
+    #             } else if opcode in u8ArgOpcodes {
+    #                 2
+    #             } else if opcode in u16ArgOpcodes {
+    #                 3
+    #             } else {
+    #             }
+    #     }
+    # }
+
+    private def paddingToNearestMultipleOf4(i: Int): Int = {
+        if i % 4 == 0 {
+            0
+        } else {
+            (4 - (i % 4))
+        }
+    }
 
     ## Opcodes with one 8-bit local variable argument
     static val oneU8LocalArgOpcode: Map[Int, String] = Map(
@@ -405,4 +455,15 @@ class Opcode {
         0xfe: "impdep1",
         0xff: "impdep2",
     )
+
+    static val u8ArgOpcodes: Set[Int] = [
+        oneU8LocalArgOpcode.keys().toList(),
+        [bipush]
+    ].flatten().toSet()
+
+    static val u16ArgOpcodes: Set[Int] = [
+        oneU16ConstArgOpcode.keys().toList(),
+        oneU16BranchArgOpcode.keys().toList(),
+        [sipush, iinc],
+    ].flatten().toSet()
 }

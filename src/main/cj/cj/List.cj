@@ -40,6 +40,9 @@ native class List[T?] :
 
     def default(): Self
 
+    def flatMap[@generic R, C: Iterable[R]](self, f: Fn[T, C]): List[R]
+    def flatten[@generic R, C: Iterable[R]](self: List[C]): List[R]
+
     if T : Eq def __contains(self, t: T): Bool
     if T : Ord def sort(self)
     if T : Eq def __eq(self: Self,  other: Self): Bool

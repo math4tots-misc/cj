@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cj.Error
+import cjx.jl1.JLIRLocal
 import cjx.jvm.JVMCodeBuilder
 import cjx.jl1.JLIRExpr
 import cjx.jl1.JLIRMethod
@@ -49,7 +51,12 @@ class JLCodegen {
 
                 if null(body) = jlmethod.body {
                     jvmmethod.addCode(jvmcode ->
-                        ExprGen(ctx, jvmcls, jvmmethod, jlmethod, jvmcode).top(body))
+                        ExprGen(
+                            ctx,
+                            jvmcls,
+                            jvmmethod,
+                            jlmethod,
+                            jvmcode).top(body))
                 }
             })
         }
@@ -66,8 +73,44 @@ class JLCodegen {
         val jlmethod: JLIRMethod
         val jvmcode: JVMCodeBuilder
 
+        ## Maps local variable ids to their JVM local variable slot
+        val localMap: Map[Int, Int] = Map()
+        var localSize: Int = 0
+
+        var stackSize: Int = 0
+
+        def stackIncr(self, diff: Int) {
+            stackSize = stackSize + diff
+            if stackSize > jvmcode.maxStack {
+                jvmcode.maxStack = stackSize
+            }
+        }
+
+        def addLocal(self, localvar: JLIRLocal) {
+            Assert.that(localvar.id not in localMap)
+            val slot = localSize
+            localSize = localSize + localvar.type.getJVMSlotSize()
+            if localSize > jvmcode.maxLocals {
+                jvmcode.maxLocals = localSize
+            }
+            localMap[localvar.id] = slot
+        }
+
         ## Emit an expression from the top of the method
         def top(self, expr: JLIRExpr) {
+            if null(localThis) = jlmethod.localThis {
+                addLocal(localThis)
+            }
+            for parameter in jlmethod.parameters {
+                addLocal(parameter)
+            }
+            emit(expr)
+        }
+
+        def emit(self, expr: JLIRExpr) {
+            when expr.data {
+                else = throw Error("TODO")
+            }
         }
     }
 }
