@@ -87,6 +87,15 @@ class MC$cj$List {
     M$default() {
         return [];
     }
+    M$__contains(self, t) {
+        const TV$T = this.TV$T;
+        for (const k of self) {
+            if (TV$T.M$__eq(k, t)) {
+                return true;
+            }
+        }
+        return false;
+    }
     M$sort(self) {
         const TV$T = this.TV$T;
         self.sort((a, b) => TV$T.M$__cmp(a, b));

@@ -121,6 +121,9 @@ class MC$cj$String {
     M$upper(self) {
         return self.toUpperCase();
     }
+    M$replace(self, old, new_) {
+        return self.split(old).join(new_);
+    }
 
     M$default() {
         return "";

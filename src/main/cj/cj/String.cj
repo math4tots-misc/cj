@@ -49,6 +49,7 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def trim(self: Self): String
     def lower(self): String
     def upper(self): String
+    def replace(self, old: String, new: String): String
 
     def default(): Self
 }

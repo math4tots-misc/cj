@@ -40,6 +40,7 @@ native class List[T?] :
 
     def default(): Self
 
+    if T : Eq def __contains(self, t: T): Bool
     if T : Ord def sort(self)
     if T : Eq def __eq(self: Self,  other: Self): Bool
     if T : Hash def hash(self: Self): Int
