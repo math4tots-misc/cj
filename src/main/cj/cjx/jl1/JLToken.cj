@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLMark
+
 @derive(new)
 class JLToken: Repr {
 
@@ -60,13 +62,17 @@ class JLToken: Repr {
     static val kwTRY = 238
     static val kwCATCH = 239
     static val kwFINALLY = 240
+    static val kwINTERFACE = 241
 
     static val keywordTypes: List[Int] = [
         kwDEF, kwCLASS, kwTRUE, kwFALSE, kwNULL, kwIF, kwELSE, kwIMPORT, kwWHILE, kwBREAK,
         kwCONTINUE, kwVAR, kwVAL, kwTRAIT, kwNATIVE, kwSTATIC, kwPRIVATE, kwPUBLIC, kwPACKAGE,
         kwRETURN, kwAND, kwOR, kwIS, kwNOT, kwIN, kwSWITCH, kwCASE, kwUNION, kwENUM, kwWHEN,
-        kwAS, kwFOR, kwASYNC, kwAWAIT, kwTHROW, kwTRY, kwCATCH, kwFINALLY,
+        kwAS, kwFOR, kwASYNC, kwAWAIT, kwTHROW, kwTRY, kwCATCH, kwFINALLY, kwINTERFACE,
     ]
+
+    static val modifierKeywordTypes: Set[Int] = Set(
+        kwPUBLIC, kwPRIVATE, kwSTATIC)
 
     val type: Int
     val text: String
@@ -75,6 +81,8 @@ class JLToken: Repr {
 
     def repr(self): String = (
         "JLToken(" + typeRepr(type) + ", " + text.repr() + ", " + line + ", " + column + ")")
+
+    def toMark(self, filename: String): JLMark = JLMark(filename, line, column)
 
     def keywordString(type: Int): String = {
         val str = typeRepr(type)
@@ -132,6 +140,7 @@ class JLToken: Repr {
         case kwTRY = "kwTRY"
         case kwCATCH = "kwCATCH"
         case kwFINALLY = "kwFINALLY"
+        case kwINTERFACE = "kwINTERFACE"
         case '\n' = "'\\n'"
         else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"

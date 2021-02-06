@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cj.FS
 import cjx.jvm.JVMConstValue
 import cj.Error
 import cjx.jl1.JLIRLocal
@@ -20,7 +21,11 @@ class JLCodegen {
         for className in ctx.classMap.keys() {
             val cls = ctx.classMap[className]
             if not cls.isNative() {
-                emitClass(cls)
+                val jvmcls = emitClass(cls)
+                val relpath = cls.name.replace(".", "/") + ".class"
+                val outpath = outdir + "/" + relpath
+                val jvmbuffer = jvmcls.toBuffer()
+                FS.writeFileBytes(outpath, jvmbuffer)
             }
         }
     }

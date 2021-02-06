@@ -4,7 +4,7 @@ import cjx.jl1.JLIRClass
 
 union JLType: ToString {
     case void
-    case boolean
+    case bool
     case byte
     case char
     case short
@@ -16,7 +16,7 @@ union JLType: ToString {
 
     def toString(self): String = when self {
         case void() = "void"
-        case boolean() = "boolean"
+        case bool() = "bool"
         case byte() = "byte"
         case char() = "char"
         case short() = "short"
@@ -29,7 +29,7 @@ union JLType: ToString {
 
     def toJVMString(self): String = when self {
         case void() = "V"
-        case boolean() = "Z"
+        case bool() = "Z"
         case byte() = "B"
         case char() = "C"
         case short() = "S"

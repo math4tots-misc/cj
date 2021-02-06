@@ -14,6 +14,7 @@ class JLAstClass {
     }
 
     val mark: JLMark
+    val comment: Nullable[String]
     val modifiers: List[String]
     val _isInterface: Bool
     val shortName: String

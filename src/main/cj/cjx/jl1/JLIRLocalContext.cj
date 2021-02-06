@@ -30,13 +30,13 @@ class JLIRLocalContext {
             JLType.klass(ctx.classMap[qualifiedName])
         } else {
             switch shortName {
-                case "void" = JLType.void()
-                case "boolean" = JLType.boolean()
-                case "byte" = JLType.byte()
-                case "int" = JLType.int()
-                case "long" = JLType.long()
-                case "float" = JLType.float()
-                case "double" = JLType.double()
+                case "Void" = JLType.void()
+                case "Bool" = JLType.bool()
+                case "Byte" = JLType.byte()
+                case "Int" = JLType.int()
+                case "Long" = JLType.long()
+                case "Float" = JLType.float()
+                case "Double" = JLType.double()
                 else = throw JLError("Unrecognized type: " + shortName, [texpr.mark])
             }
         }
