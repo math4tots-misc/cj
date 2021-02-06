@@ -90,9 +90,6 @@ class JLCodegen {
             Assert.that(localvar.id not in localMap)
             val slot = localSize
             localSize = localSize + localvar.type.getJVMSlotSize()
-            if localSize > jvmcode.maxLocals {
-                jvmcode.maxLocals = localSize
-            }
             localMap[localvar.id] = slot
         }
 

@@ -16,7 +16,6 @@ import cjx.jvm.JVMClass.AttributeInfoData
 class JVMCodeBuilder {
     val methodBuilder: JVMClass.MethodBuilder
     var maxStack: Int = 0
-    var maxLocals: Int = 0
     val code: Buffer = {
         val b = Buffer.empty()
         b.useLittleEndian(false)
@@ -34,8 +33,91 @@ class JVMCodeBuilder {
         }
     }
 
+    private def computeArgumentCount(descriptor: String): Int {
+        var argc = 0
+        var i = 1
+        while i < descriptor.size() and descriptor.charAt(i) != ')' {
+
+            argc++
+
+            while descriptor.charAt(i) == '[' {
+                i++
+            }
+
+            if descriptor.charAt(i) == 'L' {
+                while i < descriptor.size() and descriptor.charAt(i) != ';' {
+                    i += descriptor.charAt(i).size()
+                }
+            }
+
+            i += descriptor.charAt(i).size()
+        }
+        argc
+    }
+
+    private def computeMaxLocals(self): Int {
+        # Check 'this' and method parameters for a lower bound on maxLocals
+        var maxLocals = if methodBuilder.accessFlags & JVMClass.cACC_STATIC {
+            0
+        } else { 1 } + computeArgumentCount(methodBuilder.descriptor)
+
+        # Check the opcodes for another lower bound on maxLocals
+        for i = 0; i < code.size(); i += Opcode.instructionSize(code, i) {
+            val opcode = code.getU8(i)
+            val index = switch opcode {
+                case (Opcode.iload_0) = 0
+                case (Opcode.iload_1) = 1
+                case (Opcode.iload_2) = 2
+                case (Opcode.iload_3) = 3
+                case (Opcode.lload_0) = 0
+                case (Opcode.lload_1) = 1
+                case (Opcode.lload_2) = 2
+                case (Opcode.lload_3) = 3
+                case (Opcode.fload_0) = 0
+                case (Opcode.fload_1) = 1
+                case (Opcode.fload_2) = 2
+                case (Opcode.fload_3) = 3
+                case (Opcode.dload_0) = 0
+                case (Opcode.dload_1) = 1
+                case (Opcode.dload_2) = 2
+                case (Opcode.dload_3) = 3
+                case (Opcode.aload_0) = 0
+                case (Opcode.aload_1) = 1
+                case (Opcode.aload_2) = 2
+                case (Opcode.aload_3) = 3
+                case (Opcode.istore_0) = 0
+                case (Opcode.istore_1) = 1
+                case (Opcode.istore_2) = 2
+                case (Opcode.istore_3) = 3
+                case (Opcode.lstore_0) = 0
+                case (Opcode.lstore_1) = 1
+                case (Opcode.lstore_2) = 2
+                case (Opcode.lstore_3) = 3
+                case (Opcode.fstore_0) = 0
+                case (Opcode.fstore_1) = 1
+                case (Opcode.fstore_2) = 2
+                case (Opcode.fstore_3) = 3
+                case (Opcode.dstore_0) = 0
+                case (Opcode.dstore_1) = 1
+                case (Opcode.dstore_2) = 2
+                case (Opcode.dstore_3) = 3
+                case (Opcode.astore_0) = 0
+                case (Opcode.astore_1) = 1
+                case (Opcode.astore_2) = 2
+                case (Opcode.astore_3) = 3
+                else = if opcode in Opcode.oneU8LocalArgOpcode {
+                    code.getU8(i + 1) } else { -1 }
+            }
+            if maxLocals < index + 1 {
+                maxLocals = index + 1
+            }
+        }
+
+        maxLocals
+    }
+
     def build(self) : CodeAttribute {
-        val cattr = CodeAttribute(maxStack, maxLocals, code, exceptionTable, [])
+        val cattr = CodeAttribute(maxStack, computeMaxLocals(), code, exceptionTable, [])
         if lineNumberTable {
             cattr.attributes.add(AttributeInfo(
                 cls.cp.utf8("LineNumberTable"),

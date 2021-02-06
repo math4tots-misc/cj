@@ -1235,6 +1235,8 @@ class JVMClass {
             descriptorIndex = cls.cp.utf8(descriptor)
         }
 
+        def __get_descriptor(self): String = cls.cp.getUtf8(descriptorIndex)
+
         def addCode(self, f: Fn[JVMCodeBuilder, Unit]) {
             val codeBuilder = JVMCodeBuilder(self)
             f.call(codeBuilder)
