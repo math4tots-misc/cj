@@ -1,10 +1,12 @@
 package cjx.jvm
 
+import cj.Error
 import cj.Buffer
 
 
 ## Information about various opcodes
-class Opcode {
+union Opcode {
+    # one u8 local variable ref argument opcodes
     static val iload = 0x15
     static val lload = 0x16
     static val fload = 0x17
@@ -17,6 +19,8 @@ class Opcode {
     static val astore = 0x3a
     static val ret = 0xa9
     static val ldc = 0x12
+
+    # one u16 constref argument opcodes
     static val ldc_w = 0x13
     static val ldc2_w = 0x14
     static val getstatic = 0xb2
@@ -31,6 +35,8 @@ class Opcode {
     static val checkcast = 0xc0
     static val instanceof = 0xc1
     static val wide = 0xc4
+
+    # one u16 branch argument opcodes
     static val ifeq = 0x99
     static val ifne = 0x9a
     static val iflt = 0x9b
@@ -49,6 +55,8 @@ class Opcode {
     static val jsr = 0xa8
     static val ifnull = 0xc6
     static val ifnonnull = 0xc7
+
+    # zero argument opcodes
     static val nop = 0x00
     static val aconst_null = 0x01
     static val iconst_m1 = 0x02
@@ -200,45 +208,53 @@ class Opcode {
     static val impdep1 = 0xfe
     static val impdep2 = 0xff
 
+    # snow flake opcodes
     static val bipush = 0x10
     static val sipush = 0x11
     static val iinc = 0x84
     static val tableswitch = 0xaa
     static val lookupswitch = 0xab
+    static val invokeinterface = 0xb9
+    static val invokedynamic = 0xba
 
-    # ## Gets the length of the instruction at the given index in the buffer
-    # ## For stepping over instructions
-    # def instructionSize(buffer: Buffer, i: Int): Int {
-    #     val opcode = buffer.getU8(i)
-    #     switch opcode {
-    #         case wide = if buffer.getU8(i + 1) == iinc {
-    #                 # iinc_w has 2 u16 args
-    #                 5
-    #             } else {
-    #                 # other 'wide' opcodes have exactly 1 u16 arg
-    #                 3
-    #             }
-    #         case tableswitch = {
-    #             val padding = paddingToNearestMultipleOf4(i + 1)
-    #             val low = buffer.getI32(i + 1 + padding + 4)
-    #             val high = buffer.getI32(i + 1 + padding + 8)
-    #             1 + padding + 3 * 4 + (high - low + 1) * 4
-    #         }
-    #         case lookupswitch = {
-    #             val padding = paddingToNearestMultipleOf4(i + 1)
-    #             val npairs = buffer.getI32(i + 1 + padding + 4)
-    #             1 + padding + 3 * 4
-    #         }
-    #         else = if opcode in zeroArgOpcodes {
-    #                 1
-    #             } else if opcode in u8ArgOpcodes {
-    #                 2
-    #             } else if opcode in u16ArgOpcodes {
-    #                 3
-    #             } else {
-    #             }
-    #     }
-    # }
+    ## Gets the length of the instruction at the given index in the buffer
+    ## For stepping over instructions
+    def instructionSize(buffer: Buffer, i: Int): Int {
+        val opcode = buffer.getU8(i)
+        switch opcode {
+            case wide = if buffer.getU8(i + 1) == iinc {
+                    # iinc_w has 2 u16 args
+                    # wide(u1) iinc(u1) <arg1>(u2) <arg2>(u2)
+                    6
+                } else {
+                    # other 'wide' opcodes have exactly 1 u16 arg
+                    # wide(u1) <op>(u1) <arg>(u2)
+                    4
+                }
+            case tableswitch = {
+                val padding = paddingToNearestMultipleOf4(i + 1)
+                val low = buffer.getI32(i + 1 + padding + 4)
+                val high = buffer.getI32(i + 1 + padding + 8)
+                1 + padding + 3 * 4 + (high - low + 1) * 4
+            }
+            case lookupswitch = {
+                val padding = paddingToNearestMultipleOf4(i + 1)
+                val npairs = buffer.getI32(i + 1 + padding + 4)
+                1 + padding + 3 * 4
+            }
+            else = if opcode in zeroArgOpcodes {
+                    1
+                } else if opcode in u8ArgOpcodes {
+                    2
+                } else if opcode in u16ArgOpcodes {
+                    3
+                } else if opcode in u32ArgOpcodes {
+                    5
+                } else {
+                    throw Error("Unrecognized opcode: 0x" + opcode.hex().lpad(2, "0"))
+                }
+        }
+    }
 
     private def paddingToNearestMultipleOf4(i: Int): Int = {
         if i % 4 == 0 {
@@ -466,4 +482,6 @@ class Opcode {
         oneU16BranchArgOpcode.keys().toList(),
         [sipush, iinc],
     ].flatten().toSet()
+
+    static val u32ArgOpcodes: Set[Int] = Set(invokeinterface, invokedynamic)
 }
