@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jvm.JVMConstValue
 import cj.Error
 import cjx.jl1.JLIRLocal
 import cjx.jvm.JVMCodeBuilder
@@ -115,6 +116,57 @@ class JLCodegen {
 
         def emit(self, expr: JLIRExpr) {
             when expr.data {
+                case boolean(b) = {
+                    stackIncr(1)
+                    jvmcode.bipush(if b { 1 } else { 0 })
+                }
+                case int(i) = {
+                    stackIncr(1)
+                    jvmcode.ldc(JVMConstValue.int(i))
+                }
+                case long(i) = {
+                    stackIncr(2)
+                    jvmcode.ldc(JVMConstValue.long(i))
+                }
+                case float(f) = {
+                    stackIncr(1)
+                    jvmcode.ldc(JVMConstValue.float(f))
+                }
+                case double(f) = {
+                    stackIncr(2)
+                    jvmcode.ldc(JVMConstValue.double(f))
+                }
+                case string(s) = {
+                    stackIncr(1)
+                    jvmcode.ldc(JVMConstValue.string(s))
+                }
+                case block(subexprs) = {
+                    for subexpr in subexprs {
+                        emit(subexpr)
+                    }
+                }
+                case call(methodref, args) = {
+                    for arg in args {
+                        emit(arg)
+                    }
+                    stackIncr(expr.type.getJVMSlotSize())
+                    if methodref.method.isStatic() {
+                        jvmcode.invokestatic(
+                            methodref.owner.toJVMName(),
+                            methodref.method.name,
+                            methodref.method.getJVMDescriptor())
+                    } else if methodref.owner.isInterface() {
+                        jvmcode.invokeinterface(
+                            methodref.owner.toJVMName(),
+                            methodref.method.name,
+                            methodref.method.getJVMDescriptor())
+                    } else {
+                        jvmcode.invokevirtual(
+                            methodref.owner.toJVMName(),
+                            methodref.method.name,
+                            methodref.method.getJVMDescriptor())
+                    }
+                }
                 else = throw Error("TODO")
             }
         }

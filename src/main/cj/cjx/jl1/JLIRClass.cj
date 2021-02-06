@@ -22,4 +22,8 @@ class JLIRClass {
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")
+    def isInterface(self): Bool = when self.kind {
+        case iface = true
+        case klass = false
+    }
 }

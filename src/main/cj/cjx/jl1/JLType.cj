@@ -41,8 +41,14 @@ union JLType: ToString {
     }
 
     def getJVMSlotSize(self): Int = when self {
+        case void() = 0
         case long() = 2
         case double() = 2
         else = 1
+    }
+
+    def isVoid(self): Bool = when self {
+        case void = true
+        else = false
     }
 }

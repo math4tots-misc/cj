@@ -99,6 +99,15 @@ class JVMCodeBuilder {
         code.addU16(index)
     }
 
+    def invokeinterface(self, interfaceName: String, methodName: String, type: String) {
+        val index = cls.cp.interfaceMethodref(interfaceName, methodName, type)
+        val argc = 1 + computeArgumentSlotCount(type)
+        code.addU8(Opcode.invokeinterface)
+        code.addU16(index)
+        code.addU8(argc)
+        code.addU8(0)
+    }
+
     def invokestatic(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
         code.addU8(Opcode.invokestatic)
@@ -141,6 +150,16 @@ class JVMCodeBuilder {
                 }
             case string(s) = _ldc(cls.cp.string(s))
         }
+    }
+
+    def bipush(self, byte: Int) {
+        code.addU8(Opcode.bipush)
+        code.addI8(byte)
+    }
+
+    def sipush(self, value: Int) {
+        code.addU8(Opcode.sipush)
+        code.addI16(value)
     }
 
     ## load int from a local variable
