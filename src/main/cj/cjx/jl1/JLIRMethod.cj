@@ -13,7 +13,11 @@ class JLIRMethod {
     val name: String
     val parameters: List[JLIRLocal]
     val returnType: JLType
+    var allLocals: List[JLIRLocal] = []
     var body: Nullable[JLIRExpr] = null
 
     def isStatic(self): Bool = localThis.isEmpty()
+
+    def getJVMDescriptor(self): String = (
+        "(" + "".join(parameters.map(p -> p.type.toJVMString())) + ")" + returnType.toJVMString())
 }
