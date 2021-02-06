@@ -51,4 +51,9 @@ union JLType: ToString {
         case void = true
         else = false
     }
+
+    def isInterface(self): Bool = when self {
+        case klass(cls) = cls.isInterface()
+        else = false
+    }
 }

@@ -29,6 +29,11 @@ class JLCodegen {
         val jvmcls = JVMClass()
         jvmcls.thisClass = jvmcls.cp.classref(cls.toJVMName())
         jvmcls.superClass = jvmcls.cp.classref("java/lang/Object")
+        jvmcls.attributes.add(JVMClass.AttributeInfo(
+            jvmcls.cp.utf8("SourceFile"),
+            JVMClass.AttributeInfoData.sourceFile(
+                JVMClass.SourceFileAttribute(
+                    jvmcls.cp.utf8(cls.mark.filename)))))
 
         for jlfield in cls.fields {
             jvmcls.addField(jvmfield -> {
@@ -150,6 +155,7 @@ class JLCodegen {
                         emit(arg)
                     }
                     stackIncr(expr.type.getJVMSlotSize())
+                    jvmcode.markLine(expr.mark.line)
                     if methodref.method.isStatic() {
                         jvmcode.invokestatic(
                             methodref.owner.toJVMName(),

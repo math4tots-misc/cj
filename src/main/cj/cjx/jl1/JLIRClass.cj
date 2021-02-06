@@ -7,14 +7,9 @@ import cjx.jl1.JLMark
 
 @derive(new)
 class JLIRClass {
-    union Kind {
-        case klass
-        case iface
-    }
-
     val mark: JLMark
     val modifiers: List[String]
-    val kind: Kind
+    val _isInterface: Bool
     val name: String  # fully qualified name
     val interfaces: List[JLType] = []
     val fields: List[JLIRField] = []
@@ -22,8 +17,5 @@ class JLIRClass {
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")
-    def isInterface(self): Bool = when self.kind {
-        case iface = true
-        case klass = false
-    }
+    def isInterface(self): Bool = _isInterface
 }

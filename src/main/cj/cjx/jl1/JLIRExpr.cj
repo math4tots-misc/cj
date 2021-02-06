@@ -8,6 +8,7 @@ import cjx.jl1.JLType
 import cjx.jl1.JLMark
 
 ## jl1 expression
+@derive(new)
 class JLIRExpr {
 
     union Data {

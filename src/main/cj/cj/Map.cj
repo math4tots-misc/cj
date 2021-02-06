@@ -26,6 +26,8 @@ class Map[K?: Hash, V?] :
     @variadic
     def new(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
 
+    def clone(self): Self = of(pairs().toList())
+
     def _rehash(self: Self, newCap: Int) = {
         if self._list.size() < newCap {
             val oldList = self._list
