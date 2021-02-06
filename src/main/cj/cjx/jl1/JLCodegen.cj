@@ -50,13 +50,17 @@ class JLCodegen {
                 jvmmethod.descriptor = jlmethod.getJVMDescriptor()
 
                 if null(body) = jlmethod.body {
-                    jvmmethod.addCode(jvmcode ->
-                        ExprGen(
+                    jvmmethod.addCode(jvmcode -> {
+                        val exprgen = ExprGen(
                             ctx,
                             jvmcls,
                             jvmmethod,
                             jlmethod,
-                            jvmcode).top(body))
+                            jvmcode)
+                        exprgen.top(body)
+                        jvmcode.maxStack = exprgen.maxStack
+                        jvmcode.maxLocals = exprgen.maxLocals
+                    })
                 }
             })
         }
@@ -76,14 +80,15 @@ class JLCodegen {
         ## Maps local variable ids to their JVM local variable slot
         val localMap: Map[Int, Int] = Map()
         var localSize: Int = 0
-        var maxLocal: Int = 0 # TODO: compare with JVMCodeBuilder's inferred maxLocal
+        var maxLocals: Int = 0 # TODO: compare with JVMCodeBuilder's inferred maxLocals
 
         var stackSize: Int = 0
+        var maxStack: Int = 0
 
         def stackIncr(self, diff: Int) {
             stackSize = stackSize + diff
-            if stackSize > jvmcode.maxStack {
-                jvmcode.maxStack = stackSize
+            if stackSize > maxStack {
+                maxStack = stackSize
             }
         }
 
@@ -91,8 +96,8 @@ class JLCodegen {
             Assert.that(localvar.id not in localMap)
             val slot = localSize
             localSize = localSize + localvar.type.getJVMSlotSize()
-            if localSize > maxLocal {
-                maxLocal = localSize
+            if localSize > maxLocals {
+                maxLocals = localSize
             }
             localMap[localvar.id] = slot
         }
