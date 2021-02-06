@@ -98,7 +98,7 @@ class MC$cj$List {
         return list;
     }
     M$flatten(TV$I, TV$C, self) {
-        return this.M$flatMap(null, TV$C, x => x);
+        return this.M$flatMap(null, TV$C, self, x => x);
     }
     M$__contains(self, t) {
         const TV$T = this.TV$T;

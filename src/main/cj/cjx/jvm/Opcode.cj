@@ -18,7 +18,6 @@ union Opcode {
     static val dstore = 0x39
     static val astore = 0x3a
     static val ret = 0xa9
-    static val ldc = 0x12
 
     # one u16 constref argument opcodes
     static val ldc_w = 0x13
@@ -209,6 +208,7 @@ union Opcode {
     static val impdep2 = 0xff
 
     # snow flake opcodes
+    static val ldc = 0x12
     static val bipush = 0x10
     static val sipush = 0x11
     static val iinc = 0x84
@@ -216,6 +216,7 @@ union Opcode {
     static val lookupswitch = 0xab
     static val invokeinterface = 0xb9
     static val invokedynamic = 0xba
+    static val newarray = 0xbc
 
     ## Gets the length of the instruction at the given index in the buffer
     ## For stepping over instructions
@@ -240,7 +241,7 @@ union Opcode {
             case lookupswitch = {
                 val padding = paddingToNearestMultipleOf4(i + 1)
                 val npairs = buffer.getI32(i + 1 + padding + 4)
-                1 + padding + 3 * 4
+                1 + padding + 2 * 4 + npairs * 8
             }
             else = if opcode in zeroArgOpcodes {
                     1
@@ -474,7 +475,7 @@ union Opcode {
 
     static val u8ArgOpcodes: Set[Int] = [
         oneU8LocalArgOpcode.keys().toList(),
-        [bipush]
+        [ldc, bipush, newarray]
     ].flatten().toSet()
 
     static val u16ArgOpcodes: Set[Int] = [

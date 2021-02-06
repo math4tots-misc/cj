@@ -293,6 +293,7 @@ class JVMClass {
         while reader {
             val pos = reader.i
             out.start(pos.hex().rpad(6, " ") + ": ")
+            val instructionStart = reader.i
             val opcode = reader.getU8()
             if encounteredUnrecognizedOpcode {
                 # It's not safe to assume the rest of the code is properly interpreted
@@ -438,6 +439,13 @@ class JVMClass {
                         }
                     }
                 }
+                val instructionEnd = reader.i
+                if Opcode.instructionSize(code, instructionStart) != instructionEnd - instructionStart {
+                    IO.println("OPCODE = 0x" + opcode.hex().lpad(2, "0"))
+                }
+                Assert.equal(
+                    Opcode.instructionSize(code, instructionStart),
+                    instructionEnd - instructionStart)
             }
         }
         out.dedent()
