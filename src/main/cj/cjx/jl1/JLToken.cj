@@ -5,7 +5,7 @@ import cjx.jl1.JLMark
 @derive(new)
 class JLToken: Repr {
 
-    # general categories (1-15)
+    # general categories (1-31 except 10 -- 10 is reserved for newline)
     static val tEOF = 1
     static val tCOMMENT = 2
     static val tID = 3
@@ -15,8 +15,8 @@ class JLToken: Repr {
     static val tSHORT = 7
     static val tLONG = 8
     static val tDOUBLE = 9
-    static val tFLOAT = 10
-    static val tSTRING = 11
+    static val tFLOAT = 11
+    static val tSTRING = 12
 
     # token types in the range 32-127 are restricted for ASCII single character
     # token types.

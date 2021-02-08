@@ -178,6 +178,8 @@ class JLParser {
                 val name = parseTypeId()
                 val args: List[JLAstType] = []
                 if at('[') and not atOffset(']', 1) {
+                    expect('[')
+                    IO.println("at = " + JLToken.typeRepr(peek().type))
                     var repeat = true
                     while repeat and not consume(']') {
                         args.add(parseType())
@@ -186,6 +188,7 @@ class JLParser {
                             expect(']')
                         }
                     }
+                    Assert.that(args)
                 }
                 JLAstType(mark, JLAstType.Data.klass(name, args))
             }

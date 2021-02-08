@@ -25,7 +25,10 @@ class JLLexer {
                 }
                 case ')'
                 case ']'
-                case '}' = if stack { stack.pop() }
+                case '}' = if stack {
+                    stack.pop()
+                    outTokens.add(token)
+                }
                 case '\n' = if not stack or stack.last() == '{' {
                     outTokens.add(token)
                 }
