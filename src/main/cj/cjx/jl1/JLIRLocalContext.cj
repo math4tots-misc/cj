@@ -46,6 +46,14 @@ class JLIRLocalContext {
         }
     }
 
+    def solveFieldType(self, texpr: JLAstType): JLType {
+        val type = solveType(texpr)
+        when type {
+            case void = throw JLError("void is not allowed here", [texpr.mark])
+            else = type
+        }
+    }
+
     def solveInterfaceType(self, texpr: JLAstType): JLType {
         val type = solveType(texpr)
         if type.isInterface() {

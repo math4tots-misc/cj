@@ -1,5 +1,8 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRLocal
+import cjx.jl1.JLIRMethod
+import cjx.jl1.JLIRField
 import cjx.jl1.JLError
 import cjx.jl1.JLIRLocalContext
 import cj.Error
@@ -13,6 +16,7 @@ import cjx.jl1.JLAstFile
 @derive(new)
 class JLIRSolver {
     static val builtinTypeMap: Map[String, String] = Map(
+        "Object": "java.lang.Object",
         "String": "cj.String",
     )
 
@@ -21,6 +25,7 @@ class JLIRSolver {
     def solve(self, files: List[JLAstFile]) {
         pass0(files)
         pass1(files)
+        pass2(files)
     }
 
     ## init JLIRClass objects
@@ -39,7 +44,65 @@ class JLIRSolver {
         walkClasses(ctx, files, (name, astcls, lctx) -> {
             val ircls = ctx.classMap[name]
             for astInterface in astcls.interfaces {
-                ircls.interfaces.add(lctx.solveInterfaceType(astInterface))
+                val irInterface = lctx.solveInterfaceType(astInterface)
+                if not irInterface.isInterface() {
+                    throw JLError("Expected interface", [astInterface.mark])
+                }
+                ircls.interfaces.add(irInterface)
+            }
+        })
+    }
+
+    ## Resolve method and field types
+    def pass2(self, files: List[JLAstFile]) {
+        walkClasses(ctx, files, (clsname, astcls, lctx) -> {
+            val ircls = ctx.classMap[clsname]
+            val thisType = JLType.klass(ircls)
+            for astMember in astcls.members {
+                when astMember {
+                    case klass(innercls) = ()
+                    case field(astField) = {
+                        val irField = JLIRField(
+                            astField.mark,
+                            astField.comment,
+                            astField.modifiers,
+                            astField.name,
+                            lctx.solveFieldType(astField.type))
+                        ircls.fields.add(irField)
+                    }
+                    case method(astMethod) = {
+                        val locals: List[JLIRLocal] = []
+                        val localThis = if not astMethod.isStatic() {
+                            val local = JLIRLocal(astMethod.mark, 0, [], "this", thisType)
+                            locals.add(local)
+                            null(local)
+                        } else {
+                            null
+                        }
+                        val parameters: List[JLIRLocal] = []
+                        for astLocal in astMethod.parameters {
+                            Assert.that(astLocal.init.isEmpty())
+                            val irLocal = JLIRLocal(
+                                astLocal.mark,
+                                locals.size(),
+                                astLocal.modifiers,
+                                astLocal.name,
+                                lctx.solveFieldType(astLocal.type.get()))
+                            locals.add(irLocal)
+                            parameters.add(irLocal)
+                        }
+                        val irMethod = JLIRMethod(
+                            astMethod.mark,
+                            astMethod.comment,
+                            astMethod.modifiers,
+                            localThis,
+                            astMethod.name,
+                            parameters,
+                            lctx.solveType(astMethod.returnType),
+                            locals)
+                        ircls.methods.add(irMethod)
+                    }
+                }
             }
         })
     }

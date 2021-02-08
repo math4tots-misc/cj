@@ -6,6 +6,7 @@ import cjx.jl1.JLType
 @derive(new)
 class JLIRField {
     val mark: JLMark
+    val comment: Nullable[String]
     val modifiers: List[String]
     val name: String
     val type: JLType
