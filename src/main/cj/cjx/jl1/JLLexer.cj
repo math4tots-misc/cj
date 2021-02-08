@@ -8,7 +8,33 @@ import cjx.jl1.JLToken
 
 class JLLexer {
 
-    def lex(filename: String, string: String): List[JLToken] = lexer.lex(filename, string)
+    def lex(filename: String, string: String): List[JLToken] = {
+        val inTokens = lexer.lex(filename, string)
+
+        # omit newline tokens in between '()' and '[]' grouping symbols
+        # (while keeping them at the top level and between '{}' grouping symbols)
+        val stack: List[Int] = []
+        val outTokens: List[JLToken] = []
+        for token in inTokens {
+            switch token.type {
+                case '('
+                case '['
+                case '{' = {
+                    stack.add(token.type)
+                    outTokens.add(token)
+                }
+                case ')'
+                case ']'
+                case '}' = if stack { stack.pop() }
+                case '\n' = if not stack or stack.last() == '{' {
+                    outTokens.add(token)
+                }
+                else = outTokens.add(token)
+            }
+        }
+
+        outTokens
+    }
 
     private static val lexer: Lexer[JLToken] = build()
 
@@ -32,6 +58,24 @@ class JLLexer {
         b.add(
             "\\(|\\)|\\{|\\}|\\[|\\]|\\+|\\*|/|-|%|~|\\.|^|&|\\||!|@|=|;|,|:|<|>|\\?",
             m -> chartok(m))
+
+        # multi-character symbol tokens
+        b.add("==", m -> symtok(JLToken.tEQ, m));
+        b.add("!=", m -> symtok(JLToken.tNE, m));
+        b.add("<=", m -> symtok(JLToken.tLE, m));
+        b.add(">=", m -> symtok(JLToken.tGE, m));
+        b.add("<<", m -> symtok(JLToken.tLSHIFT, m));
+        b.add(">>", m -> symtok(JLToken.tRSHIFT, m));
+        b.add(">>>", m -> symtok(JLToken.tRSHIFTU, m));
+        b.add("//", m -> symtok(JLToken.tTRUNCDIV, m));
+        b.add("->", m -> symtok(JLToken.tRIGHT_ARROW, m));
+        b.add("\\*\\*", m -> symtok(JLToken.tPOWER, m));
+        b.add("\\+\\+", m -> symtok(JLToken.tPLUSPLUS, m));
+        b.add("--", m -> symtok(JLToken.tMINUSMINUS, m));
+        b.add("\\+=", m -> symtok(JLToken.tPLUS_EQ, m));
+        b.add("-=", m -> symtok(JLToken.tMINUS_EQ, m));
+        b.add("\\*=", m -> symtok(JLToken.tSTAR_EQ, m));
+        b.add("%=", m -> symtok(JLToken.tREM_EQ, m));
 
         # newline
         b.add("\n\\s*", m -> chartok(m))

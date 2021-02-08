@@ -6,15 +6,21 @@ import cjx.jl1.JLMark
 @derive(new)
 class JLAstExpr {
     union Data {
-        case boolean(Bool)
+        case bool(Bool)
+        case char(Int)
         case int(Int)
         case double(Double)
         case string(String)
         case block(List[JLAstExpr])
-        case callstatic(JLAstType, String, List[JLAstExpr])
+        case callstatic(String, String, List[JLAstExpr])
         case callinstance(JLAstExpr, String, List[JLAstExpr])
-        case getstatic(JLAstType, String)
-        case setstatic(JLAstType, String, JLAstExpr)
+        case callname(String, List[JLAstExpr])
+        case getstatic(String, String)
+        case setstatic(String, String, JLAstExpr)
+        case getfield(JLAstExpr, String)
+        case setfield(JLAstExpr, String, JLAstExpr)
+        case getvar(String)
+        case setvar(String, JLAstExpr)
     }
 
     val mark: JLMark

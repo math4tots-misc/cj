@@ -21,7 +21,25 @@ class JLToken: Repr {
     # token types in the range 32-127 are restricted for ASCII single character
     # token types.
 
-    # Java keywords (200-300)
+    # Multi-character symbol tokens (150-199)
+    static val tPLUS_EQ = 150
+    static val tMINUS_EQ = 151
+    static val tSTAR_EQ = 152
+    static val tREM_EQ = 153
+    static val tEQ = 154
+    static val tNE = 155
+    static val tGE = 156
+    static val tLE = 157
+    static val tLSHIFT = 158
+    static val tRSHIFT = 159
+    static val tRSHIFTU = 160
+    static val tTRUNCDIV = 161
+    static val tPOWER = 162
+    static val tPLUSPLUS = 163
+    static val tMINUSMINUS = 164
+    static val tRIGHT_ARROW = 165
+
+    # Java keywords (200-299)
     static val kwABSTRACT = 200
     static val kwCONTINUE = 201
     static val kwFOR = 202
@@ -85,6 +103,15 @@ class JLToken: Repr {
     static val kwASYNC = 308
     static val kwAWAIT = 309
     static val kwBOOL = 310
+    static val kwTRUE = 311
+    static val kwFALSE = 312
+    static val kwNULL = 313
+    static val kwYIELD = 314
+    static val kwAND = 315
+    static val kwOR = 316
+    static val kwIS = 317
+    static val kwNOT = 318
+    static val kwIN = 319
 
     static val keywordTypes: List[Int] = [
         kwABSTRACT, kwCONTINUE, kwFOR, kwNEW, kwSWITCH, kwASSERT, kwDEFAULT, kwGOTO,
@@ -94,7 +121,7 @@ class JLToken: Repr {
         kwINT, kwSHORT, kwTRY, kwCHAR, kwFINAL, kwINTERFACE, kwSTATIC, kwVOID, kwCLASS,
         kwVAL, kwFINALLY, kwLONG, kwSTRICTFP, kwVOLATILE, kwCONST, kwFLOAT, kwNATIVE,
         kwSUPER, kwWHILE, kwVAR, kwDEF, kwTRAIT, kwUNION, kwSTRUCT, kwAS, kwWHEN, kwASYNC,
-        kwAWAIT, kwBOOL]
+        kwAWAIT, kwBOOL, kwTRUE, kwFALSE, kwNULL, kwYIELD, kwAND, kwOR, kwIS, kwNOT, kwIN]
 
     static val modifierKeywordTypes: Set[Int] = Set(
         kwABSTRACT, kwSYNCHRONIZED, kwPRIVATE, kwPROTECTED, kwPUBLIC, kwNATIVE, kwASYNC)
@@ -127,6 +154,22 @@ class JLToken: Repr {
         case tDOUBLE = "tDOUBLE"
         case tFLOAT = "tFLOAT"
         case tSTRING = "tSTRING"
+        case tPLUS_EQ = "tPLUS_EQ"
+        case tMINUS_EQ = "tMINUS_EQ"
+        case tSTAR_EQ = "tSTAR_EQ"
+        case tREM_EQ = "tREM_EQ"
+        case tEQ = "tEQ"
+        case tNE = "tNE"
+        case tGE = "tGE"
+        case tLE = "tLE"
+        case tLSHIFT = "tLSHIFT"
+        case tRSHIFT = "tRSHIFT"
+        case tRSHIFTU = "tRSHIFTU"
+        case tTRUNCDIV = "tTRUNCDIV"
+        case tPOWER = "tPOWER"
+        case tPLUSPLUS = "tPLUSPLUS"
+        case tMINUSMINUS = "tMINUSMINUS"
+        case tRIGHT_ARROW = "tRIGHT_ARROW"
         case kwABSTRACT = "kwABSTRACT"
         case kwCONTINUE = "kwCONTINUE"
         case kwFOR = "kwFOR"
@@ -188,6 +231,15 @@ class JLToken: Repr {
         case kwASYNC = "kwASYNC"
         case kwAWAIT = "kwAWAIT"
         case kwBOOL = "kwBOOL"
+        case kwTRUE = "kwTRUE"
+        case kwFALSE = "kwFALSE"
+        case kwNULL = "kwNULL"
+        case kwYIELD = "kwYIELD"
+        case kwAND = "kwAND"
+        case kwOR = "kwOR"
+        case kwIS = "kwIS"
+        case kwNOT = "kwNOT"
+        case kwIN = "kwIN"
         case '\n' = "'\\n'"
         else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"
