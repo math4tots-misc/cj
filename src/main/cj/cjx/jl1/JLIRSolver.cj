@@ -151,14 +151,38 @@ class JLIRSolver {
             case block(astExprs) = {
                 if astExprs {
                     val irExprs: List[JLIRExpr] = []
+
+                    lctx.pushScope()
                     for i = 0; i + 1 < astExprs.size(); i++ {
                         irExprs.add(solveExpression(lctx, astExprs[i], null(JLType.void())))
                     }
                     irExprs.add(solveExpression(lctx, astExprs.last(), expectedType))
+                    lctx.popScope()
+
                     JLIRExpr(mark, irExprs.last().type, JLIRExpr.Data.block(irExprs))
                 } else {
                     JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())
                 }
+            }
+            case callstatic(ownerName, methodName, astArgs) = {
+                val ownercls = lctx.getClass(mark, ownerName)
+                val methodref = ownercls.getMethodRef(mark, methodName)
+                if not methodref.method.isStatic() {
+                    throw JLError("" + methodref + " is non-static", [mark])
+                }
+                val argc = methodref.method.parameters.size()
+                if argc != astArgs.size() {
+                    throw JLError(
+                        "" + methodref +
+                        " expects " + argc +
+                        " args but got " + astArgs.size(), [mark])
+                }
+                val irArgs: List[JLIRExpr] = []
+                for i = 0; i < argc; i++ {
+                    irArgs.add(solveExpression(
+                        lctx, astArgs[i], null(methodref.method.parameters[i].type)))
+                }
+                JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
             }
             case callinstance(astOwner, methodName, astArgs) = {
                 val irOwner = solveExpression(lctx, astOwner, null)
@@ -186,10 +210,148 @@ class JLIRSolver {
                 }
                 JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
             }
+            case callname(methodName, astArgs) = {
+                # syntactic sugar for callstatic or callinstance
+                val ownercls = lctx.thisClass
+                val methodref = ownercls.getMethodRef(mark, methodName)
+                if methodref.method.isStatic() {
+                    solveExpression(lctx, JLAstExpr(mark, JLAstExpr.Data.callstatic(
+                        ownercls.name,
+                        methodName,
+                        astArgs)), expectedType)
+                } else {
+                    solveExpression(lctx, JLAstExpr(mark, JLAstExpr.Data.callinstance(
+                        JLAstExpr(mark, JLAstExpr.Data.this()),
+                        methodName,
+                        astArgs)), expectedType)
+                }
+            }
             case getstatic(clsname, fieldName) = {
                 val ownercls = lctx.getClass(mark, clsname)
                 val fieldref = ownercls.getFieldRef(mark, fieldName)
+                if not fieldref.field.isStatic() {
+                    throw JLError("" + fieldref + " is non-static", [mark])
+                }
                 JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.getstatic(fieldref))
+            }
+            case setstatic(clsname, fieldName, astValexpr) = {
+                val ownercls = lctx.getClass(mark, clsname)
+                val fieldref = ownercls.getFieldRef(mark, fieldName)
+                if not fieldref.field.isStatic() {
+                    throw JLError("" + fieldref + " is non-static", [mark])
+                }
+                if not fieldref.field.isMutable() {
+                    throw JLError("" + fieldref + " is not mutable", [mark])
+                }
+                val valexpr = solveExpression(lctx, astValexpr, null(fieldref.field.type))
+                JLIRExpr(mark, JLType.void(), JLIRExpr.Data.setstatic(fieldref, valexpr))
+            }
+            case getfield(astOwner, fieldName) = {
+                val irOwner = solveExpression(lctx, astOwner, null)
+                val ownercls = when irOwner.type {
+                    case klass(ownercls) = ownercls
+                    else = {
+                        throw JLError("" + irOwner.type + " values do not have fields", [mark])
+                    }
+                }
+                val fieldref = ownercls.getFieldRef(mark, fieldName)
+                if fieldref.field.isStatic() {
+                    throw JLError("" + fieldref + " is static", [mark])
+                }
+                JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.getfield(fieldref, irOwner))
+            }
+            case setfield(astOwner, fieldName, astValexpr) = {
+                val irOwner = solveExpression(lctx, astOwner, null)
+                val ownercls = when irOwner.type {
+                    case klass(ownercls) = ownercls
+                    else = {
+                        throw JLError("" + irOwner.type + " values do not have fields", [mark])
+                    }
+                }
+                val fieldref = ownercls.getFieldRef(mark, fieldName)
+                if fieldref.field.isStatic() {
+                    throw JLError("" + fieldref + " is static", [mark])
+                }
+                if not fieldref.field.isMutable() {
+                    throw JLError("" + fieldref + " is not mutable", [mark])
+                }
+                val valexpr = solveExpression(lctx, astValexpr, null(fieldref.field.type))
+                JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.setfield(
+                    fieldref, irOwner, valexpr))
+            }
+            case getvar(name) = {
+                if null(local) = lctx.getLocalOrNull(name) {
+                    JLIRExpr(mark, local.type, JLIRExpr.Data.getlocal(local))
+                } else {
+                    val ownercls = lctx.thisClass
+                    if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                        if fieldref.field.isStatic() {
+                            solveExpression(
+                                lctx,
+                                JLAstExpr(mark, JLAstExpr.Data.getstatic(ownercls.name, name)),
+                                expectedType)
+                        } else {
+                            solveExpression(
+                                lctx,
+                                JLAstExpr(mark, JLAstExpr.Data.getfield(
+                                    JLAstExpr(mark, JLAstExpr.Data.this()), name)),
+                                expectedType)
+                        }
+                    } else {
+                        throw JLError("Variable " + name + " not found", [mark])
+                    }
+                }
+            }
+            case setvar(name, astValexpr) = {
+                if null(local) = lctx.getLocalOrNull(name) {
+                    if not local.isMutable() {
+                        throw JLError("Variable " + name + " is not mutable", [mark])
+                    }
+                    val valexpr = solveExpression(lctx, astValexpr, null(local.type))
+                    JLIRExpr(mark, JLType.void(), JLIRExpr.Data.setlocal(local, valexpr))
+                } else {
+                    val ownercls = lctx.thisClass
+                    if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                        if fieldref.field.isStatic() {
+                            solveExpression(
+                                lctx,
+                                JLAstExpr(mark, JLAstExpr.Data.setstatic(
+                                    ownercls.name, name, astValexpr)),
+                                expectedType)
+                        } else {
+                            solveExpression(
+                                lctx,
+                                JLAstExpr(mark, JLAstExpr.Data.setfield(
+                                    JLAstExpr(mark, JLAstExpr.Data.this()), name, astValexpr)),
+                                expectedType)
+                        }
+                    } else {
+                        throw JLError("Variable " + name + " not found", [mark])
+                    }
+                }
+            }
+            case declvar(astLocal) = {
+                val (variableType, irInit) = {
+                    if astLocal.type.isPresent() {
+                        val type = lctx.solveFieldType(astLocal.type.get())
+                        val init = solveExpression(lctx, astLocal.init.get(), null(type))
+                        (type, init)
+                    } else {
+                        val init = solveExpression(lctx, astLocal.init.get(), null)
+                        (init.type, init)
+                    }
+                }
+                val local = lctx.newLocal(
+                    mark, astLocal.modifiers, astLocal.name, variableType)
+                JLIRExpr(mark, JLType.void(), JLIRExpr.Data.declarelocal(local, irInit))
+            }
+            case this() = {
+                if lctx.thisMethod.isStatic() {
+                    throw JLError("'this' cannot be used in a static context", [mark])
+                } else {
+                    JLIRExpr(mark, JLType.klass(lctx.thisClass), JLIRExpr.Data.getlocal(
+                        lctx.getLocalOrNull("this").get()))
+                }
             }
             case if_(astCond, astBody, nullableOther) = {
                 val irCond = solveExpression(lctx, astCond, null(JLType.bool()))
@@ -205,7 +367,6 @@ class JLIRSolver {
                         JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())))
                 }
             }
-            else = throw JLError("TODO", [mark])
         }
 
         if null(etype) = expectedType {
@@ -240,6 +401,10 @@ class JLIRSolver {
             for cls in file.classes {
                 val name = qualifyClassName(file, cls)
                 typeMap[cls.shortName] = name
+
+                # allow use of fully qualified names in local contexts
+                typeMap[name] = name
+
                 for member in cls.members {
                     when member {
                         case klass(innercls) = {

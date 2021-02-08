@@ -261,6 +261,9 @@ class JLParser {
         while more and not consume(')') {
             val mark = mark
             val modifiers = parseModifiers()
+            if consume(JLToken.kwVAR) {
+                modifiers.add("var")
+            }
             val name = parseId()
             expect(':')
             val type = parseType()
@@ -379,6 +382,19 @@ class JLParser {
             case (JLToken.kwFALSE) = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(false))
+            }
+            case (JLToken.kwVAR)
+            case (JLToken.kwVAL) = {
+                val modifiers = if consume(JLToken.kwVAR) { ["var"] } else {
+                    expect(JLToken.kwVAL)
+                    []
+                }
+                val name = parseId()
+                val type = if consume(':') { null(parseType()) } else { null }
+                expect('=')
+                val init = null(parseExpression())
+                JLAstExpr(mark, JLAstExpr.Data.declvar(JLAstLocal(
+                    mark, modifiers, name, type, init)))
             }
             case (JLToken.kwIF) = parseIf()
             case (JLToken.tID) = {

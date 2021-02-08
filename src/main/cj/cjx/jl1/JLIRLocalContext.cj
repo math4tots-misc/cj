@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRLocal
 import cjx.jl1.JLMark
 import cjx.jl1.JLIRMethod
 import cjx.jl1.JLIRClass
@@ -26,6 +27,8 @@ class JLIRLocalContext {
 
     var _thisClass: Nullable[JLIRClass] = null
     var _thisMethod: Nullable[JLIRMethod] = null
+
+    val localStack: List[Map[String, JLIRLocal]] = [Map()]
 
     def __get_thisClass(self): JLIRClass = if null(cls) = _thisClass {
             cls
@@ -95,5 +98,33 @@ class JLIRLocalContext {
             else = ()
         }
         throw JLError("Expected interface type but got " + type, [texpr.mark])
+    }
+
+    def pushScope(self) {
+        localStack.add(Map())
+    }
+
+    def popScope(self) {
+        localStack.pop()
+    }
+
+    def getLocalOrNull(self, name: String): Nullable[JLIRLocal] {
+        for i = localStack.size() - 1; i >= 0; i-- {
+            if null(entry) = localStack[i].getOrNull(name) {
+                return null(entry)
+            }
+        }
+        null
+    }
+
+    def newLocal(
+            self,
+            mark: JLMark,
+            modifiers: List[String],
+            name: String,
+            type: JLType): JLIRLocal {
+        val local = thisMethod.newLocal(mark, modifiers, name, type)
+        localStack.last()[name] = local
+        local
     }
 }

@@ -201,6 +201,24 @@ class JVMCodeBuilder {
         code.addU16(index)
     }
 
+    def putstatic(self, className: String, fieldName: String, type: String) {
+        val index = cls.cp.fieldref(className, fieldName, type)
+        code.addU8(Opcode.putstatic)
+        code.addU16(index)
+    }
+
+    def getfield(self, className: String, fieldName: String, type: String) {
+        val index = cls.cp.fieldref(className, fieldName, type)
+        code.addU8(Opcode.getfield)
+        code.addU16(index)
+    }
+
+    def putfield(self, className: String, fieldName: String, type: String) {
+        val index = cls.cp.fieldref(className, fieldName, type)
+        code.addU8(Opcode.putfield)
+        code.addU16(index)
+    }
+
     def invokevirtual(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
         code.addU8(Opcode.invokevirtual)
@@ -270,6 +288,10 @@ class JVMCodeBuilder {
         code.addI16(value)
     }
 
+    # ======================================================
+    # variable load/store opcodes
+    # ======================================================
+
     ## load int from a local variable
     def iload(self, index: Int) = _localvarOp(
         index, Opcode.iload_0, Opcode.iload_1, Opcode.iload_2, Opcode.iload_3, Opcode.iload)
@@ -326,6 +348,104 @@ class JVMCodeBuilder {
             }
         }
     }
+
+    # ======================================================
+    # one u16 branch argument opcodes
+    # ======================================================
+
+    def ifeq(self, offset: Int) {
+        code.addU8(Opcode.ifeq)
+        code.addU16(offset)
+    }
+
+    def ifne(self, offset: Int) {
+        code.addU8(Opcode.ifne)
+        code.addU16(offset)
+    }
+
+    def iflt(self, offset: Int) {
+        code.addU8(Opcode.iflt)
+        code.addU16(offset)
+    }
+
+    def ifge(self, offset: Int) {
+        code.addU8(Opcode.ifge)
+        code.addU16(offset)
+    }
+
+    def ifgt(self, offset: Int) {
+        code.addU8(Opcode.ifgt)
+        code.addU16(offset)
+    }
+
+    def ifle(self, offset: Int) {
+        code.addU8(Opcode.ifle)
+        code.addU16(offset)
+    }
+
+    def if_icmpeq(self, offset: Int) {
+        code.addU8(Opcode.if_icmpeq)
+        code.addU16(offset)
+    }
+
+    def if_icmpne(self, offset: Int) {
+        code.addU8(Opcode.if_icmpne)
+        code.addU16(offset)
+    }
+
+    def if_icmplt(self, offset: Int) {
+        code.addU8(Opcode.if_icmplt)
+        code.addU16(offset)
+    }
+
+    def if_icmpge(self, offset: Int) {
+        code.addU8(Opcode.if_icmpge)
+        code.addU16(offset)
+    }
+
+    def if_icmpgt(self, offset: Int) {
+        code.addU8(Opcode.if_icmpgt)
+        code.addU16(offset)
+    }
+
+    def if_icmple(self, offset: Int) {
+        code.addU8(Opcode.if_icmple)
+        code.addU16(offset)
+    }
+
+    def if_acmpeq(self, offset: Int) {
+        code.addU8(Opcode.if_acmpeq)
+        code.addU16(offset)
+    }
+
+    def if_acmpne(self, offset: Int) {
+        code.addU8(Opcode.if_acmpne)
+        code.addU16(offset)
+    }
+
+    def goto(self, offset: Int) {
+        code.addU8(Opcode.goto)
+        code.addU16(offset)
+    }
+
+    def jsr(self, offset: Int) {
+        code.addU8(Opcode.jsr)
+        code.addU16(offset)
+    }
+
+    def ifnull(self, offset: Int) {
+        code.addU8(Opcode.ifnull)
+        code.addU16(offset)
+    }
+
+    def ifnonnull(self, offset: Int) {
+        code.addU8(Opcode.ifnonnull)
+        code.addU16(offset)
+    }
+
+    # ======================================================
+    # zero argument opcodes
+    # ======================================================
 
     def nop(self) {
         code.addU8(Opcode.nop)
@@ -709,97 +829,5 @@ class JVMCodeBuilder {
 
     def impdep2(self) {
         code.addU8(Opcode.impdep2)
-    }
-
-    # one u16 branch argument opcodes
-
-    def ifeq(self, offset: Int) {
-        code.addU8(Opcode.ifeq)
-        code.addU16(offset)
-    }
-
-    def ifne(self, offset: Int) {
-        code.addU8(Opcode.ifne)
-        code.addU16(offset)
-    }
-
-    def iflt(self, offset: Int) {
-        code.addU8(Opcode.iflt)
-        code.addU16(offset)
-    }
-
-    def ifge(self, offset: Int) {
-        code.addU8(Opcode.ifge)
-        code.addU16(offset)
-    }
-
-    def ifgt(self, offset: Int) {
-        code.addU8(Opcode.ifgt)
-        code.addU16(offset)
-    }
-
-    def ifle(self, offset: Int) {
-        code.addU8(Opcode.ifle)
-        code.addU16(offset)
-    }
-
-    def if_icmpeq(self, offset: Int) {
-        code.addU8(Opcode.if_icmpeq)
-        code.addU16(offset)
-    }
-
-    def if_icmpne(self, offset: Int) {
-        code.addU8(Opcode.if_icmpne)
-        code.addU16(offset)
-    }
-
-    def if_icmplt(self, offset: Int) {
-        code.addU8(Opcode.if_icmplt)
-        code.addU16(offset)
-    }
-
-    def if_icmpge(self, offset: Int) {
-        code.addU8(Opcode.if_icmpge)
-        code.addU16(offset)
-    }
-
-    def if_icmpgt(self, offset: Int) {
-        code.addU8(Opcode.if_icmpgt)
-        code.addU16(offset)
-    }
-
-    def if_icmple(self, offset: Int) {
-        code.addU8(Opcode.if_icmple)
-        code.addU16(offset)
-    }
-
-    def if_acmpeq(self, offset: Int) {
-        code.addU8(Opcode.if_acmpeq)
-        code.addU16(offset)
-    }
-
-    def if_acmpne(self, offset: Int) {
-        code.addU8(Opcode.if_acmpne)
-        code.addU16(offset)
-    }
-
-    def goto(self, offset: Int) {
-        code.addU8(Opcode.goto)
-        code.addU16(offset)
-    }
-
-    def jsr(self, offset: Int) {
-        code.addU8(Opcode.jsr)
-        code.addU16(offset)
-    }
-
-    def ifnull(self, offset: Int) {
-        code.addU8(Opcode.ifnull)
-        code.addU16(offset)
-    }
-
-    def ifnonnull(self, offset: Int) {
-        code.addU8(Opcode.ifnonnull)
-        code.addU16(offset)
     }
 }

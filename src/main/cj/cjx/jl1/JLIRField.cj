@@ -12,4 +12,5 @@ class JLIRField {
     val type: JLType
 
     def isStatic(self): Bool = "static" in modifiers
+    def isMutable(self): Bool = "var" in modifiers
 }

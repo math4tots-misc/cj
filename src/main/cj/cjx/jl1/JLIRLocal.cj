@@ -17,4 +17,6 @@ class JLIRLocal {
 
     ## The type of this variable
     val type: JLType
+
+    def isMutable(self): Bool = "var" in modifiers
 }

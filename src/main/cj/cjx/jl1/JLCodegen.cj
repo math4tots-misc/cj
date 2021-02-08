@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLType
+import cjx.jl1.JLError
 import cj.FS
 import cjx.jvm.JVMConstValue
 import cj.Error
@@ -90,6 +92,8 @@ class JLCodegen {
         ## Maps local variable ids to their JVM local variable slot
         val localMap: Map[Int, Int] = Map()
         var localSize: Int = 0
+        val localSizeStack: List[Int] = []
+        val localStack: List[List[JLIRLocal]] = [[]]
         var maxLocals: Int = 0 # TODO: compare with JVMCodeBuilder's inferred maxLocals
 
         def addLocal(self, localvar: JLIRLocal) {
@@ -99,7 +103,20 @@ class JLCodegen {
             if localSize > maxLocals {
                 maxLocals = localSize
             }
+            localStack.last().add(localvar)
             localMap[localvar.id] = slot
+        }
+
+        def pushScope(self) {
+            localSizeStack.add(localSize)
+            localStack.add([])
+        }
+
+        def popScope(self) {
+            localSize = localSizeStack.pop()
+            for local in localStack.pop() {
+                localMap.removeOrThrow(local.id)
+            }
         }
 
         ## Emit an expression from the top of the method
@@ -125,8 +142,12 @@ class JLCodegen {
 
         def emit(self, expr: JLIRExpr) {
             when expr.data {
+                case void() = ()
                 case bool(b) = {
                     jvmcode.bipush(if b { 1 } else { 0 })
+                }
+                case char(i) = {
+                    jvmcode.ldc(JVMConstValue.int(i))
                 }
                 case int(i) = {
                     jvmcode.ldc(JVMConstValue.int(i))
@@ -144,9 +165,11 @@ class JLCodegen {
                     jvmcode.ldc(JVMConstValue.string(s))
                 }
                 case block(subexprs) = {
+                    pushScope()
                     for subexpr in subexprs {
                         emit(subexpr)
                     }
+                    popScope()
                 }
                 case call(methodref, args) = {
                     for arg in args {
@@ -170,8 +193,55 @@ class JLCodegen {
                             methodref.method.getJVMDescriptor())
                     }
                 }
+                case declarelocal(local, init) = {
+                    emit(init)
+                    addLocal(local)
+                    store(local)
+                }
+                case getlocal(local) = {
+                    val index = localMap[local.id]
+                    when local.type {
+                        case void() = throw Error("getlocal void variable")
+                        case bool() = jvmcode.iload(index)
+                        case byte() = jvmcode.iload(index)
+                        case char() = jvmcode.iload(index)
+                        case short() = jvmcode.iload(index)
+                        case int() = jvmcode.iload(index)
+                        case long() = jvmcode.lload(index)
+                        case float() = jvmcode.fload(index)
+                        case double() = jvmcode.dload(index)
+                        case array(inner) = jvmcode.aload(index)
+                        case klass(cls) = jvmcode.aload(index)
+                    }
+                }
+                case setlocal(local, valexpr) = {
+                    emit(valexpr)
+                    store(local)
+                }
                 case getstatic(fieldref) = {
                     jvmcode.getstatic(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
+                }
+                case setstatic(fieldref, valexpr) = {
+                    emit(valexpr)
+                    jvmcode.putstatic(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
+                }
+                case getfield(fieldref, owner) = {
+                    emit(owner)
+                    jvmcode.getfield(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
+                }
+                case setfield(fieldref, owner, valexpr) = {
+                    emit(owner)
+                    emit(valexpr)
+                    jvmcode.putfield(
                         fieldref.owner.toJVMName(),
                         fieldref.field.name,
                         fieldref.field.type.toJVMString())
@@ -194,7 +264,40 @@ class JLCodegen {
                     jvmcode.code.setU16(jumpPatchPos1, landPos1 - jumpPos1)
                     jvmcode.code.setU16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
-                else = throw Error("TODO")
+                case calldirect(kind, ownerName, methodName, descriptor, args) = {
+                    for arg in args {
+                        emit(arg)
+                    }
+                    switch kind {
+                        case "static" = {
+                            jvmcode.invokestatic(ownerName, methodName, descriptor)
+                        }
+                        case "class" = {
+                            jvmcode.invokevirtual(ownerName, methodName, descriptor)
+                        }
+                        case "interface" = {
+                            jvmcode.invokeinterface(ownerName, methodName, descriptor)
+                        }
+                        else = throw JLError("Unrecognized call kind " + kind, [expr.mark])
+                    }
+                }
+            }
+        }
+
+        def store(self, local: JLIRLocal) {
+            val index = localMap[local.id]
+            when local.type {
+                case void() = throw Error("getlocal void variable")
+                case bool() = jvmcode.istore(index)
+                case byte() = jvmcode.istore(index)
+                case char() = jvmcode.istore(index)
+                case short() = jvmcode.istore(index)
+                case int() = jvmcode.istore(index)
+                case long() = jvmcode.lstore(index)
+                case float() = jvmcode.fstore(index)
+                case double() = jvmcode.dstore(index)
+                case array(inner) = jvmcode.astore(index)
+                case klass(cls) = jvmcode.astore(index)
             }
         }
     }

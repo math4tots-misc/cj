@@ -4,11 +4,23 @@ import java.lang.System
 
 class JLSample {
     def main(args: String[]) {
-        if false {
-            System.out.println("false is true")
+
+        var x = true
+
+        if x {
+            System.out.println("x is true")
         } else {
-            System.out.println("true is true")
+            System.out.println("x is false")
         }
+
+        x = false
+
+        if x {
+            System.out.println("x is true")
+        } else {
+            System.out.println("x is false")
+        }
+
         System.out.println("Hello world!")
     }
 }

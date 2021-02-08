@@ -22,7 +22,7 @@ class JLIRExpr {
         case string(String)
         case block(List[JLIRExpr])
         case call(JLIRMethodRef, List[JLIRExpr])
-        case declarelocal(JLIRLocal) # declare a local variable
+        case declarelocal(JLIRLocal, JLIRExpr) # declare a local variable
         case getlocal(JLIRLocal) # get local variable
         case setlocal(JLIRLocal, JLIRExpr) # set local variable
         case getstatic(JLIRFieldRef) # get static field
@@ -35,8 +35,8 @@ class JLIRExpr {
         ##
         ## Allows invoking overloaded methods by specifying the full method signature
         ##
-        ## (is-static, owner-type, method-name, signature, args)
-        case calldirect(Bool, JLType, String, String, List[JLIRExpr])
+        ## (kind(static, class or interface), owner-type, method-name, signature, args)
+        case calldirect(String, String, String, String, List[JLIRExpr])
     }
 
     val mark: JLMark
