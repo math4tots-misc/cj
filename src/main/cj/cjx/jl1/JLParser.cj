@@ -1,8 +1,10 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstExpr
+import cjx.jl1.JLAstLocal
+import cjx.jl1.JLAstMethod
 import cjx.jl1.JLLexer
 import cj.Error
-import cjx.jl1.JLType
 import cjx.jl1.JLAstType
 import cjx.jl1.JLAstClass
 import cjx.jl1.JLAstImport
@@ -160,13 +162,76 @@ class JLParser {
     }
 
     def parseType(self): JLAstType {
-        # TODO: type args
         val mark = mark
         val name = parseTypeId()
-        JLAstType(mark, name, [])
+        val args: List[JLAstType] = []
+        if consume('[') {
+            var repeat = true
+            while repeat and not consume(']') {
+                args.add(parseType())
+                if not consume(',') {
+                    repeat = false
+                    expect(']')
+                }
+            }
+        }
+        JLAstType(mark, name, args)
     }
 
     def parseMember(self): JLAstClass.Member {
-        throw Error("TODO")
+        val comment = parseComment()
+        val modifiers = parseModifiers()
+        switch peek().type {
+            case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
+            else = throw Error("TODO: parseMember")
+        }
+    }
+
+    def parseMethod(self, comment: Nullable[String], modifiers: List[String]): JLAstMethod {
+        val mark = mark
+        expect(JLToken.kwDEF)
+        val name = parseId()
+        val parameters = parseParameters()
+        val returnType = if consume(':') { parseType() } else { JLAstType(mark, "Void", []) }
+        val body: Nullable[JLAstExpr] = (
+            if consume('=') { null(parseExpression()) }
+            else if at('{') { null(parseBlock()) }
+            else { null })
+        JLAstMethod(mark, comment, modifiers, name, parameters, returnType, body)
+    }
+
+    def parseParameters(self): List[JLAstLocal] {
+        expect('(')
+        val list: List[JLAstLocal] = []
+        var repeat = true
+        while repeat and not consume(')') {
+            val mark = mark
+            val modifiers = parseModifiers()
+            val name = parseId()
+            expect(':')
+            val type = parseType()
+            list.add(JLAstLocal(mark, modifiers, name, null(type), null))
+            if not consume(',') {
+                repeat = false
+                expect(')')
+            }
+        }
+        list
+    }
+
+    def parseBlock(self): JLAstExpr {
+        val mark = mark
+        val exprs: List[JLAstExpr] = []
+        expect('{')
+        skipDelimiters()
+        while not consume('}') {
+            exprs.add(parseExpression())
+            skipDelimiters()
+        }
+        JLAstExpr(mark, JLAstExpr.Data.block(exprs))
+    }
+
+    def parseExpression(self): JLAstExpr {
+        throw Error("TODO: parseExpression")
     }
 }

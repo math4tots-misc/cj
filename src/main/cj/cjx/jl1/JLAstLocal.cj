@@ -1,12 +1,15 @@
 package cjx.jl1
 
-import cjx.jl1.JLType
+import cjx.jl1.JLAstType
+import cjx.jl1.JLAstExpr
 import cjx.jl1.JLMark
 
 ## Local variable declaration
 @derive(new)
 class JLAstLocal {
     val mark: JLMark
+    val modifiers: List[String]
     val name: String
-    val type: JLType
+    val type: Nullable[JLAstType]
+    val init: Nullable[JLAstExpr]
 }

@@ -1,4 +1,6 @@
 package sample
 
 class JLSample {
+    def main(args: Array[String]) {
+    }
 }

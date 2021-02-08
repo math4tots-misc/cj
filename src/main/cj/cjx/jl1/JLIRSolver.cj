@@ -12,6 +12,10 @@ import cjx.jl1.JLAstFile
 
 @derive(new)
 class JLIRSolver {
+    static val builtinTypeMap: Map[String, String] = Map(
+        "String": "cj.String",
+    )
+
     val ctx: JLContext
 
     def solve(self, files: List[JLAstFile]) {
@@ -51,7 +55,7 @@ class JLIRSolver {
             files: List[JLAstFile],
             f: Fn[String, JLAstClass, JLIRLocalContext, Unit]) {
         for file in files {
-            val typeMap: Map[String, String] = Map()
+            val typeMap = builtinTypeMap.clone()
 
             for imp in file.imports {
                 typeMap[imp.alias] = imp.qualifiedName

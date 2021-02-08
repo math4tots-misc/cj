@@ -10,6 +10,8 @@ class JLIRLocal {
     ## An id unique within the function in which it is defined
     val id: Int
 
+    val modifiers: List[String]
+
     ## The variable's name
     val name: String
 
