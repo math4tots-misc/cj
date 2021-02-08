@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstField
 import cjx.jl1.JLAstExpr
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstMethod
@@ -85,7 +86,10 @@ class JLParser {
 
         val classes: List[JLAstClass] = []
         while not at(JLToken.tEOF) {
-            classes.add(parseClass())
+            val comment = parseComment()
+            skipDelimiters()
+            val modifiers = parseModifiers()
+            classes.add(parseClass(comment, modifiers))
         }
 
         JLAstFile(mark, packageName, imports, classes)
@@ -128,11 +132,8 @@ class JLParser {
         modifiers
     }
 
-    def parseClass(self): JLAstClass {
+    def parseClass(self, comment: Nullable[String], modifiers: List[String]): JLAstClass {
         val mark = mark
-        val comment = parseComment()
-        skipDelimiters()
-        val modifiers = parseModifiers()
         val isInterface = if consume(JLToken.kwINTERFACE) { true } else {
             expect(JLToken.kwCLASS)
             false
@@ -202,9 +203,26 @@ class JLParser {
         val comment = parseComment()
         val modifiers = parseModifiers()
         switch peek().type {
+            case (JLToken.kwVAR)
+            case (JLToken.kwVAL) = JLAstClass.Member.field(parseField(comment, modifiers))
             case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
-            else = throw Error("TODO: parseMember")
+            case (JLToken.kwCLASS)
+            case (JLToken.kwINTERFACE) = JLAstClass.Member.klass(parseClass(comment, modifiers))
+            else = throw JLError("Expected class member", [mark])
         }
+    }
+
+    def parseField(self, comment: Nullable[String], modifiers: List[String]): JLAstField {
+        val mark = mark
+        if consume(JLToken.kwVAR) {
+            modifiers.add("var")
+        } else {
+            expect(JLToken.kwVAL)
+        }
+        val name = parseId()
+        expect(':')
+        val type = parseType()
+        JLAstField(mark, comment, modifiers, name, type)
     }
 
     def parseMethod(self, comment: Nullable[String], modifiers: List[String]): JLAstMethod {
