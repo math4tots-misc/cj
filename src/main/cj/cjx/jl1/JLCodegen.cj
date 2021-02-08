@@ -115,39 +115,49 @@ class JLCodegen {
 
         ## Emit an expression from the top of the method
         def top(self, expr: JLIRExpr) {
-            if null(localThis) = jlmethod.localThis {
-                addLocal(localThis)
-            }
             for parameter in jlmethod.parameters {
                 addLocal(parameter)
             }
             emit(expr)
+            when jlmethod.returnType {
+                case void = jvmcode.return_()
+                case bool = jvmcode.ireturn()
+                case byte = jvmcode.ireturn()
+                case char = jvmcode.ireturn()
+                case short = jvmcode.ireturn()
+                case int = jvmcode.ireturn()
+                case long = jvmcode.lreturn()
+                case float = jvmcode.freturn()
+                case double = jvmcode.dreturn()
+                case array(inner) = jvmcode.areturn()
+                case klass(cls) = jvmcode.areturn()
+            }
         }
 
         def emit(self, expr: JLIRExpr) {
             when expr.data {
-                case boolean(b) = {
-                    stackIncr(1)
+                case bool(b) = {
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.bipush(if b { 1 } else { 0 })
                 }
                 case int(i) = {
-                    stackIncr(1)
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.int(i))
                 }
                 case long(i) = {
-                    stackIncr(2)
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.long(i))
                 }
                 case float(f) = {
-                    stackIncr(1)
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.float(f))
                 }
                 case double(f) = {
-                    stackIncr(2)
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.double(f))
                 }
                 case string(s) = {
-                    stackIncr(1)
+                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.string(s))
                 }
                 case block(subexprs) = {
@@ -159,7 +169,12 @@ class JLCodegen {
                     for arg in args {
                         emit(arg)
                     }
+
+                    for arg in args {
+                        stackIncr(-arg.type.getJVMSlotSize())
+                    }
                     stackIncr(expr.type.getJVMSlotSize())
+
                     jvmcode.markLine(expr.mark.line)
                     if methodref.method.isStatic() {
                         jvmcode.invokestatic(
@@ -177,6 +192,13 @@ class JLCodegen {
                             methodref.method.name,
                             methodref.method.getJVMDescriptor())
                     }
+                }
+                case getstatic(fieldref) = {
+                    stackIncr(expr.type.getJVMSlotSize())
+                    jvmcode.getstatic(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
                 }
                 else = throw Error("TODO")
             }

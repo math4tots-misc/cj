@@ -10,7 +10,6 @@ class JLIRMethod {
     val mark: JLMark
     val comment: Nullable[String]
     val modifiers: List[String]
-    val localThis: Nullable[JLIRLocal]
     val name: String
     val parameters: List[JLIRLocal]
     val returnType: JLType
@@ -20,10 +19,12 @@ class JLIRMethod {
     val locals: List[JLIRLocal]
     var body: Nullable[JLIRExpr] = null
 
-    def isStatic(self): Bool = localThis.isEmpty()
+    def isStatic(self): Bool = not (parameters and parameters[0].name == "this")
 
     def getJVMDescriptor(self): String = (
-        "(" + "".join(parameters.map(p -> p.type.toJVMString())) + ")" + returnType.toJVMString())
+        "(" + "".join((
+            if isStatic() { parameters } else { parameters[1:] }
+        ).map(p -> p.type.toJVMString())) + ")" + returnType.toJVMString())
 
     def newLocal(
             self,

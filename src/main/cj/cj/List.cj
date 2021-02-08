@@ -33,6 +33,7 @@ native class List[T?] :
 
     @generic def map[R?](self: Self, f: Fn[T, R]): List[R]
     @generic def filter(self: Self, f: Fn[T, Bool]): Self
+    @generic def clone(self): Self
 
     def toBool(self: Self): Bool
 

@@ -8,7 +8,10 @@ import cjx.jl1.JLIRMethod
 ## This allows us to determine if the given method reference is a class
 ## method or an interface method.
 ##
-class JLIRMethodRef {
+@derive(new)
+class JLIRMethodRef: ToString {
     val owner: JLIRClass
     val method: JLIRMethod
+
+    def toString(self): String = owner.name + "." + method.name
 }

@@ -1,6 +1,9 @@
 package sample
 
+import java.lang.System
+
 class JLSample {
     def main(args: String[]) {
+        System.out.println("Hello world!")
     }
 }

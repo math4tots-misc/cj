@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRExpr
+import cjx.jl1.JLAstExpr
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLIRMethod
 import cjx.jl1.JLIRField
@@ -17,7 +19,7 @@ import cjx.jl1.JLAstFile
 class JLIRSolver {
     static val builtinTypeMap: Map[String, String] = Map(
         "Object": "java.lang.Object",
-        "String": "cj.String",
+        "String": "java.lang.String",
     )
 
     val ctx: JLContext
@@ -26,6 +28,7 @@ class JLIRSolver {
         pass0(files)
         pass1(files)
         pass2(files)
+        pass3(files)
     }
 
     ## init JLIRClass objects
@@ -68,43 +71,140 @@ class JLIRSolver {
                             astField.modifiers,
                             astField.name,
                             lctx.solveFieldType(astField.type))
-                        ircls.fields.add(irField)
+                        ircls.addField(irField)
                     }
                     case method(astMethod) = {
-                        val locals: List[JLIRLocal] = []
-                        val localThis = if not astMethod.isStatic() {
-                            val local = JLIRLocal(astMethod.mark, 0, [], "this", thisType)
-                            locals.add(local)
-                            null(local)
-                        } else {
-                            null
-                        }
                         val parameters: List[JLIRLocal] = []
                         for astLocal in astMethod.parameters {
                             Assert.that(astLocal.init.isEmpty())
                             val irLocal = JLIRLocal(
                                 astLocal.mark,
-                                locals.size(),
+                                parameters.size(),
                                 astLocal.modifiers,
                                 astLocal.name,
-                                lctx.solveFieldType(astLocal.type.get()))
-                            locals.add(irLocal)
+                                if astLocal.name == "this" {
+                                    Assert.that(astLocal.type.isEmpty())
+                                    thisType
+                                } else {
+                                    lctx.solveFieldType(astLocal.type.get())
+                                })
                             parameters.add(irLocal)
                         }
                         val irMethod = JLIRMethod(
                             astMethod.mark,
                             astMethod.comment,
                             astMethod.modifiers,
-                            localThis,
                             astMethod.name,
                             parameters,
                             lctx.solveType(astMethod.returnType),
-                            locals)
-                        ircls.methods.add(irMethod)
+                            parameters.clone())
+                        ircls.addMethod(irMethod)
                     }
                 }
             }
         })
+    }
+
+    ## Resolve expressions
+    def pass3(self, files: List[JLAstFile]) {
+        walkClasses(ctx, files, (clsname, astcls, lctx) -> {
+            val ircls = ctx.classMap[clsname]
+            val thisType = JLType.klass(ircls)
+            for astMember in astcls.members {
+                when astMember {
+                    case klass(innercls) = ()
+                    case field(astField) = ()
+                    case method(astMethod) = {
+                        if astMethod.body.isPresent() {
+                            val irMethod = ircls.getDeclaredMethod(astMethod.name)
+                            val astBody = astMethod.body.get()
+                            val mlctx = JLIRLocalContext(
+                                lctx.ctx,
+                                lctx.className,
+                                lctx.typeMap,
+                                astMethod.name)
+                            val irBody = solveExpression(
+                                mlctx, astBody, null(irMethod.returnType))
+                            irMethod.body = null(irBody)
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    def solveExpression(
+            self,
+            lctx: JLIRLocalContext,
+            astExpr: JLAstExpr,
+            expectedType: Nullable[JLType]): JLIRExpr {
+
+        val mark = astExpr.mark
+
+        val irExpr: JLIRExpr = when astExpr.data {
+            case bool(x) = JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.bool(x))
+            case char(x) = JLIRExpr(mark, JLType.char(), JLIRExpr.Data.char(x))
+            case int(x) = JLIRExpr(mark, JLType.int(), JLIRExpr.Data.int(x))
+            case double(x) = JLIRExpr(mark, JLType.double(), JLIRExpr.Data.double(x))
+            case string(x) = JLIRExpr(
+                mark, ctx.getClassType(mark, "java.lang.String"), JLIRExpr.Data.string(x))
+            case block(astExprs) = {
+                if astExprs {
+                    val irExprs: List[JLIRExpr] = []
+                    for i = 0; i + 1 < astExprs.size(); i++ {
+                        irExprs.add(solveExpression(lctx, astExprs[i], null(JLType.void())))
+                    }
+                    irExprs.add(solveExpression(lctx, astExprs.last(), expectedType))
+                    JLIRExpr(mark, irExprs.last().type, JLIRExpr.Data.block(irExprs))
+                } else {
+                    JLIRExpr(mark, JLType.void(), JLIRExpr.Data.block([]))
+                }
+            }
+            case callinstance(astOwner, methodName, astArgs) = {
+                val irOwner = solveExpression(lctx, astOwner, null)
+                val ownercls = when irOwner.type {
+                    case klass(ownercls) = ownercls
+                    else = {
+                        throw JLError("" + irOwner.type + " values do not have methods", [mark])
+                    }
+                }
+                val methodref = ownercls.getMethodRef(mark, methodName)
+                if methodref.method.isStatic() {
+                    throw JLError("" + methodref + " is static", [mark])
+                }
+                val argc = methodref.method.parameters.size() - 1
+                if argc != astArgs.size() {
+                    throw JLError(
+                        "" + methodref +
+                        " expects " + argc +
+                        " args but got " + astArgs.size(), [mark])
+                }
+                val irArgs: List[JLIRExpr] = [irOwner]
+                for i = 1; i <= argc; i++ {
+                    irArgs.add(solveExpression(
+                        lctx, astArgs[i - 1], null(methodref.method.parameters[i].type)))
+                }
+                JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
+            }
+            case getstatic(clsname, fieldName) = {
+                val ownercls = lctx.getClass(mark, clsname)
+                val fieldref = ownercls.getFieldRef(mark, fieldName)
+                JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.getstatic(fieldref))
+            }
+            else = throw JLError("TODO", [mark])
+        }
+
+        if null(etype) = expectedType {
+            if not etype.isVoid() and etype != irExpr.type {
+                throw JLError("Expected " + etype + " but got " + irExpr.type, [mark])
+            }
+        } else {
+            # If a void type was not specifically requested, it's not allowed
+            if irExpr.type.isVoid() {
+                throw JLError("a void expression is not allowed here", [mark])
+            }
+        }
+        irExpr
     }
 
     private def qualifyClassName(file: JLAstFile, cls: JLAstClass): String = (
@@ -149,13 +249,13 @@ class JLIRSolver {
 
             for cls in file.classes {
                 val name = qualifyClassName(file, cls)
-                val lctx = JLIRLocalContext(ctx, name, typeMap)
+                val lctx = JLIRLocalContext(ctx, name, typeMap, "")
                 f.call(name, cls, lctx)
                 for member in cls.members {
                     when member {
                         case klass(innercls) = {
                             val innerName = qualifyInnerClassName(name, innercls)
-                            val innerLctx = JLIRLocalContext(ctx, innerName, typeMap)
+                            val innerLctx = JLIRLocalContext(ctx, innerName, typeMap, "")
                             f.call(innerName, innercls, innerLctx)
                         }
                         else = ()

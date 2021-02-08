@@ -12,7 +12,8 @@ import cjx.jl1.JLMark
 class JLIRExpr {
 
     union Data {
-        case boolean(Bool)
+        case bool(Bool)
+        case char(Int)
         case int(Int)
         case long(BigInt)
         case float(Double)

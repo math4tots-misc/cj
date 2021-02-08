@@ -155,7 +155,7 @@ class JLParser {
         expect('{')
         skipDelimiters()
         while not consume('}') {
-            parseMember()
+            members.add(parseMember())
             skipDelimiters()
         }
         expectDelimiters()
@@ -179,7 +179,6 @@ class JLParser {
                 val args: List[JLAstType] = []
                 if at('[') and not atOffset(']', 1) {
                     expect('[')
-                    IO.println("at = " + JLToken.typeRepr(peek().type))
                     var repeat = true
                     while repeat and not consume(']') {
                         args.add(parseType())
@@ -246,8 +245,20 @@ class JLParser {
     def parseParameters(self): List[JLAstLocal] {
         expect('(')
         val list: List[JLAstLocal] = []
-        var repeat = true
-        while repeat and not consume(')') {
+        var more = if at(JLToken.kwTHIS) {
+            val mark = mark
+            expect(JLToken.kwTHIS)
+            list.add(JLAstLocal(mark, [], "this", null, null))
+            if consume(',') {
+                true
+            } else {
+                expect(')')
+                false
+            }
+        } else {
+            true
+        }
+        while more and not consume(')') {
             val mark = mark
             val modifiers = parseModifiers()
             val name = parseId()
@@ -255,7 +266,7 @@ class JLParser {
             val type = parseType()
             list.add(JLAstLocal(mark, modifiers, name, null(type), null))
             if not consume(',') {
-                repeat = false
+                more = false
                 expect(')')
             }
         }
@@ -269,7 +280,7 @@ class JLParser {
         skipDelimiters()
         while not consume('}') {
             exprs.add(parseExpression())
-            skipDelimiters()
+            expectDelimiters()
         }
         JLAstExpr(mark, JLAstExpr.Data.block(exprs))
     }
@@ -320,6 +331,7 @@ class JLParser {
             val mark = mark
             expr = switch peek().type {
                 case '.' = {
+                    next()
                     val name = parseId()
                     if at('(') {
                         val args = parseArgs()
@@ -345,6 +357,7 @@ class JLParser {
                         [mark])
                 }
             }
+            tokenPrecedence = getTokenPrecedence(peek().type)
         }
         expr
     }

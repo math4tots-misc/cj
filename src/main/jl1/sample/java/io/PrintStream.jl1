@@ -1,0 +1,5 @@
+package java.io
+
+native class PrintStream {
+    def println(this, string: String)
+}
