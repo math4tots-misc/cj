@@ -21,58 +21,83 @@ class JLToken: Repr {
     # token types in the range 32-127 are restricted for ASCII single character
     # token types.
 
-    # keywords (200+)
-    static val kwDEF = 201
-    static val kwCLASS = 202
-    static val kwTRUE = 203
-    static val kwFALSE = 204
-    static val kwNULL = 205
-    static val kwIF = 206
-    static val kwELSE = 207
-    static val kwIMPORT = 208
-    static val kwWHILE = 209
-    static val kwBREAK = 210
-    static val kwCONTINUE = 211
-    static val kwVAR = 212
-    static val kwVAL = 213
-    # static val kwNEW = 214
-    static val kwTRAIT = 215
-    static val kwNATIVE = 216
-    static val kwSTATIC = 217
-    static val kwPRIVATE = 218
-    static val kwPUBLIC = 219
-    static val kwPACKAGE = 220
-    static val kwRETURN = 221
-    static val kwAND = 222
-    static val kwOR = 223
-    static val kwIS = 224
-    static val kwNOT = 225
-    static val kwIN = 226
-    # static val kwTHEN = 227
-    static val kwSWITCH = 228
-    static val kwCASE = 229
-    static val kwUNION = 230
-    static val kwENUM = 231
-    static val kwWHEN = 232
-    static val kwAS = 233
-    static val kwFOR = 234
-    static val kwASYNC = 235
-    static val kwAWAIT = 236
-    static val kwTHROW = 237
-    static val kwTRY = 238
-    static val kwCATCH = 239
-    static val kwFINALLY = 240
-    static val kwINTERFACE = 241
+    # Java keywords (200-300)
+    static val kwABSTRACT = 200
+    static val kwCONTINUE = 201
+    static val kwFOR = 202
+    static val kwNEW = 203
+    static val kwSWITCH = 204
+    static val kwASSERT = 205
+    static val kwDEFAULT = 206
+    static val kwGOTO = 207
+    static val kwPACKAGE = 208
+    static val kwSYNCHRONIZED = 209
+    static val kwBOOLEAN = 210
+    static val kwDO = 211
+    static val kwIF = 212
+    static val kwPRIVATE = 213
+    static val kwTHIS = 214
+    static val kwBREAK = 215
+    static val kwDOUBLE = 216
+    static val kwIMPLEMENTS = 217
+    static val kwPROTECTED = 218
+    static val kwTHROW = 219
+    static val kwBYTE = 220
+    static val kwELSE = 221
+    static val kwIMPORT = 222
+    static val kwPUBLIC = 223
+    static val kwTHROWS = 224
+    static val kwCASE = 225
+    static val kwENUM = 226
+    static val kwINSTANCEOF = 227
+    static val kwRETURN = 228
+    static val kwTRANSIENT = 229
+    static val kwCATCH = 230
+    static val kwEXTENDS = 231
+    static val kwINT = 232
+    static val kwSHORT = 233
+    static val kwTRY = 234
+    static val kwCHAR = 235
+    static val kwFINAL = 236
+    static val kwINTERFACE = 237
+    static val kwSTATIC = 238
+    static val kwVOID = 239
+    static val kwCLASS = 240
+    static val kwFINALLY = 241
+    static val kwLONG = 242
+    static val kwSTRICTFP = 243
+    static val kwVOLATILE = 244
+    static val kwCONST = 245
+    static val kwFLOAT = 246
+    static val kwNATIVE = 247
+    static val kwSUPER = 248
+    static val kwWHILE = 249
+
+    # other keywords (300+)
+    static val kwVAL = 300
+    static val kwVAR = 301
+    static val kwDEF = 302
+    static val kwTRAIT = 303
+    static val kwUNION = 304
+    static val kwSTRUCT = 305
+    static val kwAS = 306
+    static val kwWHEN = 307
+    static val kwASYNC = 308
+    static val kwAWAIT = 309
+    static val kwBOOL = 310
 
     static val keywordTypes: List[Int] = [
-        kwDEF, kwCLASS, kwTRUE, kwFALSE, kwNULL, kwIF, kwELSE, kwIMPORT, kwWHILE, kwBREAK,
-        kwCONTINUE, kwVAR, kwVAL, kwTRAIT, kwNATIVE, kwSTATIC, kwPRIVATE, kwPUBLIC, kwPACKAGE,
-        kwRETURN, kwAND, kwOR, kwIS, kwNOT, kwIN, kwSWITCH, kwCASE, kwUNION, kwENUM, kwWHEN,
-        kwAS, kwFOR, kwASYNC, kwAWAIT, kwTHROW, kwTRY, kwCATCH, kwFINALLY, kwINTERFACE,
-    ]
+        kwABSTRACT, kwCONTINUE, kwFOR, kwNEW, kwSWITCH, kwASSERT, kwDEFAULT, kwGOTO,
+        kwPACKAGE, kwSYNCHRONIZED, kwBOOLEAN, kwDO, kwIF, kwPRIVATE, kwTHIS, kwBREAK,
+        kwDOUBLE, kwIMPLEMENTS, kwPROTECTED, kwTHROW, kwBYTE, kwELSE, kwIMPORT,kwPUBLIC,
+        kwTHROWS, kwCASE, kwENUM, kwINSTANCEOF, kwRETURN, kwTRANSIENT, kwCATCH, kwEXTENDS,
+        kwINT, kwSHORT, kwTRY, kwCHAR, kwFINAL, kwINTERFACE, kwSTATIC, kwVOID, kwCLASS,
+        kwVAL, kwFINALLY, kwLONG, kwSTRICTFP, kwVOLATILE, kwCONST, kwFLOAT, kwNATIVE,
+        kwSUPER, kwWHILE, kwVAR, kwDEF, kwTRAIT, kwUNION, kwSTRUCT, kwAS, kwWHEN, kwASYNC,
+        kwAWAIT, kwBOOL]
 
     static val modifierKeywordTypes: Set[Int] = Set(
-        kwPUBLIC, kwPRIVATE, kwSTATIC)
+        kwABSTRACT, kwSYNCHRONIZED, kwPRIVATE, kwPROTECTED, kwPUBLIC, kwNATIVE, kwASYNC)
 
     val type: Int
     val text: String
@@ -102,45 +127,67 @@ class JLToken: Repr {
         case tDOUBLE = "tDOUBLE"
         case tFLOAT = "tFLOAT"
         case tSTRING = "tSTRING"
-        case kwDEF = "kwDEF"
-        case kwCLASS = "kwCLASS"
-        case kwTRUE = "kwTRUE"
-        case kwFALSE = "kwFALSE"
-        case kwNULL = "kwNULL"
+        case kwABSTRACT = "kwABSTRACT"
+        case kwCONTINUE = "kwCONTINUE"
+        case kwFOR = "kwFOR"
+        case kwNEW = "kwNEW"
+        case kwSWITCH = "kwSWITCH"
+        case kwASSERT = "kwASSERT"
+        case kwDEFAULT = "kwDEFAULT"
+        case kwGOTO = "kwGOTO"
+        case kwPACKAGE = "kwPACKAGE"
+        case kwSYNCHRONIZED = "kwSYNCHRONIZED"
+        case kwBOOLEAN = "kwBOOLEAN"
+        case kwDO = "kwDO"
         case kwIF = "kwIF"
+        case kwPRIVATE = "kwPRIVATE"
+        case kwTHIS = "kwTHIS"
+        case kwBREAK = "kwBREAK"
+        case kwDOUBLE = "kwDOUBLE"
+        case kwIMPLEMENTS = "kwIMPLEMENTS"
+        case kwPROTECTED = "kwPROTECTED"
+        case kwTHROW = "kwTHROW"
+        case kwBYTE = "kwBYTE"
         case kwELSE = "kwELSE"
         case kwIMPORT = "kwIMPORT"
-        case kwWHILE = "kwWHILE"
-        case kwBREAK = "kwBREAK"
-        case kwCONTINUE = "kwCONTINUE"
-        case kwVAR = "kwVAR"
-        case kwVAL = "kwVAL"
-        case kwTRAIT = "kwTRAIT"
-        case kwNATIVE = "kwNATIVE"
-        case kwSTATIC = "kwSTATIC"
-        case kwPRIVATE = "kwPRIVATE"
         case kwPUBLIC = "kwPUBLIC"
-        case kwPACKAGE = "kwPACKAGE"
-        case kwRETURN = "kwRETURN"
-        case kwAND = "kwAND"
-        case kwOR = "kwOR"
-        case kwIS = "kwIS"
-        case kwNOT = "kwNOT"
-        case kwIN = "kwIN"
-        case kwSWITCH = "kwSWITCH"
+        case kwTHROWS = "kwTHROWS"
         case kwCASE = "kwCASE"
-        case kwUNION = "kwUNION"
         case kwENUM = "kwENUM"
-        case kwWHEN = "kwWHEN"
+        case kwINSTANCEOF = "kwINSTANCEOF"
+        case kwRETURN = "kwRETURN"
+        case kwTRANSIENT = "kwTRANSIENT"
+        case kwCATCH = "kwCATCH"
+        case kwEXTENDS = "kwEXTENDS"
+        case kwINT = "kwINT"
+        case kwSHORT = "kwSHORT"
+        case kwTRY = "kwTRY"
+        case kwCHAR = "kwCHAR"
+        case kwFINAL = "kwFINAL"
+        case kwINTERFACE = "kwINTERFACE"
+        case kwSTATIC = "kwSTATIC"
+        case kwVOID = "kwVOID"
+        case kwCLASS = "kwCLASS"
+        case kwFINALLY = "kwFINALLY"
+        case kwLONG = "kwLONG"
+        case kwSTRICTFP = "kwSTRICTFP"
+        case kwVOLATILE = "kwVOLATILE"
+        case kwCONST = "kwCONST"
+        case kwFLOAT = "kwFLOAT"
+        case kwNATIVE = "kwNATIVE"
+        case kwSUPER = "kwSUPER"
+        case kwWHILE = "kwWHILE"
+        case kwVAL = "kwVAL"
+        case kwVAR = "kwVAR"
+        case kwDEF = "kwDEF"
+        case kwTRAIT = "kwTRAIT"
+        case kwUNION = "kwUNION"
+        case kwSTRUCT = "kwSTRUCT"
         case kwAS = "kwAS"
-        case kwFOR = "kwFOR"
+        case kwWHEN = "kwWHEN"
         case kwASYNC = "kwASYNC"
         case kwAWAIT = "kwAWAIT"
-        case kwTHROW = "kwTHROW"
-        case kwTRY = "kwTRY"
-        case kwCATCH = "kwCATCH"
-        case kwFINALLY = "kwFINALLY"
-        case kwINTERFACE = "kwINTERFACE"
+        case kwBOOL = "kwBOOL"
         case '\n' = "'\\n'"
         else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"

@@ -18,26 +18,30 @@ class JLIRLocalContext {
     val typeMap: Map[String, String]
 
     def solveType(self, texpr: JLAstType): JLType {
-        if texpr.args {
-            throw Error("TODO: type expression args")
-        }
-        val shortName = texpr.name
-        if shortName in typeMap {
-            val qualifiedName = typeMap[shortName]
-            if qualifiedName not in ctx.classMap {
-                throw JLError("Class " + qualifiedName + " not found", [texpr.mark])
-            }
-            JLType.klass(ctx.classMap[qualifiedName])
-        } else {
-            switch shortName {
-                case "Void" = JLType.void()
-                case "Bool" = JLType.bool()
-                case "Byte" = JLType.byte()
-                case "Int" = JLType.int()
-                case "Long" = JLType.long()
-                case "Float" = JLType.float()
-                case "Double" = JLType.double()
-                else = throw JLError("Unrecognized type: " + shortName, [texpr.mark])
+        when texpr.data {
+            case void = JLType.void()
+            case bool = JLType.bool()
+            case byte = JLType.byte()
+            case char = JLType.char()
+            case short = JLType.short()
+            case int = JLType.int()
+            case long = JLType.long()
+            case float = JLType.float()
+            case double = JLType.double()
+            case array(inner) = JLType.array(solveType(inner))
+            case klass(shortName, args) = {
+                if args {
+                    throw JLError("TODO: type expression args", [texpr.mark])
+                }
+                if null(qualifiedName) = typeMap.getOrNull(shortName) {
+                    if null(cls) = ctx.classMap.getOrNull(qualifiedName) {
+                        JLType.klass(cls)
+                    } else {
+                        throw JLError("Class " + qualifiedName + " not found", [texpr.mark])
+                    }
+                } else {
+                    throw JLError("Unrecognized type name " + shortName, [texpr.mark])
+                }
             }
         }
     }

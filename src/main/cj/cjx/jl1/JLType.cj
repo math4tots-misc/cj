@@ -16,16 +16,16 @@ union JLType: ToString {
     case klass(JLIRClass)
 
     def toString(self): String = when self {
-        case void() = "Void"
-        case bool() = "Bool"
-        case byte() = "Byte"
-        case char() = "Char"
-        case short() = "Short"
-        case int() = "Int"
-        case long() = "Long"
-        case float() = "Float"
-        case double() = "Double"
-        case array(inner) = "Array[" + inner + "]"
+        case void() = "void"
+        case bool() = "bool"
+        case byte() = "byte"
+        case char() = "char"
+        case short() = "short"
+        case int() = "int"
+        case long() = "long"
+        case float() = "float"
+        case double() = "double"
+        case array(inner) = inner.toString() + "[]"
         case klass(cls) = cls.name
     }
 

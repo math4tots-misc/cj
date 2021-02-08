@@ -162,20 +162,40 @@ class JLParser {
     }
 
     def parseType(self): JLAstType {
-        val mark = mark
-        val name = parseTypeId()
-        val args: List[JLAstType] = []
-        if consume('[') {
-            var repeat = true
-            while repeat and not consume(']') {
-                args.add(parseType())
-                if not consume(',') {
-                    repeat = false
-                    expect(']')
+        var mark = mark
+        var type = switch peek().type {
+            case (JLToken.kwVOID) = { next(); JLAstType(mark, JLAstType.Data.void()) }
+            case (JLToken.kwBOOL) = { next(); JLAstType(mark, JLAstType.Data.bool()) }
+            case (JLToken.kwBYTE) = { next(); JLAstType(mark, JLAstType.Data.byte()) }
+            case (JLToken.kwCHAR) = { next(); JLAstType(mark, JLAstType.Data.char()) }
+            case (JLToken.kwSHORT) = { next(); JLAstType(mark, JLAstType.Data.short()) }
+            case (JLToken.kwINT) = { next(); JLAstType(mark, JLAstType.Data.int()) }
+            case (JLToken.kwLONG) = { next(); JLAstType(mark, JLAstType.Data.long()) }
+            case (JLToken.kwFLOAT) = { next(); JLAstType(mark, JLAstType.Data.float()) }
+            case (JLToken.kwDOUBLE) = { next(); JLAstType(mark, JLAstType.Data.double()) }
+            else = {
+                val name = parseTypeId()
+                val args: List[JLAstType] = []
+                if at('[') and not atOffset(']', 1) {
+                    var repeat = true
+                    while repeat and not consume(']') {
+                        args.add(parseType())
+                        if not consume(',') {
+                            repeat = false
+                            expect(']')
+                        }
+                    }
                 }
+                JLAstType(mark, JLAstType.Data.klass(name, args))
             }
         }
-        JLAstType(mark, name, args)
+        mark = self.mark
+        while consume('[') {
+            expect(']')
+            type = JLAstType(mark, JLAstType.Data.array(type))
+            mark = self.mark
+        }
+        type
     }
 
     def parseMember(self): JLAstClass.Member {
@@ -192,7 +212,9 @@ class JLParser {
         expect(JLToken.kwDEF)
         val name = parseId()
         val parameters = parseParameters()
-        val returnType = if consume(':') { parseType() } else { JLAstType(mark, "Void", []) }
+        val returnType = if consume(':') { parseType() } else {
+            JLAstType(mark, JLAstType.Data.void())
+        }
         val body: Nullable[JLAstExpr] = (
             if consume('=') { null(parseExpression()) }
             else if at('{') { null(parseBlock()) }
