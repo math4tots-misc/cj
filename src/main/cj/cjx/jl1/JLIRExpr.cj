@@ -12,6 +12,7 @@ import cjx.jl1.JLMark
 class JLIRExpr {
 
     union Data {
+        case void()
         case bool(Bool)
         case char(Int)
         case int(Int)
@@ -28,6 +29,7 @@ class JLIRExpr {
         case setstatic(JLIRFieldRef, JLIRExpr) # set static field
         case getfield(JLIRFieldRef, JLIRExpr) # get instance field
         case setfield(JLIRFieldRef, JLIRExpr, JLIRExpr) # set instance field
+        case if_(JLIRExpr, JLIRExpr, JLIRExpr)
 
         ## "Manually" call a Java method
         ##
@@ -40,4 +42,10 @@ class JLIRExpr {
     val mark: JLMark
     val type: JLType
     val data: Data
+
+    def isEmpty(self): Bool = when data {
+        case void() = true
+        case block(exprs) = exprs.isEmpty()
+        else = false
+    }
 }

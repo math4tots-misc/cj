@@ -124,6 +124,9 @@ class MC$cj$String {
     M$replace(self, old, new_) {
         return self.split(old).join(new_);
     }
+    M$indexOf(self, substring) {
+        return self.indexOf(substring);
+    }
 
     M$default() {
         return "";

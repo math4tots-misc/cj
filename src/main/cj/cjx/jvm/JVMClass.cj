@@ -850,9 +850,9 @@ class JVMClass {
             case empty() = "empty()"
             case classref(c) = "class(" + getUtf8(c) + ")"
             case string(i) = "string(" + getUtf8(i).repr() + ")"
-            case fieldref(ci, nti) = getMember(index)
-            case methodref(ci, nti) = getMember(index)
-            case interfaceMethodref(ci, nti) = getMember(index)
+            case fieldref(ci, nti) = "fieldref(" + getMember(index) + ")"
+            case methodref(ci, nti) = "methodref(" + getMember(index) + ")"
+            case interfaceMethodref(ci, nti) = "interfaceMethodref(" + getMember(index) + ")"
             case nameAndType(ni, ti) = "nameAndType(" + getUtf8(ni) + ", " + getUtf8(ti) + ")"
             case methodHandle(rk, ri) = "methodHandle(" + rk + ", " + ri + ")"
             case methodType(di) = "methodType(" + getUtf8(di) + ")"
@@ -961,6 +961,8 @@ class JVMClass {
             className + "." + memberName + ":" + descriptor
         }
 
+        def getMemberDescriptor(self, index: Int): String = getMemberTriple(index).get2()
+
         def methodref(self, className: String, name: String, descriptor: String): Int = {
             val key = (className, name, descriptor)
             if key not in methodrefMap {
@@ -968,6 +970,18 @@ class JVMClass {
                     classref(className), nameAndType(name, descriptor)))
             }
             methodrefMap[key]
+        }
+
+        ## Returns (classname, fieldname, descriptor)
+        def getFieldTriple(self, fieldrefIndex: Int): Tuple[String, String, String] {
+            when infos[fieldrefIndex - 1] {
+                case fieldref(classIndex, nameAndTypeIndex) = {
+                    val classname = getClassref(classIndex)
+                    val (name, type) = getNameAndType(nameAndTypeIndex)
+                    (classname, name, type)
+                }
+                else = throw Error("Invalid fieldref cp index " + getConst(fieldrefIndex))
+            }
         }
 
         def fieldref(self, className: String, name: String, descriptor: String): Int = {

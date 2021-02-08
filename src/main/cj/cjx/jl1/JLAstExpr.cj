@@ -21,6 +21,7 @@ class JLAstExpr {
         case setfield(JLAstExpr, String, JLAstExpr)
         case getvar(String)
         case setvar(String, JLAstExpr)
+        case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
     }
 
     val mark: JLMark

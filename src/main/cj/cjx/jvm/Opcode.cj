@@ -208,9 +208,9 @@ union Opcode {
     static val impdep2 = 0xff
 
     # snow flake opcodes
-    static val ldc = 0x12
     static val bipush = 0x10
     static val sipush = 0x11
+    static val ldc = 0x12
     static val iinc = 0x84
     static val tableswitch = 0xaa
     static val lookupswitch = 0xab
@@ -485,4 +485,62 @@ union Opcode {
     ].flatten().toSet()
 
     static val u32ArgOpcodes: Set[Int] = Set(invokeinterface, invokedynamic)
+
+    # stack info
+
+    ## These are the simplest opcodes that never branches
+    ## and always changes the stack by a fixed amount
+    static val simpleStackChangeOpcodes: Map[Int, Int] = Map(
+        nop: 0,
+        ldc: 1,
+        ldc_w: 1,
+        ldc2_w: 2,
+        bipush: 1,
+        sipush: 1,
+        iconst_0: 1,
+        iconst_1: 1,
+        iconst_2: 1,
+        iconst_3: 1,
+        iconst_4: 1,
+        iconst_5: 1,
+        lconst_0: 2,
+        lconst_1: 2,
+        fconst_0: 1,
+        fconst_1: 1,
+        fconst_2: 1,
+        dconst_0: 2,
+        dconst_1: 2,
+        iload: 1,
+        lload: 2,
+        fload: 1,
+        dload: 2,
+        aload: 1,
+        istore: -1,
+        lstore: -2,
+        fstore: -1,
+        dstore: -2,
+        astore: -1,
+    )
+
+    ## These are opcodes that halts the method, so the stack
+    ## size doesn't matter after this anymore.
+    static val terminalStackChangeOpcodes: Set[Int] = Set(
+        ireturn,
+        lreturn,
+        freturn,
+        dreturn,
+        areturn,
+        return_,
+        athrow,
+    )
+
+    ## Opcodes that branch conditionally after comparing TOS int with zero
+    static val ifZeroCmp: Set[Int] = Set(
+        ifeq,
+        ifne,
+        iflt,
+        ifge,
+        ifgt,
+        ifle,
+    )
 }

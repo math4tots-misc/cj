@@ -380,6 +380,7 @@ class JLParser {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(false))
             }
+            case (JLToken.kwIF) = parseIf()
             case (JLToken.tID) = {
                 val name = parseId()
                 if at('(') {
@@ -406,6 +407,21 @@ class JLParser {
             }
             else = throw JLError("Expected expression", [mark])
         }
+    }
+
+    def parseIf(self): JLAstExpr {
+        val mark = mark
+        expect(JLToken.kwIF)
+        val cond = parseExpression()
+        val body = parseBlock()
+        val other = if consume(JLToken.kwELSE) {
+            null(if at(JLToken.kwIF) {
+                parseIf()
+            } else {
+                parseBlock()
+            })
+        } else { null }
+        JLAstExpr(mark, JLAstExpr.Data.if_(cond, body, other))
     }
 
     private def translateStringLiteral(mark: JLMark, input: String): String {

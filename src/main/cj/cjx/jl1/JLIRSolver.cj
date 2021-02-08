@@ -157,7 +157,7 @@ class JLIRSolver {
                     irExprs.add(solveExpression(lctx, astExprs.last(), expectedType))
                     JLIRExpr(mark, irExprs.last().type, JLIRExpr.Data.block(irExprs))
                 } else {
-                    JLIRExpr(mark, JLType.void(), JLIRExpr.Data.block([]))
+                    JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())
                 }
             }
             case callinstance(astOwner, methodName, astArgs) = {
@@ -190,6 +190,20 @@ class JLIRSolver {
                 val ownercls = lctx.getClass(mark, clsname)
                 val fieldref = ownercls.getFieldRef(mark, fieldName)
                 JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.getstatic(fieldref))
+            }
+            case if_(astCond, astBody, nullableOther) = {
+                val irCond = solveExpression(lctx, astCond, null(JLType.bool()))
+                if null(astOther) = nullableOther {
+                    val irBody = solveExpression(lctx, astBody, expectedType)
+                    val irOther = solveExpression(lctx, astOther, null(irBody.type))
+                    JLIRExpr(mark, irBody.type, JLIRExpr.Data.if_(irCond, irBody, irOther))
+                } else {
+                    val irBody = solveExpression(lctx, astBody, null(JLType.void()))
+                    JLIRExpr(mark, JLType.void(), JLIRExpr.Data.if_(
+                        irCond,
+                        irBody,
+                        JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())))
+                }
             }
             else = throw JLError("TODO", [mark])
         }

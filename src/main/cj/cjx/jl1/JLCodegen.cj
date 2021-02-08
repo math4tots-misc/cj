@@ -69,7 +69,6 @@ class JLCodegen {
                             jlmethod,
                             jvmcode)
                         exprgen.top(body)
-                        jvmcode.maxStack = exprgen.maxStack
                         jvmcode.maxLocals = exprgen.maxLocals
                     })
                 }
@@ -92,16 +91,6 @@ class JLCodegen {
         val localMap: Map[Int, Int] = Map()
         var localSize: Int = 0
         var maxLocals: Int = 0 # TODO: compare with JVMCodeBuilder's inferred maxLocals
-
-        var stackSize: Int = 0
-        var maxStack: Int = 0
-
-        def stackIncr(self, diff: Int) {
-            stackSize = stackSize + diff
-            if stackSize > maxStack {
-                maxStack = stackSize
-            }
-        }
 
         def addLocal(self, localvar: JLIRLocal) {
             Assert.that(localvar.id not in localMap)
@@ -137,27 +126,21 @@ class JLCodegen {
         def emit(self, expr: JLIRExpr) {
             when expr.data {
                 case bool(b) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.bipush(if b { 1 } else { 0 })
                 }
                 case int(i) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.int(i))
                 }
                 case long(i) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.long(i))
                 }
                 case float(f) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.float(f))
                 }
                 case double(f) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.double(f))
                 }
                 case string(s) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.ldc(JVMConstValue.string(s))
                 }
                 case block(subexprs) = {
@@ -169,12 +152,6 @@ class JLCodegen {
                     for arg in args {
                         emit(arg)
                     }
-
-                    for arg in args {
-                        stackIncr(-arg.type.getJVMSlotSize())
-                    }
-                    stackIncr(expr.type.getJVMSlotSize())
-
                     jvmcode.markLine(expr.mark.line)
                     if methodref.method.isStatic() {
                         jvmcode.invokestatic(
@@ -194,11 +171,28 @@ class JLCodegen {
                     }
                 }
                 case getstatic(fieldref) = {
-                    stackIncr(expr.type.getJVMSlotSize())
                     jvmcode.getstatic(
                         fieldref.owner.toJVMName(),
                         fieldref.field.name,
                         fieldref.field.type.toJVMString())
+                }
+                case if_(cond, body, other) = {
+                    emit(cond)
+                    val jumpPos1 = jvmcode.code.size()
+                    val jumpPatchPos1 = jumpPos1 + 1
+                    jvmcode.ifeq(0)
+                    emit(body)
+                    val jumpPos2 = jvmcode.code.size()
+                    val jumpPatchPos2 = jumpPos2 + 1
+                    jvmcode.goto(0)
+                    val landPos1 = jvmcode.code.size()
+                    emit(other)
+                    val landPos2 = jvmcode.code.size()
+
+                    Assert.that(landPos1 - jumpPos1 <= 32767)
+                    Assert.that(landPos2 - jumpPos2 <= 32767)
+                    jvmcode.code.setU16(jumpPatchPos1, landPos1 - jumpPos1)
+                    jvmcode.code.setU16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
                 else = throw Error("TODO")
             }

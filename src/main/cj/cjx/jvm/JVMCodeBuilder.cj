@@ -1,5 +1,6 @@
 package cjx.jvm
 
+import cj.Error
 import cj.BufferReader
 import cjx.jvm.JVMConstValue
 import cj.Buffer
@@ -15,7 +16,6 @@ import cjx.jvm.JVMClass.AttributeInfoData
 @derive(new)
 class JVMCodeBuilder {
     val methodBuilder: JVMClass.MethodBuilder
-    var maxStack: Int = 0
     var maxLocals: Int = 0
     val code: Buffer = {
         val b = Buffer.empty()
@@ -28,11 +28,114 @@ class JVMCodeBuilder {
 
     def __get_cls(self): JVMClass = methodBuilder.cls
 
+    def __get_cp(self): JVMClass.ConstantPool = cls.cp
+
     def markLine(self, lineNumber: Int) {
         if not (lineNumberTable and lineNumberTable.last().lineNumber != lineNumber) {
             lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
         }
     }
+
+    private def computeMaxStackSize(self): Int {
+        var maxStack = 0
+        val todo = [(0, 0)]
+        val seen = Set[Int].empty()
+        while todo {
+            val (pc, stackSize) = todo.pop()
+            if stackSize > maxStack {
+                maxStack = stackSize
+            }
+            if stackSize < 0 {
+                throw Error("stack underflow")
+            }
+            val opcode = code.getU8(pc)
+            val instructionSize = Opcode.instructionSize(code, pc)
+            val nextPc = pc + instructionSize
+            if pc in seen {
+                # already handled
+            } else {
+                seen.add(pc)
+                if null(stackChange) = Opcode.simpleStackChangeOpcodes.getOrNull(opcode) {
+                    val newStackSize = stackSize + stackChange
+                    todo.add((nextPc, newStackSize))
+                } else if opcode in Opcode.terminalStackChangeOpcodes {
+                    # nothing more to do -- these opcodes don't "continue"
+                } else if opcode in Opcode.ifZeroCmp {
+                    # these pop an int from the top of the stack, does a comparison
+                    # and potentially branches
+                    val newStackSize = stackSize - 1
+                    todo.add((nextPc, newStackSize))
+                    todo.add((code.getU16(pc + 1), newStackSize))
+                } else {
+                    switch opcode {
+                        case (Opcode.goto) = {
+                            # 0xa7
+                            # unconditional branching
+                            todo.add((code.getU16(pc + 1), stackSize))
+                        }
+                        case (Opcode.getstatic) = {
+                            # 0xb2
+                            val newStackSize = stackSize + slotSizeForType(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, newStackSize))
+                        }
+                        case (Opcode.putstatic) = {
+                            # 0xb3
+                            val newStackSize = stackSize - slotSizeForType(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, newStackSize))
+                        }
+                        case (Opcode.getfield) = {
+                            # 0xb4
+                            val newStackSize = stackSize - 1 + slotSizeForType(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, newStackSize))
+                        }
+                        case (Opcode.putfield) = {
+                            # 0xb5
+                            val newStackSize = stackSize - 1 - slotSizeForType(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, stackSize))
+                        }
+                        case (Opcode.invokevirtual)
+                        case (Opcode.invokespecial)
+                        case (Opcode.invokeinterface) = {
+                            # 0xb6 invokevirtual
+                            # 0xb7 invokespecial
+                            # 0xb9 invokeinterface
+                            val newStackSize = stackSize - 1 + slotChangeForFunction(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, newStackSize))
+                        }
+                        case (Opcode.invokestatic) = {
+                            # 0xb8
+                            val newStackSize = stackSize + slotChangeForFunction(
+                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                            todo.add((nextPc, newStackSize))
+                        }
+                        else = {
+                            throw Error("TODO computeMaxStackSize 0x" + opcode.hex().lpad(2, "0"))
+                        }
+                    }
+                }
+            }
+        }
+        maxStack
+    }
+
+    private def slotSizeForType(type: String): Int = switch type.charAt(0) {
+        case 'V' = 0
+        case 'J'
+        case 'D' = 2
+        case '(' = throw Error("Funciton descriptor provided to slotSizeForType " + type)
+        else = 1
+    }
+
+    private def slotSizeForReturnType(descriptor: String): Int = slotSizeForType(
+        descriptor[descriptor.indexOf(")") + 1:])
+
+    private def slotChangeForFunction(descriptor: String): Int = (
+        slotSizeForReturnType(descriptor) - computeArgumentSlotCount(descriptor))
 
     private def computeArgumentSlotCount(descriptor: String): Int {
         var argc = 0
@@ -62,7 +165,7 @@ class JVMCodeBuilder {
     }
 
     def build(self) : CodeAttribute {
-        val cattr = CodeAttribute(maxStack, maxLocals, code, exceptionTable, [])
+        val cattr = CodeAttribute(computeMaxStackSize(), maxLocals, code, exceptionTable, [])
         if lineNumberTable {
             cattr.attributes.add(AttributeInfo(
                 cls.cp.utf8("LineNumberTable"),
@@ -85,6 +188,11 @@ class JVMCodeBuilder {
             code.addU8(Opcode.ldc_w)
             code.addU16(index)
         }
+    }
+
+    def _ldc2_w(self, index: Int) {
+        code.addU8(Opcode.ldc2_w)
+        code.addU16(index)
     }
 
     def getstatic(self, className: String, fieldName: String, type: String) {
@@ -130,7 +238,7 @@ class JVMCodeBuilder {
             case long(i) = switch i.toInt() {
                 case 0 = code.addU8(Opcode.lconst_0)
                 case 1 = code.addU8(Opcode.lconst_1)
-                else = _ldc(cls.cp.long(i))
+                else = _ldc2_w(cls.cp.long(i))
             }
             case float(f) = if f == 0 {
                     code.addU8(Opcode.fconst_0)
@@ -146,7 +254,7 @@ class JVMCodeBuilder {
                 } else if f == 1 {
                     code.addU8(Opcode.dconst_1)
                 } else {
-                    _ldc(cls.cp.double(f))
+                    _ldc2_w(cls.cp.double(f))
                 }
             case string(s) = _ldc(cls.cp.string(s))
         }
@@ -601,5 +709,97 @@ class JVMCodeBuilder {
 
     def impdep2(self) {
         code.addU8(Opcode.impdep2)
+    }
+
+    # one u16 branch argument opcodes
+
+    def ifeq(self, offset: Int) {
+        code.addU8(Opcode.ifeq)
+        code.addU16(offset)
+    }
+
+    def ifne(self, offset: Int) {
+        code.addU8(Opcode.ifne)
+        code.addU16(offset)
+    }
+
+    def iflt(self, offset: Int) {
+        code.addU8(Opcode.iflt)
+        code.addU16(offset)
+    }
+
+    def ifge(self, offset: Int) {
+        code.addU8(Opcode.ifge)
+        code.addU16(offset)
+    }
+
+    def ifgt(self, offset: Int) {
+        code.addU8(Opcode.ifgt)
+        code.addU16(offset)
+    }
+
+    def ifle(self, offset: Int) {
+        code.addU8(Opcode.ifle)
+        code.addU16(offset)
+    }
+
+    def if_icmpeq(self, offset: Int) {
+        code.addU8(Opcode.if_icmpeq)
+        code.addU16(offset)
+    }
+
+    def if_icmpne(self, offset: Int) {
+        code.addU8(Opcode.if_icmpne)
+        code.addU16(offset)
+    }
+
+    def if_icmplt(self, offset: Int) {
+        code.addU8(Opcode.if_icmplt)
+        code.addU16(offset)
+    }
+
+    def if_icmpge(self, offset: Int) {
+        code.addU8(Opcode.if_icmpge)
+        code.addU16(offset)
+    }
+
+    def if_icmpgt(self, offset: Int) {
+        code.addU8(Opcode.if_icmpgt)
+        code.addU16(offset)
+    }
+
+    def if_icmple(self, offset: Int) {
+        code.addU8(Opcode.if_icmple)
+        code.addU16(offset)
+    }
+
+    def if_acmpeq(self, offset: Int) {
+        code.addU8(Opcode.if_acmpeq)
+        code.addU16(offset)
+    }
+
+    def if_acmpne(self, offset: Int) {
+        code.addU8(Opcode.if_acmpne)
+        code.addU16(offset)
+    }
+
+    def goto(self, offset: Int) {
+        code.addU8(Opcode.goto)
+        code.addU16(offset)
+    }
+
+    def jsr(self, offset: Int) {
+        code.addU8(Opcode.jsr)
+        code.addU16(offset)
+    }
+
+    def ifnull(self, offset: Int) {
+        code.addU8(Opcode.ifnull)
+        code.addU16(offset)
+    }
+
+    def ifnonnull(self, offset: Int) {
+        code.addU8(Opcode.ifnonnull)
+        code.addU16(offset)
     }
 }

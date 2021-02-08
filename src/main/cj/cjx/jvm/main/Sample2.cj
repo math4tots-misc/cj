@@ -24,7 +24,6 @@ class Sample2 {
             method.name = "main"
             method.descriptor = "([Ljava/lang/String;)V"
             method.addCode(code -> {
-                code.maxStack = 5
                 code.maxLocals = 1
 
                 code.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")

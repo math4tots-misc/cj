@@ -4,6 +4,11 @@ import java.lang.System
 
 class JLSample {
     def main(args: String[]) {
+        if false {
+            System.out.println("false is true")
+        } else {
+            System.out.println("true is true")
+        }
         System.out.println("Hello world!")
     }
 }

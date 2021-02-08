@@ -51,5 +51,7 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def upper(self): String
     def replace(self, old: String, new: String): String
 
+    def indexOf(self, substring: String): Int
+
     def default(): Self
 }
