@@ -37,7 +37,7 @@ class JLIRExpr {
         ##
         ## Allows invoking overloaded methods by specifying the full method signature
         ##
-        ## (kind(static, class or interface), owner-type, method-name, signature, args)
+        ## (kind(static, virtual or interface), owner-type, method-name, signature, args)
         case calldirect(String, String, String, String, List[JLIRExpr])
     }
 

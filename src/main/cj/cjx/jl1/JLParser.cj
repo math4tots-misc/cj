@@ -419,6 +419,9 @@ class JLParser {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(false))
             }
+            case (JLToken.tINT) = {
+                JLAstExpr(mark, JLAstExpr.Data.int(translateInt(mark, next().text)))
+            }
             case (JLToken.kwVAR)
             case (JLToken.kwVAL) = {
                 val modifiers = if consume(JLToken.kwVAR) { ["var"] } else {
@@ -474,6 +477,14 @@ class JLParser {
             })
         } else { null }
         JLAstExpr(mark, JLAstExpr.Data.if_(cond, body, other))
+    }
+
+    private def translateInt(mark: JLMark, input: String): Int {
+        if null(i) = input.parseInt() {
+            i
+        } else {
+            throw JLError("Unrecognized int literal " + input, [mark])
+        }
     }
 
     private def translateStringLiteral(mark: JLMark, input: String): String {

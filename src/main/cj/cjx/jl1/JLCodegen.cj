@@ -315,7 +315,7 @@ class JLCodegen {
                         case "static" = {
                             jvmcode.invokestatic(ownerName, methodName, descriptor)
                         }
-                        case "class" = {
+                        case "virtual" = {
                             jvmcode.invokevirtual(ownerName, methodName, descriptor)
                         }
                         case "interface" = {

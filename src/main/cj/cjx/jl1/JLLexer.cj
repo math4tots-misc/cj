@@ -46,7 +46,7 @@ class JLLexer {
 
         b.add("(\\d+\\.\\d*|\\.\\d+)(e|E-?\\d+)?", m -> tok(JLToken.tDOUBLE, m))
         b.add("\\d+(e|E)-?\\d+", m -> tok(JLToken.tDOUBLE, m))
-        b.add("0x[0-9A-Fa-f]+", m -> tok(JLToken.tINT, m)) # hex literals
+        b.add("0x[0-9A-Fa-f\\$]+", m -> tok(JLToken.tINT, m)) # hex literals
         b.add("\\d+", m -> tok(JLToken.tINT, m))
         for type in JLToken.keywordTypes {
             b.add(JLToken.keywordString(type), m -> symtok(type, m))

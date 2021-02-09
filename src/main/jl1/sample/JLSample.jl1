@@ -25,6 +25,6 @@ class JLSample {
         System.out.println(
             "Hello world!" +
             " some extra" +
-            " more extra")
+            " more extra " + 1234)
     }
 }

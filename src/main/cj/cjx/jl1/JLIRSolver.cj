@@ -139,6 +139,99 @@ class JLIRSolver {
             lctx: JLIRLocalContext,
             astExpr: JLAstExpr,
             expectedType: Nullable[JLType]): JLIRExpr {
+        val irExpr = solveExpressionUnchecked(lctx, astExpr, expectedType)
+
+        if null(etype) = expectedType {
+            if not etype.isVoid() and etype != irExpr.type {
+                throw JLError("Expected " + etype + " but got " + irExpr.type, [astExpr.mark])
+            }
+        } else {
+            # If a void type was not specifically requested, it's not allowed
+            if irExpr.type.isVoid() {
+                throw JLError("a void expression is not allowed here", [astExpr.mark])
+            }
+        }
+
+        irExpr
+    }
+
+    def solveStringCoercedExpression(
+            self,
+            lctx: JLIRLocalContext,
+            astExpr: JLAstExpr): JLIRExpr {
+        val mark = astExpr.mark
+        val irExpr = solveExpressionUnchecked(lctx, astExpr, null)
+        val strtype = ctx.getClassType(mark, "java.lang.String")
+
+        val nullableIrExpr: Nullable[JLIRExpr] = when irExpr.type {
+            case void() = null
+            case bool() = null(callStaticJavaMethod(
+                mark, "java/lang/Boolean", "toString", "(Z)Ljava/lang/String;", strtype, [irExpr]))
+            case char() = null
+            case int() = null(callStaticJavaMethod(
+                mark, "java/lang/Integer", "toString", "(I)Ljava/lang/String;", strtype, [irExpr]))
+            case long() = null(callStaticJavaMethod(
+                mark, "java/lang/Long", "toString", "(J)Ljava/lang/String;", strtype, [irExpr]))
+            case klass(cls) = if cls.name == "java.lang.String" { null(irExpr) } else {
+                    null(callVirtualJavaMethod(
+                        mark,
+                        "java/lang/Object",
+                        "toString",
+                        "()Ljava/lang/String;",
+                        strtype,
+                        [irExpr]))
+                }
+            else = null
+        }
+
+        if null(ie) = nullableIrExpr {
+            ie
+        } else {
+            throw JLError("Expected String expression", [astExpr.mark])
+        }
+    }
+
+    def callStaticJavaMethod(
+            self,
+            mark: JLMark,
+            className: String,
+            methodName: String,
+            descriptor: String,
+            returnType: JLType,
+            args: List[JLIRExpr]): JLIRExpr {
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+            "static", className, methodName, descriptor, args))
+    }
+
+    def callVirtualJavaMethod(
+            self,
+            mark: JLMark,
+            className: String,
+            methodName: String,
+            descriptor: String,
+            returnType: JLType,
+            args: List[JLIRExpr]): JLIRExpr {
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+            "virtual", className, methodName, descriptor, args))
+    }
+
+    def callInterfaceJavaMethod(
+            self,
+            mark: JLMark,
+            className: String,
+            methodName: String,
+            descriptor: String,
+            returnType: JLType,
+            args: List[JLIRExpr]): JLIRExpr {
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+            "interface", className, methodName, descriptor, args))
+    }
+
+    def solveExpressionUnchecked(
+            self,
+            lctx: JLIRLocalContext,
+            astExpr: JLAstExpr,
+            expectedType: Nullable[JLType]): JLIRExpr {
 
         val mark = astExpr.mark
 
@@ -378,7 +471,7 @@ class JLIRSolver {
                             case double() = null(handleHomogeneousOps(
                                 mark, lctx, JLIRExpr.Operator.doubleAdd(), irArg0, astArgs))
                             case klass(argcls) = switch argcls.name {
-                                case "java.lang.String" = null(handleHomogeneousOps(
+                                case "java.lang.String" = null(handleStringOps(
                                     mark, lctx, JLIRExpr.Operator.stringAdd(), irArg0, astArgs))
                                 else = null
                             }
@@ -406,17 +499,6 @@ class JLIRSolver {
                 }
             }
         }
-
-        if null(etype) = expectedType {
-            if not etype.isVoid() and etype != irExpr.type {
-                throw JLError("Expected " + etype + " but got " + irExpr.type, [mark])
-            }
-        } else {
-            # If a void type was not specifically requested, it's not allowed
-            if irExpr.type.isVoid() {
-                throw JLError("a void expression is not allowed here", [mark])
-            }
-        }
         irExpr
     }
 
@@ -432,6 +514,20 @@ class JLIRSolver {
         for i = 1; i < astArgs.size(); i++ {
             irArgs.add(solveExpression(
                 lctx, astArgs[i], null(irArg0.type)))
+        }
+        JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, irArgs))
+    }
+
+    private def handleStringOps(
+            self,
+            mark: JLMark,
+            lctx: JLIRLocalContext,
+            op: JLIRExpr.Operator,
+            irArg0: JLIRExpr,
+            astArgs: List[JLAstExpr]): JLIRExpr {
+        val irArgs: List[JLIRExpr] = [irArg0]
+        for i = 1; i < astArgs.size(); i++ {
+            irArgs.add(solveStringCoercedExpression(lctx, astArgs[i]))
         }
         JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, irArgs))
     }

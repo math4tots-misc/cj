@@ -598,6 +598,7 @@ class Regex {
                 case '{' = Tree.char('{')
                 case '}' = Tree.char('}')
                 case '.' = Tree.char('.')
+                case '$' = Tree.char('$')
                 case '\n' = Tree.char('\n')
                 case '\\' = Tree.char('\\')
                 case '0' = Tree.char('\0')
