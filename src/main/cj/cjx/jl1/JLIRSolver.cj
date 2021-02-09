@@ -155,6 +155,35 @@ class JLIRSolver {
         irExpr
     }
 
+    def solveTruthyCoercedExpression(
+            self,
+            lctx: JLIRLocalContext,
+            astExpr: JLAstExpr): JLIRExpr {
+        val mark = astExpr.mark
+        val irExpr = solveExpressionUnchecked(lctx, astExpr, null)
+        val inttype = JLType.int()
+        val nullableIrExpr: Nullable[JLIRExpr] = when irExpr.type {
+            case void() = null
+            case bool() = null(irExpr)
+            case int() = null(irExpr)
+            case klass(cls) = {
+                if cls.name == "java.lang.String" {
+                    null(callVirtualJavaMethod(
+                        mark, "java/lang/String", "length", "()I", inttype, [irExpr]))
+                } else {
+                    null
+                }
+            }
+            else = null
+        }
+
+        if null(ie) = nullableIrExpr {
+            ie
+        } else {
+            throw JLError("Expected bool expression", [astExpr.mark])
+        }
+    }
+
     def solveStringCoercedExpression(
             self,
             lctx: JLIRLocalContext,
@@ -448,7 +477,7 @@ class JLIRSolver {
                 }
             }
             case if_(astCond, astBody, nullableOther) = {
-                val irCond = solveExpression(lctx, astCond, null(JLType.bool()))
+                val irCond = solveTruthyCoercedExpression(lctx, astCond)
                 if null(astOther) = nullableOther {
                     val irBody = solveExpression(lctx, astBody, expectedType)
                     val irOther = solveExpression(lctx, astOther, null(irBody.type))

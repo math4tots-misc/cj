@@ -21,6 +21,21 @@ class JLSample {
             System.out.println("x is false")
         }
 
+        {
+            val s = "hello"
+            if s {
+                System.out.println("s is truthy")
+            } else {
+                System.out.println("s is not truthy")
+            }
+            val r = ""
+            if r {
+                System.out.println("r is truthy")
+            } else {
+                System.out.println("r is not truthy")
+            }
+        }
+
         System.out.println("Hello world!")
         System.out.println(
             "Hello world!" +
