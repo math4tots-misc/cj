@@ -44,7 +44,7 @@ class JLIRExpr {
     @derive(repr)
     union Operator {
 
-        # operations on int
+        # int ops
         case iadd
         case isub
         case imul
@@ -63,7 +63,14 @@ class JLIRExpr {
         case i2f
         case i2l
         case i2s
+        case ilt
+        case ile
+        case igt
+        case ige
+        case ieq
+        case ine
 
+        # double ops
         case dadd
 
         case strcat

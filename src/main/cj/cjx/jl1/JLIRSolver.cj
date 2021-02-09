@@ -37,6 +37,19 @@ class JLIRSolver {
         JLAstExpr.Operator.shru(): JLIRExpr.Operator.ishru(),
     )
 
+    static val comparisonIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+        JLAstExpr.Operator.eq(): JLIRExpr.Operator.ieq(),
+        JLAstExpr.Operator.ne(): JLIRExpr.Operator.ine(),
+        JLAstExpr.Operator.le(): JLIRExpr.Operator.ile(),
+        JLAstExpr.Operator.lt(): JLIRExpr.Operator.ilt(),
+        JLAstExpr.Operator.ge(): JLIRExpr.Operator.ige(),
+        JLAstExpr.Operator.gt(): JLIRExpr.Operator.igt(),
+    )
+
+    static val homogeneousUnaryIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+        JLAstExpr.Operator.neg(): JLIRExpr.Operator.ineg(),
+    )
+
     static val homogeneousDoubleOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
         JLAstExpr.Operator.add(): JLIRExpr.Operator.dadd(),
     )
@@ -537,6 +550,10 @@ class JLIRSolver {
                     case int() = {
                         if null(irOp) = homogeneousIntOps.getOrNull(operator) {
                             null(handleHomogeneousOps(mark, lctx, irOp, irArg0, astArgs))
+                        } else if null(irOp) = comparisonIntOps.getOrNull(operator) {
+                            null(handleCompareOps(mark, lctx, irOp, irArg0, astArgs))
+                        } else if null(irOp) = homogeneousUnaryIntOps.getOrNull(operator) {
+                            null(handleHomogeneousUnaryOp(mark, lctx, irOp, irArg0, astArgs))
                         } else {
                             null
                         }
@@ -585,6 +602,38 @@ class JLIRSolver {
                 lctx, astArgs[i], null(irArg0.type)))
         }
         JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, irArgs))
+    }
+
+    ## solve an operation where all inputs and the output have the same type.
+    private def handleHomogeneousUnaryOp(
+            self,
+            mark: JLMark,
+            lctx: JLIRLocalContext,
+            op: JLIRExpr.Operator,
+            irArg0: JLIRExpr,
+            astArgs: List[JLAstExpr]): JLIRExpr {
+        if astArgs.size() != 1 {
+            throw JLError("" + op + " exepcts exactly one argument", [mark])
+        }
+        JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, [irArg0]))
+    }
+
+    private def handleCompareOps(
+            self,
+            mark: JLMark,
+            lctx: JLIRLocalContext,
+            op: JLIRExpr.Operator,
+            irArg0: JLIRExpr,
+            astArgs: List[JLAstExpr]): JLIRExpr {
+        if astArgs.size() != 2 {
+            throw JLError("" + op + " operator is non-associative and cannot be chained", [mark])
+        }
+        val irArgs: List[JLIRExpr] = [irArg0]
+        for i = 1; i < astArgs.size(); i++ {
+            irArgs.add(solveExpression(
+                lctx, astArgs[i], null(irArg0.type)))
+        }
+        JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.operation(op, irArgs))
     }
 
     private def handleStringOps(

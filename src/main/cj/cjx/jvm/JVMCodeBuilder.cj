@@ -463,6 +463,14 @@ class JVMCodeBuilder {
         code.addU8(Opcode.nop)
     }
 
+    def iconst_0(self) {
+        code.addU8(Opcode.iconst_0)
+    }
+
+    def iconst_1(self) {
+        code.addU8(Opcode.iconst_1)
+    }
+
     def aconst_null(self) {
         code.addU8(Opcode.aconst_null)
     }

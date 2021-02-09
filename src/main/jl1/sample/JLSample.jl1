@@ -64,6 +64,8 @@ class JLSample {
             IO.println(123)
             IO.println(55.5)
             IO.println(124 - 45 * 27)
+            IO.println("5 < 4 = " + (5 < 4))
+            IO.println("-5 < 4 = " + (-5 < 4))
         }
     }
 }

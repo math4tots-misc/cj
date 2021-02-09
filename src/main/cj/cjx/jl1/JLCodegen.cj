@@ -263,8 +263,8 @@ class JLCodegen {
 
                     Assert.that(landPos1 - jumpPos1 <= 32767)
                     Assert.that(landPos2 - jumpPos2 <= 32767)
-                    jvmcode.code.setU16(jumpPatchPos1, landPos1 - jumpPos1)
-                    jvmcode.code.setU16(jumpPatchPos2, landPos2 - jumpPos2)
+                    jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
+                    jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
                 case operation(operator, args) = {
                     when operator {
@@ -288,6 +288,12 @@ class JLCodegen {
                         case i2f = emitUnop(args, () -> jvmcode.i2f())
                         case i2l = emitUnop(args, () -> jvmcode.i2l())
                         case i2s = emitUnop(args, () -> jvmcode.i2s())
+                        case ieq = emitIntCmp(args, offset -> jvmcode.if_icmpeq(offset))
+                        case ine = emitIntCmp(args, offset -> jvmcode.if_icmpne(offset))
+                        case ilt = emitIntCmp(args, offset -> jvmcode.if_icmplt(offset))
+                        case ile = emitIntCmp(args, offset -> jvmcode.if_icmple(offset))
+                        case igt = emitIntCmp(args, offset -> jvmcode.if_icmpgt(offset))
+                        case ige = emitIntCmp(args, offset -> jvmcode.if_icmpge(offset))
 
                         # double ops
                         case dadd = emitBinop(args, () -> jvmcode.dadd())
@@ -339,7 +345,7 @@ class JLCodegen {
             }
         }
 
-        def emitBinop(self, args: List[JLIRExpr], f: Fn[Unit]) {
+        private def emitBinop(self, args: List[JLIRExpr], f: Fn[Unit]) {
             emit(args[0])
             for i = 1; i < args.size(); i++ {
                 emit(args[i])
@@ -347,12 +353,25 @@ class JLCodegen {
             }
         }
 
-        def emitUnop(self, args: List[JLIRExpr], f: Fn[Unit]) {
+        private def emitUnop(self, args: List[JLIRExpr], f: Fn[Unit]) {
             Assert.equal(args.size(), 1)
+            emit(args[0])
             f.call()
         }
 
-        def store(self, local: JLIRLocal) {
+        private def emitIntCmp(self, args: List[JLIRExpr], f: Fn[Int, Unit]) {
+            Assert.equal(args.size(), 2)
+            emit(args[0])
+            emit(args[1])
+
+            # f MUST emit a 3-byte branching instruction
+            f.call(3 + 1 + 3) # 3-bytes (op, u16-branch-loc)
+            jvmcode.iconst_0() # 1-byte (op)
+            jvmcode.goto(3 + 1) # 3-bytes (op, u16-branch-loc)
+            jvmcode.iconst_1() # 1-byte
+        }
+
+        private def store(self, local: JLIRLocal) {
             val index = localMap[local.id]
             when local.type {
                 case void() = throw Error("getlocal void variable")

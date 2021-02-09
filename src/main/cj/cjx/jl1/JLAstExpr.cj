@@ -46,6 +46,12 @@ class JLAstExpr {
         case shru
         case neg
         case pow
+        case lt
+        case le
+        case gt
+        case ge
+        case eq
+        case ne
 
         def __eq(self, other: Self): Bool = repr() == other.repr()
         def hash(self): Int = repr().hash()

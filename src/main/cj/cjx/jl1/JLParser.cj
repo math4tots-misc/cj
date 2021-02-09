@@ -37,6 +37,16 @@ class JLParser {
         JLToken.tRSHIFT: (false, JLAstExpr.Operator.shr()),
         JLToken.tRSHIFTU: (false, JLAstExpr.Operator.shru()),
         JLToken.tPOWER: (true, JLAstExpr.Operator.pow()),
+        '<': (false, JLAstExpr.Operator.lt()),
+        '>': (false, JLAstExpr.Operator.gt()),
+        JLToken.tLE: (false, JLAstExpr.Operator.le()),
+        JLToken.tGE: (false, JLAstExpr.Operator.ge()),
+        JLToken.tEQ: (false, JLAstExpr.Operator.eq()),
+        JLToken.tNE: (false, JLAstExpr.Operator.ne()),
+    )
+
+    static val unopTable: Map[Int, Tuple[Int, JLAstExpr.Operator]] = Map(
+        '-': (getTokenPrecedence('*') + 5, JLAstExpr.Operator.neg()),
     )
 
     def parse(filename: String, string: String): JLAstFile {
@@ -515,7 +525,15 @@ class JLParser {
                     JLAstExpr(mark, JLAstExpr.Data.getstatic(className, memberName))
                 }
             }
-            else = throw JLError("Expected expression", [mark])
+            else = {
+                if null((precedence, operator)) = unopTable.getOrNull(peek().type) {
+                    next()
+                    val arg = parseExpressionWithPrecedence(precedence)
+                    JLAstExpr(mark, JLAstExpr.Data.operation(operator, [arg]))
+                } else {
+                    throw JLError("Expected expression", [mark])
+                }
+            }
         }
     }
 
