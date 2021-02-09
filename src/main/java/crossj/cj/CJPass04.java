@@ -1081,7 +1081,8 @@ final class CJPass04 extends CJPassBaseEx {
                 var classTypeGiven = (CJIRClassType) given;
                 if (classTypeParam.getItem() != classTypeGiven.getItem()
                         || classTypeParam.getArgs().size() != classTypeGiven.getArgs().size()) {
-                    throw CJError.of("Expected argument of form " + param + " but got " + given, inferMark);
+                    throw CJError.of("Expected argument of form " + param.repr() + " but got " + given.repr(),
+                            inferMark);
                 }
                 for (int i = 0; i < classTypeGiven.getArgs().size(); i++) {
                     stack.add(Tuple3.of(inferMark, classTypeParam.getArgs().get(i), classTypeGiven.getArgs().get(i)));

@@ -127,14 +127,10 @@ class Dump {
         # Look ahead in constant info to be able to print nicer looking
         # information
         val save = reader.i
-        for i = 1; i < constantPoolSize; i++ {
-            fillConstantInfo(i)
-        }
+        for i = 1; i < constantPoolSize; i += fillConstantInfo(i) {}
         reader.i = save
 
-        for i = 1; i < constantPoolSize; i++ {
-            dumpConstantInfo(i)
-        }
+        for i = 1; i < constantPoolSize; i += dumpConstantInfo(i) {}
 
         val accessFlags = reader.getU16()
         println("accessFlags = " + translateFlags(accessFlags))
@@ -236,7 +232,7 @@ class Dump {
         }
     }
 
-    def fillConstantInfo(self, i: Int) {
+    def fillConstantInfo(self, i: Int): Int {
         val tag = reader.getU8()
         switch tag {
             case cUtf8 = {
@@ -282,9 +278,14 @@ class Dump {
             }
             else = throw Error("Unrecognized cpinfo tag (during lookahead): " + tag)
         }
+        switch tag {
+            case cLong
+            case cDouble = 2
+            else = 1
+        }
     }
 
-    def dumpConstantInfo(self, i: Int) {
+    def dumpConstantInfo(self, i: Int): Int {
         print0("  #" + i.toString().lpad(5, " ") + " ")
         val tag = reader.getU8()
         switch tag {
@@ -349,6 +350,11 @@ class Dump {
                 IO.println(utf8(nameUtf8Index) + ":" + utf8(descriptorUtf8Index))
             }
             else = throw Error("Unrecognized cpinfo tag: " + tag)
+        }
+        switch tag {
+            case cLong
+            case cDouble = 2
+            else = 1
         }
     }
 

@@ -40,6 +40,7 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def rpad(self, length: Int, suffix: String): String
 
     def parseInt(self: Self): Nullable[Int]
+    def parseDouble(self: Self): Nullable[Double]
 
     def startsWith(self, prefix: String): Bool
     def startsWithAt(self, prefix: String, startIndex: Int): Bool

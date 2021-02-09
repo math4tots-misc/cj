@@ -61,6 +61,8 @@ class JLSample {
 
         {
             IO.println("print with IO")
+            IO.println(123)
+            IO.println(55.5)
         }
     }
 }

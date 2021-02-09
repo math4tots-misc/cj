@@ -226,9 +226,20 @@ class JLIRSolver {
     }
 
     def coerceToObject(self, lctx: JLIRLocalContext, irExpr: JLIRExpr): JLIRExpr {
+        val mark = irExpr.mark
+        val objType = ctx.getClassType(mark, "java.lang.Object")
         when irExpr.type {
+            case int() = callStaticJavaMethod(
+                mark, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", objType, [irExpr])
+            case long() = callStaticJavaMethod(
+                mark, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", objType, [irExpr])
+            case float() = callStaticJavaMethod(
+                mark, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", objType, [irExpr])
+            case double() = callStaticJavaMethod(
+                mark, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", objType, [irExpr])
+            case array(inner) = irExpr
             case klass(cls) = irExpr
-            else = throw JLError("Expected Object but got " + irExpr.type, [irExpr.mark])
+            else = throw JLError("Expected Object but got " + irExpr.type, [mark])
         }
     }
 

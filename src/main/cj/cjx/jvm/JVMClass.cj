@@ -441,7 +441,7 @@ class JVMClass {
                 }
                 val instructionEnd = reader.i
                 if Opcode.instructionSize(code, instructionStart) != instructionEnd - instructionStart {
-                    IO.println("OPCODE = 0x" + opcode.hex().lpad(2, "0"))
+                    throw Error("OPCODE = 0x" + opcode.hex().lpad(2, "0"))
                 }
                 Assert.equal(
                     Opcode.instructionSize(code, instructionStart),
@@ -812,6 +812,7 @@ class JVMClass {
             1 + infos.map(i -> when i {
                 case long(x) = 2
                 case double(f) = 2
+                case empty() = 0
                 else = 1
             }).fold(0, (a, b) -> a + b)
         }

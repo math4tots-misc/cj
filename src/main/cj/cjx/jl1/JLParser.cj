@@ -464,6 +464,9 @@ class JLParser {
             case (JLToken.tINT) = {
                 JLAstExpr(mark, JLAstExpr.Data.int(translateInt(mark, next().text)))
             }
+            case (JLToken.tDOUBLE) = {
+                JLAstExpr(mark, JLAstExpr.Data.double(translateDouble(mark, next().text)))
+            }
             case (JLToken.kwVAR)
             case (JLToken.kwVAL) = {
                 val modifiers = if consume(JLToken.kwVAR) { ["var"] } else {
@@ -527,6 +530,14 @@ class JLParser {
             i
         } else {
             throw JLError("Unrecognized int literal " + input, [mark])
+        }
+    }
+
+    private def translateDouble(mark: JLMark, input: String): Double {
+        if null(f) = input.parseDouble() {
+            f
+        } else {
+            throw JLError("Unrecognized double literal " + input, [mark])
         }
     }
 

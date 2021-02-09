@@ -98,6 +98,9 @@ class MC$cj$String {
         const i = parseInt(string, 10);
         return isNaN(i) ? null : i;
     }
+    M$parseDouble(string) {
+        return parseFloat(string);
+    }
 
     M$startsWith(self, prefix) {
         return self.startsWith(prefix);
