@@ -67,5 +67,13 @@ class JLSample {
             IO.println("5 < 4 = " + (5 < 4))
             IO.println("-5 < 4 = " + (-5 < 4))
         }
+
+        {
+            var i = 0
+            while i < 10 {
+                IO.println("i = " + i)
+                i = i + 1
+            }
+        }
     }
 }

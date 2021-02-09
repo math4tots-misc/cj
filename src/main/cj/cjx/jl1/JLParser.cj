@@ -502,6 +502,12 @@ class JLParser {
                     mark, modifiers, name, type, init)))
             }
             case (JLToken.kwIF) = parseIf()
+            case (JLToken.kwWHILE) = {
+                next()
+                val cond = parseExpression()
+                val body = parseBlock()
+                JLAstExpr(mark, JLAstExpr.Data.while_(cond, body))
+            }
             case (JLToken.tID) = {
                 val name = parseId()
                 if at('(') {

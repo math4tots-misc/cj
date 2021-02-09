@@ -30,8 +30,12 @@ class JLIRExpr {
         case getfield(JLIRFieldRef, JLIRExpr) # get instance field
         case setfield(JLIRFieldRef, JLIRExpr, JLIRExpr) # set instance field
         case if_(JLIRExpr, JLIRExpr, JLIRExpr)
-
+        case while_(JLIRExpr, JLIRExpr)
         case operation(Operator, List[JLIRExpr])
+
+        ## Converts non-void results to void
+        ## this is important for stack integrity when emitting bytecode
+        case voidify(JLIRExpr)
 
         ## "Manually" call a Java method
         ##

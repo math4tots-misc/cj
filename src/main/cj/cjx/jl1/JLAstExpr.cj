@@ -25,6 +25,7 @@ class JLAstExpr {
         case declvar(JLAstLocal)
         case this()
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
+        case while_(JLAstExpr, JLAstExpr)
         case operation(Operator, List[JLAstExpr])
 
         ## (kind(static,virtual,interface), returnType, className, methodName, descriptor, args)

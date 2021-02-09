@@ -250,19 +250,30 @@ class JLCodegen {
                 }
                 case if_(cond, body, other) = {
                     emit(cond)
-                    val jumpPos1 = jvmcode.code.size()
-                    val jumpPatchPos1 = jumpPos1 + 1
-                    jvmcode.ifeq(0)
+                    val jumpPos1 = jvmcode.code.size(); jvmcode.ifeq(0)
                     emit(body)
-                    val jumpPos2 = jvmcode.code.size()
-                    val jumpPatchPos2 = jumpPos2 + 1
-                    jvmcode.goto(0)
-                    val landPos1 = jvmcode.code.size()
-                    emit(other)
+                    val jumpPos2 = jvmcode.code.size(); jvmcode.goto(0)
+                    val landPos1 = jvmcode.code.size(); emit(other)
                     val landPos2 = jvmcode.code.size()
 
                     Assert.that(landPos1 - jumpPos1 <= 32767)
                     Assert.that(landPos2 - jumpPos2 <= 32767)
+                    val jumpPatchPos1 = jumpPos1 + 1
+                    val jumpPatchPos2 = jumpPos2 + 1
+                    jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
+                    jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
+                }
+                case while_(cond, body) = {
+                    val landPos1 = jvmcode.code.size(); emit(cond)
+                    val jumpPos2 = jvmcode.code.size(); jvmcode.ifeq(0)
+                    emit(body)
+                    val jumpPos1 = jvmcode.code.size(); jvmcode.goto(0)
+                    val landPos2 = jvmcode.code.size()
+
+                    Assert.that(landPos1 - jumpPos1 <= 32767)
+                    Assert.that(landPos2 - jumpPos2 <= 32767)
+                    val jumpPatchPos1 = jumpPos1 + 1
+                    val jumpPatchPos2 = jumpPos2 + 1
                     jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
                     jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
@@ -322,6 +333,14 @@ class JLCodegen {
                             emit(args[0])
                             jvmcode.l2i()
                         }
+                    }
+                }
+                case voidify(expr) = {
+                    when expr.type {
+                        case void = ()
+                        case long = jvmcode.pop2()
+                        case double = jvmcode.pop2()
+                        else = jvmcode.pop()
                     }
                 }
                 case calljava(kind, ownerName, methodName, descriptor, args) = {

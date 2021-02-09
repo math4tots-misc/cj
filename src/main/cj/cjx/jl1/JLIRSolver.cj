@@ -173,8 +173,10 @@ class JLIRSolver {
         val irExpr = solveExpressionUnchecked(lctx, astExpr, expectedType)
 
         if null(etype) = expectedType {
-            if not etype.isVoid() and etype != irExpr.type {
-                if etype.isObject() {
+            if etype != irExpr.type {
+                if etype.isVoid() {
+                    voidify(irExpr)
+                } else if etype.isObject() {
                     coerceToObject(lctx, irExpr)
                 } else {
                     throw JLError("Expected " + etype + " but got " + irExpr.type, [astExpr.mark])
@@ -190,6 +192,16 @@ class JLIRSolver {
             irExpr
         }
     }
+
+    def voidify(expr: JLIRExpr): JLIRExpr {
+        when expr.type {
+            case void() = expr
+            else = JLIRExpr(expr.mark, JLType.void(), JLIRExpr.Data.voidify(expr))
+        }
+    }
+
+    def solveVoidExpression(self, lctx: JLIRLocalContext, astExpr: JLAstExpr): JLIRExpr = (
+        solveExpression(lctx, astExpr, null(JLType.void())))
 
     def solveTruthyCoercedExpression(
             self,
@@ -331,7 +343,7 @@ class JLIRSolver {
 
                     lctx.pushScope()
                     for i = 0; i + 1 < astExprs.size(); i++ {
-                        irExprs.add(solveExpression(lctx, astExprs[i], null(JLType.void())))
+                        irExprs.add(solveVoidExpression(lctx, astExprs[i]))
                     }
                     irExprs.add(solveExpression(lctx, astExprs.last(), expectedType))
                     lctx.popScope()
@@ -537,12 +549,18 @@ class JLIRSolver {
                     val irOther = solveExpression(lctx, astOther, null(irBody.type))
                     JLIRExpr(mark, irBody.type, JLIRExpr.Data.if_(irCond, irBody, irOther))
                 } else {
-                    val irBody = solveExpression(lctx, astBody, null(JLType.void()))
+                    val irBody = solveVoidExpression(lctx, astBody)
                     JLIRExpr(mark, JLType.void(), JLIRExpr.Data.if_(
                         irCond,
                         irBody,
                         JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())))
                 }
+            }
+            case while_(astCond, astBody) = {
+                val irCond = solveTruthyCoercedExpression(lctx, astCond)
+                val irBody = solveVoidExpression(lctx, astBody)
+                JLIRExpr(mark, JLType.void(), JLIRExpr.Data.while_(
+                    irCond, irBody))
             }
             case operation(operator, astArgs) = {
                 val irArg0 = solveExpression(lctx, astArgs[0], null)
