@@ -10,7 +10,6 @@ import cjx.jl1.JLType
 import cjx.jl1.JLAstType
 import cjx.jl1.JLContext
 
-@derive(new)
 class JLIRLocalContext {
     ## Global context
     val ctx: JLContext
@@ -29,6 +28,19 @@ class JLIRLocalContext {
     var _thisMethod: Nullable[JLIRMethod] = null
 
     val localStack: List[Map[String, JLIRLocal]] = [Map()]
+
+    def new(ctx: JLContext,
+            className: String,
+            typeMap: Map[String, String],
+            methodName: String): Self {
+        val self = __malloc(ctx, className, typeMap, methodName)
+        if methodName {
+            for parameter in thisMethod.parameters {
+                localStack.last()[parameter.name] = parameter
+            }
+        }
+        self
+    }
 
     def __get_thisClass(self): JLIRClass = if null(cls) = _thisClass {
             cls

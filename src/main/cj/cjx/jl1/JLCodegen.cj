@@ -66,6 +66,7 @@ class JLCodegen {
                     jvmmethod.addCode(jvmcode -> {
                         val exprgen = ExprGen(
                             ctx,
+                            cls,
                             jvmcls,
                             jvmmethod,
                             jlmethod,
@@ -84,6 +85,7 @@ class JLCodegen {
     @derive(new)
     class ExprGen {
         val ctx: JLContext
+        val cls: JLIRClass
         val jvmcls: JVMClass
         val jvmmethod: JVMClass.MethodBuilder
         val jlmethod: JLIRMethod
@@ -316,6 +318,7 @@ class JLCodegen {
                     for arg in args {
                         emit(arg)
                     }
+                    jvmcode.markLine(expr.mark.line)
                     switch kind {
                         case "static" = {
                             jvmcode.invokestatic(ownerName, methodName, descriptor)

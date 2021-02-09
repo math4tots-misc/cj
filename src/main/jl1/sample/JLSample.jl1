@@ -1,5 +1,6 @@
 package sample
 
+import jl1.IO
 import java.lang.System
 
 class JLSample {
@@ -56,6 +57,10 @@ class JLSample {
                 "()Ljava/lang/String;",
                 arrayListClass)
             System.out.println("ArrayListClass.class.toString() = " + arrayListClassName)
+        }
+
+        {
+            IO.println("print with IO")
         }
     }
 }

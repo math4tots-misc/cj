@@ -419,7 +419,8 @@ class Regex {
         private static val allSpace: Set[Int] = Set(' ', '\n', '\t', '\f', '\r')
         private static val allNonSpace: Set[Int] = Self.allLetters.filter(x -> x not in Self.allSpace)
         private static val allWord: Set[Int] = (
-            Range.inclusive('a', 'z').toSet() + Range.inclusive('A', 'Z').toSet() + Set('_'))
+            Range.inclusive('a', 'z').toSet() + Range.inclusive('A', 'Z').toSet() +
+            allDigits + Set('_'))
         private static val allNonWord: Set[Int] = Self.allLetters.filter(x -> x not in Self.allWord)
 
         private val pattern: String

@@ -31,7 +31,7 @@ class JVMCodeBuilder {
     def __get_cp(self): JVMClass.ConstantPool = cls.cp
 
     def markLine(self, lineNumber: Int) {
-        if not (lineNumberTable and lineNumberTable.last().lineNumber != lineNumber) {
+        if not (lineNumberTable and lineNumberTable.last().lineNumber == lineNumber) {
             lineNumberTable.add(LineNumberTableEntry(code.size(), lineNumber))
         }
     }

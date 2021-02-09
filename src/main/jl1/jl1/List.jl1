@@ -1,0 +1,6 @@
+package jl1
+
+class List {
+    class I {
+    }
+}

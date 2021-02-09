@@ -107,6 +107,7 @@ class JLParser {
         expect('.')
         val shortName = parseTypeId()
         val alias = if consume(JLToken.kwAS) { parseTypeId() } else { shortName }
+        expectDelimiters()
         JLAstImport(mark, packageName + "." + shortName, alias)
     }
 

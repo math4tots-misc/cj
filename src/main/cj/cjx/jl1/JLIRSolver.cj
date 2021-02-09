@@ -143,16 +143,21 @@ class JLIRSolver {
 
         if null(etype) = expectedType {
             if not etype.isVoid() and etype != irExpr.type {
-                throw JLError("Expected " + etype + " but got " + irExpr.type, [astExpr.mark])
+                if etype.isObject() {
+                    coerceToObject(lctx, irExpr)
+                } else {
+                    throw JLError("Expected " + etype + " but got " + irExpr.type, [astExpr.mark])
+                }
+            } else {
+                irExpr
             }
         } else {
             # If a void type was not specifically requested, it's not allowed
             if irExpr.type.isVoid() {
                 throw JLError("a void expression is not allowed here", [astExpr.mark])
             }
+            irExpr
         }
-
-        irExpr
     }
 
     def solveTruthyCoercedExpression(
@@ -217,6 +222,13 @@ class JLIRSolver {
             ie
         } else {
             throw JLError("Expected String expression", [astExpr.mark])
+        }
+    }
+
+    def coerceToObject(self, lctx: JLIRLocalContext, irExpr: JLIRExpr): JLIRExpr {
+        when irExpr.type {
+            case klass(cls) = irExpr
+            else = throw JLError("Expected Object but got " + irExpr.type, [irExpr.mark])
         }
     }
 
