@@ -22,25 +22,10 @@ class JLIRSolver {
     val ctx: JLContext
 
     def solve(self, files: List[JLAstFile]) {
-        pass0(files)
+        ctx.registerClassesInFiles(files)
         pass1(files)
         pass2(files)
         pass3(files)
-    }
-
-    ## init JLIRClass objects
-    def pass0(self, files: List[JLAstFile]) {
-        walkClasses(ctx, files, (name, astfile, astcls, lctx) -> {
-            if astcls.templateParameters {
-                ctx.classTemplateMap[name] = (astfile, astcls)
-            } else {
-                ctx.newClass(
-                    astcls.mark,
-                    astcls.modifiers,
-                    astcls.isInterface(),
-                    name)
-            }
-        })
     }
 
     ## Resolve interface types

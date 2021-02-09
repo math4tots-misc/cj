@@ -21,6 +21,18 @@ class JLContext {
     val classMap: Map[String, JLIRClass] = Map()
     val classTemplateMap: Map[String, Tuple[JLAstFile, JLAstClass]] = Map()
 
+    ## Registers the classes and class templates in these files without
+    ## actually resolving them
+    def registerClassesInFiles(self, files: List[JLAstFile]) {
+        walkClasses(files, (name, file, astcls, lctx) -> {
+            if astcls.templateParameters {
+                classTemplateMap[name] = (file, astcls)
+            } else {
+                newClass(astcls.mark, astcls.modifiers, astcls.isInterface(), name)
+            }
+        })
+    }
+
     def getClassType(self, mark: JLMark, qualifiedClassName: String): JLType = (
         JLType.klass(getClass(mark, qualifiedClassName)))
 
@@ -118,6 +130,30 @@ class JLContext {
             }
         }
         typeMap
+    }
+
+    private def walkClasses(
+            self,
+            files: List[JLAstFile],
+            f: Fn[String, JLAstFile, JLAstClass, JLIRLocalContext, Unit]) {
+        for file in files {
+            val typeMap = JLContext.buildTypeMap(file)
+            for cls in file.classes {
+                val name = JLContext.qualifyClassName(file, cls)
+                val lctx = JLIRLocalContext(self, typeMap, name, "")
+                f.call(name, file, cls, lctx)
+                for member in cls.members {
+                    when member {
+                        case klass(innercls) = {
+                            val innerName = JLContext.qualifyInnerClassName(name, innercls)
+                            val innerLctx = JLIRLocalContext(self, typeMap, innerName, "")
+                            f.call(innerName, file, innercls, innerLctx)
+                        }
+                        else = ()
+                    }
+                }
+            }
+        }
     }
 
     def newClass(
