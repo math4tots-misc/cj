@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLIRFieldRef
 import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLError
@@ -11,6 +12,7 @@ import cjx.jl1.JLMark
 @derive(new)
 class JLIRClass {
     val mark: JLMark
+    val id: Int # global unique identifier
     val modifiers: List[String]
     val _isInterface: Bool
     val name: String  # fully qualified name
@@ -19,6 +21,7 @@ class JLIRClass {
     val fieldMap: Map[String, JLIRField] = Map()
     val methods: List[JLIRMethod] = []
     val methodMap: Map[String, JLIRMethod] = Map()
+    val templateArguments: Map[String, JLIRTemplateArgument] = Map()
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")

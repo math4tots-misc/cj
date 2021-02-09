@@ -18,11 +18,6 @@ import cjx.jl1.JLAstFile
 
 @derive(new)
 class JLIRSolver {
-    static val builtinTypeMap: Map[String, String] = Map(
-        "Object": "java.lang.Object",
-        "String": "java.lang.String",
-    )
-
     static val homogeneousIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
         JLAstExpr.Operator.add(): JLIRExpr.Operator.iadd(),
         JLAstExpr.Operator.sub(): JLIRExpr.Operator.isub(),
@@ -65,18 +60,22 @@ class JLIRSolver {
 
     ## init JLIRClass objects
     def pass0(self, files: List[JLAstFile]) {
-        walkClasses(ctx, files, (name, astcls, lctx) -> {
-            ctx.classMap[name] = JLIRClass(
-                astcls.mark,
-                astcls.modifiers,
-                astcls.isInterface(),
-                name)
+        walkClasses(ctx, files, (name, astfile, astcls, lctx) -> {
+            if astcls.templateParameters {
+                ctx.classTemplateMap[name] = (astfile, astcls)
+            } else {
+                ctx.newClass(
+                    astcls.mark,
+                    astcls.modifiers,
+                    astcls.isInterface(),
+                    name)
+            }
         })
     }
 
     ## Resolve interface types
     def pass1(self, files: List[JLAstFile]) {
-        walkClasses(ctx, files, (name, astcls, lctx) -> {
+        walkClasses(ctx, files, (name, astfile, astcls, lctx) -> {
             val ircls = ctx.classMap[name]
             for astInterface in astcls.interfaces {
                 val irInterface = lctx.solveInterfaceType(astInterface)
@@ -90,7 +89,7 @@ class JLIRSolver {
 
     ## Resolve method and field types
     def pass2(self, files: List[JLAstFile]) {
-        walkClasses(ctx, files, (clsname, astcls, lctx) -> {
+        walkClasses(ctx, files, (clsname, astfile, astcls, lctx) -> {
             val ircls = ctx.classMap[clsname]
             val thisType = JLType.klass(ircls)
             for astMember in astcls.members {
@@ -139,7 +138,7 @@ class JLIRSolver {
 
     ## Resolve expressions
     def pass3(self, files: List[JLAstFile]) {
-        walkClasses(ctx, files, (clsname, astcls, lctx) -> {
+        walkClasses(ctx, files, (clsname, astfile, astcls, lctx) -> {
             val ircls = ctx.classMap[clsname]
             val thisType = JLType.klass(ircls)
             for astMember in astcls.members {
@@ -152,8 +151,8 @@ class JLIRSolver {
                             val astBody = astMethod.body.get()
                             val mlctx = JLIRLocalContext(
                                 lctx.ctx,
-                                lctx.className,
                                 lctx.typeMap,
+                                lctx.className,
                                 astMethod.name)
                             val irBody = solveExpression(
                                 mlctx, astBody, null(irMethod.returnType))
@@ -668,60 +667,22 @@ class JLIRSolver {
         JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, irArgs))
     }
 
-    private def qualifyClassName(file: JLAstFile, cls: JLAstClass): String = (
-        file.packageName + "." + cls.shortName)
-
-    private def qualifyInnerClassName(outerClassName: String, cls: JLAstClass): String =(
-        outerClassName + "$" + cls.shortName)
-
     private def walkClasses(
             ctx: JLContext,
             files: List[JLAstFile],
-            f: Fn[String, JLAstClass, JLIRLocalContext, Unit]) {
+            f: Fn[String, JLAstFile, JLAstClass, JLIRLocalContext, Unit]) {
         for file in files {
-            val typeMap = builtinTypeMap.clone()
-
-            for imp in file.imports {
-                typeMap[imp.alias] = imp.qualifiedName
-            }
+            val typeMap = JLContext.buildTypeMap(file)
             for cls in file.classes {
-                val name = qualifyClassName(file, cls)
-                typeMap[cls.shortName] = name
-
-                # allow use of fully qualified names in local contexts
-                typeMap[name] = name
-
+                val name = JLContext.qualifyClassName(file, cls)
+                val lctx = JLIRLocalContext(ctx, typeMap, name, "")
+                f.call(name, file, cls, lctx)
                 for member in cls.members {
                     when member {
                         case klass(innercls) = {
-                            val innerName = qualifyInnerClassName(name, innercls)
-                            typeMap[innercls.shortName] = innerName
-                            for innerMember in innercls.members {
-                                when innerMember {
-                                    case klass(innerInnercls) = {
-                                        throw JLError(
-                                            "inner classes cannot have inner classes",
-                                            [innerInnercls.mark])
-                                    }
-                                    else = ()
-                                }
-                            }
-                        }
-                        else = ()
-                    }
-                }
-            }
-
-            for cls in file.classes {
-                val name = qualifyClassName(file, cls)
-                val lctx = JLIRLocalContext(ctx, name, typeMap, "")
-                f.call(name, cls, lctx)
-                for member in cls.members {
-                    when member {
-                        case klass(innercls) = {
-                            val innerName = qualifyInnerClassName(name, innercls)
-                            val innerLctx = JLIRLocalContext(ctx, innerName, typeMap, "")
-                            f.call(innerName, innercls, innerLctx)
+                            val innerName = JLContext.qualifyInnerClassName(name, innercls)
+                            val innerLctx = JLIRLocalContext(ctx, typeMap, innerName, "")
+                            f.call(innerName, file, innercls, innerLctx)
                         }
                         else = ()
                     }

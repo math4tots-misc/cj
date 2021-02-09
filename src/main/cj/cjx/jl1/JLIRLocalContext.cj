@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLMark
 import cjx.jl1.JLIRMethod
@@ -14,11 +15,11 @@ class JLIRLocalContext {
     ## Global context
     val ctx: JLContext
 
-    ## Name of the current class
-    val className: String
-
     ## Maps shortName to qualifiedNames (for imports and local and inner classes)
     val typeMap: Map[String, String]
+
+    ## Name of the current class
+    val className: String
 
     ## The current method we're working with.
     ## May be the empty string when none really applies
@@ -30,10 +31,10 @@ class JLIRLocalContext {
     val localStack: List[Map[String, JLIRLocal]] = [Map()]
 
     def new(ctx: JLContext,
-            className: String,
             typeMap: Map[String, String],
+            className: String,
             methodName: String): Self {
-        val self = __malloc(ctx, className, typeMap, methodName)
+        val self = __malloc(ctx, typeMap, className, methodName)
         if methodName {
             for parameter in thisMethod.parameters {
                 localStack.last()[parameter.name] = parameter

@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLAstType
 import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstField
@@ -18,6 +19,7 @@ class JLAstClass {
     val modifiers: List[String]
     val _isInterface: Bool
     val shortName: String
+    val templateParameters: List[JLAstTemplateParameter]
     val interfaces: List[JLAstType]
     val members: List[Member]
 

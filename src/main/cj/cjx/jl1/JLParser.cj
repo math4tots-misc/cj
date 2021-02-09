@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLAstField
 import cjx.jl1.JLAstExpr
 import cjx.jl1.JLAstLocal
@@ -171,8 +172,9 @@ class JLParser {
             false
         }
         val shortName = parseTypeId()
+        val templateParameters = parseTemplateParameters()
         val interfaces: List[JLAstType] = []
-        if consume(':') {
+        if consume('<') {
             skipDelimiters()
             interfaces.add(parseType())
             skipDelimiters()
@@ -191,7 +193,51 @@ class JLParser {
             skipDelimiters()
         }
         expectDelimiters()
-        JLAstClass(mark, comment, modifiers, isInterface, shortName, interfaces, members)
+        JLAstClass(
+            mark,
+            comment,
+            modifiers,
+            isInterface,
+            shortName,
+            templateParameters,
+            interfaces,
+            members)
+    }
+
+    def parseTemplateParameter(self): JLAstTemplateParameter {
+        val mark = mark
+        val modifiers = parseModifiers()
+        if at(JLToken.tID) {
+            val name = parseId()
+            expect(':')
+            expect(JLToken.kwINT)
+            JLAstTemplateParameter(mark, modifiers, name, JLAstTemplateParameter.Kind.int())
+        } else {
+            val name = parseTypeId()
+            JLAstTemplateParameter(mark, modifiers, name, JLAstTemplateParameter.Kind.type())
+        }
+    }
+
+    def parseTemplateParameters(self): List[JLAstTemplateParameter] = {
+        if at('[') {
+            parseJoin('[', ']', ',', () -> parseTemplateParameter())
+        } else {
+            []
+        }
+    }
+
+    def parseJoin[T](self, open: Int, close: Int, sep: Int, inner: Fn[T]): List[T] {
+        expect(open)
+        var loop = true
+        val list: List[T] = []
+        while loop and not at(close) {
+            list.add(inner.call())
+            if not consume(sep) {
+                loop = false
+            }
+        }
+        expect(close)
+        list
     }
 
     def parseType(self): JLAstType {
@@ -210,16 +256,8 @@ class JLParser {
                 val name = parseTypeId()
                 val args: List[JLAstType] = []
                 if at('[') and not atOffset(']', 1) {
-                    expect('[')
-                    var repeat = true
-                    while repeat and not consume(']') {
-                        args.add(parseType())
-                        if not consume(',') {
-                            repeat = false
-                            expect(']')
-                        }
-                    }
-                    Assert.that(args)
+                    args.addAll(parseJoin('[', ']', ',', () -> parseType()))
+                    Assert.that(args.size() > 0)
                 }
                 JLAstType(mark, JLAstType.Data.klass(name, args))
             }
@@ -601,17 +639,5 @@ class JLParser {
         sb.toString()
     }
 
-    private def parseArgs(self): List[JLAstExpr] {
-        expect('(')
-        val list: List[JLAstExpr] = []
-        var repeat = true
-        while repeat and not consume(')') {
-            list.add(parseExpression())
-            if not consume(',') {
-                expect(')')
-                repeat = false
-            }
-        }
-        list
-    }
+    private def parseArgs(self): List[JLAstExpr] = parseJoin('(', ')', ',', () -> parseExpression())
 }

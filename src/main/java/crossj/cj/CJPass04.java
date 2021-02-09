@@ -1081,11 +1081,18 @@ final class CJPass04 extends CJPassBaseEx {
                 var classTypeGiven = (CJIRClassType) given;
                 if (classTypeParam.getItem() != classTypeGiven.getItem()
                         || classTypeParam.getArgs().size() != classTypeGiven.getArgs().size()) {
-                    throw CJError.of("Expected argument of form " + param.repr() + " but got " + given.repr(),
-                            inferMark);
-                }
-                for (int i = 0; i < classTypeGiven.getArgs().size(); i++) {
-                    stack.add(Tuple3.of(inferMark, classTypeParam.getArgs().get(i), classTypeGiven.getArgs().get(i)));
+                    // Just skip it for now. If this is actually invalid, this should be caught
+                    // later down the line.
+                    // Also throwing an error here prevents autocasting (e.g. providing a Char
+                    // when an Int is expected)
+
+                    // throw CJError.of("Expected argument of form " + param.repr() + " but got " + given.repr(),
+                    //         inferMark);
+                } else {
+                    for (int i = 0; i < classTypeGiven.getArgs().size(); i++) {
+                        stack.add(
+                                Tuple3.of(inferMark, classTypeParam.getArgs().get(i), classTypeGiven.getArgs().get(i)));
+                    }
                 }
             }
         }
