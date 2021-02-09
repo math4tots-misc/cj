@@ -31,12 +31,21 @@ class JLIRExpr {
         case setfield(JLIRFieldRef, JLIRExpr, JLIRExpr) # set instance field
         case if_(JLIRExpr, JLIRExpr, JLIRExpr)
 
+        case operation(Operator, List[JLIRExpr])
+
         ## "Manually" call a Java method
         ##
         ## Allows invoking overloaded methods by specifying the full method signature
         ##
         ## (kind(static, class or interface), owner-type, method-name, signature, args)
         case calldirect(String, String, String, String, List[JLIRExpr])
+    }
+
+    union Operator {
+        case intAdd
+        case intSub
+        case doubleAdd
+        case stringAdd
     }
 
     val mark: JLMark

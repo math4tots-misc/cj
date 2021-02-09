@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLMark
 import cjx.jl1.JLIRExpr
 import cjx.jl1.JLAstExpr
 import cjx.jl1.JLIRLocal
@@ -367,6 +368,43 @@ class JLIRSolver {
                         JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())))
                 }
             }
+            case operation(operator, astArgs) = {
+                when operator {
+                    case add = {
+                        val irArg0 = solveExpression(lctx, astArgs[0], null)
+                        val nullableIrExpr = when irArg0.type {
+                            case int() = null(handleHomogeneousOps(
+                                mark, lctx, JLIRExpr.Operator.intAdd(), irArg0, astArgs))
+                            case double() = null(handleHomogeneousOps(
+                                mark, lctx, JLIRExpr.Operator.doubleAdd(), irArg0, astArgs))
+                            case klass(argcls) = switch argcls.name {
+                                case "java.lang.String" = null(handleHomogeneousOps(
+                                    mark, lctx, JLIRExpr.Operator.stringAdd(), irArg0, astArgs))
+                                else = null
+                            }
+                            else = null
+                        }
+                        if null(irExpr) = nullableIrExpr {
+                            irExpr
+                        } else {
+                            throw JLError("'+' not supported for " + irArg0.type, [mark])
+                        }
+                    }
+                    case sub = {
+                        val irArg0 = solveExpression(lctx, astArgs[0], null)
+                        val nullableIrExpr = when irArg0.type {
+                            case int() = null(handleHomogeneousOps(
+                                mark, lctx, JLIRExpr.Operator.intSub(), irArg0, astArgs))
+                            else = null
+                        }
+                        if null(irExpr) = nullableIrExpr {
+                            irExpr
+                        } else {
+                            throw JLError("'-' not supported for " + irArg0.type, [mark])
+                        }
+                    }
+                }
+            }
         }
 
         if null(etype) = expectedType {
@@ -380,6 +418,22 @@ class JLIRSolver {
             }
         }
         irExpr
+    }
+
+    ## solve an operation where all inputs and the output have the same type.
+    private def handleHomogeneousOps(
+            self,
+            mark: JLMark,
+            lctx: JLIRLocalContext,
+            op: JLIRExpr.Operator,
+            irArg0: JLIRExpr,
+            astArgs: List[JLAstExpr]): JLIRExpr {
+        val irArgs: List[JLIRExpr] = [irArg0]
+        for i = 1; i < astArgs.size(); i++ {
+            irArgs.add(solveExpression(
+                lctx, astArgs[i], null(irArg0.type)))
+        }
+        JLIRExpr(mark, irArg0.type, JLIRExpr.Data.operation(op, irArgs))
     }
 
     private def qualifyClassName(file: JLAstFile, cls: JLAstClass): String = (

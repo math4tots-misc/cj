@@ -68,7 +68,7 @@ public abstract class CJIRContextBase {
             checkTypeArg(arg, marks);
             for (var subtrait : typeParameter.getTraits().map(t -> t.apply(binding, marks))) {
                 if (!implementsTrait(arg, subtrait)) {
-                    throw CJError.of(arg + " does not implement required trait " + subtrait, marks);
+                    throw CJError.of(arg.repr() + " does not implement required trait " + subtrait.repr(), marks);
                 }
             }
         }

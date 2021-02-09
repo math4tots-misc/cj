@@ -22,5 +22,9 @@ class JLSample {
         }
 
         System.out.println("Hello world!")
+        System.out.println(
+            "Hello world!" +
+            " some extra" +
+            " more extra")
     }
 }

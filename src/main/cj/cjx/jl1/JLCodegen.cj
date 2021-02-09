@@ -264,6 +264,49 @@ class JLCodegen {
                     jvmcode.code.setU16(jumpPatchPos1, landPos1 - jumpPos1)
                     jvmcode.code.setU16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
+                case operation(operator, args) = {
+                    when operator {
+                        case intAdd = {
+                            emit(args[0])
+                            for i = 1; i < args.size(); i++ {
+                                emit(args[i])
+                                jvmcode.iadd()
+                            }
+                        }
+                        case intSub = {
+                            emit(args[0])
+                            for i = 1; i < args.size(); i++ {
+                                emit(args[i])
+                                jvmcode.isub()
+                            }
+                        }
+                        case doubleAdd = {
+                            emit(args[0])
+                            for i = 1; i < args.size(); i++ {
+                                emit(args[i])
+                                jvmcode.dadd()
+                            }
+                        }
+                        case stringAdd = {
+                            jvmcode.new_("java/lang/StringBuilder")
+                            jvmcode.dup()
+                            emit(args[0])
+                            jvmcode.invokespecial(
+                                "java/lang/StringBuilder", "<init>", "(Ljava/lang/String;)V")
+                            for i = 1; i < args.size(); i++ {
+                                emit(args[i])
+                                jvmcode.invokevirtual(
+                                    "java/lang/StringBuilder",
+                                    "append",
+                                    "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+                            }
+                            jvmcode.invokevirtual(
+                                "java/lang/StringBuilder",
+                                "toString",
+                                "()Ljava/lang/String;")
+                        }
+                    }
+                }
                 case calldirect(kind, ownerName, methodName, descriptor, args) = {
                     for arg in args {
                         emit(arg)

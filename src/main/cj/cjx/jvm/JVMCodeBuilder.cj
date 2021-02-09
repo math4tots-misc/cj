@@ -195,6 +195,12 @@ class JVMCodeBuilder {
         code.addU16(index)
     }
 
+    def new_(self, className: String) {
+        val index = cp.classref(className)
+        code.addU8(Opcode.new_)
+        code.addU16(index)
+    }
+
     def getstatic(self, className: String, fieldName: String, type: String) {
         val index = cls.cp.fieldref(className, fieldName, type)
         code.addU8(Opcode.getstatic)
@@ -222,6 +228,12 @@ class JVMCodeBuilder {
     def invokevirtual(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
         code.addU8(Opcode.invokevirtual)
+        code.addU16(index)
+    }
+
+    def invokespecial(self, className: String, methodName: String, type: String) {
+        val index = cls.cp.methodref(className, methodName, type)
+        code.addU8(Opcode.invokespecial)
         code.addU16(index)
     }
 

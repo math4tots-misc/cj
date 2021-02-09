@@ -506,7 +506,7 @@ final class CJPass04 extends CJPassBaseEx {
                     innerType = e.getInnerType().map(lctx::evalTypeExpression).getOrElseDo(() -> {
                         var expectedType = a.get();
                         if (!expectedType.isNullableType()) {
-                            throw CJError.of("Expected " + expectedType + " but got a nullable expression",
+                            throw CJError.of("Expected " + expectedType.repr() + " but got a nullable expression",
                                     e.getMark());
                         }
                         return ((CJIRClassType) expectedType).getArgs().get(0);

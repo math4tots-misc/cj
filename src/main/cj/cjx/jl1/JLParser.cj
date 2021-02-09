@@ -18,6 +18,11 @@ import cjx.jl1.JLToken
 @derive(new)
 class JLParser {
 
+    static val combineOperators: Set[JLAstExpr.Operator] = Set(
+        JLAstExpr.Operator.add(),
+        JLAstExpr.Operator.sub(),
+    )
+
     def parse(filename: String, string: String): JLAstFile {
         val tokens = JLLexer.lex(filename, string)
         val parser = JLParser(filename, tokens)
@@ -327,12 +332,43 @@ class JLParser {
 
     def parseExpression(self): JLAstExpr = parseExpressionWithPrecedence(0)
 
+    def mkop(self, mark: JLMark, op: JLAstExpr.Operator, lhs: JLAstExpr, rhs: JLAstExpr): JLAstExpr {
+        if op in combineOperators and isOp(lhs, op) {
+            when lhs.data {
+                case operation(operator, args) = args.add(rhs)
+                else = throw Error("FUBAR")
+            }
+            lhs
+        } else {
+            JLAstExpr(mark, JLAstExpr.Data.operation(op, [lhs, rhs]))
+        }
+    }
+
+    def isOp(expr: JLAstExpr, operator: JLAstExpr.Operator): Bool {
+        when expr.data {
+            case operation(op, args) = op == operator
+            else = false
+        }
+    }
+
     def parseExpressionWithPrecedence(self, precedence: Int): JLAstExpr {
         var expr = parseAtomExpression()
         var tokenPrecedence = getTokenPrecedence(peek().type)
         while tokenPrecedence >= precedence {
             val mark = mark
             expr = switch peek().type {
+                case '+' = {
+                    next()
+                    mkop(
+                        mark, JLAstExpr.Operator.add(), expr,
+                        parseExpressionWithPrecedence(tokenPrecedence + 1))
+                }
+                case '-' = {
+                    next()
+                    mkop(
+                        mark, JLAstExpr.Operator.sub(), expr,
+                        parseExpressionWithPrecedence(tokenPrecedence + 1))
+                }
                 case '.' = {
                     next()
                     val name = parseId()
