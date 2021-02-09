@@ -55,6 +55,11 @@ union JLType: ToString, Eq {
         else = false
     }
 
+    def isObject(self): Bool = when self {
+        case klass(cls) = cls.name == "java.lang.Object"
+        else = false
+    }
+
     def isInterface(self): Bool = when self {
         case klass(cls) = cls.isInterface()
         else = false
