@@ -26,20 +26,20 @@ class JLAstExpr {
         case this()
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
         case operation(Operator, List[JLAstExpr])
+
+        ## (kind(static,virtual,interface), returnType, className, methodName, descriptor, args)
+        case calljava(String, JLAstType, String, String, String, List[JLAstExpr])
     }
 
-    union Operator: Hash {
+    union Operator: Hash, Repr {
         case add
         case sub
 
-        def __eq(self, other: Self): Bool = when self {
-            case add = { when other { case add = true; else = false } }
-            case sub = { when other { case sub = true; else = false } }
-        }
-
-        def hash(self): Int = when self {
-            case add = 1
-            case sub = 2
+        def __eq(self, other: Self): Bool = repr() == other.repr()
+        def hash(self): Int = repr().hash()
+        def repr(self): String = when self {
+            case add = "add"
+            case sub = "sub"
         }
     }
 

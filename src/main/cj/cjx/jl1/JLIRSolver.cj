@@ -228,7 +228,7 @@ class JLIRSolver {
             descriptor: String,
             returnType: JLType,
             args: List[JLIRExpr]): JLIRExpr {
-        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calljava(
             "static", className, methodName, descriptor, args))
     }
 
@@ -240,7 +240,7 @@ class JLIRSolver {
             descriptor: String,
             returnType: JLType,
             args: List[JLIRExpr]): JLIRExpr {
-        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calljava(
             "virtual", className, methodName, descriptor, args))
     }
 
@@ -252,7 +252,7 @@ class JLIRSolver {
             descriptor: String,
             returnType: JLType,
             args: List[JLIRExpr]): JLIRExpr {
-        JLIRExpr(mark, returnType, JLIRExpr.Data.calldirect(
+        JLIRExpr(mark, returnType, JLIRExpr.Data.calljava(
             "interface", className, methodName, descriptor, args))
     }
 
@@ -526,6 +526,12 @@ class JLIRSolver {
                         }
                     }
                 }
+            }
+            case calljava(kind, astReturnType, className, methodName, descriptor, astArgs) = {
+                val returnType = lctx.solveType(astReturnType)
+                val args = astArgs.map(astArg -> solveExpression(lctx, astArg, null))
+                JLIRExpr(mark, returnType, JLIRExpr.Data.calljava(
+                    kind, className, methodName, descriptor, args))
             }
         }
         irExpr

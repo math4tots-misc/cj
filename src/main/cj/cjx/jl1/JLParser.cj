@@ -411,6 +411,47 @@ class JLParser {
                 expect(')')
                 inner
             }
+            case '@' = {
+                next()
+                val name = parseId()
+                val nullableOp = switch name {
+                    case "add" = null(JLAstExpr.Operator.add())
+                    else = null
+                }
+                if null(op) = nullableOp {
+                    val args = parseArgs()
+                    JLAstExpr(mark, JLAstExpr.Data.operation(op, args))
+                } else {
+                    switch name {
+                        case "callstatic"
+                        case "callvirtual"
+                        case "callinterface" = {
+                            val kind = name["call".size():]
+                            expect('(')
+                            val type = parseType()
+                            expect(',')
+                            val className = parseString()
+                            expect(',')
+                            val methodName = parseString()
+                            expect(',')
+                            val descriptor = parseString()
+                            var repeat = true
+                            val args: List[JLAstExpr] = []
+                            while repeat {
+                                if not consume(',') {
+                                    repeat = false
+                                } else if not at(')') {
+                                    args.add(parseExpression())
+                                }
+                            }
+                            expect(')')
+                            JLAstExpr(mark, JLAstExpr.Data.calljava(
+                                kind, type, className, methodName, descriptor, args))
+                        }
+                        else = throw JLError("Unrecognized operator " + name, [mark])
+                    }
+                }
+            }
             case (JLToken.kwTRUE) = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(true))
@@ -446,8 +487,7 @@ class JLParser {
                 }
             }
             case (JLToken.tSTRING) = {
-                val data = translateStringLiteral(mark, next().text)
-                JLAstExpr(mark, JLAstExpr.Data.string(data))
+                JLAstExpr(mark, JLAstExpr.Data.string(parseString()))
             }
             case (JLToken.tTYPEID) = {
                 val className = parseTypeId()
@@ -463,6 +503,8 @@ class JLParser {
             else = throw JLError("Expected expression", [mark])
         }
     }
+
+    def parseString(self): String = translateStringLiteral(mark, next().text)
 
     def parseIf(self): JLAstExpr {
         val mark = mark

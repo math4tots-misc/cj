@@ -305,9 +305,14 @@ class JLCodegen {
                                 "toString",
                                 "()Ljava/lang/String;")
                         }
+                        case l2i = {
+                            Assert.equal(args.size(), 1)
+                            emit(args[0])
+                            jvmcode.l2i()
+                        }
                     }
                 }
-                case calldirect(kind, ownerName, methodName, descriptor, args) = {
+                case calljava(kind, ownerName, methodName, descriptor, args) = {
                     for arg in args {
                         emit(arg)
                     }

@@ -41,5 +41,21 @@ class JLSample {
             "Hello world!" +
             " some extra" +
             " more extra " + 1234)
+
+        {
+            val arrayListClass = @callstatic(
+                Object,
+                "java/lang/Class",
+                "forName",
+                "(Ljava/lang/String;)Ljava/lang/Class;",
+                "java.util.ArrayList")
+            val arrayListClassName = @callvirtual(
+                String,
+                "java/lang/Object",
+                "toString",
+                "()Ljava/lang/String;",
+                arrayListClass)
+            System.out.println("ArrayListClass.class.toString() = " + arrayListClassName)
+        }
     }
 }
