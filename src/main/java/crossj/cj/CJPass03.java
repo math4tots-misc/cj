@@ -367,7 +367,11 @@ final class CJPass03 extends CJPassBaseEx {
     }
 
     private CJAstExpression newJoin(CJMark mark, String sep, List<CJAstExpression> args) {
-        return newMethodCall(mark, "join", List.of(newString(mark, sep), newList(mark, args)));
+        if (args.isEmpty()) {
+            return newString(mark, "");
+        } else {
+            return newMethodCall(mark, "join", List.of(newString(mark, sep), newList(mark, args)));
+        }
     }
 
     private CJAstExpression newGetField(CJAstExpression owner, String name) {

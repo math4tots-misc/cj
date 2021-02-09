@@ -268,28 +268,32 @@ class JLCodegen {
                 }
                 case operation(operator, args) = {
                     when operator {
-                        case intAdd = {
-                            emit(args[0])
-                            for i = 1; i < args.size(); i++ {
-                                emit(args[i])
-                                jvmcode.iadd()
-                            }
-                        }
-                        case intSub = {
-                            emit(args[0])
-                            for i = 1; i < args.size(); i++ {
-                                emit(args[i])
-                                jvmcode.isub()
-                            }
-                        }
-                        case doubleAdd = {
-                            emit(args[0])
-                            for i = 1; i < args.size(); i++ {
-                                emit(args[i])
-                                jvmcode.dadd()
-                            }
-                        }
-                        case stringAdd = {
+
+                        # int ops
+                        case iadd = emitBinop(args, () -> jvmcode.iadd())
+                        case isub = emitBinop(args, () -> jvmcode.isub())
+                        case imul = emitBinop(args, () -> jvmcode.imul())
+                        case idiv = emitBinop(args, () -> jvmcode.idiv())
+                        case irem = emitBinop(args, () -> jvmcode.irem())
+                        case iand = emitBinop(args, () -> jvmcode.iand())
+                        case ior = emitBinop(args, () -> jvmcode.ior())
+                        case ixor = emitBinop(args, () -> jvmcode.ixor())
+                        case ishl = emitBinop(args, () -> jvmcode.ishl())
+                        case ishr = emitBinop(args, () -> jvmcode.ishr())
+                        case ishru = emitBinop(args, () -> jvmcode.iushr())
+                        case ineg = emitUnop(args, () -> jvmcode.ineg())
+                        case i2b = emitUnop(args, () -> jvmcode.i2b())
+                        case i2c = emitUnop(args, () -> jvmcode.i2c())
+                        case i2d = emitUnop(args, () -> jvmcode.i2d())
+                        case i2f = emitUnop(args, () -> jvmcode.i2f())
+                        case i2l = emitUnop(args, () -> jvmcode.i2l())
+                        case i2s = emitUnop(args, () -> jvmcode.i2s())
+
+                        # double ops
+                        case dadd = emitBinop(args, () -> jvmcode.dadd())
+
+                        # string ops
+                        case strcat = {
                             jvmcode.new_("java/lang/StringBuilder")
                             jvmcode.dup()
                             emit(args[0])
@@ -333,6 +337,19 @@ class JLCodegen {
                     }
                 }
             }
+        }
+
+        def emitBinop(self, args: List[JLIRExpr], f: Fn[Unit]) {
+            emit(args[0])
+            for i = 1; i < args.size(); i++ {
+                emit(args[i])
+                f.call()
+            }
+        }
+
+        def emitUnop(self, args: List[JLIRExpr], f: Fn[Unit]) {
+            Assert.equal(args.size(), 1)
+            f.call()
         }
 
         def store(self, local: JLIRLocal) {

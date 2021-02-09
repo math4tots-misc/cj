@@ -41,13 +41,32 @@ class JLIRExpr {
         case calljava(String, String, String, String, List[JLIRExpr])
     }
 
+    @derive(repr)
     union Operator {
-        case intAdd
-        case intSub
 
-        case doubleAdd
+        # operations on int
+        case iadd
+        case isub
+        case imul
+        case idiv
+        case irem
+        case iand
+        case ior
+        case ixor
+        case ishl
+        case ishr
+        case ishru
+        case ineg
+        case i2b
+        case i2c
+        case i2d
+        case i2f
+        case i2l
+        case i2s
 
-        case stringAdd
+        case dadd
+
+        case strcat
 
         case l2i
     }

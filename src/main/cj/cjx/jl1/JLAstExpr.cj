@@ -31,16 +31,24 @@ class JLAstExpr {
         case calljava(String, JLAstType, String, String, String, List[JLAstExpr])
     }
 
-    union Operator: Hash, Repr {
+    @derive(repr)
+    union Operator: Hash {
         case add
         case sub
+        case mul
+        case div
+        case rem
+        case and_
+        case or_
+        case xor
+        case shl
+        case shr
+        case shru
+        case neg
+        case pow
 
         def __eq(self, other: Self): Bool = repr() == other.repr()
         def hash(self): Int = repr().hash()
-        def repr(self): String = when self {
-            case add = "add"
-            case sub = "sub"
-        }
     }
 
     val mark: JLMark

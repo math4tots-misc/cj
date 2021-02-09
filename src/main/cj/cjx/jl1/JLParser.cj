@@ -23,6 +23,22 @@ class JLParser {
         JLAstExpr.Operator.sub(),
     )
 
+    ## Maps token -> (is-right-associative, ast-operator)
+    static val binopTable: Map[Int, Tuple[Bool, JLAstExpr.Operator]] = Map(
+        '+': (false, JLAstExpr.Operator.add()),
+        '-': (false, JLAstExpr.Operator.sub()),
+        '*': (false, JLAstExpr.Operator.mul()),
+        '/': (false, JLAstExpr.Operator.div()),
+        '%': (false, JLAstExpr.Operator.rem()),
+        '&': (false, JLAstExpr.Operator.and_()),
+        '|': (false, JLAstExpr.Operator.or_()),
+        '^': (false, JLAstExpr.Operator.xor()),
+        JLToken.tLSHIFT: (false, JLAstExpr.Operator.shl()),
+        JLToken.tRSHIFT: (false, JLAstExpr.Operator.shr()),
+        JLToken.tRSHIFTU: (false, JLAstExpr.Operator.shru()),
+        JLToken.tPOWER: (true, JLAstExpr.Operator.pow()),
+    )
+
     def parse(filename: String, string: String): JLAstFile {
         val tokens = JLLexer.lex(filename, string)
         val parser = JLParser(filename, tokens)
@@ -357,19 +373,8 @@ class JLParser {
         var tokenPrecedence = getTokenPrecedence(peek().type)
         while tokenPrecedence >= precedence {
             val mark = mark
-            expr = switch peek().type {
-                case '+' = {
-                    next()
-                    mkop(
-                        mark, JLAstExpr.Operator.add(), expr,
-                        parseExpressionWithPrecedence(tokenPrecedence + 1))
-                }
-                case '-' = {
-                    next()
-                    mkop(
-                        mark, JLAstExpr.Operator.sub(), expr,
-                        parseExpressionWithPrecedence(tokenPrecedence + 1))
-                }
+            val toktype = peek().type
+            expr = switch toktype {
                 case '.' = {
                     next()
                     val name = parseId()
@@ -392,9 +397,15 @@ class JLParser {
                     })
                 }
                 else = {
-                    throw JLError(
-                        "expression operator TODO " + JLToken.typeRepr(peek().type),
-                        [mark])
+                    if null((isRightAssociative, operator)) = binopTable.getOrNull(toktype) {
+                        next()
+                        mkop(mark, operator, expr, parseExpressionWithPrecedence(
+                            tokenPrecedence + if isRightAssociative { 0 } else { 1 }))
+                    } else {
+                        throw JLError(
+                            "expression operator TODO " + JLToken.typeRepr(peek().type),
+                            [mark])
+                    }
                 }
             }
             tokenPrecedence = getTokenPrecedence(peek().type)

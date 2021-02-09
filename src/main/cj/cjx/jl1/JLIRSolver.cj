@@ -23,6 +23,24 @@ class JLIRSolver {
         "String": "java.lang.String",
     )
 
+    static val homogeneousIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+        JLAstExpr.Operator.add(): JLIRExpr.Operator.iadd(),
+        JLAstExpr.Operator.sub(): JLIRExpr.Operator.isub(),
+        JLAstExpr.Operator.mul(): JLIRExpr.Operator.imul(),
+        JLAstExpr.Operator.div(): JLIRExpr.Operator.idiv(),
+        JLAstExpr.Operator.rem(): JLIRExpr.Operator.irem(),
+        JLAstExpr.Operator.and_(): JLIRExpr.Operator.iand(),
+        JLAstExpr.Operator.or_(): JLIRExpr.Operator.ior(),
+        JLAstExpr.Operator.xor(): JLIRExpr.Operator.ixor(),
+        JLAstExpr.Operator.shl(): JLIRExpr.Operator.ishl(),
+        JLAstExpr.Operator.shr(): JLIRExpr.Operator.ishr(),
+        JLAstExpr.Operator.shru(): JLIRExpr.Operator.ishru(),
+    )
+
+    static val homogeneousDoubleOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+        JLAstExpr.Operator.add(): JLIRExpr.Operator.dadd(),
+    )
+
     val ctx: JLContext
 
     def solve(self, files: List[JLAstFile]) {
@@ -514,40 +532,33 @@ class JLIRSolver {
                 }
             }
             case operation(operator, astArgs) = {
-                when operator {
-                    case add = {
-                        val irArg0 = solveExpression(lctx, astArgs[0], null)
-                        val nullableIrExpr = when irArg0.type {
-                            case int() = null(handleHomogeneousOps(
-                                mark, lctx, JLIRExpr.Operator.intAdd(), irArg0, astArgs))
-                            case double() = null(handleHomogeneousOps(
-                                mark, lctx, JLIRExpr.Operator.doubleAdd(), irArg0, astArgs))
-                            case klass(argcls) = switch argcls.name {
-                                case "java.lang.String" = null(handleStringOps(
-                                    mark, lctx, JLIRExpr.Operator.stringAdd(), irArg0, astArgs))
-                                else = null
-                            }
-                            else = null
-                        }
-                        if null(irExpr) = nullableIrExpr {
-                            irExpr
+                val irArg0 = solveExpression(lctx, astArgs[0], null)
+                val nullableIrExpr = when irArg0.type {
+                    case int() = {
+                        if null(irOp) = homogeneousIntOps.getOrNull(operator) {
+                            null(handleHomogeneousOps(mark, lctx, irOp, irArg0, astArgs))
                         } else {
-                            throw JLError("'+' not supported for " + irArg0.type, [mark])
+                            null
                         }
                     }
-                    case sub = {
-                        val irArg0 = solveExpression(lctx, astArgs[0], null)
-                        val nullableIrExpr = when irArg0.type {
-                            case int() = null(handleHomogeneousOps(
-                                mark, lctx, JLIRExpr.Operator.intSub(), irArg0, astArgs))
-                            else = null
-                        }
-                        if null(irExpr) = nullableIrExpr {
-                            irExpr
+                    case double() = {
+                        if null(irOp) = homogeneousDoubleOps.getOrNull(operator) {
+                            null(handleHomogeneousOps(mark, lctx, irOp, irArg0, astArgs))
                         } else {
-                            throw JLError("'-' not supported for " + irArg0.type, [mark])
+                            null
                         }
                     }
+                    case klass(argcls) = switch argcls.name {
+                        case "java.lang.String" = null(handleStringOps(
+                            mark, lctx, JLIRExpr.Operator.strcat(), irArg0, astArgs))
+                        else = null
+                    }
+                    else = null
+                }
+                if null(irExpr) = nullableIrExpr {
+                    irExpr
+                } else {
+                    throw JLError("" + operator + " not supported for " + irArg0.type, [mark])
                 }
             }
             case calljava(kind, astReturnType, className, methodName, descriptor, astArgs) = {
