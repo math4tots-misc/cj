@@ -184,6 +184,17 @@ class JLCodegen {
                             methodref.method.getJVMDescriptor())
                     }
                 }
+                case callnew(methodref, args) = {
+                    jvmcode.new_(methodref.owner.toJVMName())
+                    jvmcode.dup()
+                    for arg in args {
+                        emit(arg)
+                    }
+                    jvmcode.invokespecial(
+                        methodref.owner.toJVMName(),
+                        methodref.method.name,
+                        methodref.method.getJVMDescriptor())
+                }
                 case declarelocal(local, init) = {
                     emit(init)
                     addLocal(local)

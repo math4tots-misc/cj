@@ -22,6 +22,7 @@ class JLIRExpr {
         case string(String)
         case block(List[JLIRExpr])
         case call(JLIRMethodRef, List[JLIRExpr])
+        case callnew(JLIRMethodRef, List[JLIRExpr])
 
         case declarelocal(JLIRLocal, JLIRExpr) # declare a local variable
         case getlocal(JLIRLocal) # get local variable

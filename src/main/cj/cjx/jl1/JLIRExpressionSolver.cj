@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLMark
 import cjx.jl1.JLIRExpr
 import cjx.jl1.JLAstExpr
@@ -132,6 +133,10 @@ class JLIRExpressionSolver {
             case char() = null
             case int() = null(callStaticJavaMethod(
                 mark, "java/lang/Integer", "toString", "(I)Ljava/lang/String;", strtype, [irExpr]))
+            case float() = null(callStaticJavaMethod(
+                mark, "java/lang/Float", "toString", "(F)Ljava/lang/String;", strtype, [irExpr]))
+            case double() = null(callStaticJavaMethod(
+                mark, "java/lang/Double", "toString", "(D)Ljava/lang/String;", strtype, [irExpr]))
             case long() = null(callStaticJavaMethod(
                 mark, "java/lang/Long", "toString", "(J)Ljava/lang/String;", strtype, [irExpr]))
             case klass(cls) = if cls.name == "java.lang.String" { null(irExpr) } else {
@@ -243,50 +248,30 @@ class JLIRExpressionSolver {
                     JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())
                 }
             }
-            case callstatic(ownerName, methodName, astArgs) = {
-                val ownercls = lctx.getClass(mark, ownerName)
+            case callnew(astOwnerType, astArgs) = {
+                val ownercls = lctx.solveClass(astOwnerType)
+                if ownercls.isInterface() or ownercls.isAbstract() {
+                    throw JLError("new cannot be used with interface or abstract classes", [mark])
+                }
+                val methodref = ownercls.getMethodRef(mark, "<init>")
+                val irArgs = checkMethodArgs(false, mark, methodref, null, astArgs)
+                JLIRExpr(mark, JLType.klass(ownercls), JLIRExpr.Data.callnew(methodref, irArgs))
+            }
+            case callstatic(astOwnerType, methodName, astArgs) = {
+                val ownercls = lctx.solveClass(astOwnerType)
                 val methodref = ownercls.getMethodRef(mark, methodName)
-                if not methodref.method.isStatic() {
-                    throw JLError("" + methodref + " is non-static", [mark])
-                }
-                val argc = methodref.method.parameters.size()
-                if argc != astArgs.size() {
-                    throw JLError(
-                        "" + methodref +
-                        " expects " + argc +
-                        " args but got " + astArgs.size(), [mark])
-                }
-                val irArgs: List[JLIRExpr] = []
-                for i = 0; i < argc; i++ {
-                    irArgs.add(solveExpression(
-                        astArgs[i], null(methodref.method.parameters[i].type)))
-                }
+                val irArgs = checkMethodArgs(true, mark, methodref, null, astArgs)
                 JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
             }
             case callinstance(astOwner, methodName, astArgs) = {
                 val irOwner = solveExpression(astOwner, null)
                 val ownercls = when irOwner.type {
                     case klass(ownercls) = ownercls
-                    else = {
-                        throw JLError("" + irOwner.type + " values do not have methods", [mark])
-                    }
+                    else = throw JLError(
+                        "" + irOwner.type + " values do not have methods", [mark])
                 }
                 val methodref = ownercls.getMethodRef(mark, methodName)
-                if methodref.method.isStatic() {
-                    throw JLError("" + methodref + " is static", [mark])
-                }
-                val argc = methodref.method.parameters.size() - 1
-                if argc != astArgs.size() {
-                    throw JLError(
-                        "" + methodref +
-                        " expects " + argc +
-                        " args but got " + astArgs.size(), [mark])
-                }
-                val irArgs: List[JLIRExpr] = [irOwner]
-                for i = 1; i <= argc; i++ {
-                    irArgs.add(solveExpression(
-                        astArgs[i - 1], null(methodref.method.parameters[i].type)))
-                }
+                val irArgs = checkMethodArgs(false, mark, methodref, null(irOwner), astArgs)
                 JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
             }
             case callname(methodName, astArgs) = {
@@ -295,7 +280,7 @@ class JLIRExpressionSolver {
                 val methodref = ownercls.getMethodRef(mark, methodName)
                 if methodref.method.isStatic() {
                     solveExpression(JLAstExpr(mark, JLAstExpr.Data.callstatic(
-                        ownercls.name,
+                        ownercls.toAstType(mark),
                         methodName,
                         astArgs)), expectedType)
                 } else {
@@ -305,16 +290,16 @@ class JLIRExpressionSolver {
                         astArgs)), expectedType)
                 }
             }
-            case getstatic(clsname, fieldName) = {
-                val ownercls = lctx.getClass(mark, clsname)
+            case getstatic(astClassType, fieldName) = {
+                val ownercls = lctx.solveClass(astClassType)
                 val fieldref = ownercls.getFieldRef(mark, fieldName)
                 if not fieldref.field.isStatic() {
                     throw JLError("" + fieldref + " is non-static", [mark])
                 }
                 JLIRExpr(mark, fieldref.field.type, JLIRExpr.Data.getstatic(fieldref))
             }
-            case setstatic(clsname, fieldName, astValexpr) = {
-                val ownercls = lctx.getClass(mark, clsname)
+            case setstatic(astClassType, fieldName, astValexpr) = {
+                val ownercls = lctx.solveClass(astClassType)
                 val fieldref = ownercls.getFieldRef(mark, fieldName)
                 if not fieldref.field.isStatic() {
                     throw JLError("" + fieldref + " is non-static", [mark])
@@ -366,7 +351,8 @@ class JLIRExpressionSolver {
                     if null(fieldref) = ownercls.getFieldRefOrNull(name) {
                         if fieldref.field.isStatic() {
                             solveExpression(
-                                JLAstExpr(mark, JLAstExpr.Data.getstatic(ownercls.name, name)),
+                                JLAstExpr(mark, JLAstExpr.Data.getstatic(
+                                    ownercls.toAstType(mark), name)),
                                 expectedType)
                         } else {
                             solveExpression(
@@ -392,7 +378,7 @@ class JLIRExpressionSolver {
                         if fieldref.field.isStatic() {
                             solveExpression(
                                 JLAstExpr(mark, JLAstExpr.Data.setstatic(
-                                    ownercls.name, name, astValexpr)),
+                                    ownercls.toAstType(mark), name, astValexpr)),
                                 expectedType)
                         } else {
                             solveExpression(
@@ -499,6 +485,51 @@ class JLIRExpressionSolver {
             }
         }
         irExpr
+    }
+
+    private def checkMethodArgs(
+            self,
+            static_: Bool,
+            mark: JLMark,
+            methodref: JLIRMethodRef,
+            nullableIrOwner: Nullable[JLIRExpr],
+            astArgs: List[JLAstExpr]): List[JLIRExpr] {
+        if static_ {
+            if not methodref.method.isStatic() {
+                throw JLError("" + methodref + " is non-static", [mark])
+            }
+            val argc = methodref.method.parameters.size()
+            if argc != astArgs.size() {
+                throw JLError(
+                    "" + methodref +
+                    " expects " + argc +
+                    " args but got " + astArgs.size(), [mark])
+            }
+            val irArgs: List[JLIRExpr] = []
+            for i = 0; i < argc; i++ {
+                irArgs.add(solveExpression(
+                    astArgs[i], null(methodref.method.parameters[i].type)))
+            }
+            irArgs
+        } else {
+            if methodref.method.isStatic() {
+                throw JLError("" + methodref + " is static", [mark])
+            }
+            val argc = methodref.method.parameters.size() - 1
+            if argc != astArgs.size() {
+                throw JLError(
+                    "" + methodref +
+                    " expects " + argc +
+                    " args but got " + astArgs.size(), [mark])
+            }
+            val irArgs: List[JLIRExpr] = if null(irOwner) = nullableIrOwner {
+                [irOwner] } else { [] }
+            for i = 1; i <= argc; i++ {
+                irArgs.add(solveExpression(
+                    astArgs[i - 1], null(methodref.method.parameters[i].type)))
+            }
+            irArgs
+        }
     }
 
     ## solve an operation where all inputs and the output have the same type.

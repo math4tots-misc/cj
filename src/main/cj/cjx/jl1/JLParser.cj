@@ -573,14 +573,19 @@ class JLParser {
                 JLAstExpr(mark, JLAstExpr.Data.string(parseString()))
             }
             case (JLToken.tTYPEID) = {
-                val className = parseTypeId()
+                val classtype = parseType()
                 expect('.')
-                val memberName = parseId()
-                if at('(') {
+                if consume(JLToken.kwNEW) {
                     val args = parseArgs()
-                    JLAstExpr(mark, JLAstExpr.Data.callstatic(className, memberName, args))
+                    JLAstExpr(mark, JLAstExpr.Data.callnew(classtype, args))
                 } else {
-                    JLAstExpr(mark, JLAstExpr.Data.getstatic(className, memberName))
+                    val memberName = parseId()
+                    if at('(') {
+                        val args = parseArgs()
+                        JLAstExpr(mark, JLAstExpr.Data.callstatic(classtype, memberName, args))
+                    } else {
+                        JLAstExpr(mark, JLAstExpr.Data.getstatic(classtype, memberName))
+                    }
                 }
             }
             else = {

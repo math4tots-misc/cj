@@ -165,14 +165,17 @@ class JLPass2 {
                 }
             )))
         }
-        val body = JLAstExpr(mark, JLAstExpr.Data.block(bodyexprs))
-        astcls.members.add(JLAstClass.Member.method(JLAstMethod(
-            mark,
-            null,
-            [],
-            "<clinit>",
-            parameters,
-            JLAstType(mark, JLAstType.Data.void()),
-            null(body))))
+
+        if bodyexprs {
+            val body = JLAstExpr(mark, JLAstExpr.Data.block(bodyexprs))
+            astcls.members.add(JLAstClass.Member.method(JLAstMethod(
+                mark,
+                null,
+                [],
+                "<clinit>",
+                parameters,
+                JLAstType(mark, JLAstType.Data.void()),
+                null(body))))
+        }
     }
 }

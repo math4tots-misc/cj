@@ -8,6 +8,11 @@ class JLSample {
 
     static var someStaticField = 15
 
+    class Foo {
+        val x: double = 1.2
+        val y: int
+    }
+
     def foo(list: List[int]) {
     }
 
@@ -85,5 +90,11 @@ class JLSample {
 
         IO.println("someStaticField = " + someStaticField)
         IO.println("someStaticField * 32 = " + someStaticField * 32)
+
+        {
+            val foo = Foo.new(24)
+            IO.println("foo.x = " + foo.x)
+            IO.println("foo.y = " + foo.y)
+        }
     }
 }

@@ -99,6 +99,14 @@ class JLIRLocalContext {
         }
     }
 
+    def solveClass(self, texpr: JLAstType): JLIRClass {
+        val type = solveType(texpr)
+        when type {
+            case klass(cls) = cls
+            else = throw JLError("Calss type is expected here", [texpr.mark])
+        }
+    }
+
     def getClass(self, mark: JLMark, shortName: String): JLIRClass {
         if null(qualifiedName) = typeMap.getOrNull(shortName) {
             ctx.getClass(mark, qualifiedName, methodName.size() > 0)

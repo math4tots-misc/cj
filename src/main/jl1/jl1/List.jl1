@@ -2,7 +2,7 @@ package jl1
 
 class List[T] {
 
-    val array: T[]
+    var array: T[]
     var size: int
 
     def add(this, t: T) {
