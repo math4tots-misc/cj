@@ -35,6 +35,14 @@ class JLIRExpr {
         case while_(JLIRExpr, JLIRExpr)
         case operation(Operator, List[JLIRExpr])
 
+        # ================================================================================
+        # other
+        # ================================================================================
+
+        ## This is the only array op that's not under Operator, because this one
+        ## requires a type argument.
+        case arraynew(JLType, JLIRExpr)
+
         ## Converts non-void results to void
         ## this is important for stack integrity when emitting bytecode
         case voidify(JLIRExpr)
@@ -43,8 +51,13 @@ class JLIRExpr {
         ##
         ## Allows invoking overloaded methods by specifying the full method signature
         ##
-        ## (kind(static, virtual or interface), owner-type, method-name, signature, args)
-        case calljava(String, String, String, String, List[JLIRExpr])
+        ## (kind(static,virtual,interface,special), owner-type, method-name, signature, args)
+        case javacall(String, String, String, String, List[JLIRExpr])
+
+        ## "Manually" call 'new' on a Java class
+        ##
+        ## (owner-type, constructor-descriptor, args)
+        case javanew(String, String, List[JLIRExpr])
 
         ## Initializes static and non-static fields.
         ## Must only appear within <clinit> and <init> methods.
@@ -84,9 +97,18 @@ class JLIRExpr {
         # double ops
         case dadd
 
+        # long ops
+        case l2i
+
+        # string ops
         case strcat
 
-        case l2i
+        # array ops
+        case arrayget
+        case arrayset
+        case arrayclear
+        case arraylen
+        case arrayrealloc
     }
 
     val mark: JLMark

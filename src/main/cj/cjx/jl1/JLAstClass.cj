@@ -25,6 +25,8 @@ class JLAstClass {
 
     def isInterface(self): Bool = _isInterface
 
+    def isNative(self): Bool = "native" in modifiers
+
     def __get_fields(self): List[JLAstField] = {
         members.flatMap(mem -> when mem {
             case field(f) = [f]

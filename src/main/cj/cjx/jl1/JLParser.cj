@@ -290,7 +290,6 @@ class JLParser {
         switch peek().type {
             case (JLToken.kwVAR)
             case (JLToken.kwVAL) = JLAstClass.Member.field(parseField(comment, modifiers))
-            case (JLToken.kwNEW)
             case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
             case (JLToken.kwCLASS)
             case (JLToken.kwINTERFACE) = JLAstClass.Member.klass(parseClass(comment, modifiers))
@@ -314,10 +313,10 @@ class JLParser {
 
     def parseMethod(self, comment: Nullable[String], modifiers: List[String]): JLAstMethod {
         val mark = mark
-        val name = if consume(JLToken.kwNEW) {
+        expect(JLToken.kwDEF)
+        val name = if at('(') {
             "jl$new"
         } else {
-            expect(JLToken.kwDEF)
             parseId()
         }
         val parameters = parseParameters()
@@ -452,16 +451,39 @@ class JLParser {
                         JLAstExpr(mark, JLAstExpr.Data.getfield(expr, name))
                     }
                 }
+                case '[' = {
+                    next()
+                    val index = parseExpression()
+                    expect(']')
+                    JLAstExpr(mark, JLAstExpr.Data.operation(
+                        JLAstExpr.Operator.getitem(),
+                        [expr, index]))
+                }
                 case '=' = {
                     next()
                     val valexpr = parseExpression()
-                    JLAstExpr(mark, when expr.data {
-                        case getvar(name) = JLAstExpr.Data.setvar(name, valexpr)
-                        case getstatic(clsname, fname) = (
+                    val nullableData = when expr.data {
+                        case getvar(name) = null(JLAstExpr.Data.setvar(name, valexpr))
+                        case getstatic(clsname, fname) = null(
                             JLAstExpr.Data.setstatic(clsname, fname, valexpr))
-                        case getfield(owner, name) = JLAstExpr.Data.setfield(owner, name, valexpr)
-                        else = throw JLError("The left hand side is not assignable", [mark])
-                    })
+                        case getfield(owner, name) = null(
+                            JLAstExpr.Data.setfield(owner, name, valexpr))
+                        case operation(operator, args) = when operator {
+                            case getitem = {
+                                Assert.equal(args.size(), 2)
+                                null(JLAstExpr.Data.operation(
+                                    JLAstExpr.Operator.setitem(),
+                                    [args[0], args[1], valexpr]))
+                            }
+                            else = null
+                        }
+                        else = null
+                    }
+                    if null(data) = nullableData {
+                        JLAstExpr(mark, data)
+                    } else {
+                        throw JLError("The left hand side is not assignable", [mark])
+                    }
                 }
                 else = {
                     if null((isRightAssociative, operator)) = binopTable.getOrNull(toktype) {
@@ -495,6 +517,9 @@ class JLParser {
                 val name = parseId()
                 val nullableOp = switch name {
                     case "add" = null(JLAstExpr.Operator.add())
+                    case "clearitem" = null(JLAstExpr.Operator.clearitem())
+                    case "realloc" = null(JLAstExpr.Operator.realloc())
+                    case "len" = null(JLAstExpr.Operator.len())
                     else = null
                 }
                 if null(op) = nullableOp {
@@ -504,7 +529,8 @@ class JLParser {
                     switch name {
                         case "callstatic"
                         case "callvirtual"
-                        case "callinterface" = {
+                        case "callinterface"
+                        case "callspecial" = {
                             val kind = name["call".size():]
                             expect('(')
                             val type = parseType()
@@ -524,8 +550,28 @@ class JLParser {
                                 }
                             }
                             expect(')')
-                            JLAstExpr(mark, JLAstExpr.Data.calljava(
+                            JLAstExpr(mark, JLAstExpr.Data.javacall(
                                 kind, type, className, methodName, descriptor, args))
+                        }
+                        case "callnew" = {
+                            expect('(')
+                            val type = parseType()
+                            expect(',')
+                            val className = parseString()
+                            expect(',')
+                            val descriptor = parseString()
+                            var repeat = true
+                            val args: List[JLAstExpr] = []
+                            while repeat {
+                                if not consume(',') {
+                                    repeat = false
+                                } else if not at(')') {
+                                    args.add(parseExpression())
+                                }
+                            }
+                            expect(')')
+                            JLAstExpr(mark, JLAstExpr.Data.javanew(
+                                type, className, descriptor, args))
                         }
                         else = throw JLError("Unrecognized operator " + name, [mark])
                     }
@@ -610,7 +656,7 @@ class JLParser {
         }
     }
 
-    def parseString(self): String = translateStringLiteral(mark, next().text)
+    def parseString(self): String = translateStringLiteral(mark, expect(JLToken.tSTRING).text)
 
     def parseIf(self): JLAstExpr {
         val mark = mark

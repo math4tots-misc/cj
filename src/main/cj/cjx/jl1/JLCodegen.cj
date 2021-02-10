@@ -190,6 +190,7 @@ class JLCodegen {
                     for arg in args {
                         emit(arg)
                     }
+                    jvmcode.markLine(expr.mark.line)
                     jvmcode.invokespecial(
                         methodref.owner.toJVMName(),
                         methodref.method.name,
@@ -309,6 +310,13 @@ class JLCodegen {
                         # double ops
                         case dadd = emitBinop(args, () -> jvmcode.dadd())
 
+                        # long ops
+                        case l2i = {
+                            Assert.equal(args.size(), 1)
+                            emit(args[0])
+                            jvmcode.l2i()
+                        }
+
                         # string ops
                         case strcat = {
                             jvmcode.new_("java/lang/StringBuilder")
@@ -328,14 +336,80 @@ class JLCodegen {
                                 "toString",
                                 "()Ljava/lang/String;")
                         }
-                        case l2i = {
+
+                        # array ops
+                        case arrayget = {
+                            Assert.equal(args.size(), 2)
+                            emit(args[0])
+                            emit(args[1])
+                            when args[0].type.innerType {
+                                case void() = throw Error("FUBAR arrayget void[]")
+                                case bool() = jvmcode.baload()
+                                case byte() = jvmcode.baload()
+                                case char() = jvmcode.caload()
+                                case short() = jvmcode.saload()
+                                case int() = jvmcode.iaload()
+                                case long() = jvmcode.laload()
+                                case float() = jvmcode.faload()
+                                case double() = jvmcode.daload()
+                                case array(inner) = jvmcode.aaload()
+                                case klass(cls) = jvmcode.aaload()
+                            }
+                        }
+                        case arrayset = {
+                            Assert.equal(args.size(), 3)
+                            emit(args[0])
+                            emit(args[1])
+                            emit(args[2])
+                            emitArraySet(args[0].type.innerType)
+                        }
+                        case arrayclear = {
+                            Assert.equal(args.size(), 2)
+                            emit(args[0])
+                            emit(args[1])
+                            emitClearType(args[0].type.innerType)
+                            emitArraySet(args[0].type.innerType)
+                        }
+                        case arraylen = {
                             Assert.equal(args.size(), 1)
                             emit(args[0])
-                            jvmcode.l2i()
+                            jvmcode.arraylength()
+                        }
+                        case arrayrealloc = {
+                            Assert.equal(args.size(), 2)
+                            emit(args[0])
+                            emit(args[1])
+                            val itemDescriptor: String = when args[0].type.innerType {
+                                case void() = throw Error("FUBAR arrayrealloc void[]")
+                                case array(inner) = "Ljava/lang/Object;"
+                                case klass(cls) = "Ljava/lang/Object;"
+                                else = args[0].type.innerType.toJVMString()
+                            }
+                            jvmcode.invokestatic(
+                                "java/util/Arrays",
+                                "copyOf",
+                                "([" + itemDescriptor + "I)[" + itemDescriptor)
                         }
                     }
                 }
+                case arraynew(itemtype, arg) = {
+                    emit(arg)
+                    when itemtype {
+                        case void() = throw JLError("FUBAR", [expr.mark])
+                        case bool() = jvmcode.newarray("bool")
+                        case char() = jvmcode.newarray("char")
+                        case float() = jvmcode.newarray("float")
+                        case double() = jvmcode.newarray("double")
+                        case byte() = jvmcode.newarray("byte")
+                        case short() = jvmcode.newarray("short")
+                        case int() = jvmcode.newarray("int")
+                        case long() = jvmcode.newarray("long")
+                        case array(inner) = jvmcode.anewarray(itemtype.toJVMString())
+                        case klass(cls) = jvmcode.anewarray(itemtype.toJVMString())
+                    }
+                }
                 case voidify(expr) = {
+                    emit(expr)
                     when expr.type {
                         case void = ()
                         case long = jvmcode.pop2()
@@ -343,7 +417,7 @@ class JLCodegen {
                         else = jvmcode.pop()
                     }
                 }
-                case calljava(kind, ownerName, methodName, descriptor, args) = {
+                case javacall(kind, ownerName, methodName, descriptor, args) = {
                     for arg in args {
                         emit(arg)
                     }
@@ -364,6 +438,15 @@ class JLCodegen {
                         else = throw JLError("Unrecognized call kind " + kind, [expr.mark])
                     }
                 }
+                case javanew(ownerName, descriptor, args) = {
+                    jvmcode.new_(ownerName)
+                    jvmcode.dup()
+                    for arg in args {
+                        emit(arg)
+                    }
+                    jvmcode.markLine(expr.mark.line)
+                    jvmcode.invokespecial(ownerName, "<init>", descriptor)
+                }
                 case initfield(fieldref, valexpr) = {
                     if fieldref.field.isStatic() {
                         emit(valexpr)
@@ -380,6 +463,40 @@ class JLCodegen {
                             fieldref.field.type.toJVMString())
                     }
                 }
+            }
+        }
+
+        ## Emit the type that would "clear out" a value of the given type
+        ## i.e. the zero values for most primitives, and null for reference types.
+        private def emitClearType(self, type: JLType) {
+            when type {
+                case void() = throw Error("FUBAR emitClearType void")
+                case bool() = jvmcode.iconst_0()
+                case byte() = jvmcode.iconst_0()
+                case char() = jvmcode.iconst_0()
+                case short() = jvmcode.iconst_0()
+                case int() = jvmcode.iconst_0()
+                case long() = jvmcode.lconst_0()
+                case float() = jvmcode.fconst_0()
+                case double() = jvmcode.dconst_0()
+                case array(inner) = jvmcode.aconst_null()
+                case klass(cls) = jvmcode.aconst_null()
+            }
+        }
+
+        private def emitArraySet(self, type: JLType) {
+            when type {
+                case void() = throw Error("FUBAR emitArraySet void[]")
+                case bool() = jvmcode.bastore()
+                case byte() = jvmcode.bastore()
+                case char() = jvmcode.castore()
+                case short() = jvmcode.sastore()
+                case int() = jvmcode.iastore()
+                case long() = jvmcode.lastore()
+                case float() = jvmcode.fastore()
+                case double() = jvmcode.dastore()
+                case array(inner) = jvmcode.aastore()
+                case klass(cls) = jvmcode.aastore()
             }
         }
 

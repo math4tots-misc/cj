@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cj.Error
 import cjx.jl1.JLIRClass
 
 union JLType: ToString, Eq {
@@ -63,6 +64,11 @@ union JLType: ToString, Eq {
     def isInterface(self): Bool = when self {
         case klass(cls) = cls.isInterface()
         else = false
+    }
+
+    def __get_innerType(self): Self = when self {
+        case array(inner) = inner
+        else = throw Error("FUBAR: expected array type")
     }
 
     def __eq(self, other: Self): Bool = when self {

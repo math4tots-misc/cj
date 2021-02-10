@@ -492,6 +492,8 @@ union Opcode {
     ## and always changes the stack by a fixed amount
     static val simpleStackChangeOpcodes: Map[Int, Int] = Map(
         nop: 0,
+        pop: -1,
+        pop2: -2,
         ldc: 1,
         ldc_w: 1,
         ldc2_w: 2,
@@ -575,6 +577,27 @@ union Opcode {
         ishr: -1,
         iushr: -1,
         ineg: 0,
+
+        # array ops
+        anewarray: 0,
+        newarray: 0,
+        arraylength: 0,
+        iaload: -1,
+        laload: 0,
+        faload: -1,
+        daload: 0,
+        aaload: -1,
+        baload: -1,
+        caload: -1,
+        saload: -1,
+        iastore: -3,
+        lastore: -4,
+        fastore: -3,
+        dastore: -4,
+        aastore: -3,
+        bastore: -3,
+        castore: -3,
+        sastore: -3,
     )
 
     ## These are opcodes that halts the method, so the stack

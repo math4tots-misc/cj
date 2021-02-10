@@ -54,6 +54,8 @@ class JVMClass {
     var methods: List[MethodInfo] = []
     var attributes: List[AttributeInfo] = []
 
+    def __get_name(self): String = cp.getClassref(thisClass)
+
     def fromBuffer(buffer: Buffer): Self {
         val parser = Parser(buffer)
         parser.parseJVMClass()

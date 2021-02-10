@@ -1,10 +1,40 @@
 package jl1
 
+import jl1.IO
+import jl1.StringBuilder
+
 class List[T] {
 
     var array: T[]
     var size: int
 
+    def empty(): Self = Self.new(T[].new(0), 0)
+
     def add(this, t: T) {
+        if size < array.size() {
+            array[size] = t
+        } else {
+            val newcap = if array.size() { 2 * array.size() } else { 4 }
+            array = array.realloc(newcap)
+            array[size] = t
+        }
+        size = size + 1
+    }
+
+    def size(this): int = size
+
+    def toString(this): String {
+        val sb = StringBuilder()
+        sb.add("[")
+        var i = 0
+        while i < size {
+            if i > 0 {
+                sb.add(", ")
+            }
+            sb.add("" + array[i])
+            i = i + 1
+        }
+        sb.add("]")
+        sb.toString()
     }
 }

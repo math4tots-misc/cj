@@ -74,10 +74,12 @@ class JLIRLocalContext {
             case long = JLType.long()
             case float = JLType.float()
             case double = JLType.double()
-            case array(inner) = JLType.array(solveType(inner))
+            case array(inner) = JLType.array(solveFieldType(inner))
             case klass(shortName, astArgs) = {
                 val ensurePass2 = methodName.size() > 0
-                if null(templateArg) = thisClass.templateArguments.getOrNull(shortName) {
+                if shortName == "Self" {
+                    JLType.klass(thisClass)
+                } else if null(templateArg) = thisClass.templateArguments.getOrNull(shortName) {
                     when templateArg {
                         case type(type) = type
                         else = throw JLError(shortName + " is not a type", [texpr.mark])
@@ -103,15 +105,15 @@ class JLIRLocalContext {
         val type = solveType(texpr)
         when type {
             case klass(cls) = cls
-            else = throw JLError("Calss type is expected here", [texpr.mark])
+            else = throw JLError("Class type is expected here", [texpr.mark])
         }
     }
 
     def getClass(self, mark: JLMark, shortName: String): JLIRClass {
-        if null(qualifiedName) = typeMap.getOrNull(shortName) {
-            ctx.getClass(mark, qualifiedName, methodName.size() > 0)
-        } else {
-            throw JLError("Unrecognized type name " + shortName, [mark])
+        val type = solveType(JLAstType(mark, JLAstType.Data.klass(shortName, [])))
+        when type {
+            case klass(cls) = cls
+            else = throw JLError("Class type is expected here", [mark])
         }
     }
 

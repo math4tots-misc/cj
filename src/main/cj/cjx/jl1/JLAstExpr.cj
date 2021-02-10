@@ -32,14 +32,17 @@ class JLAstExpr {
 
         ## (kind(static,virtual,interface,special),
         ##   returnType, className, methodName, descriptor, args)
-        case calljava(String, JLAstType, String, String, String, List[JLAstExpr])
+        case javacall(String, JLAstType, String, String, String, List[JLAstExpr])
+
+        ## (returnType, className, descriptor, args)
+        case javanew(JLAstType, String, String, List[JLAstExpr])
 
         # ================================================================================
         # special <init> and <clinit> helpers
         # ================================================================================
 
         ## Initializes a static or non-static field.
-        ## Not for direct use (i.e., the parser should never generate this).
+        ## Not for direct use (i.e. the parser should never generate this).
         ## Nodes of this kind are automatically generated for <init> and <clinit> methods.
         case initfield(String, JLAstExpr)
     }
@@ -65,6 +68,13 @@ class JLAstExpr {
         case ge
         case eq
         case ne
+
+        case len
+        case getitem
+        case setitem
+        case clearitem
+        case slice
+        case realloc
 
         def __eq(self, other: Self): Bool = repr() == other.repr()
         def hash(self): Int = repr().hash()

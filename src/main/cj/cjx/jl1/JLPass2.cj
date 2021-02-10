@@ -101,8 +101,9 @@ class JLPass2 {
     }
 
     private def addSynthesizedInit(self, astcls: JLAstClass) {
-        if astcls.isInterface() {
+        if astcls.isInterface() or astcls.isNative() {
             # Interfaces don't have <init> methods
+            # Native classes should not have automatically <init> methods autoconstructed
             return ()
         }
 
@@ -110,7 +111,7 @@ class JLPass2 {
         val parameters = [JLAstLocal(mark, [], "this", null, null)]
         val bodyexprs = [
             # start by calling the super constructor
-            JLAstExpr(mark, JLAstExpr.Data.calljava(
+            JLAstExpr(mark, JLAstExpr.Data.javacall(
                 "special",
                 JLAstType(mark, JLAstType.Data.void()),
                 "java/lang/Object", "<init>", "()V", [JLAstExpr(mark, JLAstExpr.Data.this())],
@@ -137,7 +138,7 @@ class JLPass2 {
         astcls.members.add(JLAstClass.Member.method(JLAstMethod(
             mark,
             null,
-            ["private"],
+            ["public"],
             "<init>",
             parameters,
             JLAstType(mark, JLAstType.Data.void()),

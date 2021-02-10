@@ -1,5 +1,6 @@
 package cjx.jvm
 
+import cjx.jl1.JLError
 import cj.Error
 import cj.BufferReader
 import cjx.jvm.JVMConstValue
@@ -37,6 +38,8 @@ class JVMCodeBuilder {
     }
 
     private def computeMaxStackSize(self): Int {
+        # val methodName = cp.getUtf8(methodBuilder.nameIndex)
+        # IO.println("=== computeMaxStackSize " + cls.name + "." + methodName + " ===")
         var maxStack = 0
         val todo = [(0, 0)]
         val seen = Set[Int].empty()
@@ -51,6 +54,8 @@ class JVMCodeBuilder {
             val opcode = code.getU8(pc)
             val instructionSize = Opcode.instructionSize(code, pc)
             val nextPc = pc + instructionSize
+            # IO.println("  pc=0x" + pc.hex() + "  opcode=0x" +
+            # opcode.hex().lpad(2, "0") + " stack=" + stackSize)
             if pc in seen {
                 # already handled
             } else {
@@ -165,6 +170,10 @@ class JVMCodeBuilder {
                 }
             }
 
+            if i >= descriptor.size() {
+                throw JLError("Bad descriptor " + descriptor, [])
+            }
+
             i += descriptor.charAt(i).size()
         }
         argc
@@ -205,6 +214,28 @@ class JVMCodeBuilder {
         val index = cp.classref(className)
         code.addU8(Opcode.new_)
         code.addU16(index)
+    }
+
+    def anewarray(self, className: String) {
+        val index = cp.classref(className)
+        code.addU8(Opcode.anewarray)
+        code.addU16(index)
+    }
+
+    def newarray(self, typeName: String) {
+        val typeCode = switch typeName {
+            case "bool" = 4
+            case "char" = 5
+            case "float" = 6
+            case "double" = 7
+            case "byte" = 8
+            case "short" = 9
+            case "int" = 10
+            case "long" = 11
+            else = throw Error("Invalid newarray type name: " + typeName)
+        }
+        code.addU8(Opcode.newarray)
+        code.addU8(typeCode)
     }
 
     def getstatic(self, className: String, fieldName: String, type: String) {
@@ -475,6 +506,18 @@ class JVMCodeBuilder {
 
     def iconst_1(self) {
         code.addU8(Opcode.iconst_1)
+    }
+
+    def lconst_0(self) {
+        code.addU8(Opcode.lconst_0)
+    }
+
+    def fconst_0(self) {
+        code.addU8(Opcode.fconst_0)
+    }
+
+    def dconst_0(self) {
+        code.addU8(Opcode.dconst_0)
     }
 
     def aconst_null(self) {

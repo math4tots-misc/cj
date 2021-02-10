@@ -17,7 +17,7 @@ class JLSample {
         var a: String
         val b: String = "b-value"
 
-        new(): Bar {
+        def(): Bar {
             Bar.new("a value")
         }
     }
@@ -119,6 +119,14 @@ class JLSample {
             val bar = Bar.new("alt-b-value")
             IO.println("bar.a = " + bar.a)
             IO.println("bar.b = " + bar.b)
+        }
+
+        {
+            val list = List[int].empty()
+            IO.println("empty list.size() = " + list.size())
+            IO.println("empty list = " + list)
+            list.add(15)
+            IO.println("list = " + list)
         }
     }
 }

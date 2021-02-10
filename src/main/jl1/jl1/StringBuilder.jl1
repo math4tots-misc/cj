@@ -1,0 +1,30 @@
+package jl1
+
+import java.lang.StringBuilder as SB
+
+class StringBuilder {
+    val jsb: SB
+
+    def(): Self {
+        val self = Self.new(@callnew(SB, "java/lang/StringBuilder", "()V"))
+        self
+    }
+
+    def add(this, value: Object) {
+        @callvirtual(
+            SB,
+            "java/lang/StringBuilder",
+            "append",
+            "(Ljava/lang/Object;)Ljava/lang/StringBuilder;",
+            jsb, value)
+    }
+
+    def toString(this): String {
+        @callvirtual(
+            String,
+            "java/lang/StringBuilder",
+            "toString",
+            "()Ljava/lang/String;",
+            jsb)
+    }
+}
