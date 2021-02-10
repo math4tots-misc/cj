@@ -14,6 +14,7 @@ class JLAstExpr {
         case string(String)
         case block(List[JLAstExpr])
         case callnew(JLAstType, List[JLAstExpr])
+        case calltype(JLAstType, List[JLAstExpr]) # call a type like a function
         case callstatic(JLAstType, String, List[JLAstExpr])
         case callinstance(JLAstExpr, String, List[JLAstExpr])
         case callname(String, List[JLAstExpr])

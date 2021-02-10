@@ -290,6 +290,7 @@ class JLParser {
         switch peek().type {
             case (JLToken.kwVAR)
             case (JLToken.kwVAL) = JLAstClass.Member.field(parseField(comment, modifiers))
+            case (JLToken.kwNEW)
             case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
             case (JLToken.kwCLASS)
             case (JLToken.kwINTERFACE) = JLAstClass.Member.klass(parseClass(comment, modifiers))
@@ -313,8 +314,12 @@ class JLParser {
 
     def parseMethod(self, comment: Nullable[String], modifiers: List[String]): JLAstMethod {
         val mark = mark
-        expect(JLToken.kwDEF)
-        val name = parseId()
+        val name = if consume(JLToken.kwNEW) {
+            "jl$new"
+        } else {
+            expect(JLToken.kwDEF)
+            parseId()
+        }
         val parameters = parseParameters()
         val returnType = if consume(':') { parseType() } else {
             JLAstType(mark, JLAstType.Data.void())
@@ -574,17 +579,22 @@ class JLParser {
             }
             case (JLToken.tTYPEID) = {
                 val classtype = parseType()
-                expect('.')
-                if consume(JLToken.kwNEW) {
+                if at('(') {
                     val args = parseArgs()
-                    JLAstExpr(mark, JLAstExpr.Data.callnew(classtype, args))
+                    JLAstExpr(mark, JLAstExpr.Data.calltype(classtype, args))
                 } else {
-                    val memberName = parseId()
-                    if at('(') {
+                    expect('.')
+                    if consume(JLToken.kwNEW) {
                         val args = parseArgs()
-                        JLAstExpr(mark, JLAstExpr.Data.callstatic(classtype, memberName, args))
+                        JLAstExpr(mark, JLAstExpr.Data.callnew(classtype, args))
                     } else {
-                        JLAstExpr(mark, JLAstExpr.Data.getstatic(classtype, memberName))
+                        val memberName = parseId()
+                        if at('(') {
+                            val args = parseArgs()
+                            JLAstExpr(mark, JLAstExpr.Data.callstatic(classtype, memberName, args))
+                        } else {
+                            JLAstExpr(mark, JLAstExpr.Data.getstatic(classtype, memberName))
+                        }
                     }
                 }
             }

@@ -13,6 +13,15 @@ class JLSample {
         val y: int
     }
 
+    class Bar {
+        var a: String
+        val b: String = "b-value"
+
+        new(): Bar {
+            Bar.new("a value")
+        }
+    }
+
     def foo(list: List[int]) {
     }
 
@@ -95,6 +104,21 @@ class JLSample {
             val foo = Foo.new(24)
             IO.println("foo.x = " + foo.x)
             IO.println("foo.y = " + foo.y)
+        }
+        {
+            val foo = Foo(55)
+            IO.println("foo.x = " + foo.x)
+            IO.println("foo.y = " + foo.y)
+        }
+        {
+            val bar = Bar()
+            IO.println("bar.a = " + bar.a)
+            IO.println("bar.b = " + bar.b)
+        }
+        {
+            val bar = Bar.new("alt-b-value")
+            IO.println("bar.a = " + bar.a)
+            IO.println("bar.b = " + bar.b)
         }
     }
 }

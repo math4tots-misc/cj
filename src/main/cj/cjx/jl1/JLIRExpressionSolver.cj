@@ -257,6 +257,20 @@ class JLIRExpressionSolver {
                 val irArgs = checkMethodArgs(false, mark, methodref, null, astArgs)
                 JLIRExpr(mark, JLType.klass(ownercls), JLIRExpr.Data.callnew(methodref, irArgs))
             }
+            case calltype(astOwnerType, astArgs) = {
+                val ownercls = lctx.solveClass(astOwnerType)
+                solveExpressionUnchecked(
+                    JLAstExpr(
+                        mark,
+                        if ownercls.getMethodRefOrNull("jl$new").isPresent() {
+                            # Call ".jl$new" if present
+                            JLAstExpr.Data.callstatic(astOwnerType, "jl$new", astArgs)
+                        } else {
+                            # Otherwise, fallback to calling ".new"
+                            JLAstExpr.Data.callnew(astOwnerType, astArgs)
+                        }),
+                    expectedType)
+            }
             case callstatic(astOwnerType, methodName, astArgs) = {
                 val ownercls = lctx.solveClass(astOwnerType)
                 val methodref = ownercls.getMethodRef(mark, methodName)
