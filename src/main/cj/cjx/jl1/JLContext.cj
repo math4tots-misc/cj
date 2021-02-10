@@ -1,5 +1,9 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstLocal
+import cjx.jl1.JLAstType
+import cjx.jl1.JLAstMethod
+import cjx.jl1.JLAstExpr
 import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLIRExpressionSolver
 import cjx.jl1.JLIRMethod
@@ -108,6 +112,8 @@ class JLContext {
         }
     }
 
+    ## pass1
+    ## Materializes all declared interfaces of the given class.
     private def runPass1(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]
@@ -117,20 +123,37 @@ class JLContext {
         }
     }
 
+    ## pass2
+    ## Materializes all field and method declarations of the given class.
+    ## Associated expressions however are not touched.
     private def runPass2(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]
         val thisType = JLType.klass(ircls)
+
+        addSynthesizedInit(astcls)
+
         for astMember in astcls.members {
             when astMember {
                 case klass(innercls) = ()
                 case field(astField) = {
+                    val fieldtype = if null(ftype) = astField.type {
+                        ftype
+                    } else if null(init) = astField.init {
+                        if null(ftype) = simpleInferExpressionType(init) {
+                            ftype
+                        } else {
+                            throw JLError("Could not infer field type", [astField.mark])
+                        }
+                    } else {
+                        throw JLError("Field type is not specified", [astField.mark])
+                    }
                     val irField = JLIRField(
                         astField.mark,
                         astField.comment,
                         astField.modifiers,
                         astField.name,
-                        lctx.solveFieldType(astField.type))
+                        lctx.solveFieldType(fieldtype))
                     ircls.addField(irField)
                 }
                 case method(astMethod) = {
@@ -164,6 +187,65 @@ class JLContext {
         }
     }
 
+    private def simpleInferExpressionType(self, expr: JLAstExpr): Nullable[JLAstType] {
+        val nullableData = when expr.data {
+            case int(i) = null(JLAstType.Data.int())
+            case string(s) = null(JLAstType.Data.klass("java.lang.String", []))
+            else = null
+        }
+        if null(data) = nullableData {
+            null(JLAstType(expr.mark, data))
+        } else {
+            null
+        }
+    }
+
+    private def addSynthesizedInit(self, astcls: JLAstClass) {
+        if astcls.isInterface() {
+            # Interfaces don't have <init> methods
+            return ()
+        }
+
+        val mark = astcls.mark
+        val parameters = [JLAstLocal(mark, [], "this", null, null)]
+        val bodyexprs = [
+            # start by calling the super constructor
+            JLAstExpr(mark, JLAstExpr.Data.calljava(
+                "special",
+                JLAstType(mark, JLAstType.Data.void()),
+                "java/lang/Object", "<init>", "()V", [JLAstExpr(mark, JLAstExpr.Data.this())],
+            )),
+        ]
+        for field in astcls.fields.filter(f -> not f.isStatic()) {
+            bodyexprs.add(JLAstExpr(mark, JLAstExpr.Data.initfield(
+                field.name,
+                if field.init.isPresent() {
+                    field.init.get()
+                } else {
+                    if field.type.isEmpty() {
+                        throw JLError(
+                            "A field without an initializer must provide a type", [field.mark])
+                    }
+                    val fieldtype = field.type.get()
+                    val parameterName = "p$" + field.name
+                    parameters.add(JLAstLocal(mark, [], parameterName, null(fieldtype), null))
+                    JLAstExpr(mark, JLAstExpr.Data.getvar(parameterName))
+                }
+            )))
+        }
+        val body = JLAstExpr(mark, JLAstExpr.Data.block(bodyexprs))
+        astcls.members.add(JLAstClass.Member.method(JLAstMethod(
+            mark,
+            null,
+            ["private"],
+            "<init>",
+            parameters,
+            JLAstType(mark, JLAstType.Data.void()),
+            null(body))))
+    }
+
+    ## pass3
+    ## Resolves all expressions attached to fields and methods.
     private def runPass3(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]

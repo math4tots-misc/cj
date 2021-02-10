@@ -305,9 +305,10 @@ class JLParser {
             expect(JLToken.kwVAL)
         }
         val name = parseId()
-        expect(':')
-        val type = parseType()
-        JLAstField(mark, comment, modifiers, name, type)
+        val type = if consume(':') { null(parseType()) } else { null }
+        val init = if consume('=') { null(parseExpression()) } else { null }
+        expectDelimiters()
+        JLAstField(mark, comment, modifiers, name, type, init)
     }
 
     def parseMethod(self, comment: Nullable[String], modifiers: List[String]): JLAstMethod {

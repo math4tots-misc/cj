@@ -24,4 +24,11 @@ class JLAstClass {
     val members: List[Member]
 
     def isInterface(self): Bool = _isInterface
+
+    def __get_fields(self): List[JLAstField] = {
+        members.flatMap(mem -> when mem {
+            case field(f) = [f]
+            else = []
+        })
+    }
 }

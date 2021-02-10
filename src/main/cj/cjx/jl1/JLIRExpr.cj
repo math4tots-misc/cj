@@ -22,6 +22,7 @@ class JLIRExpr {
         case string(String)
         case block(List[JLIRExpr])
         case call(JLIRMethodRef, List[JLIRExpr])
+
         case declarelocal(JLIRLocal, JLIRExpr) # declare a local variable
         case getlocal(JLIRLocal) # get local variable
         case setlocal(JLIRLocal, JLIRExpr) # set local variable
@@ -43,6 +44,11 @@ class JLIRExpr {
         ##
         ## (kind(static, virtual or interface), owner-type, method-name, signature, args)
         case calljava(String, String, String, String, List[JLIRExpr])
+
+        ## Initializes static and non-static fields.
+        ## Must only appear within <clinit> and <init> methods.
+        ## For non-static fields, the owner 'this' is implied.
+        case initfield(JLIRFieldRef, JLIRExpr)
     }
 
     @derive(repr)

@@ -22,6 +22,7 @@ class JLIRClass {
     val methods: List[JLIRMethod] = []
     val methodMap: Map[String, JLIRMethod] = Map()
     val templateArguments: Map[String, JLIRTemplateArgument] = Map()
+    val _nonStaticFields: Nullable[List[JLIRField]] = null
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")

@@ -48,6 +48,9 @@ class JLCodegen {
                 if jlfield.isStatic() {
                     jvmfield.accessFlags = jvmfield.accessFlags | JVMClass.cACC_STATIC
                 }
+                if not jlfield.isMutable() {
+                    jvmfield.accessFlags = jvmfield.accessFlags | JVMClass.cACC_FINAL
+                }
                 jvmfield.name = jlfield.name
                 jvmfield.descriptor = jlfield.type.toJVMString()
             })
@@ -344,7 +347,26 @@ class JLCodegen {
                         case "interface" = {
                             jvmcode.invokeinterface(ownerName, methodName, descriptor)
                         }
+                        case "special" = {
+                            jvmcode.invokespecial(ownerName, methodName, descriptor)
+                        }
                         else = throw JLError("Unrecognized call kind " + kind, [expr.mark])
+                    }
+                }
+                case initfield(fieldref, valexpr) = {
+                    if fieldref.field.isStatic() {
+                        emit(valexpr)
+                        jvmcode.putstatic(
+                            fieldref.owner.toJVMName(),
+                            fieldref.field.name,
+                            fieldref.field.type.toJVMString())
+                    } else {
+                        jvmcode.aload(0)
+                        emit(valexpr)
+                        jvmcode.putfield(
+                            fieldref.owner.toJVMName(),
+                            fieldref.field.name,
+                            fieldref.field.type.toJVMString())
                     }
                 }
             }

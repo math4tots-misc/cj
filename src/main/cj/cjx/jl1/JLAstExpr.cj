@@ -28,8 +28,18 @@ class JLAstExpr {
         case while_(JLAstExpr, JLAstExpr)
         case operation(Operator, List[JLAstExpr])
 
-        ## (kind(static,virtual,interface), returnType, className, methodName, descriptor, args)
+        ## (kind(static,virtual,interface,special),
+        ##   returnType, className, methodName, descriptor, args)
         case calljava(String, JLAstType, String, String, String, List[JLAstExpr])
+
+        # ================================================================================
+        # special <init> and <clinit> helpers
+        # ================================================================================
+
+        ## Initializes a static or non-static field.
+        ## Not for direct use (i.e., the parser should never generate this).
+        ## Nodes of this kind are automatically generated for <init> and <clinit> methods.
+        case initfield(String, JLAstExpr)
     }
 
     @derive(repr)

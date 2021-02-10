@@ -422,7 +422,11 @@ class JLIRExpressionSolver {
             }
             case this() = {
                 if lctx.thisMethod.isStatic() {
-                    throw JLError("'this' cannot be used in a static context", [mark])
+                    throw JLError(
+                        "'this' cannot be used in a static context (in method " +
+                        lctx.thisMethod.name +
+                        ")",
+                        [mark])
                 } else {
                     JLIRExpr(mark, JLType.klass(lctx.thisClass), JLIRExpr.Data.getlocal(
                         lctx.getLocalOrNull("this").get()))
@@ -487,6 +491,11 @@ class JLIRExpressionSolver {
                 val args = astArgs.map(astArg -> solveExpression(astArg, null))
                 JLIRExpr(mark, returnType, JLIRExpr.Data.calljava(
                     kind, className, methodName, descriptor, args))
+            }
+            case initfield(fieldName, astValexpr) = {
+                val fieldref = lctx.thisClass.getFieldRef(mark, fieldName)
+                val valexpr = solveExpression(astValexpr, null(fieldref.field.type))
+                JLIRExpr(mark, JLType.void(), JLIRExpr.Data.initfield(fieldref, valexpr))
             }
         }
         irExpr
