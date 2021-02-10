@@ -497,6 +497,8 @@ union Opcode {
         ldc2_w: 2,
         bipush: 1,
         sipush: 1,
+        new_: 1,
+        dup: 1,
         iconst_0: 1,
         iconst_1: 1,
         iconst_2: 1,
@@ -560,6 +562,19 @@ union Opcode {
         astore_1: -1,
         astore_2: -1,
         astore_3: -1,
+
+        iadd: -1,
+        isub: -1,
+        imul: -1,
+        idiv: -1,
+        irem: -1,
+        iand: -1,
+        ior: -1,
+        ixor: -1,
+        ishl: -1,
+        ishr: -1,
+        iushr: -1,
+        ineg: 0,
     )
 
     ## These are opcodes that halts the method, so the stack
@@ -582,5 +597,18 @@ union Opcode {
         ifge,
         ifgt,
         ifle,
+    )
+
+    ## Opcodes that branch conditionally after compareing top two ints
+    ## on the stack
+    static val ifICmp: Set[Int] = Set(
+        if_icmpeq,
+        if_icmpne,
+        if_icmplt,
+        if_icmpge,
+        if_icmpgt,
+        if_icmple,
+        if_acmpeq,
+        if_acmpne,
     )
 }

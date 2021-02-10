@@ -65,13 +65,19 @@ class JVMCodeBuilder {
                     # and potentially branches
                     val newStackSize = stackSize - 1
                     todo.add((nextPc, newStackSize))
-                    todo.add((code.getU16(pc + 1), newStackSize))
+                    todo.add((pc + code.getI16(pc + 1), newStackSize))
+                } else if opcode in Opcode.ifICmp {
+                    # these pop two ints from the stack, does a comparison
+                    # and potentially branches
+                    val newStackSize = stackSize - 2
+                    todo.add((nextPc, newStackSize))
+                    todo.add((pc + code.getI16(pc + 1), newStackSize))
                 } else {
                     switch opcode {
                         case (Opcode.goto) = {
                             # 0xa7
                             # unconditional branching
-                            todo.add((code.getU16(pc + 1), stackSize))
+                            todo.add((pc + code.getI16(pc + 1), stackSize))
                         }
                         case (Opcode.getstatic) = {
                             # 0xb2
