@@ -134,30 +134,30 @@ class JLContext {
                 }
                 case method(astMethod) = {
                     val parameters: List[JLIRLocal] = []
-                        for astLocal in astMethod.parameters {
-                            Assert.that(astLocal.init.isEmpty())
-                            val irLocal = JLIRLocal(
-                                astLocal.mark,
-                                parameters.size(),
-                                astLocal.modifiers,
-                                astLocal.name,
-                                if astLocal.name == "this" {
-                                    Assert.that(astLocal.type.isEmpty())
-                                    thisType
-                                } else {
-                                    lctx.solveFieldType(astLocal.type.get())
-                                })
-                            parameters.add(irLocal)
-                        }
-                        val irMethod = JLIRMethod(
-                            astMethod.mark,
-                            astMethod.comment,
-                            astMethod.modifiers,
-                            astMethod.name,
-                            parameters,
-                            lctx.solveType(astMethod.returnType),
-                            parameters.clone())
-                        ircls.addMethod(irMethod)
+                    for astLocal in astMethod.parameters {
+                        Assert.that(astLocal.init.isEmpty())
+                        val irLocal = JLIRLocal(
+                            astLocal.mark,
+                            parameters.size(),
+                            astLocal.modifiers,
+                            astLocal.name,
+                            if astLocal.name == "this" {
+                                Assert.that(astLocal.type.isEmpty())
+                                thisType
+                            } else {
+                                lctx.solveFieldType(astLocal.type.get())
+                            })
+                        parameters.add(irLocal)
+                    }
+                    val irMethod = JLIRMethod(
+                        astMethod.mark,
+                        astMethod.comment,
+                        astMethod.modifiers,
+                        astMethod.name,
+                        parameters,
+                        lctx.solveType(astMethod.returnType),
+                        parameters.clone())
+                    ircls.addMethod(irMethod)
                 }
             }
         }
