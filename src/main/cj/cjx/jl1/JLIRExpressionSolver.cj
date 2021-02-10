@@ -292,9 +292,16 @@ class JLIRExpressionSolver {
             }
             case callstatic(astOwnerType, methodName, astArgs) = {
                 val ownercls = lctx.solveClass(astOwnerType)
-                val methodref = ownercls.getMethodRef(mark, methodName)
-                val irArgs = checkMethodArgs(true, mark, methodref, null, astArgs)
-                JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(methodref, irArgs))
+                if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
+                    val methodref = ownercls.getMethodRef(mark, methodName)
+                    val irArgs = checkMethodArgs(true, mark, methodref, null, astArgs)
+                    JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
+                        methodref, irArgs))
+                } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
+                    throw JLError("TODO template instance method call", [mark])
+                } else {
+                    throw JLError("Method " + methodName + " not found", [mark])
+                }
             }
             case callinstance(astOwner, methodName, astArgs) = {
                 val irOwner = solveExpression(astOwner, null)
@@ -334,11 +341,17 @@ class JLIRExpressionSolver {
                                     "Method " + methodName + " not found for String", [mark])
                             }
                         } else {
-                            val methodref = ownercls.getMethodRef(mark, methodName)
-                            val irArgs = checkMethodArgs(
-                                false, mark, methodref, null(irOwner), astArgs)
-                            JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
-                                methodref, irArgs))
+                            if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
+                                val irArgs = checkMethodArgs(
+                                    false, mark, methodref, null(irOwner), astArgs)
+                                JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
+                                    methodref, irArgs))
+                            } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
+                                    methodName) {
+                                throw JLError("TODO template instance method call", [mark])
+                            } else {
+                                throw JLError("Method " + methodName + " not found", [mark])
+                            }
                         }
                     }
                     else = throw JLError(

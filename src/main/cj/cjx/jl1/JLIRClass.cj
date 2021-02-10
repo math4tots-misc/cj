@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstType
 import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLIRFieldRef
@@ -22,6 +23,8 @@ class JLIRClass {
     val fieldMap: Map[String, JLIRField] = Map()
     val methods: List[JLIRMethod] = []
     val methodMap: Map[String, JLIRMethod] = Map()
+    val methodTemplates: List[JLAstMethod] = []
+    val methodTemplateMap: Map[String, JLAstMethod] = Map()
     val templateArguments: Map[String, JLIRTemplateArgument] = Map()
     val _nonStaticFields: Nullable[List[JLIRField]] = null
 
@@ -38,6 +41,11 @@ class JLIRClass {
     def addMethod(self, method: JLIRMethod) {
         methods.add(method)
         methodMap[method.name] = method
+    }
+
+    def addMethodTemplate(self, methodTemplate: JLAstMethod) {
+        methodTemplates.add(methodTemplate)
+        methodTemplateMap[methodTemplate.name] = methodTemplate
     }
 
     def getDeclaredMethod(self, name: String): JLIRMethod = methodMap[name]
@@ -75,6 +83,14 @@ class JLIRClass {
                     return null(methodref)
                 }
             }
+            null
+        }
+    }
+
+    def getMethodTemplateOrNull(self, name: String): Nullable[JLAstMethod] {
+        if null(template) = methodTemplateMap.getOrNull(name) {
+            null(template)
+        } else {
             null
         }
     }

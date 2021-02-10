@@ -319,6 +319,7 @@ class JLParser {
         } else {
             parseId()
         }
+        val templateParameters = parseTemplateParameters()
         val parameters = parseParameters()
         val returnType = if consume(':') { parseType() } else {
             JLAstType(mark, JLAstType.Data.void())
@@ -327,7 +328,8 @@ class JLParser {
             if consume('=') { null(parseExpression()) }
             else if at('{') { null(parseBlock()) }
             else { null })
-        JLAstMethod(mark, comment, modifiers, name, parameters, returnType, body)
+        JLAstMethod(
+            mark, comment, modifiers, name, templateParameters, parameters, returnType, body)
     }
 
     def parseParameters(self): List[JLAstLocal] {

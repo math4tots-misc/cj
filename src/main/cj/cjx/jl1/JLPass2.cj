@@ -57,31 +57,35 @@ class JLPass2 {
                     ircls.addField(irField)
                 }
                 case method(astMethod) = {
-                    val parameters: List[JLIRLocal] = []
-                    for astLocal in astMethod.parameters {
-                        Assert.that(astLocal.init.isEmpty())
-                        val irLocal = JLIRLocal(
-                            astLocal.mark,
-                            parameters.size(),
-                            astLocal.modifiers,
-                            astLocal.name,
-                            if astLocal.name == "this" {
-                                Assert.that(astLocal.type.isEmpty())
-                                thisType
-                            } else {
-                                lctx.solveFieldType(astLocal.type.get())
-                            })
-                        parameters.add(irLocal)
+                    if astMethod.templateParameters {
+                        ircls.addMethodTemplate(astMethod)
+                    } else {
+                        val parameters: List[JLIRLocal] = []
+                        for astLocal in astMethod.parameters {
+                            Assert.that(astLocal.init.isEmpty())
+                            val irLocal = JLIRLocal(
+                                astLocal.mark,
+                                parameters.size(),
+                                astLocal.modifiers,
+                                astLocal.name,
+                                if astLocal.name == "this" {
+                                    Assert.that(astLocal.type.isEmpty())
+                                    thisType
+                                } else {
+                                    lctx.solveFieldType(astLocal.type.get())
+                                })
+                            parameters.add(irLocal)
+                        }
+                        val irMethod = JLIRMethod(
+                            astMethod.mark,
+                            astMethod.comment,
+                            astMethod.modifiers,
+                            astMethod.name,
+                            parameters,
+                            lctx.solveType(astMethod.returnType),
+                            parameters.clone())
+                        ircls.addMethod(irMethod)
                     }
-                    val irMethod = JLIRMethod(
-                        astMethod.mark,
-                        astMethod.comment,
-                        astMethod.modifiers,
-                        astMethod.name,
-                        parameters,
-                        lctx.solveType(astMethod.returnType),
-                        parameters.clone())
-                    ircls.addMethod(irMethod)
                 }
             }
         }
@@ -140,6 +144,7 @@ class JLPass2 {
             null,
             ["public"],
             "<init>",
+            [],
             parameters,
             JLAstType(mark, JLAstType.Data.void()),
             null(body))))
@@ -174,6 +179,7 @@ class JLPass2 {
                 null,
                 [],
                 "<clinit>",
+                [],
                 parameters,
                 JLAstType(mark, JLAstType.Data.void()),
                 null(body))))
