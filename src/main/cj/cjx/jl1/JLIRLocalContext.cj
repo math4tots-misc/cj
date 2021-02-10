@@ -78,7 +78,7 @@ class JLIRLocalContext {
                     throw JLError("TODO: type expression args", [texpr.mark])
                 }
                 if null(qualifiedName) = typeMap.getOrNull(shortName) {
-                    ctx.getClassType(texpr.mark, qualifiedName)
+                    ctx.getClassType(texpr.mark, qualifiedName, methodName.size() > 0)
                 } else {
                     throw JLError("Unrecognized type name " + shortName, [texpr.mark])
                 }
@@ -88,7 +88,7 @@ class JLIRLocalContext {
 
     def getClass(self, mark: JLMark, shortName: String): JLIRClass {
         if null(qualifiedName) = typeMap.getOrNull(shortName) {
-            ctx.getClass(mark, qualifiedName)
+            ctx.getClass(mark, qualifiedName, methodName.size() > 0)
         } else {
             throw JLError("Unrecognized type name " + shortName, [mark])
         }

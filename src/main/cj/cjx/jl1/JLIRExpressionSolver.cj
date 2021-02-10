@@ -123,7 +123,7 @@ class JLIRExpressionSolver {
             astExpr: JLAstExpr): JLIRExpr {
         val mark = astExpr.mark
         val irExpr = solveExpressionUnchecked(astExpr, null)
-        val strtype = ctx.getClassType(mark, "java.lang.String")
+        val strtype = getStringType()
 
         val nullableIrExpr: Nullable[JLIRExpr] = when irExpr.type {
             case void() = null
@@ -155,7 +155,7 @@ class JLIRExpressionSolver {
 
     def coerceToObject(self, irExpr: JLIRExpr): JLIRExpr {
         val mark = irExpr.mark
-        val objType = ctx.getClassType(mark, "java.lang.Object")
+        val objType = getObjectType()
         when irExpr.type {
             case int() = callStaticJavaMethod(
                 mark, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", objType, [irExpr])
@@ -207,6 +207,13 @@ class JLIRExpressionSolver {
             "interface", className, methodName, descriptor, args))
     }
 
+    def getBuiltinClass(self, qualifiedName: String): JLIRClass = (
+        ctx.getClass(Default(), qualifiedName, true))
+    def getObjectClass(self): JLIRClass = getBuiltinClass("java.lang.Object")
+    def getObjectType(self): JLType = JLType.klass(getObjectClass())
+    def getStringClass(self): JLIRClass = getBuiltinClass("java.lang.String")
+    def getStringType(self): JLType = JLType.klass(getStringClass())
+
     def solveExpressionUnchecked(
             self,
             astExpr: JLAstExpr,
@@ -219,8 +226,7 @@ class JLIRExpressionSolver {
             case char(x) = JLIRExpr(mark, JLType.char(), JLIRExpr.Data.char(x))
             case int(x) = JLIRExpr(mark, JLType.int(), JLIRExpr.Data.int(x))
             case double(x) = JLIRExpr(mark, JLType.double(), JLIRExpr.Data.double(x))
-            case string(x) = JLIRExpr(
-                mark, ctx.getClassType(mark, "java.lang.String"), JLIRExpr.Data.string(x))
+            case string(x) = JLIRExpr(mark, getStringType(), JLIRExpr.Data.string(x))
             case block(astExprs) = {
                 if astExprs {
                     val irExprs: List[JLIRExpr] = []

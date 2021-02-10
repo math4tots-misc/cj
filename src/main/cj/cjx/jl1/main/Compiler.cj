@@ -1,7 +1,6 @@
 package cjx.jl1.main
 
 import cjx.jl1.JLCodegen
-import cjx.jl1.JLIRSolver
 import cjx.jl1.JLParser
 import cj.FS
 import cjx.jl1.JLAstFile
@@ -48,8 +47,8 @@ class Compiler {
 
         val ctx = JLContext()
 
-        val solver = JLIRSolver(ctx)
-        solver.solve(astfiles)
+        ctx.registerClassesInFiles(astfiles)
+        ctx.resolveAllRegisteredClasses()
 
         val codegen = JLCodegen(ctx, outdir)
         codegen.emit()

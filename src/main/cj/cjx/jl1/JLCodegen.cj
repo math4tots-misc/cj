@@ -145,27 +145,13 @@ class JLCodegen {
         def emit(self, expr: JLIRExpr) {
             when expr.data {
                 case void() = ()
-                case bool(b) = {
-                    jvmcode.bipush(if b { 1 } else { 0 })
-                }
-                case char(i) = {
-                    jvmcode.ldc(JVMConstValue.int(i))
-                }
-                case int(i) = {
-                    jvmcode.ldc(JVMConstValue.int(i))
-                }
-                case long(i) = {
-                    jvmcode.ldc(JVMConstValue.long(i))
-                }
-                case float(f) = {
-                    jvmcode.ldc(JVMConstValue.float(f))
-                }
-                case double(f) = {
-                    jvmcode.ldc(JVMConstValue.double(f))
-                }
-                case string(s) = {
-                    jvmcode.ldc(JVMConstValue.string(s))
-                }
+                case bool(b) = jvmcode.bipush(if b { 1 } else { 0 })
+                case char(i) = jvmcode.ldc(JVMConstValue.int(i))
+                case int(i) = jvmcode.ldc(JVMConstValue.int(i))
+                case long(i) = jvmcode.ldc(JVMConstValue.long(i))
+                case float(f) = jvmcode.ldc(JVMConstValue.float(f))
+                case double(f) = jvmcode.ldc(JVMConstValue.double(f))
+                case string(s) = jvmcode.ldc(JVMConstValue.string(s))
                 case block(subexprs) = {
                     pushScope()
                     for subexpr in subexprs {
