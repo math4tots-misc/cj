@@ -1,4 +1,4 @@
 package java.lang
 
-class StringBuilder {
+native class StringBuilder {
 }
