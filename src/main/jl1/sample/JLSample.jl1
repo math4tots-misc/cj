@@ -6,6 +6,8 @@ import java.lang.System
 
 class JLSample {
 
+    # static var someStaticField = 15
+
     def foo(list: List[int]) {
     }
 
@@ -80,5 +82,7 @@ class JLSample {
                 i = i + 1
             }
         }
+
+        # IO.println("someStaticField = " + someStaticField)
     }
 }
