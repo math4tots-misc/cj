@@ -251,13 +251,13 @@ class JLContext {
         sb.toString()
     }
 
-    def qualifyClassName(file: JLAstFile, cls: JLAstClass): String = (
+    private def qualifyClassName(file: JLAstFile, cls: JLAstClass): String = (
         file.packageName + "." + cls.shortName)
 
-    def qualifyInnerClassName(outerClassName: String, cls: JLAstClass): String =(
+    private def qualifyInnerClassName(outerClassName: String, cls: JLAstClass): String =(
         outerClassName + "$" + cls.shortName)
 
-    def buildTypeMap(astFile: JLAstFile): Map[String, String] {
+    private def buildTypeMap(astFile: JLAstFile): Map[String, String] {
         val typeMap = builtinTypeMap.clone()
         for imp in astFile.imports {
             typeMap[imp.alias] = imp.qualifiedName
@@ -297,14 +297,14 @@ class JLContext {
             files: List[JLAstFile],
             f: Fn[String, JLAstFile, JLAstClass, Map[String, String], Unit]) {
         for file in files {
-            val typeMap = JLContext.buildTypeMap(file)
+            val typeMap = buildTypeMap(file)
             for cls in file.classes {
-                val name = JLContext.qualifyClassName(file, cls)
+                val name = qualifyClassName(file, cls)
                 f.call(name, file, cls, typeMap)
                 for member in cls.members {
                     when member {
                         case klass(innercls) = {
-                            val innerName = JLContext.qualifyInnerClassName(name, innercls)
+                            val innerName = qualifyInnerClassName(name, innercls)
                             f.call(innerName, file, innercls, typeMap)
                         }
                         else = ()
