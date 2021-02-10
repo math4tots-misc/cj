@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLMark
 
 ## Type expression
@@ -17,7 +18,7 @@ class JLAstType {
         case float
         case double
         case array(JLAstType)
-        case klass(String, List[JLAstType])
+        case klass(String, List[JLAstTemplateArgument])
     }
 
     val mark: JLMark

@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateArgument
+import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLMark
@@ -73,12 +75,23 @@ class JLIRLocalContext {
             case float = JLType.float()
             case double = JLType.double()
             case array(inner) = JLType.array(solveType(inner))
-            case klass(shortName, args) = {
-                if args {
-                    throw JLError("TODO: type expression args", [texpr.mark])
-                }
-                if null(qualifiedName) = typeMap.getOrNull(shortName) {
-                    ctx.getClassType(texpr.mark, qualifiedName, methodName.size() > 0)
+            case klass(shortName, astArgs) = {
+                val ensurePass2 = methodName.size() > 0
+                if null(templateArg) = thisClass.templateArguments.getOrNull(shortName) {
+                    when templateArg {
+                        case type(type) = type
+                        else = throw JLError(shortName + " is not a type", [texpr.mark])
+                    }
+                } else if null(qualifiedName) = typeMap.getOrNull(shortName) {
+                    val mark = texpr.mark
+                    if astArgs {
+                        val classTemplate = ctx.getClassTemplate(mark, qualifiedName)
+                        val irArgs = solveTemplateArgs(
+                            mark, classTemplate.templateParameters, astArgs)
+                        ctx.getReifiedClassType(mark, qualifiedName, irArgs, ensurePass2)
+                    } else {
+                        ctx.getClassType(mark, qualifiedName, ensurePass2)
+                    }
                 } else {
                     throw JLError("Unrecognized type name " + shortName, [texpr.mark])
                 }
@@ -139,5 +152,31 @@ class JLIRLocalContext {
         val local = thisMethod.newLocal(mark, modifiers, name, type)
         localStack.last()[name] = local
         local
+    }
+
+    def solveTemplateArgs(
+            self,
+            mark: JLMark,
+            params: List[JLAstTemplateParameter],
+            astArgs: List[JLAstTemplateArgument]): List[JLIRTemplateArgument] {
+        if params.size() != astArgs.size() {
+            throw JLError("Expected " + params.size() + " args but got " + astArgs.size(), [mark])
+        }
+        val args: List[JLIRTemplateArgument] = []
+        for i = 0; i < params.size(); i++ {
+            val param = params[i]
+            val astArg = astArgs[i]
+            args.add(when param.kind {
+                case int = when astArg.data {
+                    case int(i) = JLIRTemplateArgument.int(i)
+                    else = throw JLError("Expected int template argument", [astArg.mark])
+                }
+                case type = when astArg.data {
+                    case type(astType) = JLIRTemplateArgument.type(solveType(astType))
+                    else = throw JLError("Expected type template argument", [astArg.mark])
+                }
+            })
+        }
+        args
     }
 }

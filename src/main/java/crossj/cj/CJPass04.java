@@ -219,9 +219,7 @@ final class CJPass04 extends CJPassBaseEx {
             // by default we forgo the check.
         } else if (!expectedType.equals(actualType)) {
             // TODO: Better type name
-            throw CJError.of(
-                    "Expected " + expectedType.toRawQualifiedName() + " but got " + actualType.toRawQualifiedName(),
-                    mark);
+            throw CJError.of("Expected " + expectedType.repr() + " but got " + actualType.repr(), mark);
         }
     }
 
@@ -1086,8 +1084,9 @@ final class CJPass04 extends CJPassBaseEx {
                     // Also throwing an error here prevents autocasting (e.g. providing a Char
                     // when an Int is expected)
 
-                    // throw CJError.of("Expected argument of form " + param.repr() + " but got " + given.repr(),
-                    //         inferMark);
+                    // throw CJError.of("Expected argument of form " + param.repr() + " but got " +
+                    // given.repr(),
+                    // inferMark);
                 } else {
                     for (int i = 0; i < classTypeGiven.getArgs().size(); i++) {
                         stack.add(

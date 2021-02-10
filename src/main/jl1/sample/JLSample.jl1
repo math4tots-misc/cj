@@ -1,9 +1,14 @@
 package sample
 
+import jl1.List
 import jl1.IO
 import java.lang.System
 
 class JLSample {
+
+    def foo(list: List[int]) {
+    }
+
     def main(args: String[]) {
 
         var x = true

@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLAstField
 import cjx.jl1.JLAstExpr
@@ -226,6 +227,22 @@ class JLParser {
         }
     }
 
+    def parseTemplateArg(self): JLAstTemplateArgument {
+        val mark = mark
+        if at('-') or at(JLToken.tINT) {
+            val neg = consume('-')
+            val rawValue = translateInt(mark, expect(JLToken.tINT).text)
+            val value = if neg { -rawValue } else { rawValue }
+            JLAstTemplateArgument(mark, JLAstTemplateArgument.Data.int(value))
+        } else {
+            val type = parseType()
+            JLAstTemplateArgument(mark, JLAstTemplateArgument.Data.type(type))
+        }
+    }
+
+    def parseTemplateArgs(self): List[JLAstTemplateArgument] = parseJoin(
+        '[', ']', ',', () -> parseTemplateArg())
+
     def parseJoin[T](self, open: Int, close: Int, sep: Int, inner: Fn[T]): List[T] {
         expect(open)
         var loop = true
@@ -254,11 +271,7 @@ class JLParser {
             case (JLToken.kwDOUBLE) = { next(); JLAstType(mark, JLAstType.Data.double()) }
             else = {
                 val name = parseTypeId()
-                val args: List[JLAstType] = []
-                if at('[') and not atOffset(']', 1) {
-                    args.addAll(parseJoin('[', ']', ',', () -> parseType()))
-                    Assert.that(args.size() > 0)
-                }
+                val args = if at('[') and not atOffset(']', 1) { parseTemplateArgs() } else { [] }
                 JLAstType(mark, JLAstType.Data.klass(name, args))
             }
         }

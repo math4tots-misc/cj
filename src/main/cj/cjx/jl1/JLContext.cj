@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLIRExpressionSolver
 import cjx.jl1.JLIRMethod
 import cjx.jl1.JLIRLocal
@@ -190,6 +191,17 @@ class JLContext {
         }
     }
 
+    def getClassTemplate(
+            self,
+            mark: JLMark,
+            qualifiedClassName: String): JLAstClass {
+        if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+            classTemplate
+        } else {
+            throw JLError("Class template " + qualifiedClassName + " not found", [mark])
+        }
+    }
+
     def getClassType(self, mark: JLMark, qualifiedClassName: String, ensurePass2: Bool): JLType = (
         JLType.klass(getClass(mark, qualifiedClassName, ensurePass2)))
 
@@ -208,17 +220,29 @@ class JLContext {
             self,
             mark: JLMark,
             qualifiedClassName: String,
-            templateArgs: List[JLIRTemplateArgument]): JLIRClass {
+            templateArgs: List[JLIRTemplateArgument],
+            ensurePass2: Bool): JLIRClass {
         val reifiedClassName = getReifiedClassName(mark, qualifiedClassName, templateArgs)
         if reifiedClassName not in classMap {
             if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
-                classMap[reifiedClassName] = initReifiedClass(
-                    mark, reifiedClassName, typeMap, classTemplate)
+                initReifiedClass(mark, reifiedClassName, typeMap, classTemplate, templateArgs)
             } else {
                 throw JLError("Class template " + qualifiedClassName + " not found", [mark])
             }
         }
+        if ensurePass2 {
+            resolvePendingClassesThroughPass2()
+        }
         classMap[reifiedClassName]
+    }
+
+    def getReifiedClassType(
+            self,
+            mark: JLMark,
+            qualifiedClassName: String,
+            templateArgs: List[JLIRTemplateArgument],
+            ensurePass2: Bool): JLType {
+        JLType.klass(getReifiedClass(mark, qualifiedClassName, templateArgs, ensurePass2))
     }
 
     private def getReifiedClassName(
@@ -340,8 +364,13 @@ class JLContext {
             mark: JLMark,
             reifiedClassName: String,
             typeMap: Map[String, String],
-            classTemplate: JLAstClass): JLIRClass {
+            classTemplate: JLAstClass,
+            templateArgs: List[JLIRTemplateArgument]) {
         val ircls = newClass(typeMap, classTemplate, reifiedClassName)
-        throw Error("TDOO")
+        Assert.equal(classTemplate.templateParameters.size(), templateArgs.size())
+        for i = 0; i < templateArgs.size(); i++ {
+            val name = classTemplate.templateParameters[i].name
+            ircls.templateArguments[name] = templateArgs[i]
+        }
     }
 }

@@ -1,6 +1,6 @@
 package jl1
 
-class List {
-    class I {
+class List[T] {
+    def add(this, t: T) {
     }
 }
