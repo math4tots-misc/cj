@@ -501,6 +501,7 @@ union Opcode {
         sipush: 1,
         new_: 1,
         dup: 1,
+        iinc: 0,
         iconst_0: 1,
         iconst_1: 1,
         iconst_2: 1,

@@ -127,6 +127,7 @@ class JLSample {
             IO.println("empty list = " + list)
             list.add(15)
             IO.println("list = " + list)
+            IO.println("list[0] = " + list[0])
         }
     }
 }

@@ -10,6 +10,10 @@ class List[T] {
 
     def empty(): Self = Self.new(T[].new(0), 0)
 
+    def size(this): int = size
+    def __getitem(this, i: int): T = array[i]
+    def __setitem(this, i: int, t: T) = (array[i] = t)
+
     def add(this, t: T) {
         if size < array.size() {
             array[size] = t
@@ -18,10 +22,20 @@ class List[T] {
             array = array.realloc(newcap)
             array[size] = t
         }
-        size = size + 1
+        size++
     }
 
-    def size(this): int = size
+    def __add(this, other: Self): Self {
+        val newSize = size + other.size
+        val newArray = T[].new(newSize)
+        for i = 0; i < size; i++ {
+            newArray[i] = array[i]
+        }
+        for i = 0; i < other.size; i++ {
+            newArray[size + i] = other.array[i]
+        }
+        Self.new(newArray, newSize)
+    }
 
     def toString(this): String {
         val sb = StringBuilder()

@@ -218,8 +218,22 @@ class JLCodegen {
                     }
                 }
                 case setlocal(local, valexpr) = {
-                    emit(valexpr)
-                    store(local)
+                    # Try optimizing wth iinc for the really common case
+                    val opt = if null(incr) = getIntAddAssignIncr(local, valexpr) {
+                        val index = localMap[local.id]
+                        if index < 128 and incr >= -128 and incr < 128 {
+                            jvmcode.iinc(index, incr)
+                            true
+                        } else { false }
+                    } else {
+                        false
+                    }
+                    # If the optimization wasn't applicable, just set
+                    # the local variable the simple way
+                    if not opt {
+                        emit(valexpr)
+                        store(local)
+                    }
                 }
                 case getstatic(fieldref) = {
                     jvmcode.getstatic(
@@ -392,6 +406,20 @@ class JLCodegen {
                         }
                     }
                 }
+                case iaugfield(fieldref, owner, valexpr) = {
+                    emit(owner)
+                    jvmcode.dup()
+                    jvmcode.getfield(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
+                    emit(valexpr)
+                    jvmcode.iadd()
+                    jvmcode.putfield(
+                        fieldref.owner.toJVMName(),
+                        fieldref.field.name,
+                        fieldref.field.type.toJVMString())
+                }
                 case arraynew(itemtype, arg) = {
                     emit(arg)
                     when itemtype {
@@ -556,6 +584,26 @@ class JLCodegen {
                 case double() = jvmcode.dstore(index)
                 case array(inner) = jvmcode.astore(index)
                 case klass(cls) = jvmcode.astore(index)
+            }
+        }
+
+        private def getIntAddAssignIncr(local: JLIRLocal, setexpr: JLIRExpr): Nullable[Int] {
+            when setexpr.data {
+                case operation(operator, args) = when operator {
+                    case iadd = when args[0].data {
+                        case getlocal(srclocal) = {
+                            if local.id == srclocal.id {
+                                when args[1].data {
+                                    case int(i) = null(i)
+                                    else = null
+                                }
+                            } else { null }
+                        }
+                        else = null
+                    }
+                    else = null
+                }
+                else = null
             }
         }
     }

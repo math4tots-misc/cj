@@ -341,6 +341,14 @@ class JVMCodeBuilder {
     # variable load/store opcodes
     # ======================================================
 
+    def iinc(self, index: Int, incr: Int) {
+        Assert.that(index < 128)
+        Assert.that(incr >= -128 and incr < 128)
+        code.addU8(Opcode.iinc)
+        code.addU8(index)
+        code.addI8(incr)
+    }
+
     ## load int from a local variable
     def iload(self, index: Int) = _localvarOp(
         index, Opcode.iload_0, Opcode.iload_1, Opcode.iload_2, Opcode.iload_3, Opcode.iload)

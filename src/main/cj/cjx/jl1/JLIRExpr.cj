@@ -39,6 +39,10 @@ class JLIRExpr {
         # other
         # ================================================================================
 
+        ## A hack, for supporting the common use case of '+=' for int fields.
+        ## TODO: Remove this hacks
+        case iaugfield(JLIRFieldRef, JLIRExpr, JLIRExpr)
+
         ## This is the only array op that's not under Operator, because this one
         ## requires a type argument.
         case arraynew(JLType, JLIRExpr)

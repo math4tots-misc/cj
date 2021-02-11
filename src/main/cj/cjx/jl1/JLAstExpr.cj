@@ -25,10 +25,13 @@ class JLAstExpr {
         case setfield(JLAstExpr, String, JLAstExpr)
         case getvar(String)
         case setvar(String, JLAstExpr)
+        case augvar(String, Operator, JLAstExpr)
         case declvar(JLAstLocal)
         case this()
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
         case while_(JLAstExpr, JLAstExpr)
+        case classicFor(Nullable[JLAstExpr], Nullable[JLAstExpr], Nullable[JLAstExpr], JLAstExpr)
+        case for_(String, JLAstExpr, JLAstExpr)
         case operation(Operator, List[JLAstExpr])
 
         case meta(JLAstMetaExpr)
@@ -72,12 +75,9 @@ class JLAstExpr {
         case eq
         case ne
 
-        case len
         case getitem
         case setitem
-        case clearitem
         case slice
-        case realloc
 
         def __eq(self, other: Self): Bool = repr() == other.repr()
         def hash(self): Int = repr().hash()

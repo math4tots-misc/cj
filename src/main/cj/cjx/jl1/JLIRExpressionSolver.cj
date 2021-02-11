@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRFieldRef
+import cjx.jl1.JLParser
 import cjx.jl1.JLIRMetaSolver
 import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLMark
@@ -317,58 +319,7 @@ class JLIRExpressionSolver {
             }
             case callinstance(methodName, astArgs) = {
                 val irOwner = solveExpression(astArgs[0], null)
-                when irOwner.type {
-                    case array(innertype) = {
-                        switch methodName {
-                            case "size" = {
-                                checkArgc(mark, astArgs, 1)
-                                JLIRExpr(mark, JLType.int(), JLIRExpr.Data.operation(
-                                    JLIRExpr.Operator.arraylen(),
-                                    [irOwner]))
-                            }
-                            case "realloc" = {
-                                checkArgc(mark, astArgs, 2)
-                                val newlen = solveExpression(astArgs[1], null(JLType.int()))
-                                JLIRExpr(mark, irOwner.type, JLIRExpr.Data.operation(
-                                    JLIRExpr.Operator.arrayrealloc(),
-                                    [irOwner, newlen]))
-                            }
-                            else = throw JLError(
-                                "Method " + methodName + " not found for " + irOwner.type, [mark])
-                        }
-                    }
-                    case klass(ownercls) = {
-                        if ownercls.name == "java.lang.String" {
-                            switch methodName {
-                                case "size" = {
-                                    checkArgc(mark, astArgs, 1)
-                                    JLIRExpr(mark, JLType.int(), JLIRExpr.Data.javacall(
-                                        "virtual",
-                                        "java/lang/String",
-                                        "length",
-                                        "()I",
-                                        [irOwner]))
-                                }
-                                else = throw JLError(
-                                    "Method " + methodName + " not found for String", [mark])
-                            }
-                        } else {
-                            if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
-                                val irArgs = checkMethodArgs(
-                                    false, mark, methodref, null(irOwner), astArgs)
-                                JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
-                                    methodref, irArgs))
-                            } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
-                                    methodName) {
-                                throw JLError("TODO template instance method call", [mark])
-                            } else {
-                                throw JLError("Method " + methodName + " not found", [mark])
-                            }
-                        }
-                    }
-                    else = throw JLError(
-                        "" + irOwner.type + " values do not have methods", [mark])
-                }
+                handleInstanceMethod(mark, expectedType, methodName, astArgs, irOwner)
             }
             case callname(methodName, astArgs) = {
                 # syntactic sugar for callstatic or callinstance
@@ -488,6 +439,50 @@ class JLIRExpressionSolver {
                     }
                 }
             }
+            case augvar(name, operator, astValexpr) = {
+                val nullableInstanceFieldref: Nullable[JLIRFieldRef] = {
+                    if lctx.getLocalOrNull(name).isPresent() {
+                        null
+                    } else {
+                        val ownercls = lctx.thisClass
+                        if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                            if fieldref.field.isStatic() {
+                                null
+                            } else {
+                                null(fieldref)
+                            }
+                        } else {
+                            null
+                        }
+                    }
+                }
+                if null(fieldref) = nullableInstanceFieldref {
+                    if (fieldref.field.type == JLType.int() and
+                            operator == JLAstExpr.Operator.add()) {
+                        # Because of how common this is, I just want to support this special
+                        # case now
+                        val irThis = solveExpression(
+                            JLAstExpr(mark, JLAstExpr.Data.this()), null)
+                        val valexpr = solveExpression(astValexpr, null(JLType.int()))
+                        JLIRExpr(mark, JLType.void(), JLIRExpr.Data.iaugfield(
+                            fieldref, irThis, valexpr))
+                    } else {
+                        throw JLError("TODO augvar instance field " + operator, [mark])
+                    }
+                } else {
+                    # As long as thte target is not an instance field, we should
+                    # be working with a local variable or a static field, and
+                    # just expanding (x <op>= y) to (x = x <op> y) should
+                    # be fine
+                    solveExpression(
+                        JLAstExpr(mark, JLAstExpr.Data.setvar(
+                            name,
+                            JLAstExpr(mark, JLAstExpr.Data.operation(operator, [
+                                JLAstExpr(mark, JLAstExpr.Data.getvar(name)),
+                                astValexpr])))),
+                        expectedType)
+                }
+            }
             case declvar(astLocal) = {
                 val (variableType, irInit) = {
                     if astLocal.type.isPresent() {
@@ -535,6 +530,35 @@ class JLIRExpressionSolver {
                 JLIRExpr(mark, JLType.void(), JLIRExpr.Data.while_(
                     irCond, irBody))
             }
+            case classicFor(astInit, astCond, astIncr, astBody) = {
+                val ainit = (
+                    if null(ainit) = astInit {
+                        ainit
+                    } else {
+                        JLAstExpr(mark, JLAstExpr.Data.block([]))
+                    })
+                val acond = (
+                    if null(acond) = astCond {
+                        acond
+                    } else {
+                        JLAstExpr(mark, JLAstExpr.Data.bool(true))
+                    })
+                val aincr = (
+                    if null(aincr) = astIncr {
+                        aincr
+                    } else {
+                        JLAstExpr(mark, JLAstExpr.Data.block([]))
+                    })
+                solveVoidExpression(JLAstExpr(mark, JLAstExpr.Data.block([
+                    ainit,
+                    JLAstExpr(mark, JLAstExpr.Data.while_(acond,
+                        JLAstExpr(mark, JLAstExpr.Data.block([astBody, aincr]))
+                    ))
+                ])))
+            }
+            case for_(name, container, body) = {
+                throw JLError("TODO: solve expression for_", [mark])
+            }
             case operation(operator, astArgs) = {
                 val irArg0 = solveExpression(astArgs[0], null)
                 val nullableIrExpr = when irArg0.type {
@@ -556,33 +580,6 @@ class JLIRExpressionSolver {
                             null
                         }
                     }
-                    case array(innertype) = when operator {
-                        case len = {
-                            checkArgc(mark, astArgs, 1)
-                            null(JLIRExpr(mark, JLType.int(), JLIRExpr.Data.operation(
-                                JLIRExpr.Operator.arraylen(), [irArg0])))
-                        }
-                        case getitem = {
-                            checkArgc(mark, astArgs, 2)
-                            val index = solveExpression(astArgs[1], null(JLType.int()))
-                            null(JLIRExpr(mark, innertype, JLIRExpr.Data.operation(
-                                JLIRExpr.Operator.arrayget(), [irArg0, index])))
-                        }
-                        case setitem = {
-                            checkArgc(mark, astArgs, 3)
-                            val index = solveExpression(astArgs[1], null(JLType.int()))
-                            val value = solveExpression(astArgs[2], null(innertype))
-                            null(JLIRExpr(mark, JLType.void(), JLIRExpr.Data.operation(
-                                JLIRExpr.Operator.arrayset(), [irArg0, index, value])))
-                        }
-                        case clearitem = {
-                            checkArgc(mark, astArgs, 2)
-                            val index = solveExpression(astArgs[1], null(JLType.int()))
-                            null(JLIRExpr(mark, JLType.void(), JLIRExpr.Data.operation(
-                                JLIRExpr.Operator.arrayclear(), [irArg0, index])))
-                        }
-                        else = null
-                    }
                     case klass(argcls) = switch argcls.name {
                         case "java.lang.String" = when operator {
                             case add = null(handleStringOps(
@@ -596,7 +593,41 @@ class JLIRExpressionSolver {
                 if null(irExpr) = nullableIrExpr {
                     irExpr
                 } else {
-                    throw JLError("" + operator + " not supported for " + irArg0.type, [mark])
+                    val methodName = when operator {
+                        case add = "__add"
+                        case sub = "__sub"
+                        case mul = "__mul"
+                        case div = "__div"
+                        case rem = "__rem"
+                        case and_ = "__and"
+                        case or_ = "__or"
+                        case xor = "__xor"
+                        case shl = "__shl"
+                        case shr = "__shr"
+                        case shru = "__shru"
+                        case neg = "__neg"
+                        case pow = "__pow"
+                        case lt = "__lt"
+                        case le = "__le"
+                        case gt = "__gt"
+                        case ge = "__ge"
+                        case eq = "__eq"
+                        case ne = "__ne"
+                        case getitem = "__getitem"
+                        case setitem = "__setitem"
+                        case slice = "__slice"
+                    }
+                    if operator in JLParser.combineOperators {
+                        var irExpr = irArg0
+                        for i = 1; i < astArgs.size(); i++ {
+                            # WARNING: use of dummy entry with astArgs[0]
+                            irExpr = handleInstanceMethod(
+                                mark, expectedType, methodName, [astArgs[0], astArgs[i]], irExpr)
+                        }
+                        irExpr
+                    } else {
+                        handleInstanceMethod(mark, expectedType, methodName, astArgs, irArg0)
+                    }
                 }
             }
             case meta(metaExpr) = {
@@ -658,6 +689,86 @@ class JLIRExpressionSolver {
     private def checkArgc(self, mark: JLMark, astArgs: List[JLAstExpr], argc: Int) {
         if astArgs.size() != argc {
             throw JLError("Expected " + argc + " but got " + astArgs.size(), [mark])
+        }
+    }
+
+    private def handleInstanceMethod(
+            self,
+            mark: JLMark,
+            expectedType: Nullable[JLType],
+            methodName: String,
+            astArgs: List[JLAstExpr],
+            irOwner: JLIRExpr): JLIRExpr {
+        when irOwner.type {
+            case array(innertype) = {
+                switch methodName {
+                    case "size" = {
+                        checkArgc(mark, astArgs, 1)
+                        JLIRExpr(mark, JLType.int(), JLIRExpr.Data.operation(
+                            JLIRExpr.Operator.arraylen(),
+                            [irOwner]))
+                    }
+                    case "realloc" = {
+                        checkArgc(mark, astArgs, 2)
+                        val newlen = solveExpression(astArgs[1], null(JLType.int()))
+                        JLIRExpr(mark, irOwner.type, JLIRExpr.Data.operation(
+                            JLIRExpr.Operator.arrayrealloc(),
+                            [irOwner, newlen]))
+                    }
+                    case "clear" = {
+                        checkArgc(mark, astArgs, 2)
+                        val index = solveExpression(astArgs[1], null(JLType.int()))
+                        JLIRExpr(mark, JLType.void(), JLIRExpr.Data.operation(
+                            JLIRExpr.Operator.arrayclear(), [irOwner, index]))
+                    }
+                    case "__getitem" = {
+                        checkArgc(mark, astArgs, 2)
+                        val index = solveExpression(astArgs[1], null(JLType.int()))
+                        JLIRExpr(mark, innertype, JLIRExpr.Data.operation(
+                            JLIRExpr.Operator.arrayget(), [irOwner, index]))
+                    }
+                    case "__setitem" = {
+                        checkArgc(mark, astArgs, 3)
+                        val index = solveExpression(astArgs[1], null(JLType.int()))
+                        val value = solveExpression(astArgs[2], null(innertype))
+                        JLIRExpr(mark, JLType.void(), JLIRExpr.Data.operation(
+                            JLIRExpr.Operator.arrayset(), [irOwner, index, value]))
+                    }
+                    else = throw JLError(
+                        "Method " + methodName + " not found for " + irOwner.type, [mark])
+                }
+            }
+            case klass(ownercls) = {
+                if ownercls.name == "java.lang.String" {
+                    switch methodName {
+                        case "size" = {
+                            checkArgc(mark, astArgs, 1)
+                            JLIRExpr(mark, JLType.int(), JLIRExpr.Data.javacall(
+                                "virtual",
+                                "java/lang/String",
+                                "length",
+                                "()I",
+                                [irOwner]))
+                        }
+                        else = throw JLError(
+                            "Method " + methodName + " not found for String", [mark])
+                    }
+                } else {
+                    if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
+                        val irArgs = checkMethodArgs(
+                            false, mark, methodref, null(irOwner), astArgs)
+                        JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
+                            methodref, irArgs))
+                    } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
+                            methodName) {
+                        throw JLError("TODO template instance method call", [mark])
+                    } else {
+                        throw JLError("Method " + methodName + " not found", [mark])
+                    }
+                }
+            }
+            else = throw JLError(
+                "" + irOwner.type + " values do not have methods", [mark])
         }
     }
 

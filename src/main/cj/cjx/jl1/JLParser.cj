@@ -25,6 +25,11 @@ class JLParser {
     static val combineOperators: Set[JLAstExpr.Operator] = Set(
         JLAstExpr.Operator.add(),
         JLAstExpr.Operator.sub(),
+        JLAstExpr.Operator.mul(),
+        JLAstExpr.Operator.div(),
+        JLAstExpr.Operator.rem(),
+        JLAstExpr.Operator.and_(),
+        JLAstExpr.Operator.or_(),
     )
 
     ## Maps token -> (is-right-associative, ast-operator)
@@ -411,6 +416,8 @@ class JLParser {
         case '%'
         case (JLToken.tTRUNCDIV) = 120
         case (JLToken.tPOWER) = 130
+        case (JLToken.tPLUSPLUS)
+        case (JLToken.tMINUSMINUS)
         case '.'
         case '['
         case '?' = 140
@@ -490,6 +497,27 @@ class JLParser {
                         throw JLError("The left hand side is not assignable", [mark])
                     }
                 }
+                case (JLToken.tPLUS_EQ)
+                case (JLToken.tPLUSPLUS)
+                case (JLToken.tMINUSMINUS) = {
+                    val (op, valexpr) = switch next().type {
+                        case (JLToken.tPLUSPLUS) = (
+                            JLAstExpr.Operator.add(), JLAstExpr(mark, JLAstExpr.Data.int(1)))
+                        case (JLToken.tMINUSMINUS) = (
+                            JLAstExpr.Operator.add(), JLAstExpr(mark, JLAstExpr.Data.int(-1)))
+                        case (JLToken.tPLUS_EQ) = (JLAstExpr.Operator.add(), parseExpression())
+                        else = throw JLError("FUBAR op switch", [mark])
+                    }
+                    val nullableData = when expr.data {
+                        case getvar(name) = null(JLAstExpr.Data.augvar(name, op, valexpr))
+                        else = null
+                    }
+                    if null(data) = nullableData {
+                        JLAstExpr(mark, data)
+                    } else {
+                        throw JLError("The left hand side is not augassignable", [mark])
+                    }
+                }
                 else = {
                     if null((isRightAssociative, operator)) = binopTable.getOrNull(toktype) {
                         next()
@@ -554,6 +582,30 @@ class JLParser {
                 val cond = parseExpression()
                 val body = parseBlock()
                 JLAstExpr(mark, JLAstExpr.Data.while_(cond, body))
+            }
+            case (JLToken.kwFOR) = {
+                next()
+                if at(';') or (at(JLToken.tID) and atOffset('=', 1)) {
+                    val init = if not at(';') {
+                        val name = parseId()
+                        expect('=')
+                        val initexpr = parseExpression()
+                        null(JLAstExpr(mark, JLAstExpr.Data.declvar(
+                            JLAstLocal(mark, ["var"], name, null, null(initexpr)))))
+                    } else { null }
+                    expect(';')
+                    val cond = if not at(';') { null(parseExpression()) } else { null }
+                    expect(';')
+                    val incr = if not at('{') { null(parseExpression()) } else { null }
+                    val body = parseBlock()
+                    JLAstExpr(mark, JLAstExpr.Data.classicFor(init, cond, incr, body))
+                } else {
+                    val name = parseId()
+                    expect(JLToken.kwIN)
+                    val container = parseExpression()
+                    val body = parseBlock()
+                    JLAstExpr(mark, JLAstExpr.Data.for_(name, container, body))
+                }
             }
             case (JLToken.tID) = {
                 val name = parseId()
