@@ -4,13 +4,35 @@ import java.lang.System
 
 class IO {
 
-    def printlnObject(object: Object) {
-        val string = @callvirtual(
-            String, "java/lang/Object", "toString", "()Ljava/lang/String;", object)
-        System.out.println(string)
-    }
-
     def println[T](t: T) {
-        printlnObject(t)
+        @(cond
+            (eq T String) {
+                @callvirtual(
+                    void,
+                    "java/io/PrintStream",
+                    "println",
+                    "(Ljava/lang/String;)V",
+                    System.out, t)
+            }
+
+            (eq T int) {
+                @callvirtual(
+                    void,
+                    "java/io/PrintStream",
+                    "println",
+                    "(I)V",
+                    System.out, t)
+            }
+
+            1 {
+                val obj: Object = t
+                @callvirtual(
+                    void,
+                    "java/io/PrintStream",
+                    "println",
+                    "(Ljava/lang/Object;)V",
+                    System.out, obj)
+            }
+        )
     }
 }

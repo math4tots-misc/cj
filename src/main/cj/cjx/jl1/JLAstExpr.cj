@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstMetaExpr
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstType
 import cjx.jl1.JLMark
@@ -29,6 +30,8 @@ class JLAstExpr {
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
         case while_(JLAstExpr, JLAstExpr)
         case operation(Operator, List[JLAstExpr])
+
+        case meta(JLAstMetaExpr)
 
         ## (kind(static,virtual,interface,special),
         ##   returnType, className, methodName, descriptor, args)

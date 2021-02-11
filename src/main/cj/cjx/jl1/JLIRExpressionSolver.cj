@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRMetaSolver
 import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLMark
 import cjx.jl1.JLIRExpr
@@ -597,6 +598,10 @@ class JLIRExpressionSolver {
                 } else {
                     throw JLError("" + operator + " not supported for " + irArg0.type, [mark])
                 }
+            }
+            case meta(metaExpr) = {
+                val metaSolver = JLIRMetaSolver(lctx, self)
+                metaSolver.solveExpr(metaExpr, expectedType)
             }
             case javacall(kind, astReturnType, className, methodName, descriptor, astArgs) = {
                 val returnType = lctx.solveType(astReturnType)
