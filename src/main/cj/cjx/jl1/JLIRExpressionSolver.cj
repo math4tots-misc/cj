@@ -235,14 +235,12 @@ class JLIRExpressionSolver {
             case block(astExprs) = {
                 if astExprs {
                     val irExprs: List[JLIRExpr] = []
-
                     lctx.pushScope()
                     for i = 0; i + 1 < astExprs.size(); i++ {
                         irExprs.add(solveVoidExpression(astExprs[i]))
                     }
                     irExprs.add(solveExpression(astExprs.last(), expectedType))
                     lctx.popScope()
-
                     JLIRExpr(mark, irExprs.last().type, JLIRExpr.Data.block(irExprs))
                 } else {
                     JLIRExpr(mark, JLType.void(), JLIRExpr.Data.void())
