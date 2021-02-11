@@ -5,34 +5,28 @@ import java.lang.System
 class IO {
 
     def println[T](t: T) {
-        @(cond
-            (eq T String) {
-                @callvirtual(
-                    void,
-                    "java/io/PrintStream",
-                    "println",
-                    "(Ljava/lang/String;)V",
-                    System.out, t)
-            }
-
-            (eq T int) {
-                @callvirtual(
-                    void,
-                    "java/io/PrintStream",
-                    "println",
-                    "(I)V",
-                    System.out, t)
-            }
-
-            1 {
-                val obj: Object = t
-                @callvirtual(
-                    void,
-                    "java/io/PrintStream",
-                    "println",
-                    "(Ljava/lang/Object;)V",
-                    System.out, obj)
-            }
-        )
+        @(begin
+            (define f (lambda [descriptor]
+                (java callvirtual
+                    void
+                    "java/io/PrintStream"
+                    "println"
+                    descriptor
+                    [{ System.out } { t }])
+            ))
+            (cond
+                (eq T String) (apply f "(Ljava/lang/String;)V")
+                (eq T int) (apply f "(I)V")
+                (eq T double) (apply f "(D)V")
+                1 {
+                    val obj: Object = t
+                    @callvirtual(
+                        void,
+                        "java/io/PrintStream",
+                        "println",
+                        "(Ljava/lang/Object;)V",
+                        System.out, obj)
+                }
+            ))
     }
 }

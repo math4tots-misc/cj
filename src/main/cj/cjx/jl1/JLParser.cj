@@ -675,10 +675,17 @@ class JLParser {
                 val name = parseNameForMetaFunc()
                 val args: List[JLAstMetaExpr] = []
                 while not consume(')') {
-                    val start = JLToken.typeRepr(peek().type)
                     args.add(parseMetaExpr())
                 }
                 JLAstMetaExpr.Data.apply(name, args)
+            }
+            case '[' = {
+                next()
+                val args: List[JLAstMetaExpr] = []
+                while not consume(']') {
+                    args.add(parseMetaExpr())
+                }
+                JLAstMetaExpr.Data.apply("list", args)
             }
             case (JLToken.kwVOID)
             case (JLToken.kwBOOL)

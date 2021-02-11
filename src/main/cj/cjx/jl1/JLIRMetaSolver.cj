@@ -14,6 +14,7 @@ import cjx.jl1.JLIRLocalContext
 class JLIRMetaSolver {
     val lctx: JLIRLocalContext
     val esolver: JLIRExpressionSolver
+    var currentScope: JLIRMetaVal.Scope = JLIRMetaVal.Scope(null)
 
     def solveTruthy(self, expr: JLAstMetaExpr): Bool {
         when solve(expr, JLIRMetaVal.Constraint.truthy()) {
@@ -43,6 +44,37 @@ class JLIRMetaSolver {
 
     def solveAny(self, expr: JLAstMetaExpr): JLIRMetaVal = solve(
         expr, JLIRMetaVal.Constraint.any())
+
+    def solveString(self, expr: JLAstMetaExpr): String = {
+        val value = solveAny(expr)
+        when value {
+            case string(s) = s
+            else = throw JLError("Expected string but got " + value, [expr.mark])
+        }
+    }
+
+    def solveList(self, expr: JLAstMetaExpr): List[JLIRMetaVal] = {
+        val value = solveAny(expr)
+        when value {
+            case list(list) = list
+            else = throw JLError("Expected list but got " + value, [expr.mark])
+        }
+    }
+
+    def solveExprList(self, expr: JLAstMetaExpr): List[JLIRExpr] = {
+        solveList(expr).map(item -> when item {
+            case expr(e) = e
+            else = throw JLError("Expected expression but got " + item, [expr.mark])
+        })
+    }
+
+    def solveLambda(self, expr: JLAstMetaExpr): Tuple[JLIRMetaVal.Scope, List[String], List[JLAstMetaExpr]] {
+        val value = solveAny(expr)
+        when value {
+            case lambda(scope, argnames, body) = (scope, argnames, body)
+            else = throw JLError("Expected lambda but got " + value, [expr.mark])
+        }
+    }
 
     def solve(self, expr: JLAstMetaExpr, constraint: JLIRMetaVal.Constraint): JLIRMetaVal {
         val value = solveUnchecked(expr, constraint)
@@ -83,7 +115,9 @@ class JLIRMetaSolver {
                 }))
             }
             case name(name) = {
-                if null(arg) = lctx.getTemplateArgumentOrNull(name) {
+                if null(arg) = currentScope.getOrNull(name) {
+                    arg
+                } else if null(arg) = lctx.getTemplateArgumentOrNull(name) {
                     when arg {
                         case int(i) = JLIRMetaVal.number(i)
                         case type(t) = JLIRMetaVal.type(t)
@@ -95,6 +129,52 @@ class JLIRMetaSolver {
             case apply(f, args) = {
                 val mark = expr.mark
                 switch f {
+                    case "begin" = {
+                        if args {
+                            for i = 0; i + 1 < args.size(); i++ {
+                                solveAny(args[i])
+                            }
+                            solve(args.last(), constraint)
+                        } else {
+                            Default()
+                        }
+                    }
+                    case "define" = {
+                        checkArgc(mark, args, 2)
+                        val name = getRawName(args[0])
+                        val value = solveAny(args[1])
+                        currentScope[name] = value
+                        Default()
+                    }
+                    case "lambda" = {
+                        checkMinArgc(mark, args, 1)
+                        val argnames = getRawNameList(args[0])
+                        val body = args[1:]
+                        JLIRMetaVal.lambda(currentScope, argnames, body)
+                    }
+                    case "apply" = {
+                        checkMinArgc(mark, args, 1)
+                        val oldScope = currentScope
+                        val (outerLambdaScope, argnames, body) = solveLambda(args[0])
+                        currentScope = JLIRMetaVal.Scope(null(outerLambdaScope))
+                        for i = 0; i < argnames.size(); i++ {
+                            if i + 1 < args.size() {
+                                currentScope[argnames[i]] = solveAny(args[i + 1])
+                            } else {
+                                currentScope[argnames[i]] = Default()
+                            }
+                        }
+                        val result = if body {
+                            for i = 0; i + 1 < body.size(); i++ {
+                                solveAny(body[i])
+                            }
+                            solve(body.last(), constraint)
+                        } else {
+                            Default()
+                        }
+                        currentScope = oldScope
+                        result
+                    }
                     case "cond" = {
                         if args.size() % 2 != 0 {
                             throw JLError("cond requires an even number of arguments", [mark])
@@ -111,9 +191,34 @@ class JLIRMetaSolver {
                             throw JLError("cond with no matching branches", [mark])
                         }
                     }
+                    case "list" = {
+                        JLIRMetaVal.list(args.map(arg -> solveAny(arg)))
+                    }
                     case "eq" = {
                         checkArgc(mark, args, 2)
                         JLIRMetaVal.bool(solveAny(args[0]) == solveAny(args[1]))
+                    }
+                    case "java" = {
+                        checkMinArgc(mark, args, 1)
+                        val subcmd = getRawName(args[0])
+                        switch subcmd {
+                            case "callstatic"
+                            case "callvirtual"
+                            case "callinterface"
+                            case "callspecial" = {
+                                IO.println("currentScope = " + currentScope)
+                                checkArgc(mark, args, 6)
+                                val kind = subcmd["call".size():]
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val methodName = solveString(args[3])
+                                val descriptor = solveString(args[4])
+                                val irArgs = solveExprList(args[5])
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javacall(
+                                    kind, className, methodName, descriptor, irArgs)))
+                            }
+                            else = throw JLError("Unrecognized java subcommand " + subcmd, [mark])
+                        }
                     }
                     else = throw JLError("Unrecognized meta form " + f, [mark])
                 }
@@ -124,6 +229,38 @@ class JLIRMetaSolver {
     private def checkArgc(mark: JLMark, args: List[JLAstMetaExpr], argc: Int) {
         if args.size() != argc {
             throw JLError("Expected " + argc + " args but got " + args.size(), [mark])
+        }
+    }
+
+    private def checkMinArgc(mark: JLMark, args: List[JLAstMetaExpr], argc: Int) {
+        if args.size() < argc {
+            throw JLError("Expected at least " + argc + " args but got " + args.size(), [mark])
+        }
+    }
+
+    private def getRawNameList(expr: JLAstMetaExpr): List[String] {
+        getRawList(expr).map(e -> getRawName(e))
+    }
+
+    private def getRawList(expr: JLAstMetaExpr): List[JLAstMetaExpr] {
+        val nullable = when expr.data {
+            case apply(f, args) = switch f {
+                case "list" = null(args)
+                else = null
+            }
+            else = null
+        }
+        if null(args) = nullable {
+            args
+        } else {
+            throw JLError("Expected raw list", [expr.mark])
+        }
+    }
+
+    private def getRawName(expr: JLAstMetaExpr): String {
+        when expr.data {
+            case name(name) = name
+            else = throw JLError("Expected raw name", [expr.mark])
         }
     }
 }
