@@ -6,6 +6,7 @@ import cjx.jl1.JLMark
 @derive(new)
 class JLAstTemplateArgument {
     union Data {
+        # TODO: ConstIntExpr
         case int(Int)
         case type(JLAstType)
     }

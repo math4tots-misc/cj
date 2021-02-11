@@ -1,5 +1,8 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRExpressionSolver
+import cj.Math
+import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstExpr
 import cjx.jl1.JLIRExpr
 import cjx.jl1.JLAstLocal
@@ -82,7 +85,7 @@ class JLIRLocalContext {
                 val ensurePass2 = methodName.size() > 0
                 if shortName == "Self" {
                     JLType.klass(thisClass)
-                } else if null(templateArg) = thisClass.templateArguments.getOrNull(shortName) {
+                } else if null(templateArg) = thisClass.getTemplateArgumentOrNull(shortName) {
                     when templateArg {
                         case type(type) = type
                         else = throw JLError(shortName + " is not a type", [texpr.mark])
@@ -191,5 +194,98 @@ class JLIRLocalContext {
             })
         }
         args
+    }
+
+    def inferTemplateArgs(
+            self,
+            solver: JLIRExpressionSolver,
+            outerMark: JLMark,
+            methodTemplate: JLAstMethod,
+            expectedReturnType: Nullable[JLType],
+            astArgs: List[JLAstExpr],
+            irArgs: List[JLIRExpr]): List[JLIRTemplateArgument] {
+        val stack: List[Tuple[JLMark, JLAstTemplateArgument, JLIRTemplateArgument]] = []
+        var nextInferArgIndex = 0
+        val limit = Math.min(methodTemplate.parameters.size(), astArgs.size())
+        val variableNames = methodTemplate.templateParameters.map(tp -> (tp.name, tp)).toMap()
+        val target = variableNames.size()
+        val map: Map[String, JLIRTemplateArgument] = Map()
+        if null(returnType) = expectedReturnType {
+            stack.add((
+                outerMark,
+                JLAstTemplateArgument(outerMark, JLAstTemplateArgument.Data.type(
+                    methodTemplate.returnType)),
+                JLIRTemplateArgument.type(returnType),
+            ))
+        }
+        while map.size() < target and (stack or nextInferArgIndex < limit) {
+            if not stack {
+                val i = nextInferArgIndex
+                nextInferArgIndex++
+                val expr = if i < irArgs.size() {
+                    irArgs[i]
+                } else {
+                    val astArg = astArgs[i]
+                    # TODO: lambda expressions
+                    val irExpr = solver.solveExpression(astArg, null)
+                    irArgs.add(irExpr)
+                    irExpr
+                }
+                val inferMark = expr.mark
+                stack.add((
+                    inferMark,
+                    JLAstTemplateArgument(
+                        methodTemplate.parameters[i].mark,
+                        JLAstTemplateArgument.Data.type(
+                            methodTemplate.parameters[i].type.get())),
+                    JLIRTemplateArgument.type(expr.type)))
+            }
+            val (mark, expected, actual) = stack.pop()
+            when expected.data {
+                case type(expectedType) = {
+                    when expectedType.data {
+                        case klass(shortName, astTemplateArgs) = {
+                            if shortName in variableNames {
+                                if shortName not in map {
+                                    # bind: type argument
+                                    map[shortName] = actual
+                                }
+                            } else if null(qualifiedName) = typeMap.getOrNull(shortName) {
+                                when actual {
+                                    case type(actualType) = when actualType {
+                                        case klass(actualClass) = {
+                                            if actualClass.unreifiedName == qualifiedName {
+                                                # We find matching class templates.
+                                                # We can make further inferences based on the
+                                                # arguments to these class templates.
+                                                val actualArgs = actualClass.templateArgumentsList
+                                                val len = Math.min(
+                                                    astTemplateArgs.size(),
+                                                    actualArgs.size())
+                                                for j = 0; j < len; j++ {
+                                                    val expectedArg = astTemplateArgs[j]
+                                                    val actualArg = actualArgs[j]
+                                                    stack.add((mark, expectedArg, actualArg))
+                                                }
+                                            }
+                                        }
+                                        else = ()
+                                    }
+                                    else = ()
+                                }
+                            }
+                        }
+                        else = ()
+                    }
+                }
+                else = ()
+            }
+            # In all other cases, either we can't determine the inference,
+            # or expected is a concrete type, so we just skip those
+        }
+        if map.size() < target {
+            throw JLError("Could not infer template arguments", [outerMark])
+        }
+        methodTemplate.templateParameters.map(tp -> map[tp.name]).toList()
     }
 }

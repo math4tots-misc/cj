@@ -25,7 +25,9 @@ class JLIRClass {
     val methodMap: Map[String, JLIRMethod] = Map()
     val methodTemplates: List[JLAstMethod] = []
     val methodTemplateMap: Map[String, JLAstMethod] = Map()
-    val templateArguments: Map[String, JLIRTemplateArgument] = Map()
+    var unreifiedName: String = ""
+    val templateArgumentsMap: Map[String, JLIRTemplateArgument] = Map()
+    val templateArgumentsList: List[JLIRTemplateArgument] = []
     val _nonStaticFields: Nullable[List[JLIRField]] = null
 
     def isNative(self): Bool = "native" in modifiers
@@ -93,6 +95,15 @@ class JLIRClass {
         } else {
             null
         }
+    }
+
+    def addTemplateArgument(self, name: String, arg: JLIRTemplateArgument) {
+        templateArgumentsMap[name] = arg
+        templateArgumentsList.add(arg)
+    }
+
+    def getTemplateArgumentOrNull(self, name: String): Nullable[JLIRTemplateArgument] {
+        templateArgumentsMap.getOrNull(name)
     }
 
     def toAstType(self, mark: JLMark): JLAstType = JLAstType(mark, JLAstType.Data.klass(name, []))

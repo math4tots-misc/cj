@@ -160,11 +160,21 @@ class JLContext {
         }
     }
 
+    def getClassTemplateOrNull(
+            self,
+            qualifiedClassName: String): Nullable[JLAstClass] {
+        if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+            null(classTemplate)
+        } else {
+            null
+        }
+    }
+
     def getClassTemplate(
             self,
             mark: JLMark,
             qualifiedClassName: String): JLAstClass {
-        if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+        if null(classTemplate) = getClassTemplateOrNull(qualifiedClassName) {
             classTemplate
         } else {
             throw JLError("Class template " + qualifiedClassName + " not found", [mark])
@@ -174,11 +184,19 @@ class JLContext {
     def getClassType(self, mark: JLMark, qualifiedClassName: String, ensurePass2: Bool): JLType = (
         JLType.klass(getClass(mark, qualifiedClassName, ensurePass2)))
 
-    def getClass(self, mark: JLMark, qualifiedClassName: String, ensurePass2: Bool): JLIRClass {
+    def getClassOrNull(self, qualifiedClassName: String, ensurePass2: Bool): Nullable[JLIRClass] {
         if null(cls) = classMap.getOrNull(qualifiedClassName) {
             if ensurePass2 {
                 resolvePendingClassesThroughPass2()
             }
+            null(cls)
+        } else {
+            null
+        }
+    }
+
+    def getClass(self, mark: JLMark, qualifiedClassName: String, ensurePass2: Bool): JLIRClass {
+        if null(cls) = getClassOrNull(qualifiedClassName, ensurePass2) {
             cls
         } else {
             throw JLError("Class " + qualifiedClassName + " not found", [mark])
@@ -194,7 +212,13 @@ class JLContext {
         val reifiedClassName = getReifiedClassName(mark, qualifiedClassName, templateArgs)
         if reifiedClassName not in classMap {
             if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
-                initReifiedClass(mark, reifiedClassName, typeMap, classTemplate, templateArgs)
+                initReifiedClass(
+                    mark,
+                    reifiedClassName,
+                    qualifiedClassName,
+                    typeMap,
+                    classTemplate,
+                    templateArgs)
             } else {
                 throw JLError("Class template " + qualifiedClassName + " not found", [mark])
             }
@@ -332,14 +356,16 @@ class JLContext {
             self,
             mark: JLMark,
             reifiedClassName: String,
+            qualifiedClassName: String,
             typeMap: Map[String, String],
             classTemplate: JLAstClass,
             templateArgs: List[JLIRTemplateArgument]) {
         val ircls = newClass(typeMap, classTemplate, reifiedClassName)
+        ircls.unreifiedName = qualifiedClassName
         Assert.equal(classTemplate.templateParameters.size(), templateArgs.size())
         for i = 0; i < templateArgs.size(); i++ {
             val name = classTemplate.templateParameters[i].name
-            ircls.templateArguments[name] = templateArgs[i]
+            ircls.addTemplateArgument(name, templateArgs[i])
         }
     }
 }
