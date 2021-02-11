@@ -519,73 +519,7 @@ class JLParser {
             }
             case '@' = {
                 next()
-                switch peek().type {
-                    case '(' = JLAstExpr(mark, JLAstExpr.Data.meta(parseMetaExpr()))
-                    else = {
-                        val name = parseId()
-                        val nullableOp = switch name {
-                            case "add" = null(JLAstExpr.Operator.add())
-                            case "clearitem" = null(JLAstExpr.Operator.clearitem())
-                            case "realloc" = null(JLAstExpr.Operator.realloc())
-                            case "len" = null(JLAstExpr.Operator.len())
-                            else = null
-                        }
-                        if null(op) = nullableOp {
-                            val args = parseArgs()
-                            JLAstExpr(mark, JLAstExpr.Data.operation(op, args))
-                        } else {
-                            switch name {
-                                case "callstatic"
-                                case "callvirtual"
-                                case "callinterface"
-                                case "callspecial" = {
-                                    val kind = name["call".size():]
-                                    expect('(')
-                                    val type = parseType()
-                                    expect(',')
-                                    val className = parseString()
-                                    expect(',')
-                                    val methodName = parseString()
-                                    expect(',')
-                                    val descriptor = parseString()
-                                    var repeat = true
-                                    val args: List[JLAstExpr] = []
-                                    while repeat {
-                                        if not consume(',') {
-                                            repeat = false
-                                        } else if not at(')') {
-                                            args.add(parseExpression())
-                                        }
-                                    }
-                                    expect(')')
-                                    JLAstExpr(mark, JLAstExpr.Data.javacall(
-                                        kind, type, className, methodName, descriptor, args))
-                                }
-                                case "callnew" = {
-                                    expect('(')
-                                    val type = parseType()
-                                    expect(',')
-                                    val className = parseString()
-                                    expect(',')
-                                    val descriptor = parseString()
-                                    var repeat = true
-                                    val args: List[JLAstExpr] = []
-                                    while repeat {
-                                        if not consume(',') {
-                                            repeat = false
-                                        } else if not at(')') {
-                                            args.add(parseExpression())
-                                        }
-                                    }
-                                    expect(')')
-                                    JLAstExpr(mark, JLAstExpr.Data.javanew(
-                                        type, className, descriptor, args))
-                                }
-                                else = throw JLError("Unrecognized operator " + name, [mark])
-                            }
-                        }
-                    }
-                }
+                JLAstExpr(mark, JLAstExpr.Data.meta(parseMetaExpr()))
             }
             case (JLToken.kwTRUE) = {
                 next()
@@ -672,12 +606,18 @@ class JLParser {
             case '{' = JLAstMetaExpr.Data.expr(parseBlock())
             case '(' = {
                 next()
-                val name = parseNameForMetaFunc()
-                val args: List[JLAstMetaExpr] = []
-                while not consume(')') {
-                    args.add(parseMetaExpr())
+                if consume(JLToken.kwDO) {
+                    val ret = JLAstMetaExpr.Data.expr(parseExpression())
+                    expect(')')
+                    ret
+                } else {
+                    val name = parseNameForMetaFunc()
+                    val args: List[JLAstMetaExpr] = []
+                    while not consume(')') {
+                        args.add(parseMetaExpr())
+                    }
+                    JLAstMetaExpr.Data.apply(name, args)
                 }
-                JLAstMetaExpr.Data.apply(name, args)
             }
             case '[' = {
                 next()
@@ -686,6 +626,14 @@ class JLParser {
                     args.add(parseMetaExpr())
                 }
                 JLAstMetaExpr.Data.apply("list", args)
+            }
+            case (JLToken.kwTRUE) = {
+                next()
+                JLAstMetaExpr.Data.value(JLIRMetaVal.number(1))
+            }
+            case (JLToken.kwFALSE) = {
+                next()
+                JLAstMetaExpr.Data.value(JLIRMetaVal.number(0))
             }
             case (JLToken.kwVOID)
             case (JLToken.kwBOOL)
@@ -698,6 +646,7 @@ class JLParser {
             case (JLToken.kwDOUBLE)
             case (JLToken.tTYPEID) = JLAstMetaExpr.Data.type(parseType())
             case (JLToken.tID) = JLAstMetaExpr.Data.name(parseId())
+            case (JLToken.kwNEW) = { next(); JLAstMetaExpr.Data.name("new") }
             case (JLToken.tINT) = JLAstMetaExpr.Data.value(
                 JLIRMetaVal.number(translateInt(mark, next().text)))
             case (JLToken.tDOUBLE) = JLAstMetaExpr.Data.value(

@@ -447,6 +447,22 @@ class JLCodegen {
                     jvmcode.markLine(expr.mark.line)
                     jvmcode.invokespecial(ownerName, "<init>", descriptor)
                 }
+                case javagetstatic(className, fieldName, descriptor) = {
+                    jvmcode.getstatic(className, fieldName, descriptor)
+                }
+                case javasetstatic(className, fieldName, descriptor, valexpr) = {
+                    emit(valexpr)
+                    jvmcode.putstatic(className, fieldName, descriptor)
+                }
+                case javagetfield(className, fieldName, descriptor, owner) = {
+                    emit(owner)
+                    jvmcode.getfield(className, fieldName, descriptor)
+                }
+                case javasetfield(className, fieldName, descriptor, owner, valexpr) = {
+                    emit(owner)
+                    emit(valexpr)
+                    jvmcode.putfield(className, fieldName, descriptor)
+                }
                 case initfield(fieldref, valexpr) = {
                     if fieldref.field.isStatic() {
                         emit(valexpr)

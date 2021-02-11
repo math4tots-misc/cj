@@ -59,6 +59,22 @@ class JLIRExpr {
         ## (owner-type, constructor-descriptor, args)
         case javanew(String, String, List[JLIRExpr])
 
+        ## "Manually" get a Java static variable
+        ## (owner-type, field-name, descriptor)
+        case javagetstatic(String, String, String)
+
+        ## "Manually" set a Java static variable
+        ## (owner-type, field-name, descriptor, expr)
+        case javasetstatic(String, String, String, JLIRExpr)
+
+        ## "Manually" get a Java field
+        ## (owner-type, field-name, descriptor, owner)
+        case javagetfield(String, String, String, JLIRExpr)
+
+        ## "Manually" set a Java field
+        ## (owner-type, field-name, descriptor, owner, expr)
+        case javasetfield(String, String, String, JLIRExpr, JLIRExpr)
+
         ## Initializes static and non-static fields.
         ## Must only appear within <clinit> and <init> methods.
         ## For non-static fields, the owner 'this' is implied.

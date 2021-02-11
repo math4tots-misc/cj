@@ -206,7 +206,6 @@ class JLIRMetaSolver {
                             case "callvirtual"
                             case "callinterface"
                             case "callspecial" = {
-                                IO.println("currentScope = " + currentScope)
                                 checkArgc(mark, args, 6)
                                 val kind = subcmd["call".size():]
                                 val returnType = solveAnyType(args[1])
@@ -216,6 +215,55 @@ class JLIRMetaSolver {
                                 val irArgs = solveExprList(args[5])
                                 JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javacall(
                                     kind, className, methodName, descriptor, irArgs)))
+                            }
+                            case "getstatic" = {
+                                checkArgc(mark, args, 5)
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val fieldName = solveString(args[3])
+                                val descriptor = solveString(args[4])
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javagetstatic(
+                                    className, fieldName, descriptor)))
+                            }
+                            case "setstatic" = {
+                                checkArgc(mark, args, 6)
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val fieldName = solveString(args[3])
+                                val descriptor = solveString(args[4])
+                                val valexpr = solveExpr(args[5], null)
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javasetstatic(
+                                    className, fieldName, descriptor, valexpr)))
+                            }
+                            case "getfield" = {
+                                checkArgc(mark, args, 5)
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val fieldName = solveString(args[3])
+                                val descriptor = solveString(args[4])
+                                val owner = solveExpr(args[5], null)
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javagetfield(
+                                    className, fieldName, descriptor, owner)))
+                            }
+                            case "setfield" = {
+                                checkArgc(mark, args, 6)
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val fieldName = solveString(args[3])
+                                val descriptor = solveString(args[4])
+                                val owner = solveExpr(args[5], null)
+                                val valexpr = solveExpr(args[6], null)
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javasetfield(
+                                    className, fieldName, descriptor, owner, valexpr)))
+                            }
+                            case "new" = {
+                                checkArgc(mark, args, 5)
+                                val returnType = solveAnyType(args[1])
+                                val className = solveString(args[2])
+                                val descriptor = solveString(args[3])
+                                val irArgs = solveExprList(args[4])
+                                JLIRMetaVal.expr(JLIRExpr(mark, returnType, JLIRExpr.Data.javanew(
+                                    className, descriptor, irArgs)))
                             }
                             else = throw JLError("Unrecognized java subcommand " + subcmd, [mark])
                         }

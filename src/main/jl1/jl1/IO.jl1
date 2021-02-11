@@ -6,27 +6,30 @@ class IO {
 
     def println[T](t: T) {
         @(begin
+            (define out
+                (java getstatic
+                    Object
+                    "java/lang/System"
+                    "out"
+                    "Ljava/io/PrintStream;"))
             (define f (lambda [descriptor]
                 (java callvirtual
                     void
                     "java/io/PrintStream"
                     "println"
                     descriptor
-                    [{ System.out } { t }])
-            ))
+                    [ out (do t) ])))
             (cond
                 (eq T String) (apply f "(Ljava/lang/String;)V")
                 (eq T int) (apply f "(I)V")
                 (eq T double) (apply f "(D)V")
-                1 {
-                    val obj: Object = t
-                    @callvirtual(
-                        void,
-                        "java/io/PrintStream",
-                        "println",
-                        "(Ljava/lang/Object;)V",
-                        System.out, obj)
-                }
-            ))
+                true (ast block
+                    (do val obj: Object = t)
+                    (java callvirtual
+                        void
+                        "java/io/PrintStream"
+                        "println"
+                        "(Ljava/lang/Object;)V"
+                        [ out (do obj) ]))))
     }
 }

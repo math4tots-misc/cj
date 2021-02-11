@@ -6,25 +6,25 @@ class StringBuilder {
     val jsb: SB
 
     def(): Self {
-        val self = Self.new(@callnew(SB, "java/lang/StringBuilder", "()V"))
+        val self = Self.new(@(java new SB "java/lang/StringBuilder" "()V" []))
         self
     }
 
     def add(this, value: Object) {
-        @callvirtual(
-            SB,
-            "java/lang/StringBuilder",
-            "append",
-            "(Ljava/lang/Object;)Ljava/lang/StringBuilder;",
-            jsb, value)
+        @(java callvirtual
+            SB
+            "java/lang/StringBuilder"
+            "append"
+            "(Ljava/lang/Object;)Ljava/lang/StringBuilder;"
+            [(do jsb) (do value)])
     }
 
     def toString(this): String {
-        @callvirtual(
-            String,
-            "java/lang/StringBuilder",
-            "toString",
-            "()Ljava/lang/String;",
-            jsb)
+        @(java callvirtual
+            String
+            "java/lang/StringBuilder"
+            "toString"
+            "()Ljava/lang/String;"
+            [(do jsb)])
     }
 }
