@@ -447,8 +447,9 @@ class JLParser {
                     next()
                     val name = parseId()
                     if at('(') {
-                        val args = parseArgs()
-                        JLAstExpr(mark, JLAstExpr.Data.callinstance(expr, name, args))
+                        val args = [expr]
+                        args.addAll(parseArgs())
+                        JLAstExpr(mark, JLAstExpr.Data.callinstance(name, args))
                     } else {
                         JLAstExpr(mark, JLAstExpr.Data.getfield(expr, name))
                     }

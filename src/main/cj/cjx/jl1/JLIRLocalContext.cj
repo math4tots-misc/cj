@@ -1,5 +1,8 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstExpr
+import cjx.jl1.JLIRExpr
+import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLIRTemplateArgument

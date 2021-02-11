@@ -266,11 +266,19 @@ class JLIRExpressionSolver {
                                 "new cannot be used with interface or abstract classes", [mark])
                         }
                         val methodref = ownercls.getMethodRef(mark, "<init>")
-                        val irArgs = checkMethodArgs(false, mark, methodref, null, astArgs)
+                        # TODO: remove this 'dummyThis' arg hack
+                        val astArgsWithDummyThis = [JLAstExpr(mark, JLAstExpr.Data.int(0))]
+                        astArgsWithDummyThis.addAll(astArgs)
+                        val irArgsWithDummyThis = checkMethodArgs(
+                            false,
+                            mark,
+                            methodref,
+                            null(JLIRExpr(mark, JLType.void(), JLIRExpr.Data.int(0))),
+                            astArgsWithDummyThis)
                         JLIRExpr(
                             mark,
                             JLType.klass(ownercls),
-                            JLIRExpr.Data.callnew(methodref, irArgs))
+                            JLIRExpr.Data.callnew(methodref, irArgsWithDummyThis[1:]))
                     }
                     else = throw JLError(
                         "" + ownertype + " does not support the 'new' operator", [mark])
@@ -303,20 +311,20 @@ class JLIRExpressionSolver {
                     throw JLError("Method " + methodName + " not found", [mark])
                 }
             }
-            case callinstance(astOwner, methodName, astArgs) = {
-                val irOwner = solveExpression(astOwner, null)
+            case callinstance(methodName, astArgs) = {
+                val irOwner = solveExpression(astArgs[0], null)
                 when irOwner.type {
                     case array(innertype) = {
                         switch methodName {
                             case "size" = {
-                                checkArgc(mark, astArgs, 0)
+                                checkArgc(mark, astArgs, 1)
                                 JLIRExpr(mark, JLType.int(), JLIRExpr.Data.operation(
                                     JLIRExpr.Operator.arraylen(),
                                     [irOwner]))
                             }
                             case "realloc" = {
-                                checkArgc(mark, astArgs, 1)
-                                val newlen = solveExpression(astArgs[0], null(JLType.int()))
+                                checkArgc(mark, astArgs, 2)
+                                val newlen = solveExpression(astArgs[1], null(JLType.int()))
                                 JLIRExpr(mark, irOwner.type, JLIRExpr.Data.operation(
                                     JLIRExpr.Operator.arrayrealloc(),
                                     [irOwner, newlen]))
@@ -329,7 +337,7 @@ class JLIRExpressionSolver {
                         if ownercls.name == "java.lang.String" {
                             switch methodName {
                                 case "size" = {
-                                    checkArgc(mark, astArgs, 0)
+                                    checkArgc(mark, astArgs, 1)
                                     JLIRExpr(mark, JLType.int(), JLIRExpr.Data.javacall(
                                         "virtual",
                                         "java/lang/String",
@@ -368,10 +376,11 @@ class JLIRExpressionSolver {
                         methodName,
                         astArgs)), expectedType)
                 } else {
+                    val newAstArgs = [JLAstExpr(mark, JLAstExpr.Data.this())]
+                    newAstArgs.addAll(astArgs)
                     solveExpression(JLAstExpr(mark, JLAstExpr.Data.callinstance(
-                        JLAstExpr(mark, JLAstExpr.Data.this()),
                         methodName,
-                        astArgs)), expectedType)
+                        newAstArgs)), expectedType)
                 }
             }
             case getstatic(astClassType, fieldName) = {
@@ -618,38 +627,24 @@ class JLIRExpressionSolver {
             if not methodref.method.isStatic() {
                 throw JLError("" + methodref + " is non-static", [mark])
             }
-            val argc = methodref.method.parameters.size()
-            if argc != astArgs.size() {
-                throw JLError(
-                    "" + methodref +
-                    " expects " + argc +
-                    " args but got " + astArgs.size(), [mark])
-            }
-            val irArgs: List[JLIRExpr] = []
-            for i = 0; i < argc; i++ {
-                irArgs.add(solveExpression(
-                    astArgs[i], null(methodref.method.parameters[i].type)))
-            }
-            irArgs
         } else {
             if methodref.method.isStatic() {
                 throw JLError("" + methodref + " is static", [mark])
             }
-            val argc = methodref.method.parameters.size() - 1
-            if argc != astArgs.size() {
-                throw JLError(
-                    "" + methodref +
-                    " expects " + argc +
-                    " args but got " + astArgs.size(), [mark])
-            }
-            val irArgs: List[JLIRExpr] = if null(irOwner) = nullableIrOwner {
-                [irOwner] } else { [] }
-            for i = 1; i <= argc; i++ {
-                irArgs.add(solveExpression(
-                    astArgs[i - 1], null(methodref.method.parameters[i].type)))
-            }
-            irArgs
         }
+        val argc = methodref.method.parameters.size()
+        if argc != astArgs.size() {
+            throw JLError(
+                "" + methodref +
+                " expects " + argc +
+                " args but got " + astArgs.size(), [mark])
+        }
+        val irArgs = if null(irOwner) = nullableIrOwner { [irOwner] } else { [] }
+        for i = irArgs.size(); i < argc; i++ {
+            irArgs.add(solveExpression(
+                astArgs[i], null(methodref.method.parameters[i].type)))
+        }
+        irArgs
     }
 
     private def checkArgc(self, mark: JLMark, astArgs: List[JLAstExpr], argc: Int) {
