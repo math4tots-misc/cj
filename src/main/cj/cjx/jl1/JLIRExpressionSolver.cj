@@ -304,7 +304,12 @@ class JLIRExpressionSolver {
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                         methodref, irArgs))
                 } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
-                    throw JLError("TODO template instance method call", [mark])
+                    val irArgs: List[JLIRExpr] = []
+                    val templateArgs = lctx.inferTemplateArgs(
+                        self, mark, methodTemplate, expectedType, astArgs, irArgs)
+                    val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
+                    JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
+                        methodref, irArgs))
                 } else {
                     throw JLError("Method " + methodName + " not found", [mark])
                 }

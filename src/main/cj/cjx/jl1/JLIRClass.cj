@@ -50,7 +50,13 @@ class JLIRClass {
         methodTemplateMap[methodTemplate.name] = methodTemplate
     }
 
-    def getDeclaredMethod(self, name: String): JLIRMethod = methodMap[name]
+    def getDeclaredMethod(self, mark: JLMark, name: String): JLIRMethod = {
+        if null(method) = methodMap.getOrNull(name) {
+            method
+        } else {
+            throw JLError("Method " + name + " not found in class " + self.name, [mark])
+        }
+    }
 
     def getFieldRef(self, mark: JLMark, name: String): JLIRFieldRef = {
         if null(fieldref) = getFieldRefOrNull(name) {

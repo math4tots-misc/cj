@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLPass2
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstType
@@ -142,8 +143,8 @@ class JLContext {
                 case klass(innercls) = ()
                 case field(astField) = ()
                 case method(astMethod) = {
-                    if astMethod.body.isPresent() {
-                        val irMethod = ircls.getDeclaredMethod(astMethod.name)
+                    if not astMethod.templateParameters and astMethod.body.isPresent() {
+                        val irMethod = ircls.getDeclaredMethod(astMethod.mark, astMethod.name)
                         val astBody = astMethod.body.get()
                         val mlctx = JLIRLocalContext(
                             lctx.ctx,
@@ -212,6 +213,7 @@ class JLContext {
         val reifiedClassName = getReifiedClassName(mark, qualifiedClassName, templateArgs)
         if reifiedClassName not in classMap {
             if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+                checkTemplateArgs(mark, classTemplate.templateParameters, templateArgs)
                 initReifiedClass(
                     mark,
                     reifiedClassName,
@@ -260,6 +262,7 @@ class JLContext {
                     case long() = sb.add("J")
                     case float() = sb.add("F")
                     case double() = sb.add("D")
+                    case klass(cls) = sb.add("L" + cls.id)
                     else = throw JLError(
                         "" + type + " is not supported as a template argument", [mark])
                 }
@@ -366,6 +369,113 @@ class JLContext {
         for i = 0; i < templateArgs.size(); i++ {
             val name = classTemplate.templateParameters[i].name
             ircls.addTemplateArgument(name, templateArgs[i])
+        }
+    }
+
+    def getReifiedMethod(
+            self,
+            mark: JLMark,
+            ircls: JLIRClass,
+            methodTemplate: JLAstMethod,
+            targs: List[JLIRTemplateArgument]): JLIRMethodRef {
+        val methodName = getReifiedMethodName(mark, methodTemplate.name, targs)
+        if null(methodref) = ircls.getMethodRefOrNull(methodName) {
+            methodref
+        } else {
+            JLIRMethodRef(ircls, reifyMethod(mark, ircls, methodTemplate, targs))
+        }
+    }
+
+    private def reifyMethod(
+            self,
+            mark: JLMark,
+            ircls: JLIRClass,
+            methodTemplate: JLAstMethod,
+            targs: List[JLIRTemplateArgument]): JLIRMethod {
+        val tparams = methodTemplate.templateParameters
+        checkTemplateArgs(mark, tparams, targs)
+        val lctx0 = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
+        for i = 0; i < tparams.size(); i++ {
+            lctx0.additionalTemplateArgsMap[tparams[i].name] = targs[i]
+        }
+        val methodName = getReifiedMethodName(mark, methodTemplate.name, targs)
+        val irMethod = lctx0.newMethod(methodTemplate, methodName)
+
+        # reifyMethod should only be called as a response to a pass3 event.
+        # So it should be safe to materialize the methods as well when a
+        # template method is instantiated.
+        if methodTemplate.body.isPresent() {
+            val astBody = methodTemplate.body.get()
+            val mlctx = JLIRLocalContext(
+                lctx0.ctx,
+                lctx0.typeMap,
+                lctx0.className,
+                irMethod.name)
+            mlctx.additionalTemplateArgsMap.addAll(lctx0.additionalTemplateArgsMap.pairs())
+            val esolver = JLIRExpressionSolver(mlctx)
+            val irBody = esolver.solveExpression(
+                astBody, null(irMethod.returnType))
+            irMethod.body = null(irBody)
+        }
+
+        irMethod
+    }
+
+    private def getReifiedMethodName(
+            mark: JLMark,
+            methodTemplateName: String,
+            templateArgs: List[JLIRTemplateArgument]): String {
+        val sb = StringBuilder()
+        sb.add(methodTemplateName)
+        sb.add("$T$")
+        for arg in templateArgs {
+            when arg {
+                case int(i) = {
+                    if i < 0 {
+                        sb.add("im" + -i)
+                    } else {
+                        sb.add("i" + i)
+                    }
+                }
+                case type(type) = when type {
+                    case void() = sb.add("V")
+                    case int() = sb.add("I")
+                    case long() = sb.add("J")
+                    case float() = sb.add("F")
+                    case double() = sb.add("D")
+                    case klass(cls) = sb.add("L" + cls.id)
+                    else = throw JLError(
+                        "" + type + " is not supported as a template argument", [mark])
+                }
+            }
+        }
+        sb.toString()
+    }
+
+    private def checkTemplateArgs(
+            self,
+            mark: JLMark,
+            params: List[JLAstTemplateParameter],
+            args: List[JLIRTemplateArgument],
+            ) {
+        if params.size() != args.size() {
+            throw JLError(
+                "Expected " + params.size() + " template args but got " + args.size(),
+                [mark])
+        }
+        for i = 0; i < args.size(); i++ {
+            val param = params[i]
+            val arg = args[i]
+            when param.kind {
+                case int = when arg {
+                    case int(i) = ()
+                    else = throw JLError("Expected int template argument", [mark])
+                }
+                case type = when arg {
+                    case type(t) = ()
+                    else = throw JLError("Expected type template argument", [mark])
+                }
+            }
         }
     }
 }

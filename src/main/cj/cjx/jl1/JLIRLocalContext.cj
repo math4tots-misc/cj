@@ -36,6 +36,8 @@ class JLIRLocalContext {
     var _thisClass: Nullable[JLIRClass] = null
     var _thisMethod: Nullable[JLIRMethod] = null
 
+    val additionalTemplateArgsMap: Map[String, JLIRTemplateArgument] = Map()
+
     val localStack: List[Map[String, JLIRLocal]] = [Map()]
 
     def new(ctx: JLContext,
@@ -85,7 +87,7 @@ class JLIRLocalContext {
                 val ensurePass2 = methodName.size() > 0
                 if shortName == "Self" {
                     JLType.klass(thisClass)
-                } else if null(templateArg) = thisClass.getTemplateArgumentOrNull(shortName) {
+                } else if null(templateArg) = getTemplateArgumentOrNull(shortName) {
                     when templateArg {
                         case type(type) = type
                         else = throw JLError(shortName + " is not a type", [texpr.mark])
@@ -93,9 +95,7 @@ class JLIRLocalContext {
                 } else if null(qualifiedName) = typeMap.getOrNull(shortName) {
                     val mark = texpr.mark
                     if astArgs {
-                        val classTemplate = ctx.getClassTemplate(mark, qualifiedName)
-                        val irArgs = solveTemplateArgs(
-                            mark, classTemplate.templateParameters, astArgs)
+                        val irArgs = solveTemplateArgs(mark, astArgs)
                         ctx.getReifiedClassType(mark, qualifiedName, irArgs, ensurePass2)
                     } else {
                         ctx.getClassType(mark, qualifiedName, ensurePass2)
@@ -104,6 +104,16 @@ class JLIRLocalContext {
                     throw JLError("Unrecognized type name " + shortName, [texpr.mark])
                 }
             }
+        }
+    }
+
+    def getTemplateArgumentOrNull(self, shortName: String): Nullable[JLIRTemplateArgument] {
+        if null(templateArg) = additionalTemplateArgsMap.getOrNull(shortName) {
+            null(templateArg)
+        } else if null(templateArg) = thisClass.getTemplateArgumentOrNull(shortName) {
+            null(templateArg)
+        } else {
+            null
         }
     }
 
@@ -173,27 +183,44 @@ class JLIRLocalContext {
     def solveTemplateArgs(
             self,
             mark: JLMark,
-            params: List[JLAstTemplateParameter],
             astArgs: List[JLAstTemplateArgument]): List[JLIRTemplateArgument] {
-        if params.size() != astArgs.size() {
-            throw JLError("Expected " + params.size() + " args but got " + astArgs.size(), [mark])
+        astArgs.map(astArg -> solveTemplateArg(astArg))
+    }
+
+    def solveTemplateArg(self, arg: JLAstTemplateArgument): JLIRTemplateArgument {
+        when arg.data {
+            case int(i) = JLIRTemplateArgument.int(i)
+            case type(astType) = JLIRTemplateArgument.type(solveType(astType))
         }
-        val args: List[JLIRTemplateArgument] = []
-        for i = 0; i < params.size(); i++ {
-            val param = params[i]
-            val astArg = astArgs[i]
-            args.add(when param.kind {
-                case int = when astArg.data {
-                    case int(i) = JLIRTemplateArgument.int(i)
-                    else = throw JLError("Expected int template argument", [astArg.mark])
-                }
-                case type = when astArg.data {
-                    case type(astType) = JLIRTemplateArgument.type(solveType(astType))
-                    else = throw JLError("Expected type template argument", [astArg.mark])
-                }
-            })
+    }
+
+    def newMethod(self, astMethod: JLAstMethod, methodName: String): JLIRMethod {
+        val parameters: List[JLIRLocal] = []
+        for astLocal in astMethod.parameters {
+            Assert.that(astLocal.init.isEmpty())
+            val irLocal = JLIRLocal(
+                astLocal.mark,
+                parameters.size(),
+                astLocal.modifiers,
+                astLocal.name,
+                if astLocal.name == "this" {
+                    Assert.that(astLocal.type.isEmpty())
+                    JLType.klass(thisClass)
+                } else {
+                    solveFieldType(astLocal.type.get())
+                })
+            parameters.add(irLocal)
         }
-        args
+        val irMethod = JLIRMethod(
+            astMethod.mark,
+            astMethod.comment,
+            astMethod.modifiers,
+            methodName,
+            parameters,
+            solveType(astMethod.returnType),
+            parameters.clone())
+        thisClass.addMethod(irMethod)
+        irMethod
     }
 
     def inferTemplateArgs(

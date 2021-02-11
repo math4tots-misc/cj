@@ -3,9 +3,14 @@ package jl1
 import java.lang.System
 
 class IO {
-    def println(object: Object) {
+
+    def printlnObject(object: Object) {
         val string = @callvirtual(
             String, "java/lang/Object", "toString", "()Ljava/lang/String;", object)
         System.out.println(string)
+    }
+
+    def println[T](t: T) {
+        printlnObject(t)
     }
 }

@@ -68,6 +68,12 @@ class Map[K?: Hash, V?] :
 
     @generic def size(self: Self): Int = self._size
 
+    def addAll[C: Iterable[Tuple[K, V]]](self, pairs: C) {
+        for (k, v) in pairs {
+            self[k] = v
+        }
+    }
+
     def __setitem(self: Self, key: K, value: V) = {
         self._checkForRehashBeforeInsert()
         val hash = key.hash()
