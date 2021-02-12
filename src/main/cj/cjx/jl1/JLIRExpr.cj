@@ -153,6 +153,7 @@ class JLIRExpr {
                     cond.terminatesFlow or (lhs.terminatesFlow and rhs.terminatesFlow))
                 case upcast(inner) = inner.terminatesFlow
                 case block(exprs) = exprs and exprs.last().terminatesFlow
+                case voidify(inner) = inner.terminatesFlow
                 else = false
             }
         })
