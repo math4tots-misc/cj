@@ -200,12 +200,22 @@ class JLParser {
         modifiers
     }
 
+    def parseClassKind(self): JLAstClass.Kind {
+        if consume(JLToken.kwINTERFACE) {
+            JLAstClass.Kind.interface_()
+        } else if consume(JLToken.kwUNION) {
+            JLAstClass.Kind.union_()
+        } else if consume(JLToken.kwTRAIT) {
+            JLAstClass.Kind.trait_()
+        } else {
+            expect(JLToken.kwCLASS)
+            JLAstClass.Kind.class_()
+        }
+    }
+
     def parseClass(self, comment: Nullable[String], modifiers: List[String]): JLAstClass {
         val mark = mark
-        val isInterface = if consume(JLToken.kwINTERFACE) { true } else {
-            expect(JLToken.kwCLASS)
-            false
-        }
+        val kind = parseClassKind()
         val shortName = parseTypeId()
         val templateParameters = parseTemplateParameters()
         val superClass = if consume(JLToken.kwEXTENDS) { null(parseType()) } else { null }
@@ -233,7 +243,7 @@ class JLParser {
             mark,
             comment,
             modifiers,
-            isInterface,
+            kind,
             shortName,
             templateParameters,
             superClass,

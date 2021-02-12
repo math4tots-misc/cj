@@ -9,6 +9,14 @@ import cjx.jl1.JLMark
 
 @derive(new)
 class JLAstClass {
+
+    union Kind {
+        case class_
+        case union_
+        case trait_
+        case interface_
+    }
+
     union Member {
         case klass(JLAstClass)
         case field(JLAstField)
@@ -24,14 +32,14 @@ class JLAstClass {
     val mark: JLMark
     val comment: Nullable[String]
     val modifiers: List[String]
-    val _isInterface: Bool
+    val kind: Kind
     val shortName: String
     val templateParameters: List[JLAstTemplateParameter]
     val superClass: Nullable[JLAstType]
     val interfaces: List[JLAstType]
     val members: List[Member]
 
-    def isInterface(self): Bool = _isInterface
+    def isInterface(self): Bool = when kind { case interface_ = true; else = false }
 
     def isNative(self): Bool = "native" in modifiers
 
