@@ -2,7 +2,6 @@ package sample
 
 import jl1.List
 import jl1.IO
-import java.lang.System
 
 class JLSample {
 
@@ -30,36 +29,36 @@ class JLSample {
         var x = true
 
         if x {
-            System.out.println("x is true")
+            IO.println("x is true")
         } else {
-            System.out.println("x is false")
+            IO.println("x is false")
         }
 
         x = false
 
         if x {
-            System.out.println("x is true")
+            IO.println("x is true")
         } else {
-            System.out.println("x is false")
+            IO.println("x is false")
         }
 
         {
             val s = "hello"
             if s {
-                System.out.println("s is truthy")
+                IO.println("s is truthy")
             } else {
-                System.out.println("s is not truthy")
+                IO.println("s is not truthy")
             }
             val r = ""
             if r {
-                System.out.println("r is truthy")
+                IO.println("r is truthy")
             } else {
-                System.out.println("r is not truthy")
+                IO.println("r is not truthy")
             }
         }
 
-        System.out.println("Hello world!")
-        System.out.println(
+        IO.println("Hello world!")
+        IO.println(
             "Hello world!" +
             " some extra" +
             " more extra " + 1234)
@@ -77,7 +76,7 @@ class JLSample {
                 "toString"
                 "()Ljava/lang/String;"
                 [(do arrayListClass)])
-            System.out.println("ArrayListClass.class.toString() = " + arrayListClassName)
+            IO.println("ArrayListClass.class.toString() = " + arrayListClassName)
         }
 
         {

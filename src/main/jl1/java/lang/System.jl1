@@ -1,7 +1,0 @@
-package java.lang
-
-import java.io.PrintStream
-
-native class System {
-    static val out: PrintStream
-}

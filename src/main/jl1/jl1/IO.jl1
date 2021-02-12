@@ -1,7 +1,5 @@
 package jl1
 
-import java.lang.System
-
 class IO {
 
     def println[T](t: T) {
