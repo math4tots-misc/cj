@@ -36,6 +36,9 @@ class JLIRExpr {
         case or_(List[JLIRExpr])
         case if_(JLIRExpr, JLIRExpr, JLIRExpr)
         case while_(JLIRExpr, JLIRExpr)
+        case throw_(JLIRExpr)
+        case upcast(JLIRExpr)
+        case downcast(JLIRExpr)
         case operation(Operator, List[JLIRExpr])
 
         # ================================================================================

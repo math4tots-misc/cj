@@ -133,6 +133,12 @@ class JLIRLocalContext {
         }
     }
 
+    def getClassTypeByQualifiedName(self, mark: JLMark, qualifiedName: String): JLType = (
+        ctx.getClassType(mark, qualifiedName, ensurePass2))
+
+    def getClassType(self, mark: JLMark, shortName: String): JLType = (
+        JLType.klass(getClass(mark, shortName)))
+
     def solveFieldType(self, texpr: JLAstType): JLType {
         val type = solveType(texpr)
         when type {

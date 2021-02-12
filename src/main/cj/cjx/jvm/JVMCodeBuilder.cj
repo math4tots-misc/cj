@@ -337,6 +337,12 @@ class JVMCodeBuilder {
         code.addI16(value)
     }
 
+    def checkcast(self, className: String) {
+        val index = cp.classref(className)
+        code.addU8(Opcode.checkcast)
+        code.addU16(index)
+    }
+
     # ======================================================
     # variable load/store opcodes
     # ======================================================

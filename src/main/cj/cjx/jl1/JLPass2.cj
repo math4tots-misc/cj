@@ -30,7 +30,7 @@ class JLPass2 {
         val astcls = ctx.astClassMap[ircls.id]
         val thisType = JLType.klass(ircls)
 
-        addSynthesizedInit(astcls)
+        addSynthesizedInit(astcls, ircls)
         addSynthesizedClinit(astcls)
 
         for astMember in astcls.members {
@@ -80,7 +80,7 @@ class JLPass2 {
         }
     }
 
-    private def addSynthesizedInit(self, astcls: JLAstClass) {
+    private def addSynthesizedInit(self, astcls: JLAstClass, ircls: JLIRClass) {
         if astcls.isInterface() or astcls.isNative() {
             # Interfaces don't have <init> methods
             # Native classes should not have automatically <init> methods autoconstructed
@@ -94,7 +94,8 @@ class JLPass2 {
             JLAstExpr(mark, JLAstExpr.Data.javacall(
                 "special",
                 JLAstType(mark, JLAstType.Data.void()),
-                "java/lang/Object", "<init>", "()V", [JLAstExpr(mark, JLAstExpr.Data.this())],
+                ircls.superClass.toJVMName(), "<init>", "()V",
+                [JLAstExpr(mark, JLAstExpr.Data.this())],
             )),
         ]
         for field in astcls.fields.filter(f -> not f.isStatic()) {

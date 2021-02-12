@@ -675,6 +675,11 @@ class JLParser {
                     }
                 }
             }
+            case (JLToken.kwTHROW) = {
+                next()
+                val excExpr = parseExpression()
+                JLAstExpr(mark, JLAstExpr.Data.throw_(excExpr))
+            }
             else = {
                 if null((precedence, operator)) = unopTable.getOrNull(peek().type) {
                     next()

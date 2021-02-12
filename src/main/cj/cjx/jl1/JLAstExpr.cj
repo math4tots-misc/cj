@@ -33,6 +33,7 @@ class JLAstExpr : Default {
         case while_(JLAstExpr, JLAstExpr)
         case classicFor(Nullable[JLAstExpr], Nullable[JLAstExpr], Nullable[JLAstExpr], JLAstExpr)
         case for_(String, JLAstExpr, JLAstExpr)
+        case throw_(JLAstExpr)
         case operation(Operator, List[JLAstExpr])
 
         case meta(JLAstMetaExpr)

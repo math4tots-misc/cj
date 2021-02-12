@@ -18,7 +18,7 @@ class JLIRClass {
     val modifiers: List[String]
     val _isInterface: Bool
     val name: String  # fully qualified name
-    var superClass: JLIRClass = ?
+    var _superClass: Nullable[JLIRClass] = null
     val interfaces: List[JLIRClass] = []
     val fields: List[JLIRField] = []
     val fieldMap: Map[String, JLIRField] = Map()
@@ -35,6 +35,9 @@ class JLIRClass {
     def toJVMName(self): String = name.replace(".", "/")
     def isInterface(self): Bool = _isInterface
     def isAbstract(self): Bool = "abstract" in modifiers
+
+    def __set_superClass(self, cls: JLIRClass) { _superClass = null(cls) }
+    def __get_superClass(self): JLIRClass = _superClass.get()
 
     def addField(self, field: JLIRField) {
         fields.add(field)
@@ -114,4 +117,29 @@ class JLIRClass {
     }
 
     def toAstType(self, mark: JLMark): JLAstType = JLAstType(mark, JLAstType.Data.klass(name, []))
+
+    def extends(self, other: JLIRClass): Bool {
+        if id == other.id {
+            true
+        } else if other.isInterface() {
+            val stack = [self]
+            while stack {
+                val current = stack.pop()
+                if current.id == other.id {
+                    return true
+                }
+                stack.addAll(current.interfaces)
+            }
+            false
+        } else {
+            var current = self
+            while current._superClass.isPresent() {
+                current = current.superClass
+                if current.id == other.id {
+                    return true
+                }
+            }
+            false
+        }
+    }
 }

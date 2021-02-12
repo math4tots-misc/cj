@@ -64,17 +64,7 @@ class JLIRExpressionSolver {
         val irExpr = solveExpressionUnchecked(astExpr, expectedType)
 
         if null(etype) = expectedType {
-            if etype != irExpr.type {
-                if etype.isVoid() {
-                    voidify(irExpr)
-                } else if etype.isObject() {
-                    coerceToObject(irExpr)
-                } else {
-                    throw JLError("Expected " + etype + " but got " + irExpr.type, [astExpr.mark])
-                }
-            } else {
-                irExpr
-            }
+            checkTypeAndCast(etype, irExpr)
         } else {
             # If a void type was not specifically requested, it's not allowed
             if irExpr.type.isVoid() {
@@ -158,24 +148,6 @@ class JLIRExpressionSolver {
             ie
         } else {
             throw JLError("Expected String expression", [astExpr.mark])
-        }
-    }
-
-    def coerceToObject(self, irExpr: JLIRExpr): JLIRExpr {
-        val mark = irExpr.mark
-        val objType = getObjectType()
-        when irExpr.type {
-            case int() = callStaticJavaMethod(
-                mark, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", objType, [irExpr])
-            case long() = callStaticJavaMethod(
-                mark, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", objType, [irExpr])
-            case float() = callStaticJavaMethod(
-                mark, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", objType, [irExpr])
-            case double() = callStaticJavaMethod(
-                mark, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", objType, [irExpr])
-            case array(inner) = irExpr
-            case klass(cls) = irExpr
-            else = throw JLError("Expected Object but got " + irExpr.type, [mark])
         }
     }
 
@@ -561,6 +533,11 @@ class JLIRExpressionSolver {
                 JLIRExpr(mark, JLType.void(), JLIRExpr.Data.while_(
                     irCond, irBody))
             }
+            case throw_(astExcExpr) = {
+                val baseExceptionType = lctx.getClassTypeByQualifiedName(mark, "jl1.Exception")
+                val irExcExpr = solveExpression(astExcExpr, null(baseExceptionType))
+                JLIRExpr(mark, JLType.noreturn(), JLIRExpr.Data.throw_(irExcExpr))
+            }
             case classicFor(astInit, astCond, astIncr, astBody) = {
                 val ainit = (
                     if null(ainit) = astInit {
@@ -744,11 +721,54 @@ class JLIRExpressionSolver {
         irArgs
     }
 
+    private def primitiveObjCast(self, expr: JLIRExpr): JLIRExpr {
+        val objType = getObjectType()
+        val mark = expr.mark
+        when expr.type {
+            case int() = callStaticJavaMethod(
+                mark, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", objType, [expr])
+            case long() = callStaticJavaMethod(
+                mark, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", objType, [expr])
+            case float() = callStaticJavaMethod(
+                mark, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", objType, [expr])
+            case double() = callStaticJavaMethod(
+                mark, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", objType, [expr])
+            else = throw JLError("TODO primitiveObjCast " + expr.type, [expr.mark])
+        }
+    }
+
     private def checkTypeAndCast(self, type: JLType, expr: JLIRExpr): JLIRExpr {
         if type == expr.type {
             expr
         } else {
-            throw JLError("Expected " + type + " but got " + expr.type, [expr.mark])
+            val nullableExpr = when type {
+                case void = null(voidify(expr))
+                case klass(expectedClass) = {
+                    when expr.type {
+                        case int = if type.isObject() { null(primitiveObjCast(expr)) } else { null }
+                        case long = if type.isObject() { null(primitiveObjCast(expr)) } else { null }
+                        case float = if type.isObject() { null(primitiveObjCast(expr)) } else { null }
+                        case double = if type.isObject() { null(primitiveObjCast(expr)) } else { null }
+                        case klass(actualClass) = {
+                            val mark = expr.mark
+                            if actualClass.extends(expectedClass) {
+                                null(JLIRExpr(mark, type, JLIRExpr.Data.upcast(expr)))
+                            } else if expectedClass.extends(actualClass) {
+                                null(JLIRExpr(mark, type, JLIRExpr.Data.downcast(expr)))
+                            } else {
+                                null
+                            }
+                        }
+                        else = null
+                    }
+                }
+                else = null
+            }
+            if null(newExpr) = nullableExpr {
+                newExpr
+            } else {
+                throw JLError("Expected " + type + " but got " + expr.type, [expr.mark])
+            }
         }
     }
 

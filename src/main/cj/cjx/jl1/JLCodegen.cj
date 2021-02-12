@@ -342,6 +342,20 @@ class JLCodegen {
                     jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
                     jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
+                case throw_(inner) = {
+                    emit(inner)
+                    jvmcode.athrow()
+                }
+                case upcast(arg) = {
+                    emit(arg)
+                }
+                case downcast(arg) = {
+                    emit(arg)
+                    jvmcode.checkcast(when expr.type {
+                        case klass(cls) = cls.toJVMName()
+                        else = throw JLError("FUBAR downcast", [expr.mark])
+                    })
+                }
                 case operation(operator, args) = {
                     when operator {
 

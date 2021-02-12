@@ -4,4 +4,6 @@ import jl1.Exception
 
 class Error extends Exception {
     val message: String
+
+    def toString(this): String = message
 }
