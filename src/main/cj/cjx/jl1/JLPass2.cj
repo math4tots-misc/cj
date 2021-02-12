@@ -33,9 +33,8 @@ class JLPass2 {
         addSynthesizedInit(astcls, ircls)
         addSynthesizedClinit(astcls)
 
-        for astMember in astcls.members {
+        for astMember in lctx.listMembers(ircls) {
             when astMember {
-                case klass(innercls) = ()
                 case field(astField) = {
                     val fieldtype = if null(ftype) = astField.type {
                         ftype

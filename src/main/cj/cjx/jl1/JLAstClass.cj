@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstMetaExpr
 import cjx.jl1.JLAstTemplateParameter
 import cjx.jl1.JLAstType
 import cjx.jl1.JLAstMethod
@@ -10,6 +11,12 @@ import cjx.jl1.JLMark
 class JLAstClass {
     union Member {
         case klass(JLAstClass)
+        case field(JLAstField)
+        case method(JLAstMethod)
+        case conditional(JLAstMetaExpr, List[Member])
+    }
+
+    union DirectMember {
         case field(JLAstField)
         case method(JLAstMethod)
     }

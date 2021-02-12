@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRMetaSolver
+import cjx.jl1.JLAstClass
 import cjx.jl1.JLIRExpressionSolver
 import cj.Math
 import cjx.jl1.JLAstMethod
@@ -327,4 +329,26 @@ class JLIRLocalContext {
         ctx.getListClass(mark, innerType, ensurePass2))
 
     private def __get_ensurePass2(self): Bool = methodName.size() > 0
+
+    ## List the members of a class, resolving any conditionals
+    def listMembers(self, ircls: JLIRClass): List[JLAstClass.DirectMember] {
+        val ret: List[JLAstClass.DirectMember] = []
+        val astcls = ctx.astClassMap[ircls.id]
+        val stack = astcls.members.iter().toList()
+        while stack {
+            when stack.pop() {
+                case klass(innercls) = ()
+                case field(astField) = ret.add(JLAstClass.DirectMember.field(astField))
+                case method(astMethod) = ret.add(JLAstClass.DirectMember.method(astMethod))
+                case conditional(condMetaExpr, otherMembers) = {
+                    val esolver = JLIRExpressionSolver(self)
+                    val msolver = JLIRMetaSolver(self, esolver)
+                    if msolver.solveTruthy(condMetaExpr) {
+                        stack.addAll(otherMembers)
+                    }
+                }
+            }
+        }
+        ret
+    }
 }

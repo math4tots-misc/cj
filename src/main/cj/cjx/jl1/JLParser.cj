@@ -331,8 +331,23 @@ class JLParser {
             case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
             case (JLToken.kwCLASS)
             case (JLToken.kwINTERFACE) = JLAstClass.Member.klass(parseClass(comment, modifiers))
+            case (JLToken.kwIF) = parseConditionalMembers()
             else = throw JLError("Expected class member", [mark])
         }
+    }
+
+    def parseConditionalMembers(self): JLAstClass.Member {
+        val mark = mark
+        expect(JLToken.kwIF)
+        val cond = parseMetaExpr()
+        val members: List[JLAstClass.Member] = []
+        expect('{')
+        skipDelimiters()
+        while not consume('}') {
+            members.add(parseMember())
+            skipDelimiters()
+        }
+        JLAstClass.Member.conditional(cond, members)
     }
 
     def parseField(self, comment: Nullable[String], modifiers: List[String]): JLAstField {

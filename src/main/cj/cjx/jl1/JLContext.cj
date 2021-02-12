@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLPass3
 import cjx.jl1.JLToken
 import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLPass2
@@ -144,30 +145,7 @@ class JLContext {
     ## pass3
     ## Resolves all expressions attached to fields and methods.
     private def runPass3(self, ircls: JLIRClass) {
-        val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
-        val astcls = astClassMap[ircls.id]
-        val thisType = JLType.klass(ircls)
-        for astMember in astcls.members {
-            when astMember {
-                case klass(innercls) = ()
-                case field(astField) = ()
-                case method(astMethod) = {
-                    if not astMethod.templateParameters and astMethod.body.isPresent() {
-                        val irMethod = ircls.getDeclaredMethod(astMethod.mark, astMethod.name)
-                        val astBody = astMethod.body.get()
-                        val mlctx = JLIRLocalContext(
-                            lctx.ctx,
-                            lctx.typeMap,
-                            lctx.className,
-                            astMethod.name)
-                        val esolver = JLIRExpressionSolver(mlctx)
-                        val irBody = esolver.solveExpression(
-                            astBody, null(irMethod.returnType))
-                        irMethod.body = null(irBody)
-                    }
-                }
-            }
-        }
+        JLPass3(self).run(ircls)
     }
 
     def getClassTemplateOrNull(
