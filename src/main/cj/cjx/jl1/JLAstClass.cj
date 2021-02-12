@@ -39,6 +39,8 @@ class JLAstClass {
     val interfaces: List[JLAstType]
     val members: List[Member]
 
+    def isUnion(self): Bool = when kind { case union_ = true; else = false }
+    def isTrait(self): Bool = when kind { case trait_ = true; else = false }
     def isInterface(self): Bool = when kind { case interface_ = true; else = false }
 
     def isNative(self): Bool = "native" in modifiers

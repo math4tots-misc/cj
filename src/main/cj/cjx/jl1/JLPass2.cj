@@ -57,6 +57,11 @@ class JLPass2 {
                 }
                 case method(astMethod) = {
                     if astMethod.templateParameters {
+                        if not astMethod.isStatic() and ircls.isInterface() {
+                            throw JLError(
+                                "interfaces may not have non-static template methods",
+                                [astMethod.mark])
+                        }
                         ircls.addMethodTemplate(astMethod)
                     } else {
                         lctx.newMethod(astMethod, astMethod.name)
@@ -80,7 +85,7 @@ class JLPass2 {
     }
 
     private def addSynthesizedInit(self, astcls: JLAstClass, ircls: JLIRClass) {
-        if astcls.isInterface() or astcls.isNative() {
+        if astcls.isInterface() or astcls.isNative() or astcls.isTrait() {
             # Interfaces don't have <init> methods
             # Native classes should not have automatically <init> methods autoconstructed
             return ()
