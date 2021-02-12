@@ -35,8 +35,7 @@ class JLAstClass {
     val kind: Kind
     val shortName: String
     val templateParameters: List[JLAstTemplateParameter]
-    val superClass: Nullable[JLAstType]
-    val interfaces: List[JLAstType]
+    val bases: List[JLAstType]
     val members: List[Member]
 
     def isUnion(self): Bool = when kind { case union_ = true; else = false }

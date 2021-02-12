@@ -218,15 +218,14 @@ class JLParser {
         val kind = parseClassKind()
         val shortName = parseTypeId()
         val templateParameters = parseTemplateParameters()
-        val superClass = if consume(JLToken.kwEXTENDS) { null(parseType()) } else { null }
-        val interfaces: List[JLAstType] = []
-        if consume(JLToken.kwIMPLEMENTS) {
+        val bases: List[JLAstType] = []
+        if consume(':') {
             skipDelimiters()
-            interfaces.add(parseType())
+            bases.add(parseType())
             skipDelimiters()
             while consume(',') {
                 skipDelimiters()
-                interfaces.add(parseType())
+                bases.add(parseType())
                 skipDelimiters()
             }
         }
@@ -246,8 +245,7 @@ class JLParser {
             kind,
             shortName,
             templateParameters,
-            superClass,
-            interfaces,
+            bases,
             members)
     }
 

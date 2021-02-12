@@ -142,4 +142,6 @@ class JLIRClass {
             false
         }
     }
+
+    def isFinal(self): Bool = "final" in modifiers
 }

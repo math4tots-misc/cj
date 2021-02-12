@@ -40,6 +40,7 @@ class JLContext {
 
     val classMap: Map[String, JLIRClass] = Map()
     val classTemplateMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map()
+    val traitMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map()
 
     private val pass1Todo: List[JLIRClass] = []
     private val pass1Seen: Set[Int] = Set()
@@ -52,7 +53,9 @@ class JLContext {
     ## actually resolving them
     def registerClassesInFiles(self, files: List[JLAstFile]) {
         walkClasses(files, (name, file, astcls, typeMap) -> {
-            if astcls.templateParameters {
+            if astcls.isTrait() {
+                traitMap[name] = (typeMap, astcls)
+            } else if astcls.templateParameters {
                 classTemplateMap[name] = (typeMap, astcls)
             } else {
                 newClass(typeMap, astcls, name)
@@ -121,17 +124,29 @@ class JLContext {
     private def runPass1(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]
-        if ircls.name != "java.lang.Object" {
-            ircls.superClass = (
-                if null(scls) = astcls.superClass {
-                    lctx.solveClass(scls)
-                } else {
-                    getClass(Default(), "java.lang.Object", false)
-                })
+
+        var superClass: Nullable[JLIRClass] = null
+        for astBase in astcls.bases {
+            val baseClass = lctx.solveClass(astBase)
+            if baseClass.isInterface() {
+                ircls.interfaces.add(baseClass)
+            } else {
+                if superClass.isPresent() {
+                    throw JLError(
+                        "Inheritance list may contain at most one class",
+                        [astBase.mark])
+                }
+                if baseClass.isFinal() {
+                    throw JLError("Cannot inherit from a final class", [astBase.mark])
+                }
+                superClass = null(baseClass)
+            }
         }
-        for astInterface in astcls.interfaces {
-            val irInterface = lctx.solveInterfaceType(astInterface)
-            ircls.interfaces.add(irInterface)
+
+        if null(scls) = superClass {
+            ircls.superClass = scls
+        } else if ircls.name != "java.lang.Object" {
+            ircls.superClass = getClass(Default(), "java.lang.Object", false)
         }
     }
 

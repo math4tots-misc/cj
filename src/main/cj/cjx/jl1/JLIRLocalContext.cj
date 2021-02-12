@@ -150,17 +150,6 @@ class JLIRLocalContext {
         }
     }
 
-    def solveInterfaceType(self, texpr: JLAstType): JLIRClass {
-        val type = solveType(texpr)
-        when type {
-            case klass(cls) = if cls.isInterface() {
-                return cls
-            }
-            else = ()
-        }
-        throw JLError("Expected interface type but got " + type, [texpr.mark])
-    }
-
     def pushScope(self) {
         localStack.add(Map())
     }
