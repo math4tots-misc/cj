@@ -1,0 +1,20 @@
+package jl1.lang
+
+import jl1.Assert
+
+class MiscTest {
+
+    @test
+    def logicalOperators() {
+        Assert(true)
+        Assert(not false)
+        Assert(true and true)
+        Assert(not (true and false))
+        Assert(not (false and true))
+        Assert(not (false and false))
+        Assert(true or true)
+        Assert(true or false)
+        Assert(false or true)
+        Assert(not (false or false))
+    }
+}
