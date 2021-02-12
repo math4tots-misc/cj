@@ -85,6 +85,13 @@ class MC$cj$Buffer {
     }
     /**
      * @param {Buf} self
+     * @param {number} newSize
+     */
+    M$resize(self, newSize) {
+        bufferSetSize(self, newSize)
+    }
+    /**
+     * @param {Buf} self
      * @param {number} i
      */
     M$getI8(self, i) {

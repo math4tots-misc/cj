@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRClass
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLIRFieldRef
 import cjx.jl1.JLIRMethodRef
@@ -8,7 +9,6 @@ import cjx.jl1.JLType
 import cjx.jl1.JLMark
 
 ## jl1 expression
-@derive(new)
 class JLIRExpr {
 
     union Data {
@@ -37,6 +37,8 @@ class JLIRExpr {
         case if_(JLIRExpr, JLIRExpr, JLIRExpr)
         case while_(JLIRExpr, JLIRExpr)
         case throw_(JLIRExpr)
+        case trycatch(JLIRExpr, List[Tuple[JLIRLocal, JLIRClass, JLIRExpr]])
+        case tryfinally(JLIRExpr, JLIRExpr)
         case upcast(JLIRExpr)
         case downcast(JLIRExpr)
         case operation(Operator, List[JLIRExpr])
@@ -142,6 +144,19 @@ class JLIRExpr {
     val mark: JLMark
     val type: JLType
     val data: Data
+    val terminatesFlow: Bool
+
+    def new(mark: JLMark, type: JLType, data: Data): Self {
+        __malloc(mark, type, data, if type.isNoReturn() { true } else {
+            when data {
+                case if_(cond, lhs, rhs) = (
+                    cond.terminatesFlow or (lhs.terminatesFlow and rhs.terminatesFlow))
+                case upcast(inner) = inner.terminatesFlow
+                case block(exprs) = exprs and exprs.last().terminatesFlow
+                else = false
+            }
+        })
+    }
 
     def isEmpty(self): Bool = when data {
         case void() = true

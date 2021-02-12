@@ -33,7 +33,7 @@ union JLType: ToString, Eq {
     }
 
     def toJVMString(self): String = when self {
-        case noreturn() = throw Error("JLType noreturn toJVMString")
+        case noreturn() = "V"
         case void() = "V"
         case bool() = "Z"
         case byte() = "B"

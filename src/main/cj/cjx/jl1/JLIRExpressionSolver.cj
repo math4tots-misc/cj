@@ -283,6 +283,7 @@ class JLIRExpressionSolver {
                     val templateArgs = lctx.inferTemplateArgs(
                         self, mark, methodTemplate, expectedType, astArgs, irArgs)
                     val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
+                    checkMethodArgs(true, mark, methodref, astArgs, irArgs)
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                         methodref, irArgs))
                 } else {
@@ -538,6 +539,33 @@ class JLIRExpressionSolver {
                 val irExcExpr = solveExpression(astExcExpr, null(baseExceptionType))
                 JLIRExpr(mark, JLType.noreturn(), JLIRExpr.Data.throw_(irExcExpr))
             }
+            case try_(astBody, astEntries, fin) = {
+                val irBody = solveExpression(astBody, expectedType)
+                val irEntries: List[Tuple[JLIRLocal, JLIRClass, JLIRExpr]] = []
+                for (varname, astCls, astCatchBody) in astEntries {
+                    lctx.pushScope()
+                    val catchClass = lctx.solveClass(astCls)
+                    val catchType = JLType.klass(catchClass)
+                    val local = lctx.newLocal(mark, [], varname, catchType)
+                    val catchBody = solveExpression(astCatchBody, expectedType)
+                    irEntries.add((local, catchClass, catchBody))
+                    lctx.popScope()
+                }
+                val tc = JLIRExpr(mark, irBody.type, JLIRExpr.Data.trycatch(irBody, irEntries))
+                if null(f) = fin {
+                    val irFin = solveVoidExpression(f)
+                    JLIRExpr(mark, irBody.type, JLIRExpr.Data.tryfinally(
+                        if astEntries.isEmpty() { irBody } else { tc },
+                        irFin))
+                } else {
+                    if not irEntries {
+                        throw JLError(
+                            "try must have either at least one catch clause or a finally clause",
+                            [mark])
+                    }
+                    tc
+                }
+            }
             case classicFor(astInit, astCond, astIncr, astBody) = {
                 val ainit = (
                     if null(ainit) = astInit {
@@ -616,6 +644,7 @@ class JLIRExpressionSolver {
                         if null(irExpr) = nullableIrExpr {
                             irExpr
                         } else {
+                            var negate = false
                             val methodName: String = when operator {
                                 case logicalNot = throw Error("FUBAR")
                                 case logicalAnd = throw Error("FUBAR")
@@ -638,7 +667,7 @@ class JLIRExpressionSolver {
                                 case gt = "__gt"
                                 case ge = "__ge"
                                 case eq = "__eq"
-                                case ne = "__ne"
+                                case ne = { negate = true; "__eq" }
                                 case getitem = "__getitem"
                                 case setitem = "__setitem"
                                 case slice = "__slice"
@@ -653,11 +682,20 @@ class JLIRExpressionSolver {
                                         methodName,
                                         [astArgs[0], astArgs[i]],
                                         irExpr)
+                                    if negate {
+                                        irExpr = JLIRExpr(
+                                            mark, JLType.bool(), JLIRExpr.Data.not_(irExpr))
+                                    }
                                 }
                                 irExpr
                             } else {
-                                handleInstanceMethod(
+                                val irExpr = handleInstanceMethod(
                                     mark, expectedType, methodName, astArgs, irArg0)
+                                if negate {
+                                    JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.not_(irExpr))
+                                } else {
+                                    irExpr
+                                }
                             }
                         }
                     }
@@ -835,6 +873,16 @@ class JLIRExpressionSolver {
                                 "length",
                                 "()I",
                                 [irOwner]))
+                        }
+                        case "__eq" = {
+                            checkArgc(mark, astArgs, 2)
+                            val other = solveExpression(astArgs[1], null(irOwner.type))
+                            JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.javacall(
+                                "virtual",
+                                "java/lang/String",
+                                "equals",
+                                "(Ljava/lang/Object;)Z",
+                                [irOwner, other]))
                         }
                         else = throw JLError(
                             "Method " + methodName + " not found for String", [mark])

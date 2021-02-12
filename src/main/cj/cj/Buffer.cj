@@ -28,6 +28,10 @@ native class Buffer: Repr, Eq, ToArrayBufferView {
     ## Call to flip to using either little or big endian
     def useLittleEndian(self: Self, flag: Bool)
 
+    ## Sets the new size for the buffer.
+    ## The underlying array may be reallocated to acommodate the new size
+    def resize(self: Self, newSize: Int)
+
     def getI8(self: Self, i: Int): Int
     def getU8(self: Self, i: Int): Int
     def getI16(self: Self, i: Int): Int

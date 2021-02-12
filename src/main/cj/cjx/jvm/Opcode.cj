@@ -635,4 +635,13 @@ union Opcode {
         if_acmpeq,
         if_acmpne,
     )
+
+    static val returnFamily: Set[Int] = Set(
+        ireturn,
+        lreturn,
+        freturn,
+        dreturn,
+        areturn,
+        return_,
+    )
 }

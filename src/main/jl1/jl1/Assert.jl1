@@ -8,4 +8,10 @@ class Assert {
             throw Error("Assertion failed")
         }
     }
+
+    def equal[T](lhs: T, rhs: T) {
+        if lhs != rhs {
+            throw Error("Expected " + lhs + " to equal " + rhs)
+        }
+    }
 }

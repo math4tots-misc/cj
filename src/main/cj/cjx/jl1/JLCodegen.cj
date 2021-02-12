@@ -19,6 +19,11 @@ class JLCodegen {
     val ctx: JLContext
     val outdir: String
 
+    @derive(new)
+    class FinallyJumpRegistry {
+        val returnJumps: List[Int] = []
+    }
+
     def emit(self) {
         for className in ctx.classMap.keys() {
             val cls = ctx.classMap[className]
@@ -93,6 +98,7 @@ class JLCodegen {
         val jvmmethod: JVMClass.MethodBuilder
         val jlmethod: JLIRMethod
         val jvmcode: JVMCodeBuilder
+        var finallyJumpRegistry: Nullable[FinallyJumpRegistry] = null
 
         ## Maps local variable ids to their JVM local variable slot
         val localMap: Map[Int, Int] = Map()
@@ -130,19 +136,21 @@ class JLCodegen {
                 addLocal(parameter)
             }
             emit(expr)
-            when jlmethod.returnType {
-                case noreturn = ()
-                case void = jvmcode.return_()
-                case bool = jvmcode.ireturn()
-                case byte = jvmcode.ireturn()
-                case char = jvmcode.ireturn()
-                case short = jvmcode.ireturn()
-                case int = jvmcode.ireturn()
-                case long = jvmcode.lreturn()
-                case float = jvmcode.freturn()
-                case double = jvmcode.dreturn()
-                case array(inner) = jvmcode.areturn()
-                case klass(cls) = jvmcode.areturn()
+            if not expr.terminatesFlow {
+                when jlmethod.returnType {
+                    case noreturn = ()
+                    case void = jvmcode.return_()
+                    case bool = jvmcode.ireturn()
+                    case byte = jvmcode.ireturn()
+                    case char = jvmcode.ireturn()
+                    case short = jvmcode.ireturn()
+                    case int = jvmcode.ireturn()
+                    case long = jvmcode.lreturn()
+                    case float = jvmcode.freturn()
+                    case double = jvmcode.dreturn()
+                    case array(inner) = jvmcode.areturn()
+                    case klass(cls) = jvmcode.areturn()
+                }
             }
         }
 
@@ -345,6 +353,67 @@ class JLCodegen {
                 case throw_(inner) = {
                     emit(inner)
                     jvmcode.athrow()
+                }
+                case trycatch(body, entries) = {
+                    val bodyStartPc = jvmcode.code.size()
+                    val jumpPosList: List[Int] = []
+                    emit(body)
+                    jumpPosList.add(jvmcode.code.size()); jvmcode.goto(0)
+                    val bodyEndPc = jvmcode.code.size()
+                    for (local, ecls, handler) in entries {
+                        val handlerStartPc = jvmcode.code.size()
+                        addLocal(local)
+                        store(local)
+                        emit(handler)
+                        jumpPosList.add(jvmcode.code.size()); jvmcode.goto(0)
+                        jvmcode.exceptionTable.add(JVMClass.ExceptionTableEntry(
+                            bodyStartPc,
+                            bodyEndPc,
+                            handlerStartPc,
+                            jvmcls.cp.classref(ecls.toJVMName())))
+                    }
+                    val okLandPos = jvmcode.code.size()
+
+                    for jumpPos in jumpPosList {
+                        Assert.that(okLandPos - jumpPos <= 32767)
+                        val jumpPatchPos = jumpPos + 1
+                        jvmcode.code.setI16(jumpPatchPos, okLandPos - jumpPos)
+                    }
+                }
+                case tryfinally(body, fin) = {
+                    if finallyJumpRegistry.isPresent() {
+                        # TODO: put this check in ExpressionSolver or remove this limitation
+                        throw JLError("finally blocks may not be nested", [expr.mark])
+                    }
+                    finallyJumpRegistry = null(FinallyJumpRegistry())
+                    val bodyStartPc = jvmcode.code.size()
+                    emit(body)
+                    val okJumpPos = jvmcode.code.size(); jvmcode.goto(0)
+                    val bodyEndPc = jvmcode.code.size()
+                    val finallyThrowLandPos = jvmcode.code.size(); emit(fin)
+                    jvmcode.athrow()
+                    val okLandPos = jvmcode.code.size(); emit(fin)
+
+                    if finallyJumpRegistry.get().returnJumps {
+                        throw JLError(
+                            "Early returns from within finally are not yet supported",
+                            [expr.mark])
+                    }
+
+                    # register the location to jump to when no exceptions are thrown
+                    Assert.that(okLandPos - okJumpPos <= 32767)
+                    val okJumpPatchPos = okJumpPos + 1
+                    jvmcode.code.setI16(okJumpPatchPos, okLandPos - okJumpPos)
+
+                    # Add entry in exception table for which finally to trigger
+                    # when an exception is thrown
+                    jvmcode.exceptionTable.add(JVMClass.ExceptionTableEntry(
+                        bodyStartPc,
+                        bodyEndPc,
+                        finallyThrowLandPos,
+                        0, # catch any
+                    ))
+                    finallyJumpRegistry = null
                 }
                 case upcast(arg) = {
                     emit(arg)

@@ -1,5 +1,6 @@
 package jl1.lang
 
+import jl1.Error
 import jl1.Assert
 
 class MiscTest {
@@ -17,4 +18,23 @@ class MiscTest {
         Assert(false or true)
         Assert(not (false or false))
     }
+
+    @test
+    def tryCatch() {
+        Assert.equal(useTryCatch(true), "An error Hello was thrown")
+        Assert.equal(useTryCatch(false), "Nothing was thrown")
+    }
+
+    def useTryCatch(trigger: bool): String {
+        try {
+            if trigger {
+                throwSomething()
+            }
+            "Nothing was thrown"
+        } catch e : Error {
+            "An error " + e.message + " was thrown"
+        }
+    }
+
+    def throwSomething() = throw Error("Hello")
 }

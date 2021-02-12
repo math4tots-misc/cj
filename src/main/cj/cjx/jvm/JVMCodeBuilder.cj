@@ -41,8 +41,15 @@ class JVMCodeBuilder {
         # val methodName = cp.getUtf8(methodBuilder.nameIndex)
         # IO.println("=== computeMaxStackSize " + cls.name + "." + methodName + " ===")
         var maxStack = 0
-        val todo = [(0, 0)]
         val seen = Set[Int].empty()
+        val todo = [(0, 0)]
+
+        # also take into account all the places you can end up, due to
+        # exceptions.
+        for entry in exceptionTable {
+            todo.add((entry.handlerPc, 1))
+        }
+
         while todo {
             val (pc, stackSize) = todo.pop()
             if stackSize > maxStack {
@@ -131,6 +138,18 @@ class JVMCodeBuilder {
                 }
             }
         }
+
+        val missing = Set[Int].empty()
+        for i = 0; i < code.size(); i += Opcode.instructionSize(code, i) {
+            if i not in seen {
+                missing.add(i)
+            }
+        }
+        # if missing {
+        #     val methodName = cp.getUtf8(methodBuilder.nameIndex)
+        #     throw Error("unreachable code in " + cls.name + "." + methodName + " " + missing)
+        # }
+
         maxStack
     }
 

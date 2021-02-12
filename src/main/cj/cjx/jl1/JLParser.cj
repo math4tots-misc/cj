@@ -296,6 +296,7 @@ class JLParser {
     def parseType(self): JLAstType {
         var mark = mark
         var type = switch peek().type {
+            case (JLToken.kwNORETURN) = { next(); JLAstType(mark, JLAstType.Data.noreturn()) }
             case (JLToken.kwVOID) = { next(); JLAstType(mark, JLAstType.Data.void()) }
             case (JLToken.kwBOOL) = { next(); JLAstType(mark, JLAstType.Data.bool()) }
             case (JLToken.kwBYTE) = { next(); JLAstType(mark, JLAstType.Data.byte()) }
@@ -694,6 +695,20 @@ class JLParser {
                 next()
                 val excExpr = parseExpression()
                 JLAstExpr(mark, JLAstExpr.Data.throw_(excExpr))
+            }
+            case (JLToken.kwTRY) = {
+                next()
+                val body = parseBlock()
+                val catchClauses: List[Tuple[String, JLAstType, JLAstExpr]] = []
+                while consume(JLToken.kwCATCH) {
+                    val name = parseId()
+                    expect(':')
+                    val type = parseType()
+                    val catchBody = parseBlock()
+                    catchClauses.add((name, type, catchBody))
+                }
+                val fin = if consume(JLToken.kwFINALLY) { null(parseBlock()) } else { null }
+                JLAstExpr(mark, JLAstExpr.Data.try_(body, catchClauses, fin))
             }
             else = {
                 if null((precedence, operator)) = unopTable.getOrNull(peek().type) {

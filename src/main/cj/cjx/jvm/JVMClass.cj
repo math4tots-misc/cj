@@ -249,9 +249,9 @@ class JVMClass {
                 out.indent()
                 for entry in cattr.exceptionTable {
                     out.line(
-                        "startPc = " + entry.startPc +
-                        ", endPc = " + entry.endPc +
-                        ", handlerPc = " + entry.handlerPc +
+                        "startPc = 0x" + entry.startPc.hex() +
+                        ", endPc = 0x" + entry.endPc.hex() +
+                        ", handlerPc = 0x" + entry.handlerPc.hex() +
                         ", catchType = " + if entry.catchType == 0 {
                             "finally"
                         } else {
