@@ -591,73 +591,98 @@ class JLIRExpressionSolver {
                 throw JLError("TODO: solve expression for_", [mark])
             }
             case operation(operator, astArgs) = {
-                val irArg0 = solveExpression(astArgs[0], null)
-                val nullableIrExpr = when irArg0.type {
-                    case int() = {
-                        if null(irOp) = homogeneousIntOps.getOrNull(operator) {
-                            null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
-                        } else if null(irOp) = comparisonIntOps.getOrNull(operator) {
-                            null(handleCompareOps(mark, irOp, irArg0, astArgs))
-                        } else if null(irOp) = homogeneousUnaryIntOps.getOrNull(operator) {
-                            null(handleHomogeneousUnaryOp(mark, irOp, irArg0, astArgs))
-                        } else {
-                            null
-                        }
+                when operator {
+                    case logicalNot = {
+                        Assert.equal(astArgs.size(), 1)
+                        val irInner = solveTruthyCoercedExpression(astArgs[0])
+                        JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.not_(irInner))
                     }
-                    case double() = {
-                        if null(irOp) = homogeneousDoubleOps.getOrNull(operator) {
-                            null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
-                        } else {
-                            null
-                        }
+                    case logicalAnd = {
+                        val irArgs = astArgs.map(astArg -> solveTruthyCoercedExpression(astArg))
+                        JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.and_(irArgs))
                     }
-                    case klass(argcls) = switch argcls.name {
-                        case "java.lang.String" = when operator {
-                            case add = null(handleStringOps(
-                                mark, JLIRExpr.Operator.strcat(), irArg0, astArgs))
+                    case logicalOr = {
+                        val irArgs = astArgs.map(astArg -> solveTruthyCoercedExpression(astArg))
+                        JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.or_(irArgs))
+                    }
+                    else = {
+                        val irArg0 = solveExpression(astArgs[0], null)
+                        val nullableIrExpr = when irArg0.type {
+                            case int() = {
+                                if null(irOp) = homogeneousIntOps.getOrNull(operator) {
+                                    null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
+                                } else if null(irOp) = comparisonIntOps.getOrNull(operator) {
+                                    null(handleCompareOps(mark, irOp, irArg0, astArgs))
+                                } else if null(irOp) = homogeneousUnaryIntOps.getOrNull(operator) {
+                                    null(handleHomogeneousUnaryOp(mark, irOp, irArg0, astArgs))
+                                } else {
+                                    null
+                                }
+                            }
+                            case double() = {
+                                if null(irOp) = homogeneousDoubleOps.getOrNull(operator) {
+                                    null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
+                                } else {
+                                    null
+                                }
+                            }
+                            case klass(argcls) = switch argcls.name {
+                                case "java.lang.String" = when operator {
+                                    case add = null(handleStringOps(
+                                        mark, JLIRExpr.Operator.strcat(), irArg0, astArgs))
+                                    else = null
+                                }
+                                else = null
+                            }
                             else = null
                         }
-                        else = null
-                    }
-                    else = null
-                }
-                if null(irExpr) = nullableIrExpr {
-                    irExpr
-                } else {
-                    val methodName = when operator {
-                        case add = "__add"
-                        case sub = "__sub"
-                        case mul = "__mul"
-                        case div = "__div"
-                        case rem = "__rem"
-                        case and_ = "__and"
-                        case or_ = "__or"
-                        case xor = "__xor"
-                        case shl = "__shl"
-                        case shr = "__shr"
-                        case shru = "__shru"
-                        case neg = "__neg"
-                        case pow = "__pow"
-                        case lt = "__lt"
-                        case le = "__le"
-                        case gt = "__gt"
-                        case ge = "__ge"
-                        case eq = "__eq"
-                        case ne = "__ne"
-                        case getitem = "__getitem"
-                        case setitem = "__setitem"
-                        case slice = "__slice"
-                    }
-                    if operator in JLParser.combineOperators {
-                        var irExpr = irArg0
-                        for i = 1; i < astArgs.size(); i++ {
-                            # WARNING: use of dummy entry with astArgs[0]
-                            irExpr = handleInstanceMethod(
-                                mark, expectedType, methodName, [astArgs[0], astArgs[i]], irExpr)
+                        if null(irExpr) = nullableIrExpr {
+                            irExpr
+                        } else {
+                            val methodName: String = when operator {
+                                case logicalNot = throw Error("FUBAR")
+                                case logicalAnd = throw Error("FUBAR")
+                                case logicalOr = throw Error("FUBAR")
+                                case add = "__add"
+                                case sub = "__sub"
+                                case mul = "__mul"
+                                case div = "__div"
+                                case rem = "__rem"
+                                case and_ = "__and"
+                                case or_ = "__or"
+                                case xor = "__xor"
+                                case shl = "__shl"
+                                case shr = "__shr"
+                                case shru = "__shru"
+                                case neg = "__neg"
+                                case pow = "__pow"
+                                case lt = "__lt"
+                                case le = "__le"
+                                case gt = "__gt"
+                                case ge = "__ge"
+                                case eq = "__eq"
+                                case ne = "__ne"
+                                case getitem = "__getitem"
+                                case setitem = "__setitem"
+                                case slice = "__slice"
+                            }
+                            if operator in JLParser.combineOperators {
+                                var irExpr = irArg0
+                                for i = 1; i < astArgs.size(); i++ {
+                                    # WARNING: use of dummy entry with astArgs[0]
+                                    irExpr = handleInstanceMethod(
+                                        mark,
+                                        expectedType,
+                                        methodName,
+                                        [astArgs[0], astArgs[i]],
+                                        irExpr)
+                                }
+                                irExpr
+                            } else {
+                                handleInstanceMethod(
+                                    mark, expectedType, methodName, astArgs, irArg0)
+                            }
                         }
-                        irExpr
-                    } else {
-                        handleInstanceMethod(mark, expectedType, methodName, astArgs, irArg0)
                     }
                 }
             }

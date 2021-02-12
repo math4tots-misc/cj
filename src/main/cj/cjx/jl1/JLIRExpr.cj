@@ -31,6 +31,9 @@ class JLIRExpr {
         case setstatic(JLIRFieldRef, JLIRExpr) # set static field
         case getfield(JLIRFieldRef, JLIRExpr) # get instance field
         case setfield(JLIRFieldRef, JLIRExpr, JLIRExpr) # set instance field
+        case not_(JLIRExpr)
+        case and_(List[JLIRExpr])
+        case or_(List[JLIRExpr])
         case if_(JLIRExpr, JLIRExpr, JLIRExpr)
         case while_(JLIRExpr, JLIRExpr)
         case operation(Operator, List[JLIRExpr])

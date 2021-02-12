@@ -263,6 +263,51 @@ class JLCodegen {
                         fieldref.field.name,
                         fieldref.field.type.toJVMString())
                 }
+                case not_(boolexpr) = {
+                    emit(boolexpr)
+                    jvmcode.ifeq(3 + 1 + 3)
+                    jvmcode.iconst_0()
+                    jvmcode.goto(3 + 1)
+                    jvmcode.iconst_1()
+                }
+                case and_(args) = {
+                    if args {
+                        val jumpPosList: List[Int] = []
+                        for arg in args {
+                            emit(arg)
+                            jumpPosList.add(jvmcode.code.size()); jvmcode.ifeq(0)
+                        }
+                        jvmcode.iconst_1()
+                        jvmcode.goto(3 + 1)
+                        val landPos = jvmcode.code.size(); jvmcode.iconst_0()
+                        for jumpPos in jumpPosList {
+                            Assert.that(landPos - jumpPos <= 32767)
+                            val jumpPatchPos = jumpPos + 1
+                            jvmcode.code.setI16(jumpPatchPos, landPos - jumpPos)
+                        }
+                    } else {
+                        jvmcode.iconst_1()
+                    }
+                }
+                case or_(args) = {
+                    if args {
+                        val jumpPosList: List[Int] = []
+                        for arg in args {
+                            emit(arg)
+                            jumpPosList.add(jvmcode.code.size()); jvmcode.ifne(0)
+                        }
+                        jvmcode.iconst_0()
+                        jvmcode.goto(3 + 1)
+                        val landPos = jvmcode.code.size(); jvmcode.iconst_1()
+                        for jumpPos in jumpPosList {
+                            Assert.that(landPos - jumpPos <= 32767)
+                            val jumpPatchPos = jumpPos + 1
+                            jvmcode.code.setI16(jumpPatchPos, landPos - jumpPos)
+                        }
+                    } else {
+                        jvmcode.iconst_0()
+                    }
+                }
                 case if_(cond, body, other) = {
                     emit(cond)
                     val jumpPos1 = jvmcode.code.size(); jvmcode.ifeq(0)

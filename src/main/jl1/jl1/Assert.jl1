@@ -1,0 +1,17 @@
+package jl1
+
+import java.lang.RuntimeException
+
+class Assert {
+
+    private def newError(message: String): RuntimeException {
+        @(java new RuntimeException "java/lang/RuntimeException" "(Ljava/lang/String;)V"
+            [ (do message) ])
+    }
+
+    def that(cond: bool) {
+        if not cond {
+            # throw newError("Assertion failed")
+        }
+    }
+}

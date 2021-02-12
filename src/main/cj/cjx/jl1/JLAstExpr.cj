@@ -56,6 +56,10 @@ class JLAstExpr : Default {
 
     @derive(repr)
     union Operator: Hash {
+        case logicalNot
+        case logicalAnd
+        case logicalOr
+
         case add
         case sub
         case mul

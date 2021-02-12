@@ -30,6 +30,8 @@ class JLParser {
         JLAstExpr.Operator.rem(),
         JLAstExpr.Operator.and_(),
         JLAstExpr.Operator.or_(),
+        JLAstExpr.Operator.logicalAnd(),
+        JLAstExpr.Operator.logicalOr(),
     )
 
     ## Maps token -> (is-right-associative, ast-operator)
@@ -52,10 +54,15 @@ class JLParser {
         JLToken.tGE: (false, JLAstExpr.Operator.ge()),
         JLToken.tEQ: (false, JLAstExpr.Operator.eq()),
         JLToken.tNE: (false, JLAstExpr.Operator.ne()),
+        JLToken.kwAND: (false, JLAstExpr.Operator.logicalAnd()),
+        JLToken.kwOR: (false, JLAstExpr.Operator.logicalOr()),
     )
 
     static val unopTable: Map[Int, Tuple[Int, JLAstExpr.Operator]] = Map(
         '-': (getTokenPrecedence('*') + 5, JLAstExpr.Operator.neg()),
+        JLToken.kwNOT: (
+            getTokenPrecedence(JLToken.kwAND) - 5,
+            JLAstExpr.Operator.logicalNot()),
     )
 
     def parse(filename: String, string: String): JLAstFile {
