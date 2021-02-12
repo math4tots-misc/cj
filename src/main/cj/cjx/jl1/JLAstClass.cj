@@ -20,6 +20,7 @@ class JLAstClass {
     val _isInterface: Bool
     val shortName: String
     val templateParameters: List[JLAstTemplateParameter]
+    val superClass: Nullable[JLAstType]
     val interfaces: List[JLAstType]
     val members: List[Member]
 

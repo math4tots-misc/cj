@@ -1,0 +1,6 @@
+package jl1
+
+import java.lang.RuntimeException
+
+class Exception extends RuntimeException {
+}

@@ -35,7 +35,7 @@ class JLCodegen {
     def emitClass(self, cls: JLIRClass): JVMClass {
         val jvmcls = JVMClass()
         jvmcls.thisClass = jvmcls.cp.classref(cls.toJVMName())
-        jvmcls.superClass = jvmcls.cp.classref("java/lang/Object")
+        jvmcls.superClass = jvmcls.cp.classref(cls.superClass.toJVMName())
         jvmcls.attributes.add(JVMClass.AttributeInfo(
             jvmcls.cp.utf8("SourceFile"),
             JVMClass.AttributeInfoData.sourceFile(

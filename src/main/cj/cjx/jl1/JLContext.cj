@@ -120,6 +120,14 @@ class JLContext {
     private def runPass1(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]
+        if ircls.name != "java.lang.Object" {
+            ircls.superClass = (
+                if null(scls) = astcls.superClass {
+                    lctx.solveClass(scls)
+                } else {
+                    getClass(Default(), "java.lang.Object", false)
+                })
+        }
         for astInterface in astcls.interfaces {
             val irInterface = lctx.solveInterfaceType(astInterface)
             ircls.interfaces.add(irInterface)

@@ -18,6 +18,7 @@ class JLIRClass {
     val modifiers: List[String]
     val _isInterface: Bool
     val name: String  # fully qualified name
+    var superClass: JLIRClass = ?
     val interfaces: List[JLIRClass] = []
     val fields: List[JLIRField] = []
     val fieldMap: Map[String, JLIRField] = Map()
