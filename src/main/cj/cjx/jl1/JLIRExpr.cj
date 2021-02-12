@@ -43,9 +43,11 @@ class JLIRExpr {
         ## TODO: Remove this hacks
         case iaugfield(JLIRFieldRef, JLIRExpr, JLIRExpr)
 
-        ## This is the only array op that's not under Operator, because this one
-        ## requires a type argument.
-        case arraynew(JLType, JLIRExpr)
+        ## Creates an array initialized with the given values
+        case array(List[JLIRExpr])
+
+        ## Creates a new array with the given length
+        case arraynew(JLIRExpr)
 
         ## Converts non-void results to void
         ## this is important for stack integrity when emitting bytecode

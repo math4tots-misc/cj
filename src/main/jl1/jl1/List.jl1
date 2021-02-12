@@ -10,6 +10,8 @@ class List[T] {
 
     def empty(): Self = Self.new(T[].new(0), 0)
 
+    def fromArray(array: T[]): Self = Self.new(array, array.size())
+
     def size(this): int = size
     def __getitem(this, i: int): T = array[i]
     def __setitem(this, i: int, t: T) = (array[i] = t)

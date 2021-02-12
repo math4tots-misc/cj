@@ -129,5 +129,8 @@ class JLSample {
             IO.println("list = " + list)
             IO.println("list[0] = " + list[0])
         }
+        {
+            IO.println("[7, 26, -33] = " + [7, 26, -33])
+        }
     }
 }

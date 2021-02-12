@@ -545,6 +545,10 @@ class JLParser {
                 expect(')')
                 inner
             }
+            case '[' = {
+                val args = parseJoin('[', ']', ',', () -> parseExpression())
+                JLAstExpr(mark, JLAstExpr.Data.list(args))
+            }
             case '@' = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.meta(parseMetaExpr()))

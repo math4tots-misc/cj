@@ -84,7 +84,6 @@ class JLIRLocalContext {
             case double = JLType.double()
             case array(inner) = JLType.array(solveFieldType(inner))
             case klass(shortName, astArgs) = {
-                val ensurePass2 = methodName.size() > 0
                 if shortName == "Self" {
                     JLType.klass(thisClass)
                 } else if null(templateArg) = getTemplateArgumentOrNull(shortName) {
@@ -315,4 +314,9 @@ class JLIRLocalContext {
         }
         methodTemplate.templateParameters.map(tp -> map[tp.name]).toList()
     }
+
+    def getListClass(self, mark: JLMark, innerType: JLType): JLIRClass = (
+        ctx.getListClass(mark, innerType, ensurePass2))
+
+    private def __get_ensurePass2(self): Bool = methodName.size() > 0
 }

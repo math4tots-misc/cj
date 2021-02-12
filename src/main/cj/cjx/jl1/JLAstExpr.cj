@@ -6,7 +6,7 @@ import cjx.jl1.JLAstType
 import cjx.jl1.JLMark
 
 @derive(new)
-class JLAstExpr {
+class JLAstExpr : Default {
     union Data {
         case bool(Bool)
         case char(Int)
@@ -28,6 +28,8 @@ class JLAstExpr {
         case augvar(String, Operator, JLAstExpr)
         case declvar(JLAstLocal)
         case this()
+        case array(List[JLAstExpr])
+        case list(List[JLAstExpr])
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
         case while_(JLAstExpr, JLAstExpr)
         case classicFor(Nullable[JLAstExpr], Nullable[JLAstExpr], Nullable[JLAstExpr], JLAstExpr)
@@ -85,4 +87,6 @@ class JLAstExpr {
 
     val mark: JLMark
     val data: Data
+
+    def default(): Self = Self(Default(), Data.int(0))
 }

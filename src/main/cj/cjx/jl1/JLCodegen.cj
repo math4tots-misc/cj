@@ -356,7 +356,7 @@ class JLCodegen {
                             Assert.equal(args.size(), 2)
                             emit(args[0])
                             emit(args[1])
-                            when args[0].type.innerType {
+                            when args[0].type.arrayInnerType {
                                 case void() = throw Error("FUBAR arrayget void[]")
                                 case bool() = jvmcode.baload()
                                 case byte() = jvmcode.baload()
@@ -375,14 +375,14 @@ class JLCodegen {
                             emit(args[0])
                             emit(args[1])
                             emit(args[2])
-                            emitArraySet(args[0].type.innerType)
+                            emitArraySet(args[0].type.arrayInnerType)
                         }
                         case arrayclear = {
                             Assert.equal(args.size(), 2)
                             emit(args[0])
                             emit(args[1])
-                            emitClearType(args[0].type.innerType)
-                            emitArraySet(args[0].type.innerType)
+                            emitClearType(args[0].type.arrayInnerType)
+                            emitArraySet(args[0].type.arrayInnerType)
                         }
                         case arraylen = {
                             Assert.equal(args.size(), 1)
@@ -393,11 +393,11 @@ class JLCodegen {
                             Assert.equal(args.size(), 2)
                             emit(args[0])
                             emit(args[1])
-                            val itemDescriptor: String = when args[0].type.innerType {
+                            val itemDescriptor: String = when args[0].type.arrayInnerType {
                                 case void() = throw Error("FUBAR arrayrealloc void[]")
                                 case array(inner) = "Ljava/lang/Object;"
                                 case klass(cls) = "Ljava/lang/Object;"
-                                else = args[0].type.innerType.toJVMString()
+                                else = args[0].type.arrayInnerType.toJVMString()
                             }
                             jvmcode.invokestatic(
                                 "java/util/Arrays",
@@ -420,21 +420,21 @@ class JLCodegen {
                         fieldref.field.name,
                         fieldref.field.type.toJVMString())
                 }
-                case arraynew(itemtype, arg) = {
-                    emit(arg)
-                    when itemtype {
-                        case void() = throw JLError("FUBAR", [expr.mark])
-                        case bool() = jvmcode.newarray("bool")
-                        case char() = jvmcode.newarray("char")
-                        case float() = jvmcode.newarray("float")
-                        case double() = jvmcode.newarray("double")
-                        case byte() = jvmcode.newarray("byte")
-                        case short() = jvmcode.newarray("short")
-                        case int() = jvmcode.newarray("int")
-                        case long() = jvmcode.newarray("long")
-                        case array(inner) = jvmcode.anewarray(itemtype.toJVMString())
-                        case klass(cls) = jvmcode.anewarray(itemtype.toJVMString())
+                case array(args) = {
+                    val itemtype = expr.type.arrayInnerType
+                    jvmcode.ldc(args.size())
+                    emitNewArray(itemtype)
+                    for i = 0; i < args.size(); i++ {
+                        jvmcode.dup()
+                        jvmcode.ldc(i)
+                        emit(args[i])
+                        emitArraySet(itemtype)
                     }
+                }
+                case arraynew(arg) = {
+                    val itemtype = expr.type.arrayInnerType
+                    emit(arg)
+                    emitNewArray(itemtype)
                 }
                 case voidify(expr) = {
                     emit(expr)
@@ -507,6 +507,22 @@ class JLCodegen {
                             fieldref.field.type.toJVMString())
                     }
                 }
+            }
+        }
+
+        private def emitNewArray(self, itemtype: JLType) {
+            when itemtype {
+                case void() = throw Error("FUBAR")
+                case bool() = jvmcode.newarray("bool")
+                case char() = jvmcode.newarray("char")
+                case float() = jvmcode.newarray("float")
+                case double() = jvmcode.newarray("double")
+                case byte() = jvmcode.newarray("byte")
+                case short() = jvmcode.newarray("short")
+                case int() = jvmcode.newarray("int")
+                case long() = jvmcode.newarray("long")
+                case array(inner) = jvmcode.anewarray(itemtype.toJVMString())
+                case klass(cls) = jvmcode.anewarray(itemtype.toJVMString())
             }
         }
 

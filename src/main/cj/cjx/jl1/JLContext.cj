@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLToken
 import cjx.jl1.JLIRMethodRef
 import cjx.jl1.JLPass2
 import cjx.jl1.JLAstLocal
@@ -229,6 +230,18 @@ class JLContext {
             resolvePendingClassesThroughPass2()
         }
         classMap[reifiedClassName]
+    }
+
+    def getListClass(self, mark: JLMark, itemType: JLType, ensurePass2: Bool): JLIRClass {
+        getReifiedClass(
+            mark,
+            "jl1.List",
+            [JLIRTemplateArgument.type(itemType)],
+            ensurePass2)
+    }
+
+    def getListType(self, mark: JLMark, itemType: JLType, ensurePass2: Bool): JLType {
+        JLType.klass(getListClass(mark, itemType, ensurePass2))
     }
 
     def getReifiedClassType(

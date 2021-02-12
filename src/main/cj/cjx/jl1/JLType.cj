@@ -66,7 +66,7 @@ union JLType: ToString, Eq {
         else = false
     }
 
-    def __get_innerType(self): Self = when self {
+    def __get_arrayInnerType(self): Self = when self {
         case array(inner) = inner
         else = throw Error("FUBAR: expected array type")
     }

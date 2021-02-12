@@ -259,7 +259,7 @@ class JLIRExpressionSolver {
                         JLIRExpr(
                             mark,
                             ownertype,
-                            JLIRExpr.Data.arraynew(inner, arg))
+                            JLIRExpr.Data.arraynew(arg))
                     }
                     case klass(ownercls) = {
                         if ownercls.isInterface() or ownercls.isAbstract() {
@@ -274,8 +274,8 @@ class JLIRExpressionSolver {
                             false,
                             mark,
                             methodref,
-                            null(JLIRExpr(mark, JLType.void(), JLIRExpr.Data.int(0))),
-                            astArgsWithDummyThis)
+                            astArgsWithDummyThis,
+                            [JLIRExpr(mark, JLType.klass(ownercls), JLIRExpr.Data.int(0))])
                         JLIRExpr(
                             mark,
                             JLType.klass(ownercls),
@@ -303,7 +303,7 @@ class JLIRExpressionSolver {
                 val ownercls = lctx.solveClass(astOwnerType)
                 if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
                     val methodref = ownercls.getMethodRef(mark, methodName)
-                    val irArgs = checkMethodArgs(true, mark, methodref, null, astArgs)
+                    val irArgs = checkMethodArgs(true, mark, methodref, astArgs, [])
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                         methodref, irArgs))
                 } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
@@ -510,6 +510,58 @@ class JLIRExpressionSolver {
                         lctx.getLocalOrNull("this").get()))
                 }
             }
+            case array(astArgs) = {
+                var nullableInnerType = if null(etype) = expectedType {
+                    when etype {
+                        case array(it) = null(it)
+                        else = null
+                    }
+                } else { null }
+                val irArgs: List[JLIRExpr] = []
+                for astArg in astArgs {
+                    val irArg = solveExpression(astArg, nullableInnerType)
+                    if nullableInnerType.isEmpty() {
+                        nullableInnerType = null(irArg.type)
+                    }
+                }
+                val innerType = if null(it) = nullableInnerType {
+                    it
+                } else {
+                    throw JLError("Could not infer array type", [mark])
+                }
+                JLIRExpr(mark, JLType.array(innerType), JLIRExpr.Data.array(irArgs))
+            }
+            case list(astArgs) = {
+                var nullableInnerType = if null(etype) = expectedType {
+                    when etype {
+                        case array(it) = null(it)
+                        else = null
+                    }
+                } else { null }
+                val irArgs: List[JLIRExpr] = []
+                for astArg in astArgs {
+                    val irArg = solveExpression(astArg, nullableInnerType)
+                    if nullableInnerType.isEmpty() {
+                        nullableInnerType = null(irArg.type)
+                    }
+                    irArgs.add(irArg)
+                }
+                val innerType = if null(it) = nullableInnerType {
+                    it
+                } else {
+                    throw JLError("Could not infer list type", [mark])
+                }
+                val listClass = lctx.getListClass(mark, innerType)
+                val listType = JLType.klass(listClass)
+                val methodref = listClass.getMethodRef(mark, "fromArray")
+                val fromArrayArgs = checkMethodArgs(true, mark, methodref, [Default()], [
+                    JLIRExpr(
+                        mark,
+                        JLType.array(innerType),
+                        JLIRExpr.Data.array(irArgs))
+                ])
+                JLIRExpr(mark, listType, JLIRExpr.Data.call(methodref, fromArrayArgs))
+            }
             case if_(astCond, astBody, nullableOther) = {
                 val irCond = solveTruthyCoercedExpression(astCond)
                 if null(astOther) = nullableOther {
@@ -660,8 +712,8 @@ class JLIRExpressionSolver {
             static_: Bool,
             mark: JLMark,
             methodref: JLIRMethodRef,
-            nullableIrOwner: Nullable[JLIRExpr],
-            astArgs: List[JLAstExpr]): List[JLIRExpr] {
+            astArgs: List[JLAstExpr],
+            irArgs: List[JLIRExpr]): List[JLIRExpr] {
         if static_ {
             if not methodref.method.isStatic() {
                 throw JLError("" + methodref + " is non-static", [mark])
@@ -678,12 +730,22 @@ class JLIRExpressionSolver {
                 " expects " + argc +
                 " args but got " + astArgs.size(), [mark])
         }
-        val irArgs = if null(irOwner) = nullableIrOwner { [irOwner] } else { [] }
+        for i = 0; i < irArgs.size(); i++ {
+            irArgs[i] = checkTypeAndCast(methodref.method.parameters[i].type, irArgs[i])
+        }
         for i = irArgs.size(); i < argc; i++ {
             irArgs.add(solveExpression(
                 astArgs[i], null(methodref.method.parameters[i].type)))
         }
         irArgs
+    }
+
+    private def checkTypeAndCast(self, type: JLType, expr: JLIRExpr): JLIRExpr {
+        if type == expr.type {
+            expr
+        } else {
+            throw JLError("Expected " + type + " but got " + expr.type, [expr.mark])
+        }
     }
 
     private def checkArgc(self, mark: JLMark, astArgs: List[JLAstExpr], argc: Int) {
@@ -756,7 +818,7 @@ class JLIRExpressionSolver {
                 } else {
                     if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
                         val irArgs = checkMethodArgs(
-                            false, mark, methodref, null(irOwner), astArgs)
+                            false, mark, methodref, astArgs, [irOwner])
                         JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                             methodref, irArgs))
                     } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
