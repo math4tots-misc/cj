@@ -28,7 +28,6 @@ class JLAstExpr : Default {
         case augvar(String, Operator, JLAstExpr)
         case declvar(JLAstLocal)
         case this()
-        case array(List[JLAstExpr])
         case list(List[JLAstExpr])
         case if_(JLAstExpr, JLAstExpr, Nullable[JLAstExpr])
         case while_(JLAstExpr, JLAstExpr)

@@ -510,27 +510,6 @@ class JLIRExpressionSolver {
                         lctx.getLocalOrNull("this").get()))
                 }
             }
-            case array(astArgs) = {
-                var nullableInnerType = if null(etype) = expectedType {
-                    when etype {
-                        case array(it) = null(it)
-                        else = null
-                    }
-                } else { null }
-                val irArgs: List[JLIRExpr] = []
-                for astArg in astArgs {
-                    val irArg = solveExpression(astArg, nullableInnerType)
-                    if nullableInnerType.isEmpty() {
-                        nullableInnerType = null(irArg.type)
-                    }
-                }
-                val innerType = if null(it) = nullableInnerType {
-                    it
-                } else {
-                    throw JLError("Could not infer array type", [mark])
-                }
-                JLIRExpr(mark, JLType.array(innerType), JLIRExpr.Data.array(irArgs))
-            }
             case list(astArgs) = {
                 var nullableInnerType = if null(etype) = expectedType {
                     when etype {
