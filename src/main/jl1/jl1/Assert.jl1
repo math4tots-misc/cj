@@ -3,7 +3,7 @@ package jl1
 import jl1.Error
 
 class Assert {
-    def that(cond: bool) {
+    def(cond: bool) {
         if not cond {
             throw Error("Assertion failed")
         }

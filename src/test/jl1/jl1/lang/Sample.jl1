@@ -6,6 +6,6 @@ class Sample {
 
     @test
     def sample() {
-        Assert.that(true)
+        Assert(true)
     }
 }
