@@ -4,6 +4,7 @@ import cj.Error
 import cjx.jl1.JLIRClass
 
 union JLType: ToString, Eq {
+    case noreturn
     case void
     case bool
     case byte
@@ -17,6 +18,7 @@ union JLType: ToString, Eq {
     case klass(JLIRClass)
 
     def toString(self): String = when self {
+        case noreturn() = "noreturn"
         case void() = "void"
         case bool() = "bool"
         case byte() = "byte"
@@ -31,6 +33,7 @@ union JLType: ToString, Eq {
     }
 
     def toJVMString(self): String = when self {
+        case noreturn() = throw Error("JLType noreturn toJVMString")
         case void() = "V"
         case bool() = "Z"
         case byte() = "B"
@@ -49,6 +52,11 @@ union JLType: ToString, Eq {
         case long() = 2
         case double() = 2
         else = 1
+    }
+
+    def isNoReturn(self): Bool = when self {
+        case noreturn = true
+        else = false
     }
 
     def isVoid(self): Bool = when self {
@@ -72,6 +80,7 @@ union JLType: ToString, Eq {
     }
 
     def __eq(self, other: Self): Bool = when self {
+        case noreturn = when other { case noreturn = true; else = false }
         case void = when other { case void = true; else = false }
         case bool = when other { case bool = true; else = false }
         case byte = when other { case byte = true; else = false }

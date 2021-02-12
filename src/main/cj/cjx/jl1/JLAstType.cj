@@ -8,6 +8,7 @@ import cjx.jl1.JLMark
 class JLAstType {
 
     union Data {
+        case noreturn
         case void
         case bool
         case byte

@@ -131,6 +131,7 @@ class JLCodegen {
             }
             emit(expr)
             when jlmethod.returnType {
+                case noreturn = ()
                 case void = jvmcode.return_()
                 case bool = jvmcode.ireturn()
                 case byte = jvmcode.ireturn()
@@ -183,6 +184,9 @@ class JLCodegen {
                             methodref.method.name,
                             methodref.method.getJVMDescriptor())
                     }
+                    if expr.type.isNoReturn() {
+                        emitThrowNoReturnError()
+                    }
                 }
                 case callnew(methodref, args) = {
                     jvmcode.new_(methodref.owner.toJVMName())
@@ -204,6 +208,7 @@ class JLCodegen {
                 case getlocal(local) = {
                     val index = localMap[local.id]
                     when local.type {
+                        case noreturn() = throw Error("getlocal noreturn variable")
                         case void() = throw Error("getlocal void variable")
                         case bool() = jvmcode.iload(index)
                         case byte() = jvmcode.iload(index)
@@ -402,6 +407,7 @@ class JLCodegen {
                             emit(args[0])
                             emit(args[1])
                             when args[0].type.arrayInnerType {
+                                case noreturn() = throw Error("FUBAR arrayget noreturn[]")
                                 case void() = throw Error("FUBAR arrayget void[]")
                                 case bool() = jvmcode.baload()
                                 case byte() = jvmcode.baload()
@@ -439,7 +445,6 @@ class JLCodegen {
                             emit(args[0])
                             emit(args[1])
                             val itemDescriptor: String = when args[0].type.arrayInnerType {
-                                case void() = throw Error("FUBAR arrayrealloc void[]")
                                 case array(inner) = "Ljava/lang/Object;"
                                 case klass(cls) = "Ljava/lang/Object;"
                                 else = args[0].type.arrayInnerType.toJVMString()
@@ -484,6 +489,7 @@ class JLCodegen {
                 case voidify(expr) = {
                     emit(expr)
                     when expr.type {
+                        case noreturn = ()
                         case void = ()
                         case long = jvmcode.pop2()
                         case double = jvmcode.pop2()
@@ -509,6 +515,9 @@ class JLCodegen {
                             jvmcode.invokespecial(ownerName, methodName, descriptor)
                         }
                         else = throw JLError("Unrecognized call kind " + kind, [expr.mark])
+                    }
+                    if expr.type.isNoReturn() {
+                        emitThrowNoReturnError()
                     }
                 }
                 case javanew(ownerName, descriptor, args) = {
@@ -555,8 +564,18 @@ class JLCodegen {
             }
         }
 
+        private def emitThrowNoReturnError(self) {
+            jvmcode.new_("java/lang/RuntimeException")
+            jvmcode.dup()
+            jvmcode.ldc("noreturn assertion error")
+            jvmcode.invokespecial(
+                "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V")
+            jvmcode.athrow()
+        }
+
         private def emitNewArray(self, itemtype: JLType) {
             when itemtype {
+                case noreturn() = throw Error("FUBAR")
                 case void() = throw Error("FUBAR")
                 case bool() = jvmcode.newarray("bool")
                 case char() = jvmcode.newarray("char")
@@ -575,6 +594,7 @@ class JLCodegen {
         ## i.e. the zero values for most primitives, and null for reference types.
         private def emitClearType(self, type: JLType) {
             when type {
+                case noreturn() = throw Error("FUBAR emitClearType noreturn")
                 case void() = throw Error("FUBAR emitClearType void")
                 case bool() = jvmcode.iconst_0()
                 case byte() = jvmcode.iconst_0()
@@ -591,6 +611,7 @@ class JLCodegen {
 
         private def emitArraySet(self, type: JLType) {
             when type {
+                case noreturn() = throw Error("FUBAR emitArraySet noreturn[]")
                 case void() = throw Error("FUBAR emitArraySet void[]")
                 case bool() = jvmcode.bastore()
                 case byte() = jvmcode.bastore()
@@ -634,6 +655,7 @@ class JLCodegen {
         private def store(self, local: JLIRLocal) {
             val index = localMap[local.id]
             when local.type {
+                case noreturn() = throw Error("getlocal noreturn variable")
                 case void() = throw Error("getlocal void variable")
                 case bool() = jvmcode.istore(index)
                 case byte() = jvmcode.istore(index)

@@ -270,6 +270,7 @@ class JLContext {
                     }
                 }
                 case type(type) = when type {
+                    case noreturn() = sb.add("N")
                     case void() = sb.add("V")
                     case int() = sb.add("I")
                     case long() = sb.add("J")
@@ -451,6 +452,7 @@ class JLContext {
                     }
                 }
                 case type(type) = when type {
+                    case noreturn() = sb.add("N")
                     case void() = sb.add("V")
                     case int() = sb.add("I")
                     case long() = sb.add("J")

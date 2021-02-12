@@ -73,6 +73,7 @@ class JLIRLocalContext {
 
     def solveType(self, texpr: JLAstType): JLType {
         when texpr.data {
+            case noreturn = JLType.noreturn()
             case void = JLType.void()
             case bool = JLType.bool()
             case byte = JLType.byte()
@@ -135,6 +136,7 @@ class JLIRLocalContext {
     def solveFieldType(self, texpr: JLAstType): JLType {
         val type = solveType(texpr)
         when type {
+            case noreturn = throw JLError("noreturn is not allowed here", [texpr.mark])
             case void = throw JLError("void is not allowed here", [texpr.mark])
             else = type
         }

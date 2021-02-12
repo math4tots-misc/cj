@@ -112,6 +112,7 @@ class JLToken: Repr {
     static val kwIS = 317
     static val kwNOT = 318
     static val kwIN = 319
+    static val kwNORETURN = 320
 
     static val keywordTypes: List[Int] = [
         kwABSTRACT, kwCONTINUE, kwFOR, kwNEW, kwSWITCH, kwASSERT, kwDEFAULT, kwGOTO,
@@ -121,7 +122,8 @@ class JLToken: Repr {
         kwINT, kwSHORT, kwTRY, kwCHAR, kwFINAL, kwINTERFACE, kwSTATIC, kwVOID, kwCLASS,
         kwVAL, kwFINALLY, kwLONG, kwSTRICTFP, kwVOLATILE, kwCONST, kwFLOAT, kwNATIVE,
         kwSUPER, kwWHILE, kwVAR, kwDEF, kwTRAIT, kwUNION, kwSTRUCT, kwAS, kwWHEN, kwASYNC,
-        kwAWAIT, kwBOOL, kwTRUE, kwFALSE, kwNULL, kwYIELD, kwAND, kwOR, kwIS, kwNOT, kwIN]
+        kwAWAIT, kwBOOL, kwTRUE, kwFALSE, kwNULL, kwYIELD, kwAND, kwOR, kwIS, kwNOT, kwIN,
+        kwNORETURN]
 
     static val modifierKeywordTypes: Set[Int] = Set(
         kwABSTRACT, kwSYNCHRONIZED, kwPRIVATE, kwPROTECTED, kwPUBLIC, kwSTATIC, kwNATIVE,
@@ -241,6 +243,7 @@ class JLToken: Repr {
         case kwIS = "kwIS"
         case kwNOT = "kwNOT"
         case kwIN = "kwIN"
+        case kwNORETURN = "kwNORETURN"
         case '\n' = "'\\n'"
         else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"
