@@ -1,0 +1,6 @@
+#!/bin/sh
+rm -rf target/jl1 && \
+time ./run cjx.jl1.main.Compiler -t \
+    $(find src/main/jl1/ -type f -name '*.jl1') \
+    $(find src/test/jl1 -type f -name '*.jl1') -d target/jl1 && \
+java -cp target/jl1 jl1.test.RunAllTests

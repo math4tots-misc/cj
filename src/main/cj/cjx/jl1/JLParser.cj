@@ -165,6 +165,26 @@ class JLParser {
         }
     }
 
+    def parseAnnotationStyleModifiers(self): List[String] {
+        val modifiers: List[String] = []
+        while consume('@') {
+            val nullableName = switch peek().type {
+                case (JLToken.tID) = switch peek().text {
+                    case "test" = null(next().text)
+                    else = null
+                }
+                else = null
+            }
+            if null(name) = nullableName {
+                modifiers.add(name)
+            } else {
+                throw JLError("Expected @modifier name", [mark])
+            }
+            expectDelimiters()
+        }
+        modifiers
+    }
+
     def parseModifiers(self): List[String] {
         val modifiers: List[String] = []
         while peek().type in JLToken.modifierKeywordTypes {
@@ -293,7 +313,9 @@ class JLParser {
 
     def parseMember(self): JLAstClass.Member {
         val comment = parseComment()
-        val modifiers = parseModifiers()
+        skipDelimiters()
+        val modifiers = parseAnnotationStyleModifiers()
+        modifiers.addAll(parseModifiers())
         switch peek().type {
             case (JLToken.kwVAR)
             case (JLToken.kwVAL) = JLAstClass.Member.field(parseField(comment, modifiers))

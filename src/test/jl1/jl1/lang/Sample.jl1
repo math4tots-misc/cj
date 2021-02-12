@@ -1,0 +1,8 @@
+package jl1.lang
+
+class Sample {
+
+    @test
+    def sample() {
+    }
+}
