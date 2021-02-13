@@ -616,6 +616,10 @@ class JLParser {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(false))
             }
+            case (JLToken.kwTHIS) = {
+                next()
+                JLAstExpr(mark, JLAstExpr.Data.this())
+            }
             case (JLToken.tINT) = {
                 JLAstExpr(mark, JLAstExpr.Data.int(translateInt(mark, next().text)))
             }

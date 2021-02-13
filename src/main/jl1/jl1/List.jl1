@@ -5,6 +5,17 @@ import jl1.StringBuilder
 
 class List[T] {
 
+    class Iterator[T] {
+        val list: List[T]
+        var i = 0
+        def hasNext(this): bool = i < list.size
+        def next(this): T = {
+            val t = list[i]
+            i++
+            t
+        }
+    }
+
     var array: T[]
     var size: int
 
@@ -38,6 +49,8 @@ class List[T] {
         }
         Self.new(newArray, newSize)
     }
+
+    def iter(this): Iterator[T] = Iterator[T](this)
 
     def toString(this): String {
         val sb = StringBuilder()

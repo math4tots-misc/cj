@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstLocal
 import cjx.jl1.JLIRFieldRef
 import cjx.jl1.JLParser
 import cjx.jl1.JLIRMetaSolver
@@ -54,6 +55,7 @@ class JLIRExpressionSolver {
     )
 
     val lctx: JLIRLocalContext
+    var nextTmpVarIndex = 0
 
     def __get_ctx(self): JLContext = lctx.ctx
 
@@ -79,6 +81,12 @@ class JLIRExpressionSolver {
             case void() = expr
             else = JLIRExpr(expr.mark, JLType.void(), JLIRExpr.Data.voidify(expr))
         }
+    }
+
+    def nextTempVarName(self): String {
+        val name = "$" + nextTmpVarIndex
+        nextTmpVarIndex = nextTmpVarIndex + 1
+        name
     }
 
     def solveVoidExpression(self, astExpr: JLAstExpr): JLIRExpr = (
@@ -592,8 +600,23 @@ class JLIRExpressionSolver {
                     ))
                 ])))
             }
-            case for_(name, container, body) = {
-                throw JLError("TODO: solve expression for_", [mark])
+            case for_(name, astContainer, astBody) = {
+                val iteratorName = nextTempVarName()
+                val iteratorAst = JLAstExpr(mark, JLAstExpr.Data.getvar(iteratorName))
+                solveExpression(JLAstExpr(mark, JLAstExpr.Data.classicFor(
+                    null(JLAstExpr(mark, JLAstExpr.Data.declvar(
+                        JLAstLocal(mark, ["var"], iteratorName, null, null(
+                            JLAstExpr(mark, JLAstExpr.Data.callinstance("iter", [
+                                astContainer]))))))),
+                    null(JLAstExpr(mark, JLAstExpr.Data.callinstance("hasNext", [
+                        iteratorAst]))),
+                    null,
+                    JLAstExpr(mark, JLAstExpr.Data.block([
+                        JLAstExpr(mark, JLAstExpr.Data.declvar(
+                            JLAstLocal(mark, [], name, null, null(
+                                JLAstExpr(mark, JLAstExpr.Data.callinstance("next", [
+                                    iteratorAst])))))),
+                        astBody])))), expectedType)
             }
             case operation(operator, astArgs) = {
                 when operator {
