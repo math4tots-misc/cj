@@ -10,11 +10,23 @@ import cjx.jl1.JLMark
 @derive(new)
 class JLAstClass {
 
+    @derive(repr)
     union Kind {
         case class_
         case union_
         case trait_
         case interface_
+
+        def isClassOrInterface(self): Bool = when self {
+            case class_ = true
+            case interface_ = true
+            else = false
+        }
+
+        def isInterface(self): Bool = when self {
+            case interface_ = true
+            else = false
+        }
     }
 
     union Member {
