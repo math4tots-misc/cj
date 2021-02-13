@@ -3,7 +3,8 @@
 (print "Hello world!")
 
 (val (f x)
-    (print (cat "x = " x)))
+    (print (cat "x1 = " x))
+    (print (cat "x2 = " x)))
 
 (f 123)
 
