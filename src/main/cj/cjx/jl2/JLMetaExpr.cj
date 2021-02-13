@@ -12,4 +12,6 @@ class JLMetaExpr {
     }
     val mark: JLMark
     val data: Data
+
+    def isApply(self): Bool = when data { case apply(f, args) = true; else = false }
 }

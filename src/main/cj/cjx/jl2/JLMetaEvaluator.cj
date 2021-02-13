@@ -19,18 +19,40 @@ class JLMetaEvaluator {
             case apply(form, argexprs) = {
                 val mark = expr.mark
                 switch form {
+                    case "var"
                     case "val" = {
-                        _checkArgc(mark, 2, argexprs.size())
-                        val name = getRawName(argexprs[0])
-                        val value = eval(argexprs[1])
-                        declvar(mark, name, value, false)
-                        JLMetaVal.nil()
+                        val mutable = form == "var"
+                        if argexprs and argexprs[0].isApply() {
+                            val names = getRawNameList(argexprs[0])
+                            val functionName = names[0]
+                            val argnames = names[1:]
+                            val body = if argexprs.size() == 2 { argexprs[1] } else {
+                                JLMetaExpr(mark, JLMetaExpr.Data.apply("begin", argexprs[1:]))
+                            }
+                            val lambda = JLMetaVal.lambda(mark, scope, argnames, null, body)
+                            declvar(mark, functionName, lambda, mutable)
+                            JLMetaVal.nil()
+                        } else {
+                            _checkArgc(mark, 2, argexprs.size())
+                            val name = getRawName(argexprs[0])
+                            val value = eval(argexprs[1])
+                            declvar(mark, name, value, mutable)
+                            JLMetaVal.nil()
+                        }
                     }
-                    case "var" = {
+                    case "set" = {
                         _checkArgc(mark, 2, argexprs.size())
                         val name = getRawName(argexprs[0])
-                        val value = eval(argexprs[1])
-                        declvar(mark, name, value, true)
+                        setvar(mark, name, eval(argexprs[1]))
+                        Default()
+                    }
+                    case "while" = {
+                        _checkMinArgc(mark, 1, argexprs.size())
+                        while eval(argexprs[0]) {
+                            for i = 1; i < argexprs.size(); i++ {
+                                eval(argexprs[i])
+                            }
+                        }
                         JLMetaVal.nil()
                     }
                     case "begin" = {
@@ -87,6 +109,9 @@ class JLMetaEvaluator {
                 for ; i < limit; i++ {
                     declvar(lmark, argnames[i], args[i], true)
                 }
+                for ; i < argnames.size(); i++ {
+                    declvar(lmark, argnames[i], JLMetaVal.nil(), true)
+                }
                 if null(va) = vararg {
                     val list = args[i:]
                     declvar(lmark, va, JLMetaVal.list(list), true)
@@ -112,7 +137,7 @@ class JLMetaEvaluator {
     }
 
     def _checkMinArgc(self, mark: JLMark, expected: Int, actual: Int) {
-        if expected < actual {
+        if actual < expected {
             throw _err(mark, "Expected at least " + expected + " args but got " + actual)
         }
     }
@@ -130,7 +155,11 @@ class JLMetaEvaluator {
                 if form == "list" {
                     args.map(arg -> getRawName(arg))
                 } else {
-                    throw _err(expr.mark, "Expected raw name list")
+                    val names = [form]
+                    for arg in args {
+                        names.add(getRawName(arg))
+                    }
+                    names
                 }
             }
             else = throw _err(expr.mark, "Expected raw name list")

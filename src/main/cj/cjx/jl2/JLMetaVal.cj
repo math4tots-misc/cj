@@ -5,7 +5,7 @@ import cjx.jl2.JLMetaEvaluator
 import cjx.jl2.JLMetaExpr
 import cjx.jl2.JLMetaScope
 
-union JLMetaVal: Eq, Repr, Default {
+union JLMetaVal: Eq, Repr, Default, ToBool {
     case nil
     case bool(Bool)
     case number(Double)
@@ -15,6 +15,16 @@ union JLMetaVal: Eq, Repr, Default {
     case builtin(Fn[JLMetaEvaluator, List[JLMetaVal], JLMetaVal])
 
     def default(): Self = nil()
+
+    def toBool(self): Bool = when self {
+        case nil = false
+        case bool(b) = b
+        case number(x) = x != 0
+        case string(s) = s.size() != 0
+        case list(list) = list.size() != 0
+        case lambda(m, s, a, v, b) = true
+        case builtin(f) = true
+    }
 
     def __eq(self, other: Self): Bool {
         when self {

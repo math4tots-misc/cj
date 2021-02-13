@@ -44,6 +44,9 @@ class JLMetaParser {
     }
     private def consume(self, type: Int): Bool = if at(type) { next(); true } else { false }
 
+    private def parseInt(self): Double = translateInt(
+        mark, expect(JLToken.tINT).text)
+
     private def parseDouble(self): Double = translateDouble(
         mark, expect(JLToken.tDOUBLE).text)
 
@@ -54,6 +57,19 @@ class JLMetaParser {
         expect(JLToken.tID).text
     }
 
+    private def parseIdEx(self): String {
+        switch peek().type {
+            case (JLToken.kwIF)
+            case (JLToken.kwELSE)
+            case (JLToken.kwWHILE)
+            case (JLToken.kwVAR)
+            case (JLToken.kwVAL)
+            case (JLToken.kwFALSE)
+            case (JLToken.kwTRUE) = JLToken.keywordString(next().type)
+            else = parseId()
+        }
+    }
+
     private def parseTypeId(self): String {
         expect(JLToken.tTYPEID).text
     }
@@ -61,6 +77,14 @@ class JLMetaParser {
     private def skipDelimiters(self) {
         while at('\n') or at(';') {
             next()
+        }
+    }
+
+    private def translateInt(mark: JLMark, input: String): Int {
+        if null(i) = input.parseInt() {
+            i
+        } else {
+            throw JLError("Unrecognized int literal " + input, [mark])
         }
     }
 
@@ -120,7 +144,7 @@ class JLMetaParser {
         switch peek().type {
             case '(' = {
                 next()
-                val form = parseId()
+                val form = parseIdEx()
                 val args: List[JLMetaExpr] = []
                 while not consume(')') {
                     args.add(parseExpr())
@@ -139,17 +163,23 @@ class JLMetaParser {
                 mark, JLMetaExpr.Data.literal(JLMetaVal.bool(true)))
             case (JLToken.kwFALSE) = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.bool(false)))
+            case (JLToken.tINT) = JLMetaExpr(
+                mark, JLMetaExpr.Data.literal(JLMetaVal.number(parseInt())))
             case (JLToken.tDOUBLE) = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.number(parseDouble())))
             case (JLToken.tSTRING) = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.string(parseString())))
+            case (JLToken.kwVAR)
+            case (JLToken.kwVAL) = JLMetaExpr(
+                mark, JLMetaExpr.Data.name(JLToken.keywordString(next().type)))
             case (JLToken.tID) = {
                 val name = parseId()
                 switch name {
                     case "nil" = JLMetaExpr(mark, JLMetaExpr.Data.literal(JLMetaVal.nil()))
-                    else = JLMetaExpr(mark, JLMetaExpr.Data.name(parseId()))
+                    else = JLMetaExpr(mark, JLMetaExpr.Data.name(name))
                 }
             }
+            else = throw JLError("Expected expression", [mark])
         }
     }
 }
