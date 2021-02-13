@@ -1,9 +1,18 @@
 package cjx.jl2
 
+import cjx.jl2.JLMetaEvaluator
 import cjx.jl1.JLError
 import cjx.jl2.JLMetaVal
 
 class JLMetaScope {
+
+    static val builtinFunctions: Map[String, Fn[JLMetaEvaluator, List[JLMetaVal], JLMetaVal]] = (
+        Map(
+            "print": (ev, args) -> {
+                ev.checkArgc(1, args.size())
+                IO.println(args[0])
+                Default()
+            }))
 
     @derive(new)
     class Entry {
@@ -18,7 +27,11 @@ class JLMetaScope {
 
     def new(parent: Nullable[Self]): Self {
         if null(p) = parent {
-            __malloc(p.depth + 1, null(p))
+            val scope = __malloc(p.depth + 1, null(p))
+            for (name, f) in builtinFunctions.pairs() {
+                scope.table[name] = Entry(0, false, JLMetaVal.builtin(f))
+            }
+            scope
         } else {
             __malloc(0, null)
         }

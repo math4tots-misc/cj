@@ -305,7 +305,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var methodRef = owner.findMethod(e.getName(), e.getMark());
 
                 if (methodRef.getMethod().isPrivate() && !isPrivateCompatible(e, methodRef)) {
-                    var name = methodRef.getOwner() + "." + methodRef.getName();
+                    var name = methodRef.getOwner().repr() + "." + methodRef.getName();
                     throw CJError.of(name + " is private and cannot be called here", e.getMark());
                 }
 
