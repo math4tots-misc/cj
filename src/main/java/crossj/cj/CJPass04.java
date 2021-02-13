@@ -670,7 +670,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var unitType = ctx.getUnitType();
                 var condition = evalBoolExpression(e.getCondition());
                 var body = evalUnitExpression(e.getBody());
-                return new CJIRWhile(e, unitType, condition, body);
+                return new CJIRWhile(e, condition.isAlwaysTrue() ? ctx.getNoReturnType() : unitType, condition, body);
             }
 
             @Override

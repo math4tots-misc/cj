@@ -20,4 +20,8 @@ public abstract class CJIRExpression extends CJIRNode<CJAstExpression> {
     public boolean introducesFreeVar() {
         return false;
     }
+
+    public boolean isAlwaysTrue() {
+        return false;
+    }
 }
