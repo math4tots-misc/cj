@@ -509,13 +509,19 @@ class JLParser {
             expr = switch toktype {
                 case '.' = {
                     next()
-                    val name = parseId()
-                    if at('(') {
-                        val args = [expr]
-                        args.addAll(parseArgs())
-                        JLAstExpr(mark, JLAstExpr.Data.callinstance(name, args))
+                    if consume('(') {
+                        val type = parseType()
+                        expect(')')
+                        JLAstExpr(mark, JLAstExpr.Data.cast(expr, type))
                     } else {
-                        JLAstExpr(mark, JLAstExpr.Data.getfield(expr, name))
+                        val name = parseId()
+                        if at('(') {
+                            val args = [expr]
+                            args.addAll(parseArgs())
+                            JLAstExpr(mark, JLAstExpr.Data.callinstance(name, args))
+                        } else {
+                            JLAstExpr(mark, JLAstExpr.Data.getfield(expr, name))
+                        }
                     }
                 }
                 case '[' = {

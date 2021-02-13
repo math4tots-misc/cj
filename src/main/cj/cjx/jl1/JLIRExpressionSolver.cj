@@ -726,7 +726,10 @@ class JLIRExpressionSolver {
                     }
                 }
             }
-            # case lambda(argnames, body) = solveLambda(argnames, body, expectedType)
+            case cast(innerAstExpr, astType) = {
+                val irType = lctx.solveType(astType)
+                solveExpression(innerAstExpr, null(irType))
+            }
             case meta(metaExpr) = {
                 val metaSolver = JLIRMetaSolver(lctx, self)
                 metaSolver.solveExpr(metaExpr, expectedType)

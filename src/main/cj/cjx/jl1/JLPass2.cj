@@ -30,6 +30,10 @@ class JLPass2 {
         val astcls = ctx.astClassMap[ircls.id]
         val thisType = JLType.klass(ircls)
 
+        if astcls.isUnion() {
+            addStuffForUnion(astcls, ircls)
+        }
+
         addSynthesizedInit(astcls, ircls)
         addSynthesizedClinit(astcls)
 
@@ -82,6 +86,16 @@ class JLPass2 {
         } else {
             null
         }
+    }
+
+    private def addStuffForUnion(self, astcls: JLAstClass, ircls: JLIRClass) {
+        # for astMember in astcls.members {
+        #     when astMember {
+        #         case case_(name, astTypes) = {
+        #         }
+        #         else = ()
+        #     }
+        # }
     }
 
     private def addSynthesizedInit(self, astcls: JLAstClass, ircls: JLIRClass) {

@@ -32,6 +32,7 @@ class JLIRClass {
     val templateArgumentsList: List[JLIRTemplateArgument] = []
     val _nonStaticFields: Nullable[List[JLIRField]] = null
     var _nextLambdaId = 0
+    val caseMap: Map[String, Tuple[Int, String, List[JLType]]] = Map()
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")

@@ -19,6 +19,7 @@ class JLAstClass {
 
     union Member {
         case klass(JLAstClass)
+        case case_(String, List[JLAstType])
         case field(JLAstField)
         case method(JLAstMethod)
         case conditional(JLAstMetaExpr, List[Member])

@@ -327,6 +327,7 @@ class JLIRLocalContext {
         while stack {
             when stack.pop() {
                 case klass(innercls) = ()
+                case case_(name, typeArgs) = ()
                 case field(astField) = ret.add(JLAstClass.DirectMember.field(astField))
                 case method(astMethod) = ret.add(JLAstClass.DirectMember.method(astMethod))
                 case conditional(condMetaExpr, otherMembers) = {
