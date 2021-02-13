@@ -58,15 +58,12 @@ class JLMetaParser {
     }
 
     private def parseIdEx(self): String {
-        switch peek().type {
-            case (JLToken.kwIF)
-            case (JLToken.kwELSE)
-            case (JLToken.kwWHILE)
-            case (JLToken.kwVAR)
-            case (JLToken.kwVAL)
-            case (JLToken.kwFALSE)
-            case (JLToken.kwTRUE) = JLToken.keywordString(next().type)
-            else = parseId()
+        if peek().type in JLToken.keywordTypes {
+            JLToken.keywordString(next().type)
+        } else if at(JLToken.tTYPEID) {
+            parseTypeId()
+        } else {
+            parseId()
         }
     }
 
@@ -144,12 +141,16 @@ class JLMetaParser {
         switch peek().type {
             case '(' = {
                 next()
-                val form = parseIdEx()
-                val args: List[JLMetaExpr] = []
-                while not consume(')') {
-                    args.add(parseExpr())
+                if consume(')') {
+                    JLMetaExpr(mark, JLMetaExpr.Data.literal(JLMetaVal.nil()))
+                } else {
+                    val form = parseIdEx()
+                    val args: List[JLMetaExpr] = []
+                    while not consume(')') {
+                        args.add(parseExpr())
+                    }
+                    JLMetaExpr(mark, JLMetaExpr.Data.apply(form, args))
                 }
-                JLMetaExpr(mark, JLMetaExpr.Data.apply(form, args))
             }
             case '[' = {
                 next()
@@ -173,13 +174,19 @@ class JLMetaParser {
             case (JLToken.kwVAL) = JLMetaExpr(
                 mark, JLMetaExpr.Data.name(JLToken.keywordString(next().type)))
             case (JLToken.tID) = {
-                val name = parseId()
+                val name = parseIdEx()
                 switch name {
                     case "nil" = JLMetaExpr(mark, JLMetaExpr.Data.literal(JLMetaVal.nil()))
                     else = JLMetaExpr(mark, JLMetaExpr.Data.name(name))
                 }
             }
-            else = throw JLError("Expected expression", [mark])
+            else = {
+                if peek().type in JLToken.keywordTypes {
+                    JLMetaExpr(mark, JLMetaExpr.Data.name(JLToken.keywordString(next().type)))
+                } else {
+                    throw JLError("Expected expression", [mark])
+                }
+            }
         }
     }
 }

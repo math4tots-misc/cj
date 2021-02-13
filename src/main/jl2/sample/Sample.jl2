@@ -15,3 +15,17 @@
     (set total (add total i))
     (set i (add i 1)))
 (print (cat "total = " total))
+(print [1 2 3])
+
+# (emit template_class)
+# (emit class
+#     (package "sample")
+#     (package "")
+# )
+
+(val package "package")
+
+(emit class (cat package ".Foo")
+    (emit method "foo"
+        (emit returnType )
+    ))

@@ -98,6 +98,13 @@ class JLMetaEvaluator {
         }
     }
 
+    def evalInt(self, expr: JLMetaExpr): Int {
+        when eval(expr) {
+            case number(x) = x.toInt()
+            else = throw JLError("Expected a number", [expr.mark])
+        }
+    }
+
     def _call(self, mark: JLMark, function: JLMetaVal, args: List[JLMetaVal]): JLMetaVal {
         when function {
             case builtin(f) = f.call(self, args)
@@ -151,16 +158,16 @@ class JLMetaEvaluator {
 
     def getRawNameList(self, expr: JLMetaExpr): List[String] {
         when expr.data {
+            case literal(value) = when value {
+                case nil = []
+                else = throw _err(expr.mark, "Expected raw name list")
+            }
             case apply(form, args) = {
-                if form == "list" {
-                    args.map(arg -> getRawName(arg))
-                } else {
-                    val names = [form]
-                    for arg in args {
-                        names.add(getRawName(arg))
-                    }
-                    names
+                val names = [form]
+                for arg in args {
+                    names.add(getRawName(arg))
                 }
+                names
             }
             else = throw _err(expr.mark, "Expected raw name list")
         }
