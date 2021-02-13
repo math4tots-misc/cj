@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLIRFieldRef
 import cjx.jl1.JLParser
@@ -244,7 +245,8 @@ class JLIRExpressionSolver {
                     case klass(ownercls) = {
                         if ownercls.isInterface() or ownercls.isAbstract() {
                             throw JLError(
-                                "new cannot be used with interface or abstract classes", [mark])
+                                "new cannot be used with interface, union or abstract classes",
+                                [mark])
                         }
                         val methodref = ownercls.getMethodRef(mark, "<init>")
                         # TODO: remove this 'dummyThis' arg hack
@@ -724,6 +726,7 @@ class JLIRExpressionSolver {
                     }
                 }
             }
+            # case lambda(argnames, body) = solveLambda(argnames, body, expectedType)
             case meta(metaExpr) = {
                 val metaSolver = JLIRMetaSolver(lctx, self)
                 metaSolver.solveExpr(metaExpr, expectedType)
@@ -747,6 +750,64 @@ class JLIRExpressionSolver {
             }
         }
         irExpr
+    }
+
+    def solveLambda(
+            self,
+            mark: JLMark,
+            captures: List[String],
+            argnames: List[String],
+            astBody: JLAstExpr,
+            expectedType: Nullable[JLType]): JLIRExpr {
+        throw JLError("TODO solveLambda", [mark])
+        # val fnClassName = "jl1.Fn" + argnames.size()
+        # val (argtypes, returnType) = {
+        #     val nullablePair = if null(etype) = expectedType {
+        #         when etype {
+        #             case klass(cls) = {
+        #                 if cls.name != fnClassName {
+        #                     null
+        #                 } else {
+        #                     val argtypes = cls.templateArgumentsList[:
+        #                         cls.templateArgumentsList.size() - 1]
+        #                     val returnType = cls.templateArgumentsList.last()
+        #                     null((argtypes, returnType))
+        #                 }
+        #             }
+        #             else = null
+        #         }
+        #     } else { null }
+        #     if null(pair) = nullablePair { pair } else {
+        #         throw JLError("Could not infer type of lambda expression", [mark])
+        #     }
+        # }
+        # val thisClass = lctx.thisClass
+        # val lambdaClassName = thisClass.newLambdaClassName()
+        # Assert.that(lambdaClassName.startsWith(thisClass.packageName + "."))
+        # val lambdaClassShortName = lambdaClassName[(thisClass.packageName + ".").size():]
+        # ctx.registerClassesInFiles([JLAstFile(
+        #     mark,
+        #     thisClass.packageName,
+        #     [],
+        #     [JLAstClass(
+        #         mark,
+        #         null,
+        #         [],
+        #         JLAstClass.Kind.class_,
+        #         lambdaClassShortName,
+        #         [],
+        #         [JLAstType(mark, JLAstType.Data.klass(fnClassName,
+        #             argtypes.map(t -> t.toAst()) + [returnType.toAst()]))],
+        #         [JLAstClass.Member.method(JLAstMethod(
+        #             mark,
+        #             null,
+        #             [],
+        #             "call",
+        #             [],
+        #             argtypes.map(t -> t.toAst())
+        #         ))]
+        #     )],
+        # )])
     }
 
     private def checkMethodArgs(

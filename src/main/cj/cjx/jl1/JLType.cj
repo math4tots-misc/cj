@@ -1,5 +1,7 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstType
+import cjx.jl1.JLMark
 import cj.Error
 import cjx.jl1.JLIRClass
 
@@ -16,6 +18,21 @@ union JLType: ToString, Eq {
     case double
     case array(JLType)
     case klass(JLIRClass)
+
+    def toAst(self, mark: JLMark): JLAstType = JLAstType(mark, when self {
+        case noreturn = JLAstType.Data.noreturn()
+        case void = JLAstType.Data.void()
+        case bool = JLAstType.Data.bool()
+        case byte = JLAstType.Data.byte()
+        case char = JLAstType.Data.char()
+        case short = JLAstType.Data.short()
+        case int = JLAstType.Data.int()
+        case long = JLAstType.Data.long()
+        case float = JLAstType.Data.float()
+        case double = JLAstType.Data.double()
+        case array(inner) = JLAstType.Data.array(inner.toAst(mark))
+        case klass(cls) = JLAstType.Data.klass(cls.name, [])
+    })
 
     def toString(self): String = when self {
         case noreturn() = "noreturn"

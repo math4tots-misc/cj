@@ -17,6 +17,7 @@ class JLIRClass {
     val id: Int # global unique identifier
     val modifiers: List[String]
     val _isInterface: Bool
+    var _isUnion = false
     val name: String  # fully qualified name
     var _superClass: Nullable[JLIRClass] = null
     val interfaces: List[JLIRClass] = []
@@ -30,14 +31,24 @@ class JLIRClass {
     val templateArgumentsMap: Map[String, JLIRTemplateArgument] = Map()
     val templateArgumentsList: List[JLIRTemplateArgument] = []
     val _nonStaticFields: Nullable[List[JLIRField]] = null
+    var _nextLambdaId = 0
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")
     def isInterface(self): Bool = _isInterface
+    def isUnion(self): Bool = _isUnion
     def isAbstract(self): Bool = "abstract" in modifiers
 
     def __set_superClass(self, cls: JLIRClass) { _superClass = null(cls) }
     def __get_superClass(self): JLIRClass = _superClass.get()
+
+    def newLambdaId(self): Int {
+        val id = _nextLambdaId
+        _nextLambdaId = _nextLambdaId + 1
+        id
+    }
+
+    def newLambdaClassName(self): String = name + "$lambda$" + newLambdaId()
 
     def addField(self, field: JLIRField) {
         fields.add(field)

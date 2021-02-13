@@ -260,7 +260,7 @@ class JLContext {
             templateArgs: List[JLIRTemplateArgument]): String {
         val sb = StringBuilder()
         sb.add(qualifiedClassName)
-        sb.add("$T$")
+        sb.add("$t$")
         for arg in templateArgs {
             when arg {
                 case int(i) = {
@@ -442,7 +442,7 @@ class JLContext {
             templateArgs: List[JLIRTemplateArgument]): String {
         val sb = StringBuilder()
         sb.add(methodTemplateName)
-        sb.add("$T$")
+        sb.add("$t$")
         for arg in templateArgs {
             when arg {
                 case int(i) = {
