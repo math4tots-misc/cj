@@ -1,5 +1,6 @@
 package cjx.jl3
 
+import cj.Error
 import cjx.jvm.JVMConstValue
 import cjx.jvm.JVMCodeBuilder
 import cjx.jl3.J3Expr
@@ -15,6 +16,7 @@ class J3Codegen {
 
     def emitClass(self, ircls: J3Class) {
         val jvmcls = JVMClass()
+        val lambdaNameFactory = LambdaNameFactory(ircls.name + "$l$")
         jvmcls.thisClass = jvmcls.cp.classref(jvmName(ircls))
         jvmcls.superClass = jvmcls.cp.classref(if null(scls) = ircls.superClass {
             jvmName(scls) } else { "java/lang/Object" })
@@ -55,7 +57,7 @@ class J3Codegen {
                     jvmmethod.descriptor = jvmType(irmethod.returnType)
                     if null(body) = irmethod.body {
                         jvmmethod.addCode(jvmcode -> {
-                            val egen = ExprGen(jvmcode)
+                            val egen = ExprGen(jvmcode, lambdaNameFactory)
                             egen.top(body)
                         })
                     }
@@ -78,8 +80,21 @@ class J3Codegen {
     }
 
     @derive(new)
+    class LambdaNameFactory {
+        val prefix: String
+        var nextId = 0
+
+        def newName(self): String {
+            val name = prefix + nextId
+            nextId = nextId + 1
+            name
+        }
+    }
+
+    @derive(new)
     class ExprGen {
         val jvmcode: JVMCodeBuilder
+        val lambdaNameFactory: LambdaNameFactory
 
         def top(self, expr: J3Expr) {
             emit(expr)
@@ -98,6 +113,9 @@ class J3Codegen {
         def emit(self, expr: J3Expr) {
             when expr.data {
                 case int(i) = jvmcode.ldc(JVMConstValue.int(i))
+                case lambda(captures, params, body) = {
+                    throw Error("TODO ExprGen.emit.lambda")
+                }
             }
         }
     }

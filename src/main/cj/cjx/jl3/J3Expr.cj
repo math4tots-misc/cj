@@ -7,7 +7,7 @@ import cjx.jl3.J3Mark
 class J3Expr {
     union Data {
         case int(Int)
-        # case lambda(List[J3Local], List[J3Local], J3Expr)
+        case lambda(List[J3Local], List[J3Local], J3Expr)
     }
     val mark: J3Mark
     val type: J3Type
