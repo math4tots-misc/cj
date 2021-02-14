@@ -489,8 +489,7 @@ class JLIRExpressionSolver {
                         ")",
                         [mark])
                 } else {
-                    JLIRExpr(mark, JLType.klass(lctx.thisClass), JLIRExpr.Data.getlocal(
-                        lctx.getLocalOrNull("this").get()))
+                    solveExpression(JLAstExpr(mark, JLAstExpr.Data.getvar("this")), expectedType)
                 }
             }
             case list(astArgs) = {

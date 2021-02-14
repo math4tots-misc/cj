@@ -16,6 +16,7 @@ import cjx.jl1.JLContext
 ## jl1 code generator
 @derive(new)
 class JLCodegen {
+    static val sep = "/"
     val ctx: JLContext
     val outdir: String
 
@@ -28,16 +29,13 @@ class JLCodegen {
         for className in ctx.classMap.keys() {
             val cls = ctx.classMap[className]
             if not cls.isNative() {
-                val jvmcls = emitClass(cls)
-                val relpath = cls.name.replace(".", "/") + ".class"
-                val outpath = outdir + "/" + relpath
-                val jvmbuffer = jvmcls.toBuffer()
-                FS.writeFileBytes(outpath, jvmbuffer)
+                emitClass(cls)
             }
         }
     }
 
-    def emitClass(self, cls: JLIRClass): JVMClass {
+    def emitClass(self, cls: JLIRClass) {
+        val lambdaNameFactory = LambdaNameFactory(cls.toJVMName() + "$l$")
         val jvmcls = JVMClass()
         jvmcls.thisClass = jvmcls.cp.classref(cls.toJVMName())
         jvmcls.superClass = jvmcls.cp.classref(cls.superClass.toJVMName())
@@ -74,11 +72,14 @@ class JLCodegen {
                     jvmmethod.addCode(jvmcode -> {
                         val exprgen = ExprGen(
                             ctx,
-                            cls,
-                            jvmcls,
-                            jvmmethod,
-                            jlmethod,
-                            jvmcode)
+                            outdir,
+                            jvmcls.cp,
+                            jvmcode,
+                            lambdaNameFactory,
+                            cls.toJVMName())
+                        for parameter in jlmethod.parameters {
+                            exprgen.addLocal(parameter)
+                        }
                         exprgen.top(body)
                         jvmcode.maxLocals = exprgen.maxLocals
                     })
@@ -86,18 +87,33 @@ class JLCodegen {
             })
         }
 
-        jvmcls
+        val relpath = cls.name.replace(".", sep) + ".class"
+        val outpath = outdir + sep + relpath
+        val jvmbuffer = jvmcls.toBuffer()
+        FS.writeFileBytes(outpath, jvmbuffer)
+    }
+
+    @derive(new)
+    class LambdaNameFactory {
+        val prefix: String
+        var nextId = 0
+
+        def newName(self): String {
+            val name = prefix + nextId
+            nextId = nextId + 1
+            name
+        }
     }
 
     ## Expression code generator
     @derive(new)
     class ExprGen {
         val ctx: JLContext
-        val cls: JLIRClass
-        val jvmcls: JVMClass
-        val jvmmethod: JVMClass.MethodBuilder
-        val jlmethod: JLIRMethod
+        val outdir: String
+        val cp: JVMClass.ConstantPool
         val jvmcode: JVMCodeBuilder
+        val lambdaNameFactory: LambdaNameFactory
+        val thisJVMClassName: String
         var finallyJumpRegistry: Nullable[FinallyJumpRegistry] = null
 
         ## Maps local variable ids to their JVM local variable slot
@@ -118,6 +134,16 @@ class JLCodegen {
             localMap[localvar.id] = slot
         }
 
+        def addLocalThisForLambda(self) {
+            addLocal(JLIRLocal(
+                Default(),
+                -1,
+                [],
+                "this$lambda",
+                JLType.void(),
+            ))
+        }
+
         def pushScope(self) {
             localSizeStack.add(localSize)
             localStack.add([])
@@ -132,12 +158,9 @@ class JLCodegen {
 
         ## Emit an expression from the top of the method
         def top(self, expr: JLIRExpr) {
-            for parameter in jlmethod.parameters {
-                addLocal(parameter)
-            }
             emit(expr)
             if not expr.terminatesFlow {
-                when jlmethod.returnType {
+                when expr.type {
                     case noreturn = ()
                     case void = jvmcode.return_()
                     case bool = jvmcode.ireturn()
@@ -214,21 +237,7 @@ class JLCodegen {
                     store(local)
                 }
                 case getlocal(local) = {
-                    val index = localMap[local.id]
-                    when local.type {
-                        case noreturn() = throw Error("getlocal noreturn variable")
-                        case void() = throw Error("getlocal void variable")
-                        case bool() = jvmcode.iload(index)
-                        case byte() = jvmcode.iload(index)
-                        case char() = jvmcode.iload(index)
-                        case short() = jvmcode.iload(index)
-                        case int() = jvmcode.iload(index)
-                        case long() = jvmcode.lload(index)
-                        case float() = jvmcode.fload(index)
-                        case double() = jvmcode.dload(index)
-                        case array(inner) = jvmcode.aload(index)
-                        case klass(cls) = jvmcode.aload(index)
-                    }
+                    load(local)
                 }
                 case setlocal(local, valexpr) = {
                     # Try optimizing wth iinc for the really common case
@@ -275,6 +284,13 @@ class JLCodegen {
                         fieldref.owner.toJVMName(),
                         fieldref.field.name,
                         fieldref.field.type.toJVMString())
+                }
+                case getcapture(capture) = {
+                    jvmcode.aload(0)
+                    jvmcode.getfield(
+                        thisJVMClassName,
+                        capture.name,
+                        capture.type.toJVMString())
                 }
                 case not_(boolexpr) = {
                     emit(boolexpr)
@@ -370,7 +386,7 @@ class JLCodegen {
                             bodyStartPc,
                             bodyEndPc,
                             handlerStartPc,
-                            jvmcls.cp.classref(ecls.toJVMName())))
+                            cp.classref(ecls.toJVMName())))
                     }
                     val okLandPos = jvmcode.code.size()
 
@@ -424,6 +440,90 @@ class JLCodegen {
                         case klass(cls) = cls.toJVMName()
                         else = throw JLError("FUBAR downcast", [expr.mark])
                     })
+                }
+                case lambda(captures, params, body) = {
+                    val lambdaClassName = lambdaNameFactory.newName()
+                    val ljvmcls = JVMClass()
+                    val fncls = when expr.type {
+                        case klass(fncls) = fncls
+                        else = throw JLError("FUBAR lambda type must be a class", [expr.mark])
+                    }
+                    val initDescriptor = (
+                        "(" + "".join(captures.map(c -> c.type.toJVMString())) + ")V")
+
+                    # emit an anonymous class for the lambda expression
+                    ljvmcls.thisClass = ljvmcls.cp.classref(lambdaClassName)
+                    ljvmcls.superClass = ljvmcls.cp.classref(fncls.toJVMName())
+                    for capture in captures {
+                        ljvmcls.addField(ljvmfield -> {
+                            ljvmfield.accessFlags = JVMClass.cACC_FINAL
+                            ljvmfield.name = capture.name
+                            ljvmfield.descriptor = capture.type.toJVMString()
+                        })
+                    }
+                    ljvmcls.addMethod(ljvmmethod -> {
+                        ljvmmethod.accessFlags = JVMClass.cACC_PUBLIC
+                        ljvmmethod.name = "<init>"
+                        ljvmmethod.descriptor = initDescriptor
+                        ljvmmethod.addCode(ljvmcode -> {
+                            # invoke super
+                            ljvmcode.aload(0)
+                            ljvmcode.invokespecial(fncls.toJVMName(), "<init>", "()V")
+
+                            # set all field values
+                            for i = 0; i < captures.size(); i++ {
+                                ljvmcode.aload(0)
+                                ljvmcode.aload(i + 1)
+                                ljvmcode.putfield(
+                                    lambdaClassName,
+                                    captures[i].name,
+                                    captures[i].type.toJVMString())
+                            }
+                            ljvmcode.return_()
+                        })
+                    })
+                    ljvmcls.addMethod(ljvmmethod -> {
+                        ljvmmethod.accessFlags = JVMClass.cACC_PUBLIC
+                        ljvmmethod.name = "call"
+                        ljvmmethod.descriptor = (
+                            fncls.getMethodRef(expr.mark, "call").method.getJVMDescriptor())
+                        ljvmmethod.addCode(ljvmcode -> {
+                            val exprgen = ExprGen(
+                                ctx,
+                                outdir,
+                                ljvmcls.cp,
+                                ljvmcode,
+                                lambdaNameFactory,
+                                lambdaClassName)
+                            exprgen.addLocalThisForLambda()
+                            for param in params {
+                                exprgen.addLocal(param)
+                            }
+                            exprgen.top(body)
+                            ljvmcode.maxLocals = exprgen.maxLocals
+                        })
+                    })
+                    val relpath = lambdaClassName.replace("/", JLCodegen.sep) + ".class"
+                    val outpath = outdir + "/" + relpath
+                    val ljvmbuffer = ljvmcls.toBuffer()
+                    FS.writeFileBytes(outpath, ljvmbuffer)
+
+                    # use the lambda class we just generated
+                    jvmcode.new_(lambdaClassName)
+                    jvmcode.dup()
+                    for capture in captures {
+                        when capture.source {
+                            case local(local) = load(local)
+                            case capture(capture) = {
+                                jvmcode.aload(0)
+                                jvmcode.getfield(
+                                    thisJVMClassName,
+                                    capture.name,
+                                    capture.type.toJVMString())
+                            }
+                        }
+                    }
+                    jvmcode.invokespecial(lambdaClassName, "<init>", initDescriptor)
                 }
                 case operation(operator, args) = {
                     when operator {
@@ -733,6 +833,24 @@ class JLCodegen {
             jvmcode.iconst_0() # 1-byte (op)
             jvmcode.goto(3 + 1) # 3-bytes (op, u16-branch-loc)
             jvmcode.iconst_1() # 1-byte
+        }
+
+        private def load(self, local: JLIRLocal) {
+            val index = localMap[local.id]
+            when local.type {
+                case noreturn() = throw Error("getlocal noreturn variable")
+                case void() = throw Error("getlocal void variable")
+                case bool() = jvmcode.iload(index)
+                case byte() = jvmcode.iload(index)
+                case char() = jvmcode.iload(index)
+                case short() = jvmcode.iload(index)
+                case int() = jvmcode.iload(index)
+                case long() = jvmcode.lload(index)
+                case float() = jvmcode.fload(index)
+                case double() = jvmcode.dload(index)
+                case array(inner) = jvmcode.aload(index)
+                case klass(cls) = jvmcode.aload(index)
+            }
         }
 
         private def store(self, local: JLIRLocal) {

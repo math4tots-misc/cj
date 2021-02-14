@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRCapture
 import cjx.jl1.JLIRClass
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLIRFieldRef
@@ -31,6 +32,7 @@ class JLIRExpr {
         case setstatic(JLIRFieldRef, JLIRExpr) # set static field
         case getfield(JLIRFieldRef, JLIRExpr) # get instance field
         case setfield(JLIRFieldRef, JLIRExpr, JLIRExpr) # set instance field
+        case getcapture(JLIRCapture)
         case not_(JLIRExpr)
         case and_(List[JLIRExpr])
         case or_(List[JLIRExpr])
@@ -41,6 +43,7 @@ class JLIRExpr {
         case tryfinally(JLIRExpr, JLIRExpr)
         case upcast(JLIRExpr)
         case downcast(JLIRExpr)
+        case lambda(List[JLIRCapture], List[JLIRLocal], JLIRExpr)
         case operation(Operator, List[JLIRExpr])
 
         # ================================================================================
