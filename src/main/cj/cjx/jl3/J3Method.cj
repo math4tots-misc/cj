@@ -9,9 +9,23 @@ class J3Method {
     val mark: JLMark
     val modifiers: List[String]
     val name: String
-    val parameters: List[J3Local]
     val returnType: J3Type
+    val parameters: List[J3Local] = []
     val body: Nullable[J3Expr] = null
+    val locals: List[J3Local] = []
 
     def isStatic(self): Bool = "static" in modifiers
+
+    def newLocal(self, modifiers: List[String], name: String, type: J3Type): J3Local {
+        val id = locals.size()
+        val local = J3Local(id, modifiers, name, type)
+        locals.add(local)
+        local
+    }
+
+    def addParam(self, modifiers: List[String], name: String, type: J3Type): J3Local {
+        val local = newLocal(modifiers, name, type)
+        parameters.add(local)
+        local
+    }
 }

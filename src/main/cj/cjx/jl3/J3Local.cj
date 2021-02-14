@@ -4,8 +4,8 @@ import cjx.jl3.J3Type
 
 @derive(new)
 class J3Local {
-    val modifiers: List[String]
     val id: Int
+    val modifiers: List[String]
     val name: String
     val type: J3Type
 
