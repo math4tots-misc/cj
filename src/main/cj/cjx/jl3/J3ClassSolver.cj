@@ -21,30 +21,33 @@ class J3ClassSolver {
     def initWithAst(self, astcls: JLAstClass) {
         solver.todo1(() -> {
             for astBase in astcls.bases {
-                val irBase = solveType(astBase)
-                when irBase {
-                    case klass(baseClass) = {
-                        if baseClass.isInterface() {
-                            cls.interfaces.add(baseClass)
-                        } else {
-                            if null(otherSuperClass) = cls.superClass {
-                                throw JLError(
-                                    "Multiple base classes are not allowed (" +
-                                    otherSuperClass +
-                                    ", " +
-                                    baseClass +
-                                    ")",
-                                    [astBase.mark])
-                            } else {
-                                cls.superClass = null(baseClass)
-                            }
-                        }
-                    }
-                    else = throw JLError(
-                        "Cannot inherit from " + irBase, [astBase.mark])
-                }
+                addBase(astBase.mark, solveType(astBase))
             }
         })
+    }
+
+    private def addBase(self, mark: JLMark, irBase: J3Type) {
+        when irBase {
+            case klass(baseClass) = {
+                if baseClass.isInterface() {
+                    cls.interfaces.add(baseClass)
+                } else {
+                    if null(otherSuperClass) = cls.superClass {
+                        throw JLError(
+                            "Multiple base classes are not allowed (" +
+                            otherSuperClass +
+                            ", " +
+                            baseClass +
+                            ")",
+                            [mark])
+                    } else {
+                        cls.superClass = null(baseClass)
+                    }
+                }
+            }
+            else = throw JLError(
+                "Cannot inherit from " + irBase, [mark])
+        }
     }
 
     private def solveType(self, astType: JLAstType): J3Type {
