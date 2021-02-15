@@ -240,6 +240,7 @@ class JLIRLocalContext {
             expectedReturnType: Nullable[JLType],
             astArgs: List[JLAstExpr],
             irArgs: List[JLIRExpr]): List[JLIRTemplateArgument] {
+        val ownerlctx = ctx.getLctxForClass(ownercls)
         val stack: List[Tuple[JLMark, JLAstTemplateArgument, JLIRTemplateArgument]] = []
         var nextInferArgIndex = 0
         val limit = Math.min(methodTemplate.parameters.size(), astArgs.size())
@@ -292,7 +293,8 @@ class JLIRLocalContext {
                                     # bind: type argument
                                     map[shortName] = actual
                                 }
-                            } else if null(qualifiedName) = typeMap.getOrNull(shortName) {
+                            } else if null(qualifiedName) = ownerlctx.typeMap.getOrNull(
+                                    shortName) {
                                 when actual {
                                     case type(actualType) = when actualType {
                                         case klass(actualClass) = {

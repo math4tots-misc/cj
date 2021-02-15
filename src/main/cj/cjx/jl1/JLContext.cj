@@ -54,6 +54,10 @@ class JLContext {
     private val pass3Todo: List[JLIRClass] = []
     private val pass3Seen: Set[Int] = Set()
 
+    private val lctxMap: Map[Int, JLIRLocalContext] = Map()
+
+    def getLctxForClass(self, ircls: JLIRClass): JLIRLocalContext = lctxMap[ircls.id]
+
     ## Registers the classes and class templates in these files without
     ## actually resolving them
     def registerClassesInFiles(self, files: List[JLAstFile]) {
@@ -129,6 +133,7 @@ class JLContext {
     private def runPass1(self, ircls: JLIRClass) {
         val lctx = JLIRLocalContext(self, typeMapMap[ircls.id], ircls.name, "")
         val astcls = astClassMap[ircls.id]
+        lctxMap[ircls.id] = lctx
 
         var superClass: Nullable[JLIRClass] = null
         for astBase in astcls.bases {
