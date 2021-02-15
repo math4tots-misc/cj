@@ -292,7 +292,7 @@ class JLIRExpressionSolver {
                 } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
                     val irArgs: List[JLIRExpr] = []
                     val templateArgs = lctx.inferTemplateArgs(
-                        self, mark, methodTemplate, expectedType, astArgs, irArgs)
+                        self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
                     val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
                     checkMethodArgs(true, mark, methodref, astArgs, irArgs)
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
@@ -779,65 +779,7 @@ class JLIRExpressionSolver {
         irExpr
     }
 
-    def solveLambda(
-            self,
-            mark: JLMark,
-            captures: List[String],
-            argnames: List[String],
-            astBody: JLAstExpr,
-            expectedType: Nullable[JLType]): JLIRExpr {
-        throw JLError("TODO solveLambda", [mark])
-        # val fnClassName = "jl1.Fn" + argnames.size()
-        # val (argtypes, returnType) = {
-        #     val nullablePair = if null(etype) = expectedType {
-        #         when etype {
-        #             case klass(cls) = {
-        #                 if cls.name != fnClassName {
-        #                     null
-        #                 } else {
-        #                     val argtypes = cls.templateArgumentsList[:
-        #                         cls.templateArgumentsList.size() - 1]
-        #                     val returnType = cls.templateArgumentsList.last()
-        #                     null((argtypes, returnType))
-        #                 }
-        #             }
-        #             else = null
-        #         }
-        #     } else { null }
-        #     if null(pair) = nullablePair { pair } else {
-        #         throw JLError("Could not infer type of lambda expression", [mark])
-        #     }
-        # }
-        # val thisClass = lctx.thisClass
-        # val lambdaClassName = thisClass.newLambdaClassName()
-        # Assert.that(lambdaClassName.startsWith(thisClass.packageName + "."))
-        # val lambdaClassShortName = lambdaClassName[(thisClass.packageName + ".").size():]
-        # ctx.registerClassesInFiles([JLAstFile(
-        #     mark,
-        #     thisClass.packageName,
-        #     [],
-        #     [JLAstClass(
-        #         mark,
-        #         null,
-        #         [],
-        #         JLAstClass.Kind.class_,
-        #         lambdaClassShortName,
-        #         [],
-        #         [JLAstType(mark, JLAstType.Data.klass(fnClassName,
-        #             argtypes.map(t -> t.toAst()) + [returnType.toAst()]))],
-        #         [JLAstClass.Member.method(JLAstMethod(
-        #             mark,
-        #             null,
-        #             [],
-        #             "call",
-        #             [],
-        #             argtypes.map(t -> t.toAst())
-        #         ))]
-        #     )],
-        # )])
-    }
-
-    private def handleLambdaGivenTypes(
+    def handleLambdaGivenTypes(
             self,
             mark: JLMark,
             astParams: List[JLAstLocal],
@@ -1040,7 +982,7 @@ class JLIRExpressionSolver {
                             methodName) {
                         val irArgs: List[JLIRExpr] = [irOwner]
                         val templateArgs = lctx.inferTemplateArgs(
-                            self, mark, methodTemplate, expectedType, astArgs, irArgs)
+                            self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
                         val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
                         checkMethodArgs(true, mark, methodref, astArgs, irArgs)
                         JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(

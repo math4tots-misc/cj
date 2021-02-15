@@ -235,6 +235,7 @@ class JLIRLocalContext {
             self,
             solver: JLIRExpressionSolver,
             outerMark: JLMark,
+            ownercls: JLIRClass,
             methodTemplate: JLAstMethod,
             expectedReturnType: Nullable[JLType],
             astArgs: List[JLAstExpr],
