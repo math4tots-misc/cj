@@ -596,12 +596,58 @@ class JLParser {
         expr
     }
 
+    def atLambdaExpression(self): Bool {
+        val save = i
+        if consume(JLToken.tID) and consume(JLToken.tRIGHT_ARROW) {
+            i = save
+            return true
+        }
+        if not consume('(') {
+            i = save
+            return false
+        }
+        while consume(JLToken.tID) and consume(',') {}
+        if consume(')') and consume(JLToken.tRIGHT_ARROW) {
+            i = save
+            true
+        } else {
+            i = save
+            false
+        }
+    }
+
+    def parseLambdaExpression(self): JLAstExpr {
+        val lmark = mark
+        if at('(') {
+            val params: List[JLAstLocal] = []
+            parseJoin('(', ')', ',', () -> {
+                val pmark = mark
+                val name = parseId()
+                params.add(JLAstLocal(pmark, [], name, null, null))
+            })
+            expect(JLToken.tRIGHT_ARROW)
+            val body = parseExpression()
+            JLAstExpr(lmark, JLAstExpr.Data.lambda(params, body))
+        } else {
+            val name = parseId()
+            expect(JLToken.tRIGHT_ARROW)
+            val body = parseExpression()
+            JLAstExpr(lmark, JLAstExpr.Data.lambda([
+                JLAstLocal(lmark, [], name, null, null)], body))
+        }
+    }
+
     def parseAtomExpression(self): JLAstExpr {
+        if atLambdaExpression() {
+            return parseLambdaExpression()
+        }
         val mark = mark
         switch peek().type {
             case '{' = parseBlock()
             case '(' = {
-                expect('(')
+                if atLambdaExpression() {
+                }
+                next()
                 val inner = parseExpression()
                 expect(')')
                 inner

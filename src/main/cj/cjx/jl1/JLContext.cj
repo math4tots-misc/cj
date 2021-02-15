@@ -29,6 +29,11 @@ class JLContext {
     static val builtinTypeMap: Map[String, String] = Map(
         "Object": "java.lang.Object",
         "String": "java.lang.String",
+        "Fn0": "jl1.Fn0",
+        "Fn1": "jl1.Fn1",
+        "Fn2": "jl1.Fn2",
+        "Fn3": "jl1.Fn3",
+        "Fn4": "jl1.Fn4",
     )
 
     ## Maps class id to AstClasses

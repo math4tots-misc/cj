@@ -1,0 +1,5 @@
+package jl1
+
+abstract class Fn3[A, B, C, R] {
+    def call(this, a: A, b: B, c: C): R
+}

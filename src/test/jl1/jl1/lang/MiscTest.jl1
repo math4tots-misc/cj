@@ -37,4 +37,16 @@ class MiscTest {
     }
 
     def throwSomething() = throw Error("Hello")
+
+    @test
+    def lambda() {
+        {
+            val f: Fn[String] = () -> "Hello from lambda"
+            Assert.equal(f.call(), "Hello from lambda")
+        }
+        {
+            val f: Fn[int, int] = i -> i + 2
+            Assert.equal(f.call(5), 7)
+        }
+    }
 }

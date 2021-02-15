@@ -65,6 +65,9 @@ class JLCodegen {
                 if jlmethod.isStatic() {
                     jvmmethod.accessFlags = jvmmethod.accessFlags | JVMClass.cACC_STATIC
                 }
+                if jlmethod.body.isEmpty() {
+                    jvmmethod.accessFlags = jvmmethod.accessFlags | JVMClass.cACC_ABSTRACT
+                }
                 jvmmethod.name = jlmethod.name
                 jvmmethod.descriptor = jlmethod.getJVMDescriptor()
 
@@ -140,7 +143,7 @@ class JLCodegen {
                 -1,
                 [],
                 "this$lambda",
-                JLType.void(),
+                JLType.int(),
             ))
         }
 
@@ -480,6 +483,10 @@ class JLCodegen {
                                     captures[i].type.toJVMString())
                             }
                             ljvmcode.return_()
+
+                            val maxLocals = 1 + captures.map(
+                                c -> c.type.getJVMSlotSize()).fold(0, (a, b) -> a + b)
+                            ljvmcode.maxLocals = maxLocals
                         })
                     })
                     ljvmcls.addMethod(ljvmmethod -> {

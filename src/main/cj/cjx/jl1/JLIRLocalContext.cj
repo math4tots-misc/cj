@@ -42,6 +42,8 @@ class JLIRLocalContext {
 
     val localStack: List[Map[String, JLIRLocal]] = [Map()]
 
+    var _allLocals: List[JLIRLocal] = ?
+
     def new(ctx: JLContext,
             typeMap: Map[String, String],
             className: String,
@@ -51,6 +53,7 @@ class JLIRLocalContext {
             for parameter in thisMethod.parameters {
                 localStack.last()[parameter.name] = parameter
             }
+            _allLocals = thisMethod.locals
         }
         self
     }
@@ -86,7 +89,12 @@ class JLIRLocalContext {
             case float = JLType.float()
             case double = JLType.double()
             case array(inner) = JLType.array(solveFieldType(inner))
-            case klass(shortName, astArgs) = {
+            case klass(rawShortName, astArgs) = {
+                val shortName = switch rawShortName {
+                    case "Fn" = if astArgs.size() > 0 { "Fn" + (astArgs.size() - 1) } else {
+                        rawShortName }
+                    else = rawShortName
+                }
                 if shortName == "Self" {
                     JLType.klass(thisClass)
                 } else if null(templateArg) = getTemplateArgumentOrNull(shortName) {
@@ -173,7 +181,9 @@ class JLIRLocalContext {
             modifiers: List[String],
             name: String,
             type: JLType): JLIRLocal {
-        val local = thisMethod.newLocal(mark, modifiers, name, type)
+        val id = _allLocals.size()
+        val local = JLIRLocal(mark, id, modifiers, name, type)
+        _allLocals.add(local)
         localStack.last()[name] = local
         local
     }
@@ -317,7 +327,7 @@ class JLIRLocalContext {
     def getListClass(self, mark: JLMark, innerType: JLType): JLIRClass = (
         ctx.getListClass(mark, innerType, ensurePass2))
 
-    private def __get_ensurePass2(self): Bool = methodName.size() > 0
+    def __get_ensurePass2(self): Bool = methodName.size() > 0
 
     ## List the members of a class, resolving any conditionals
     def listMembers(self, ircls: JLIRClass): List[JLAstClass.DirectMember] {

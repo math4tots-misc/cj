@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLIRFieldRef
@@ -729,6 +730,30 @@ class JLIRExpressionSolver {
                 val irType = lctx.solveType(astType)
                 solveExpression(innerAstExpr, null(irType))
             }
+            case lambda(astParams, astBody) = {
+                val nullableFncls = if null(etype) = expectedType {
+                    when etype {
+                        case klass(fcls) = null(fcls)
+                        else = null
+                    }
+                } else { null }
+                val fncls = if null(fncls) = nullableFncls { fncls } else {
+                    throw JLError("Could not infer type of lambda expression", [mark])
+                }
+                val expectedFunctionTemplateName = "jl1.Fn" + astParams.size()
+                if fncls.unreifiedName != expectedFunctionTemplateName {
+                    throw JLError(
+                        "Expected " + expectedFunctionTemplateName + " but got " + fncls,
+                        [mark])
+                }
+                val templateArgs = fncls.templateArgumentsList.map(arg -> when arg {
+                    case type(t) = t
+                    else = throw JLError("Expected type but got " + arg, [mark])
+                })
+                val paramtypes = templateArgs[:templateArgs.size() - 1]
+                val returnType = templateArgs.last()
+                handleLambdaGivenTypes(mark, astParams, astBody, paramtypes, null(returnType))
+            }
             case meta(metaExpr) = {
                 val metaSolver = JLIRMetaSolver(lctx, self)
                 metaSolver.solveExpr(metaExpr, expectedType)
@@ -810,6 +835,38 @@ class JLIRExpressionSolver {
         #         ))]
         #     )],
         # )])
+    }
+
+    private def handleLambdaGivenTypes(
+            self,
+            mark: JLMark,
+            astParams: List[JLAstLocal],
+            astBody: JLAstExpr,
+            ptypes: List[JLType],
+            expectedReturnType: Nullable[JLType]): JLIRExpr {
+        Assert.equal(astParams.size(), ptypes.size())
+        val llctx = JLIRLocalContext(ctx, lctx.typeMap, lctx.className, "")
+        llctx._allLocals = [JLIRLocal(mark, 0, [], "this$lambda", JLType.void())]
+        for i = 0; i < astParams.size(); i++ {
+            llctx.newLocal(astParams[i].mark, [], astParams[i].name, ptypes[i])
+        }
+        val irParams = llctx._allLocals[1:]
+        val esolver = JLIRExpressionSolver(llctx)
+        val irBody = esolver.solveExpression(astBody, expectedReturnType)
+        val templateArgTypes = ptypes.clone()
+        templateArgTypes.add(irBody.type)
+        val functionClassTemplateName = "jl1.Fn" + astParams.size()
+        val functionClassTemplateArgs = (
+            templateArgTypes.map(t -> JLIRTemplateArgument.type(t)))
+        val functionType = ctx.getReifiedClassType(
+            mark,
+            functionClassTemplateName,
+            functionClassTemplateArgs,
+            lctx.ensurePass2)
+        JLIRExpr(mark, functionType, JLIRExpr.Data.lambda(
+            [],
+            irParams,
+            irBody))
     }
 
     private def checkMethodArgs(

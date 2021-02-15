@@ -12,7 +12,7 @@ import cjx.jl1.JLType
 import cjx.jl1.JLMark
 
 @derive(new)
-class JLIRClass {
+class JLIRClass: Repr {
     val mark: JLMark
     val id: Int # global unique identifier
     val modifiers: List[String]
@@ -156,4 +156,12 @@ class JLIRClass {
     }
 
     def isFinal(self): Bool = "final" in modifiers
+
+    def repr(self): String = {
+        if unreifiedName {
+            unreifiedName + "[" + ", ".join(templateArgumentsList) + "]"
+        } else {
+            name
+        }
+    }
 }

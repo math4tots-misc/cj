@@ -37,7 +37,7 @@ class JLAstExpr : Default {
         case try_(JLAstExpr, List[Tuple[String, JLAstType, JLAstExpr]], Nullable[JLAstExpr])
         case operation(Operator, List[JLAstExpr])
         case cast(JLAstExpr, JLAstType)
-        case lambda(List[String], JLAstExpr)
+        case lambda(List[JLAstLocal], JLAstExpr)
 
         case meta(JLAstMetaExpr)
 

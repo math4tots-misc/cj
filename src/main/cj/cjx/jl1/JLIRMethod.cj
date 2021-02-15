@@ -25,16 +25,4 @@ class JLIRMethod {
         "(" + "".join((
             if isStatic() { parameters } else { parameters[1:] }
         ).map(p -> p.type.toJVMString())) + ")" + returnType.toJVMString())
-
-    def newLocal(
-            self,
-            mark: JLMark,
-            modifiers: List[String],
-            name: String,
-            type: JLType): JLIRLocal {
-        val id = locals.size()
-        val local = JLIRLocal(mark, id, modifiers, name, type)
-        locals.add(local)
-        local
-    }
 }
