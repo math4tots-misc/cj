@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLAstMetaExpr
 import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstType
@@ -16,8 +17,8 @@ class JLAstExpr : Default {
         case block(List[JLAstExpr])
         case callnew(JLAstType, List[JLAstExpr])
         case calltype(JLAstType, List[JLAstExpr]) # call a type like a function
-        case callstatic(JLAstType, String, List[JLAstExpr])
-        case callinstance(String, List[JLAstExpr])
+        case callstatic(JLAstType, String, List[JLAstTemplateArgument], List[JLAstExpr])
+        case callinstance(String, List[JLAstTemplateArgument], List[JLAstExpr])
         case callname(String, List[JLAstExpr])
         case getstatic(JLAstType, String)
         case setstatic(JLAstType, String, JLAstExpr)

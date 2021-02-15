@@ -500,6 +500,31 @@ class JLParser {
         }
     }
 
+    private def atMethodCall(self): Bool {
+        if at('(') {
+            return true
+        }
+        val save = i
+        if not consume('[') {
+            return false
+        }
+        var depth = 1
+        while depth > 0 and not at(JLToken.tEOF) {
+            switch next().type {
+                case '[' = { depth += 1 }
+                case ']' = { depth -= 1 }
+                else = ()
+            }
+        }
+        if depth == 0 and at('(') {
+            i = save
+            true
+        } else {
+            i = save
+            false
+        }
+    }
+
     def parseExpressionWithPrecedence(self, precedence: Int): JLAstExpr {
         var expr = parseAtomExpression()
         var tokenPrecedence = getTokenPrecedence(peek().type)
@@ -515,10 +540,11 @@ class JLParser {
                         JLAstExpr(mark, JLAstExpr.Data.cast(expr, type))
                     } else {
                         val name = parseId()
-                        if at('(') {
+                        if atMethodCall() {
+                            val targs = if at('[') { parseTemplateArgs() } else { [] }
                             val args = [expr]
                             args.addAll(parseArgs())
-                            JLAstExpr(mark, JLAstExpr.Data.callinstance(name, args))
+                            JLAstExpr(mark, JLAstExpr.Data.callinstance(name, targs, args))
                         } else {
                             JLAstExpr(mark, JLAstExpr.Data.getfield(expr, name))
                         }
@@ -746,9 +772,10 @@ class JLParser {
                         JLAstExpr(mark, JLAstExpr.Data.callnew(classtype, args))
                     } else {
                         val memberName = parseId()
-                        if at('(') {
+                        if atMethodCall() {
+                            val targs = if at('[') { parseTemplateArgs() } else { [] }
                             val args = parseArgs()
-                            JLAstExpr(mark, JLAstExpr.Data.callstatic(classtype, memberName, args))
+                            JLAstExpr(mark, JLAstExpr.Data.callstatic(classtype, memberName, targs, args))
                         } else {
                             JLAstExpr(mark, JLAstExpr.Data.getstatic(classtype, memberName))
                         }

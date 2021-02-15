@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLIRTemplateArgument
 import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstLocal
@@ -275,14 +276,14 @@ class JLIRExpressionSolver {
                         mark,
                         if ownercls.getMethodRefOrNull("jl$new").isPresent() {
                             # Call ".jl$new" if present
-                            JLAstExpr.Data.callstatic(astOwnerType, "jl$new", astArgs)
+                            JLAstExpr.Data.callstatic(astOwnerType, "jl$new", [], astArgs)
                         } else {
                             # Otherwise, fallback to calling ".new"
                             JLAstExpr.Data.callnew(astOwnerType, astArgs)
                         }),
                     expectedType)
             }
-            case callstatic(astOwnerType, methodName, astArgs) = {
+            case callstatic(astOwnerType, methodName, astTemplArgs, astArgs) = {
                 val ownercls = lctx.solveClass(astOwnerType)
                 if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
                     val methodref = ownercls.getMethodRef(mark, methodName)
@@ -291,8 +292,12 @@ class JLIRExpressionSolver {
                         methodref, irArgs))
                 } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
                     val irArgs: List[JLIRExpr] = []
-                    val templateArgs = lctx.inferTemplateArgs(
-                        self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
+                    val templateArgs = if astTemplArgs {
+                        lctx.solveTemplateArgs(mark, astTemplArgs)
+                    } else {
+                        lctx.inferTemplateArgs(
+                            self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
+                    }
                     val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
                     checkMethodArgs(true, mark, methodref, astArgs, irArgs)
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
@@ -301,9 +306,9 @@ class JLIRExpressionSolver {
                     throw JLError("Method " + methodName + " not found in class " + ownercls, [mark])
                 }
             }
-            case callinstance(methodName, astArgs) = {
+            case callinstance(methodName, astTemplArgs, astArgs) = {
                 val irOwner = solveExpression(astArgs[0], null)
-                handleInstanceMethod(mark, expectedType, methodName, astArgs, irOwner)
+                handleInstanceMethod(mark, expectedType, methodName, astTemplArgs, astArgs, irOwner)
             }
             case callname(methodName, astArgs) = {
                 # syntactic sugar for callstatic or callinstance
@@ -313,12 +318,14 @@ class JLIRExpressionSolver {
                     solveExpression(JLAstExpr(mark, JLAstExpr.Data.callstatic(
                         ownercls.toAstType(mark),
                         methodName,
+                        [],
                         astArgs)), expectedType)
                 } else {
                     val newAstArgs = [JLAstExpr(mark, JLAstExpr.Data.this())]
                     newAstArgs.addAll(astArgs)
                     solveExpression(JLAstExpr(mark, JLAstExpr.Data.callinstance(
                         methodName,
+                        [],
                         newAstArgs)), expectedType)
                 }
             }
@@ -608,15 +615,15 @@ class JLIRExpressionSolver {
                 solveExpression(JLAstExpr(mark, JLAstExpr.Data.classicFor(
                     null(JLAstExpr(mark, JLAstExpr.Data.declvar(
                         JLAstLocal(mark, ["var"], iteratorName, null, null(
-                            JLAstExpr(mark, JLAstExpr.Data.callinstance("iter", [
+                            JLAstExpr(mark, JLAstExpr.Data.callinstance("iter", [], [
                                 astContainer]))))))),
-                    null(JLAstExpr(mark, JLAstExpr.Data.callinstance("hasNext", [
+                    null(JLAstExpr(mark, JLAstExpr.Data.callinstance("hasNext", [], [
                         iteratorAst]))),
                     null,
                     JLAstExpr(mark, JLAstExpr.Data.block([
                         JLAstExpr(mark, JLAstExpr.Data.declvar(
                             JLAstLocal(mark, [], name, null, null(
-                                JLAstExpr(mark, JLAstExpr.Data.callinstance("next", [
+                                JLAstExpr(mark, JLAstExpr.Data.callinstance("next", [], [
                                     iteratorAst])))))),
                         astBody])))), expectedType)
             }
@@ -705,6 +712,7 @@ class JLIRExpressionSolver {
                                         mark,
                                         expectedType,
                                         methodName,
+                                        [],
                                         [astArgs[0], astArgs[i]],
                                         irExpr)
                                     if negate {
@@ -715,7 +723,7 @@ class JLIRExpressionSolver {
                                 irExpr
                             } else {
                                 val irExpr = handleInstanceMethod(
-                                    mark, expectedType, methodName, astArgs, irArg0)
+                                    mark, expectedType, methodName, [], astArgs, irArg0)
                                 if negate {
                                     JLIRExpr(mark, JLType.bool(), JLIRExpr.Data.not_(irExpr))
                                 } else {
@@ -906,6 +914,7 @@ class JLIRExpressionSolver {
             mark: JLMark,
             expectedType: Nullable[JLType],
             methodName: String,
+            astTemplArgs: List[JLAstTemplateArgument],
             astArgs: List[JLAstExpr],
             irOwner: JLIRExpr): JLIRExpr {
         when irOwner.type {
@@ -981,10 +990,14 @@ class JLIRExpressionSolver {
                     } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
                             methodName) {
                         val irArgs: List[JLIRExpr] = [irOwner]
-                        val templateArgs = lctx.inferTemplateArgs(
-                            self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
+                        val templateArgs = if astTemplArgs {
+                            lctx.solveTemplateArgs(mark, astTemplArgs)
+                        } else {
+                            lctx.inferTemplateArgs(
+                                self, mark, ownercls, methodTemplate, expectedType, astArgs, irArgs)
+                        }
                         val methodref = ctx.getReifiedMethod(mark, ownercls, methodTemplate, templateArgs)
-                        checkMethodArgs(true, mark, methodref, astArgs, irArgs)
+                        checkMethodArgs(false, mark, methodref, astArgs, irArgs)
                         JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                             methodref, irArgs))
                     } else {

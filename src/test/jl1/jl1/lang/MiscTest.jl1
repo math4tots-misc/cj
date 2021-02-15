@@ -51,8 +51,13 @@ class MiscTest {
         }
         {
             val strings = ["abc", "hello", "world", "foobar"]
-            val sizes = strings.map(s -> s.size())
+            val sizes = strings.map[int](s -> s.size())
             Assert.equal(sizes, [3, 5, 5, 6])
+        }
+        {
+            val strings = ["abc", "hello", "world", "foobar"]
+            val nums = strings.map[int](s -> s.size()).map[int](i -> i * i)
+            Assert.equal(nums, [9, 25, 25, 36])
         }
     }
 }
