@@ -27,6 +27,7 @@ class List[T] {
     def __getitem(this, i: int): T = array[i]
     def __setitem(this, i: int, t: T) = (array[i] = t)
 
+    ## TODO: template arg return type
     def map(this, f: Fn[T, int]): List[int] {
         val ret = List[int].empty()
         for t in this {
