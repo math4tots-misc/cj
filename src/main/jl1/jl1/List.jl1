@@ -27,6 +27,26 @@ class List[T] {
     def __getitem(this, i: int): T = array[i]
     def __setitem(this, i: int, t: T) = (array[i] = t)
 
+    def map(this, f: Fn[T, int]): List[int] {
+        val ret = List[int].empty()
+        for t in this {
+            ret.add(f.call(t))
+        }
+        ret
+    }
+
+    def __eq(this, other: Self): bool {
+        if size != other.size {
+            false
+        } else {
+            var eq = true
+            for i = 0; eq and i < size; i++ {
+                eq = array[i] == other.array[i]
+            }
+            eq
+        }
+    }
+
     def add(this, t: T) {
         if size < array.size() {
             array[size] = t

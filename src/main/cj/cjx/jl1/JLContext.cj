@@ -219,7 +219,16 @@ class JLContext {
             ensurePass2: Bool): JLIRClass {
         val reifiedClassName = getReifiedClassName(mark, qualifiedClassName, templateArgs)
         if reifiedClassName not in classMap {
-            if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+            if null((typeMap, originalTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+                val classTemplate = JLAstClass(
+                    originalTemplate.mark,
+                    originalTemplate.comment,
+                    originalTemplate.modifiers,
+                    originalTemplate.kind,
+                    originalTemplate.shortName,
+                    originalTemplate.templateParameters.clone(),
+                    originalTemplate.bases.clone(),
+                    originalTemplate.members.clone())
                 checkTemplateArgs(mark, classTemplate.templateParameters, templateArgs)
                 initReifiedClass(
                     mark,

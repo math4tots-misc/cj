@@ -643,6 +643,10 @@ class JLCodegen {
                                 "java/util/Arrays",
                                 "copyOf",
                                 "([" + itemDescriptor + "I)[" + itemDescriptor)
+                            if (itemDescriptor == "Ljava/lang/Object;" and
+                                    expr.type.toJVMString() != itemDescriptor) {
+                                jvmcode.checkcast(expr.type.toJVMString())
+                            }
                         }
                     }
                 }
@@ -775,8 +779,8 @@ class JLCodegen {
                 case short() = jvmcode.newarray("short")
                 case int() = jvmcode.newarray("int")
                 case long() = jvmcode.newarray("long")
-                case array(inner) = jvmcode.anewarray(itemtype.toJVMString())
-                case klass(cls) = jvmcode.anewarray(itemtype.toJVMString())
+                case array(inner) = jvmcode.anewarray(inner.toJVMString())
+                case klass(cls) = jvmcode.anewarray(cls.toJVMName())
             }
         }
 

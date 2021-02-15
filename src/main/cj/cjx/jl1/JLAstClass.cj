@@ -55,6 +55,7 @@ class JLAstClass {
     def isTrait(self): Bool = when kind { case trait_ = true; else = false }
     def isInterface(self): Bool = when kind { case interface_ = true; else = false }
 
+    def isAbstract(self): Bool = "abstract" in modifiers
     def isNative(self): Bool = "native" in modifiers
 
     def __get_fields(self): List[JLAstField] = {

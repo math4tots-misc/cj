@@ -502,6 +502,7 @@ union Opcode {
         new_: 1,
         dup: 1,
         iinc: 0,
+        checkcast: 0,
         iconst_0: 1,
         iconst_1: 1,
         iconst_2: 1,

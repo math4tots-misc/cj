@@ -272,7 +272,13 @@ class JLIRLocalContext {
                     JLAstTemplateArgument(
                         methodTemplate.parameters[i].mark,
                         JLAstTemplateArgument.Data.type(
-                            methodTemplate.parameters[i].type.get())),
+                            # if the parameter type is empty, this probably means
+                            # the parameter is a 'this' argument
+                            if null(t) = methodTemplate.parameters[i].type {
+                                t
+                            } else {
+                                JLAstType(expr.mark, JLAstType.Data.int())
+                            })),
                     JLIRTemplateArgument.type(expr.type)))
             }
             val (mark, expected, actual) = stack.pop()

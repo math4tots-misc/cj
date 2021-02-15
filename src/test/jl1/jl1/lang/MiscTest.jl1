@@ -1,5 +1,6 @@
 package jl1.lang
 
+import jl1.IO
 import jl1.Error
 import jl1.Assert
 
@@ -47,6 +48,11 @@ class MiscTest {
         {
             val f: Fn[int, int] = i -> i + 2
             Assert.equal(f.call(5), 7)
+        }
+        {
+            val strings = ["abc", "hello", "world", "foobar"]
+            val sizes = strings.map(s -> s.size())
+            Assert.equal(sizes, [3, 5, 5, 6])
         }
     }
 }
