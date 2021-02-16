@@ -44,7 +44,7 @@ union JLIRMetaVal: Repr, Eq, Default {
         case truthy
     }
 
-    @derive(new, repr)
+    @derive(repr)
     class Scope {
         val parent: Nullable[Scope]
         val locals: Map[String, JLIRMetaVal] = Map()

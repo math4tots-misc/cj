@@ -1,6 +1,6 @@
 package cjx.jl3
 
-@derive(new, repr)
+@derive(repr)
 class J3Mark: Default {
     private static val _default: Self = Self("<builtin>", 1, 1)
 

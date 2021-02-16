@@ -1,6 +1,6 @@
 package cjx.ez
 
-@derive(new, repr)
+@derive(repr)
 class EZMark: Default {
     private static val _default: Self = Self("<builtin>", 1, 1)
 

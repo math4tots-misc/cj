@@ -1,6 +1,6 @@
 package cjx.lang
 
-@derive(new, repr)
+@derive(repr)
 class CJMark : Default {
     private static val _default : CJMark = Self("<builtin>", 1, 1)
 

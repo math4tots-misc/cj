@@ -101,7 +101,7 @@ class Sample {
         }
     }
 
-    @derive(new, default)
+    @derive(default)
     class ConstantPool {
         val infos: List[CpInfo] = []
         val classrefMap: Map[String, Int] = Map()

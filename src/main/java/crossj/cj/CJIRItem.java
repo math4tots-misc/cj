@@ -6,7 +6,6 @@ import crossj.base.Map;
 import crossj.base.Pair;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
-    private final boolean deriveNew;
     private final boolean deriveEq;
     private final boolean deriveHash;
     private final boolean deriveRepr;
@@ -33,7 +32,6 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
 
         // process derive lists
         {
-            boolean deriveNew = false;
             boolean deriveEq = false;
             boolean deriveHash = false;
             boolean deriveRepr = false;
@@ -41,9 +39,6 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             boolean deriveDefault = false;
             for (var command : annotations.getDeriveList()) {
                 switch (command) {
-                    case "new":
-                        deriveNew = true;
-                        break;
                     case "eq":
                         deriveEq = true;
                         break;
@@ -55,7 +50,6 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
                         deriveRepr = true;
                         break;
                     case "pod":
-                        deriveNew = true;
                         deriveEq = true;
                         deriveHash = true;
                         deriveRepr = true;
@@ -68,7 +62,6 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
                         throw CJError.of("Unrecognized derive command: " + command, ast.getMark());
                 }
             }
-            this.deriveNew = deriveNew;
             this.deriveEq = deriveEq;
             this.deriveHash = deriveHash;
             this.deriveRepr = deriveRepr;
@@ -85,10 +78,6 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
             shortNameMap.put(imp.getAlias(), imp.getFullName());
         }
         shortNameMap.put(ast.getShortName(), fullName);
-    }
-
-    public boolean isDeriveNew() {
-        return deriveNew;
     }
 
     public boolean isDeriveEq() {

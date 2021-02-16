@@ -1173,7 +1173,7 @@ class JVMClass {
         val attributes: List[AttributeInfo]
     }
 
-    @derive(new, repr)
+    @derive(repr)
     class ExceptionTableEntry {
         val startPc: Int
         val endPc: Int
