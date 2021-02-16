@@ -567,6 +567,22 @@ public final class CJParser {
         return Optional.empty();
     }
 
+    private boolean isGetStaticField(CJAstExpression expression) {
+        if (!(expression instanceof CJAstMethodCall)) {
+            return false;
+        }
+        var call = (CJAstMethodCall) expression;
+        return call.getName().startsWith("__get_") && call.getOwner().isPresent() && call.getArgs().isEmpty();
+    }
+
+    private boolean isGetInstanceField(CJAstExpression expression) {
+        if (!(expression instanceof CJAstMethodCall)) {
+            return false;
+        }
+        var call = (CJAstMethodCall) expression;
+        return call.getName().startsWith("__get_") && call.getOwner().isEmpty() && call.getArgs().size() == 1;
+    }
+
     private CJAstExpression parseExpressionWithPrecedenceUnchecked(int precedence) {
         var expr = parseAtomExpression();
         var tokenPrecedence = getTokenPrecedence(peek().type);
@@ -587,13 +603,9 @@ public final class CJParser {
                             expr = new CJAstMethodCall(methodMark, Optional.empty(), name, typeArgs, args);
                         } else {
                             switch (peek().type) {
-                                case '=':
                                 case CJToken.PLUS_EQ: {
                                     String prefix;
                                     switch (peek().type) {
-                                        case '=':
-                                            prefix = "__set_";
-                                            break;
                                         case CJToken.PLUS_EQ:
                                             prefix = "__augadd_";
                                             break;
@@ -667,8 +679,24 @@ public final class CJParser {
                 case '=': {
                     next();
                     var valexpr = parseExpressionWithPrecedence(tokenPrecedence + 1);
-                    var target = expressionToTarget(expr);
-                    expr = new CJAstAssignment(opMark, target, valexpr);
+                    if (isGetStaticField(expr)) {
+                        var call = (CJAstMethodCall) expr;
+                        Assert.that(call.getName().startsWith("__get_"));
+                        Assert.equals(call.getArgs().size(), 0);
+                        var fieldName = call.getName().substring("__get_".length());
+                        expr = new CJAstMethodCall(opMark, call.getOwner(), "__set_" + fieldName, List.of(),
+                                List.of(valexpr));
+                    } else if (isGetInstanceField(expr)) {
+                        var call = (CJAstMethodCall) expr;
+                        Assert.that(call.getName().startsWith("__get_"));
+                        Assert.equals(call.getArgs().size(), 1);
+                        var fieldName = call.getName().substring("__get_".length());
+                        expr = new CJAstMethodCall(opMark, call.getOwner(), "__set_" + fieldName, List.of(),
+                                List.of(call.getArgs().get(0), valexpr));
+                    } else {
+                        var target = expressionToTarget(expr);
+                        expr = new CJAstAssignment(opMark, target, valexpr);
+                    }
                     break;
                 }
                 case CJToken.PLUS_EQ:
@@ -1028,13 +1056,9 @@ public final class CJParser {
                     return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
                 } else {
                     switch (peek().type) {
-                        case '=':
                         case CJToken.PLUS_EQ: {
                             String prefix;
                             switch (peek().type) {
-                                case '=':
-                                    prefix = "__set_";
-                                    break;
                                 case CJToken.PLUS_EQ:
                                     prefix = "__augadd_";
                                     break;
