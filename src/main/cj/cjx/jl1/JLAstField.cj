@@ -4,7 +4,6 @@ import cjx.jl1.JLAstExpr
 import cjx.jl1.JLAstType
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLAstField {
     val mark: JLMark
     val comment: Nullable[String]

@@ -14,7 +14,6 @@ import cjx.jvm.JVMClass.CodeAttribute
 import cjx.jvm.JVMClass.AttributeInfo
 import cjx.jvm.JVMClass.AttributeInfoData
 
-@derive(new)
 class JVMCodeBuilder {
     val methodBuilder: JVMClass.MethodBuilder
     var maxLocals: Int = 0

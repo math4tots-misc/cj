@@ -7,7 +7,6 @@ import cjx.xx.XXMark
 import cjx.xx.XXAst
 import cjx.xx.llir.XXLLIRType
 
-@derive(new)
 class XXSolver {
     val classMap: Map[String, XXLLIRClass] = Map()
     val templateMap: Map[String, Tuple[Scope, XXAst.Item]] = Map()

@@ -6,7 +6,6 @@ import cjx.xx.llir.XXLLIRType
 import cjx.xx.llir.XXLLIRLocal
 import cjx.xx.XXMark
 
-@derive(new)
 class XXLLIRMethod {
     val mark: XXMark
     val modifiers: List[String]

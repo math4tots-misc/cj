@@ -4,7 +4,6 @@ import cjx.jl1.JLAstTemplateArgument
 import cjx.jl1.JLMark
 
 ## Type expression
-@derive(new)
 class JLAstType {
 
     union Data {

@@ -4,7 +4,6 @@ import cjx.xx.XXMark
 
 class XXAst {
 
-    @derive(new)
     class File {
         val mark: XXMark
         val packageName: String
@@ -12,7 +11,6 @@ class XXAst {
         val items: List[Item]
     }
 
-    @derive(new)
     class Import {
         val mark: XXMark
         val fullName: String
@@ -28,7 +26,6 @@ class XXAst {
         def __eq(self, other: Self): Bool = repr() == other.repr()
     }
 
-    @derive(new)
     class Item {
         val mark: XXMark
         val kind: ItemKind
@@ -39,7 +36,6 @@ class XXAst {
         val itemBody: ItemBody
     }
 
-    @derive(new)
     class TemplateParameter {
         val mark: XXMark
         val name: String
@@ -52,7 +48,6 @@ class XXAst {
         case method(Method)
     }
 
-    @derive(new)
     class Field {
         val mark: XXMark
         val modifiers: List[String]
@@ -61,7 +56,6 @@ class XXAst {
         val init: Nullable[Expr]
     }
 
-    @derive(new)
     class Method {
         val mark: XXMark
         val modifiers: List[String]
@@ -72,21 +66,18 @@ class XXAst {
         val body: Nullable[Expr]
     }
 
-    @derive(new)
     class Local {
         val mark: XXMark
         val name: String
         val type: Nullable[Type]
     }
 
-    @derive(new)
     class Type {
         val mark: XXMark
         val name: String
         val args: List[Expr]
     }
 
-    @derive(new)
     class Expr {
         val mark: XXMark
         val data: ExprData

@@ -4,7 +4,6 @@ import cjx.lang.CJIRReifiedMethod
 import cjx.lang.CJIRType
 import cjx.lang.CJMark
 
-@derive(new)
 class CJIRExpression {
     union Data {
         case unit

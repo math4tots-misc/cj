@@ -3,7 +3,6 @@ package cjx.jl1
 import cjx.jl1.JLType
 import cjx.jl1.JLIRLocal
 
-@derive(new)
 class JLIRCapture {
 
     union Source {

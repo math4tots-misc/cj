@@ -4,7 +4,6 @@ import cjx.xx.llir.XXLLIRType
 import cjx.xx.XXMark
 import cjx.xx.llir.XXLLIRLocal
 
-@derive(new)
 class XXLLIRLocals {
     val list: List[XXLLIRLocal] = []
 

@@ -3,7 +3,6 @@ package cjx.xx.llir
 import cjx.xx.llir.XXLLIRType
 import cjx.xx.XXMark
 
-@derive(new)
 class XXLLIRField {
     val mark: XXMark
     val modifiers: List[String]

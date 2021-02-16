@@ -12,4 +12,8 @@ public enum CJIRItemKind {
     public boolean isTypeKind() {
         return !isTraitKind();
     }
+
+    public boolean isUnion() {
+        return this == Union;
+    }
 }

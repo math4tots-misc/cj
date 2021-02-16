@@ -8,7 +8,6 @@ import cjx.jvm.JVMConstValue
 import cjx.jvm.JVMClass
 import cjx.ez.EZIR
 
-@derive(new)
 class EZCodegen {
     static val sep = "/"
     val outdir: String
@@ -116,7 +115,6 @@ class EZCodegen {
         }
     }
 
-    @derive(new)
     class ExprGen {
         val jvmcode: JVMCodeBuilder
         var maxLocals = 0

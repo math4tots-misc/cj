@@ -43,7 +43,6 @@ class Test11Class {
         Assert.equal(d.immutableField, "imfield")
     }
 
-    @derive(new)
     class DeriveNew {
         static val someStaticField : String = "static field here"
         var mutableField : List[Int]
@@ -156,7 +155,6 @@ class Test11Class {
         }
     }
 
-    @derive(new)
     class ImplicitLocals {
         var x : Int = 0
 
@@ -182,7 +180,6 @@ class Test11Class {
         Assert.equal(obj.x, [6, 7, 8])
     }
 
-    @derive(new)
     class NonStaticLateInit {
         @lateinit var x : List[Int]
     }
@@ -195,7 +192,6 @@ class Test11Class {
         Assert.equal(obj.y, 99)
     }
 
-    @derive(new)
     class AlternativeLateinit {
         var y : Int = ?
     }

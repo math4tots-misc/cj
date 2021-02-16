@@ -79,7 +79,6 @@ class Sample {
         FS.writeFileBytes(path, b)
     }
 
-    @derive(new)
     class Context {
         val cp: ConstantPool = Default()
         val methods: List[MethodInfo] = []
@@ -279,7 +278,6 @@ class Sample {
         }
     }
 
-    @derive(new)
     class MethodInfo {
         val accessFlags: Int
         val nameIndex: Int
@@ -305,7 +303,6 @@ class Sample {
         def toAttribute(self): AttributeInfo
     }
 
-    @derive(new)
     class AttributeInfo {
         val attributeNameIndex: Int
         val data: AttributeInfoData
@@ -328,7 +325,6 @@ class Sample {
         }
     }
 
-    @derive(new)
     class CodeAttribute {
         val maxStack: Int
         val maxLocals: Int
@@ -379,7 +375,6 @@ class Sample {
     }
 
     ## Bytecode builder
-    @derive(new)
     class Code : ToAttribute {
         val ctx: Context
         var maxLocals = 0

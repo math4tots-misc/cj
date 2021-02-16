@@ -24,7 +24,6 @@ import cjx.jl1.JLContext
 import cjx.jl1.JLIRClass
 import cjx.jl1.JLAstFile
 
-@derive(new)
 class JLIRExpressionSolver {
     static val homogeneousIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
         JLAstExpr.Operator.add(): JLIRExpr.Operator.iadd(),

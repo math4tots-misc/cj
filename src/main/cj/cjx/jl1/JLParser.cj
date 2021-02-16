@@ -19,7 +19,6 @@ import cjx.jl1.JLAstFile
 import cjx.jl1.JLMark
 import cjx.jl1.JLToken
 
-@derive(new)
 class JLParser {
 
     static val combineOperators: Set[JLAstExpr.Operator] = Set(

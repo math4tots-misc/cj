@@ -7,7 +7,6 @@ import cjx.lang.CJIRTypeCondition
 import cjx.lang.CJIRTypeParameter
 import cjx.lang.CJMark
 
-@derive(new)
 class CJIRMethod {
     val mark: CJMark
     val name: String

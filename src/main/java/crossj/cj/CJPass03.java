@@ -137,7 +137,11 @@ final class CJPass03 extends CJPassBaseEx {
             materializeMethod(item, mallocMethodAst, true, null);
         }
 
-        if (item.isDeriveNew()) {
+        // regardless of deriveNew, always synthesize a "new" method if one isn't
+        // already defined
+        // if (item.isDeriveNew()) {
+        if (item.getKind() == CJIRItemKind.Class && !item.isNative()
+                && !item.getMethods().any(m -> m.getName().equals("new"))) {
             deriveItemClassCheck(item, "new");
             var methodAst = synthesizeNewMethod(item);
             materializeMethod(item, methodAst, true, null);

@@ -21,7 +21,6 @@ import cjx.jl1.JLMark
 import cjx.jl1.JLType
 import cjx.jl1.JLIRClass
 
-@derive(new)
 class JLPass2 {
     val ctx: JLContext
 

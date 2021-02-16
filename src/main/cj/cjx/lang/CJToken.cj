@@ -1,6 +1,5 @@
 package cjx.lang
 
-@derive(new)
 class CJToken : Repr {
     # general categories (1-10)
     static val tEOF = 1

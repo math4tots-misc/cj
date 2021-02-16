@@ -5,7 +5,6 @@ import cjx.ez.EZIR
 import cjx.ez.EZAst
 import cjx.ez.EZSolver
 
-@derive(new)
 class EZExprSolver {
     val solver: EZSolver
     val localFactory: EZSolver.LocalFactory

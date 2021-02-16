@@ -52,7 +52,6 @@ class JLMetaScope {
             },
         ))
 
-    @derive(new)
     class Entry {
         val depth: Int
         val mutable: Bool

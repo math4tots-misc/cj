@@ -14,13 +14,11 @@ import cjx.jl1.JLIRClass
 import cjx.jl1.JLContext
 
 ## jl1 code generator
-@derive(new)
 class JLCodegen {
     static val sep = "/"
     val ctx: JLContext
     val outdir: String
 
-    @derive(new)
     class FinallyJumpRegistry {
         val returnJumps: List[Int] = []
     }
@@ -96,7 +94,6 @@ class JLCodegen {
         FS.writeFileBytes(outpath, jvmbuffer)
     }
 
-    @derive(new)
     class LambdaNameFactory {
         val prefix: String
         var nextId = 0
@@ -109,7 +106,6 @@ class JLCodegen {
     }
 
     ## Expression code generator
-    @derive(new)
     class ExprGen {
         val ctx: JLContext
         val outdir: String

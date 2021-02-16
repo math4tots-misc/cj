@@ -163,7 +163,6 @@ class EZSolver {
         }
     }
 
-    @derive(new)
     class LocalFactory {
         var nextId = 0
         def newLocal(self, mark: EZMark, name: String, type: EZIR.Type): EZIR.Local {

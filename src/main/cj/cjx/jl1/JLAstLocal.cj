@@ -5,7 +5,6 @@ import cjx.jl1.JLAstExpr
 import cjx.jl1.JLMark
 
 ## Local variable declaration
-@derive(new)
 class JLAstLocal {
     val mark: JLMark
     val modifiers: List[String]

@@ -7,7 +7,6 @@ import cjx.jl1.JLAstMethod
 import cjx.jl1.JLAstField
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLAstClass {
 
     @derive(repr)

@@ -3,7 +3,6 @@ package cjx.jl1
 import cjx.jl1.JLMark
 import cjx.jl1.JLType
 
-@derive(new)
 class JLIRField {
     val mark: JLMark
     val comment: Nullable[String]

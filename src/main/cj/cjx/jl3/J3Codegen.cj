@@ -9,7 +9,6 @@ import cj.FS
 import cjx.jvm.JVMClass
 import cjx.jl3.J3Class
 
-@derive(new)
 class J3Codegen {
     static val sep: String = "/"
     val outdir: String
@@ -79,7 +78,6 @@ class J3Codegen {
         case klass(cls) = "L" + jvmName(cls) + ";"
     }
 
-    @derive(new)
     class LambdaNameFactory {
         val prefix: String
         var nextId = 0
@@ -91,7 +89,6 @@ class J3Codegen {
         }
     }
 
-    @derive(new)
     class ExprGen {
         val jvmcode: JVMCodeBuilder
         val lambdaNameFactory: LambdaNameFactory

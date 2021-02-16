@@ -11,7 +11,6 @@ import cjx.jl1.JLIRMethod
 import cjx.jl1.JLType
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLIRClass: Repr {
     val mark: JLMark
     val id: Int # global unique identifier

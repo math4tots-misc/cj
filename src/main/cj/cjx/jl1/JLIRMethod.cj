@@ -5,7 +5,6 @@ import cjx.jl1.JLIRExpr
 import cjx.jl1.JLIRLocal
 import cjx.jl1.JLType
 
-@derive(new)
 class JLIRMethod {
     val mark: JLMark
     val comment: Nullable[String]

@@ -8,7 +8,6 @@ import cj.Error
 import cj.Buffer
 import cj.BufferReader
 
-@derive(new)
 class JVMClass {
 
     ## Constant pool tags
@@ -793,7 +792,6 @@ class JVMClass {
         }
     }
 
-    @derive(new)
     class ConstantPool {
         val infos: List[CpInfo] = []
         val classrefMap: Map[String, Int] = Map()
@@ -1131,7 +1129,6 @@ class JVMClass {
         }
     }
 
-    @derive(new)
     class FieldInfo {
         val accessFlags: Int
         val nameIndex: Int
@@ -1139,7 +1136,6 @@ class JVMClass {
         val attributes: List[AttributeInfo]
     }
 
-    @derive(new)
     class MethodInfo {
         val accessFlags: Int
         val nameIndex: Int
@@ -1147,7 +1143,6 @@ class JVMClass {
         val attributes: List[AttributeInfo]
     }
 
-    @derive(new)
     class AttributeInfo {
         val attributeNameIndex: Int
         val data: AttributeInfoData
@@ -1162,17 +1157,14 @@ class JVMClass {
         case unknown(Buffer)
     }
 
-    @derive(new)
     class ConstantValueAttribute {
         val constantValueIndex: Int
     }
 
-    @derive(new)
     class SourceFileAttribute {
         val sourcefileIndex: Int
     }
 
-    @derive(new)
     class CodeAttribute {
         val maxStack: Int
         val maxLocals: Int
@@ -1189,13 +1181,11 @@ class JVMClass {
         val catchType: Int
     }
 
-    @derive(new)
     class LineNumberTableEntry {
         val startPc: Int
         val lineNumber: Int
     }
 
-    @derive(new)
     class LocalVariableTableEntry {
         val startPc: Int
         val length: Int
@@ -1210,7 +1200,6 @@ class JVMClass {
         fields.add(fieldBuilder.build())
     }
 
-    @derive(new)
     class FieldBuilder {
         val cls: JVMClass
         var accessFlags: Int = ?
@@ -1236,7 +1225,6 @@ class JVMClass {
         methods.add(methodBuilder.build())
     }
 
-    @derive(new)
     class MethodBuilder {
         val cls: JVMClass
         var accessFlags: Int = ?
@@ -1271,7 +1259,6 @@ class JVMClass {
         }
     }
 
-    @derive(new)
     class Writer {
         val sb: StringBuilder = StringBuilder()
         var depth = 0

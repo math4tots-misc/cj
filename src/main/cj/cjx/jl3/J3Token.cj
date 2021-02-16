@@ -2,7 +2,6 @@ package cjx.jl3
 
 import cjx.jl3.J3Mark
 
-@derive(new)
 class J3Token: Repr {
 
     # general categories (1-31 except 10 -- 10 is reserved for newline)

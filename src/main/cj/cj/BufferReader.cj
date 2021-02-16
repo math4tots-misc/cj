@@ -2,7 +2,6 @@ package cj
 
 import cj.Buffer
 
-@derive(new)
 class BufferReader : ToBool {
     val buffer: Buffer
     var i = 0

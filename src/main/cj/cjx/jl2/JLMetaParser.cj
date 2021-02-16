@@ -8,7 +8,6 @@ import cjx.jl1.JLToken
 import cjx.jl1.JLLexer
 import cjx.jl2.JLMetaExpr
 
-@derive(new)
 class JLMetaParser {
 
     def parse(filename: String, string: String): JLMetaExpr {

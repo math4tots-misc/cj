@@ -5,7 +5,6 @@ import cjx.jl1.JLAstType
 import cjx.jl1.JLIRMetaVal
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLAstMetaExpr {
     union Data {
         case value(JLIRMetaVal)

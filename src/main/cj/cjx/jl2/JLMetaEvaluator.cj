@@ -7,7 +7,6 @@ import cjx.jl2.JLMetaVal
 import cjx.jl2.JLMetaExpr
 import cjx.jl2.JLMetaScope
 
-@derive(new)
 class JLMetaEvaluator {
     var scope: JLMetaScope
     val markStack: List[JLMark] = []

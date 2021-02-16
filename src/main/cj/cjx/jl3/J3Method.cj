@@ -5,7 +5,6 @@ import cjx.jl3.J3Local
 import cjx.jl3.J3Type
 import cjx.jl3.J3Mark
 
-@derive(new)
 class J3Method {
     val mark: J3Mark
     val modifiers: List[String]

@@ -4,7 +4,6 @@ import cjx.ez.EZMark
 
 class EZIR {
 
-    @derive(new)
     class Class {
         val mark: EZMark
         val id: Int
@@ -24,7 +23,6 @@ class EZIR {
         def isNative(self): Bool = "native" in modifiers
     }
 
-    @derive(new)
     class Field {
         val mark: EZMark
         val modifiers: List[String]
@@ -34,7 +32,6 @@ class EZIR {
         def isMutable(self): Bool = "var" in modifiers
     }
 
-    @derive(new)
     class Method {
         val mark: EZMark
         val modifiers: List[String]
@@ -44,7 +41,6 @@ class EZIR {
         var body: Nullable[Expr] = null
     }
 
-    @derive(new)
     class Local {
         val mark: EZMark
         val id: Int
@@ -66,7 +62,6 @@ class EZIR {
         def repr(self): String = name
     }
 
-    @derive(new)
     class MethodType: Repr {
         val parameterTypes: List[Type]
         val returnType: Type

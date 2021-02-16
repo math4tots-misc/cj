@@ -11,7 +11,6 @@ import cj.FS
 import cjx.jvm.JVMClass
 import cjx.xx.llir.XXLLIRClass
 
-@derive(new)
 class XXCodegen {
     static val sep = "/"
     val outdir: String
@@ -112,7 +111,6 @@ class XXCodegen {
             method.returnType)
     }
 
-    @derive(new)
     class ExprGen {
         val jvmcode: JVMCodeBuilder
         val locals: XXLLIRLocals

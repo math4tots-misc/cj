@@ -4,7 +4,6 @@ import cjx.ez.EZMark
 
 class EZAst {
 
-    @derive(new)
     class File {
         val mark: EZMark
         val packageName: String
@@ -12,7 +11,6 @@ class EZAst {
         val items: List[Item]
     }
 
-    @derive(new)
     class Import {
         val mark: EZMark
         val qualifiedName: String
@@ -23,7 +21,6 @@ class EZAst {
         case class_(Class)
     }
 
-    @derive(new)
     class Class {
         val mark: EZMark
         val modifiers: List[String]
@@ -36,7 +33,6 @@ class EZAst {
         case method(Method)
     }
 
-    @derive(new)
     class Field {
         val mark: EZMark
         val modifiers: List[String]
@@ -45,7 +41,6 @@ class EZAst {
         val init: Nullable[Expr]
     }
 
-    @derive(new)
     class Method {
         val mark: EZMark
         val modifiers: List[String]
@@ -55,21 +50,18 @@ class EZAst {
         val body: Nullable[Expr]
     }
 
-    @derive(new)
     class Local {
         val mark: EZMark
         val name: String
         val type: Nullable[Type]
     }
 
-    @derive(new)
     class Type {
         val mark: EZMark
         val name: String
         val args: List[Type]
     }
 
-    @derive(new)
     class Expr {
         val mark: EZMark
         val data: ExprData

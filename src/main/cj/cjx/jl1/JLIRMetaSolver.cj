@@ -10,7 +10,6 @@ import cjx.jl1.JLIRMetaVal
 import cjx.jl1.JLAstMetaExpr
 import cjx.jl1.JLIRLocalContext
 
-@derive(new)
 class JLIRMetaSolver {
     val lctx: JLIRLocalContext
     val esolver: JLIRExpressionSolver

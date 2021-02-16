@@ -2,7 +2,6 @@ package cjx.jl1
 
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLToken: Repr {
 
     # general categories (1-31 except 10 -- 10 is reserved for newline)

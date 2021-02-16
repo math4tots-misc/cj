@@ -6,7 +6,6 @@ import cjx.jl1.JLAstLocal
 import cjx.jl1.JLAstType
 import cjx.jl1.JLMark
 
-@derive(new)
 class JLAstExpr : Default {
     union Data {
         case bool(Bool)

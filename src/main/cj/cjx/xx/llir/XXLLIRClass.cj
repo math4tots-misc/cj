@@ -4,7 +4,6 @@ import cjx.xx.llir.XXLLIRMethod
 import cjx.xx.llir.XXLLIRField
 import cjx.xx.XXMark
 
-@derive(new)
 class XXLLIRClass: Repr {
     val mark: XXMark
     val id: Int
