@@ -9,10 +9,10 @@ class XXLLIRClass: Repr {
     val mark: XXMark
     val modifiers: List[String]
     val name: String
-    val superClass: String
-    val interfaces: List[String]
-    val fields: List[XXLLIRField]
-    val methods: List[XXLLIRMethod]
+    var superClass = "java.lang.Object"
+    val interfaces: List[String] = []
+    val fields: List[XXLLIRField] = []
+    val methods: List[XXLLIRMethod] = []
     def isInterface(self): Bool = "interface" in modifiers
     def isNative(self): Bool = "native" in modifiers
     def isFinal(self): Bool = "final" in modifiers
