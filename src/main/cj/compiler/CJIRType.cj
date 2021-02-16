@@ -1,9 +1,9 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRTrait
-import cjx.lang.CJIRTypeParameter
-import cjx.lang.CJIRItem
-import cjx.lang.CJMark
+import compiler.CJIRTrait
+import compiler.CJIRTypeParameter
+import compiler.CJIRItem
+import compiler.CJMark
 
 class CJIRType : Hash {
     union Data {

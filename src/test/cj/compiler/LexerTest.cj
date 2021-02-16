@@ -1,7 +1,7 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJLexer
-import cjx.lang.CJToken
+import compiler.CJLexer
+import compiler.CJToken
 
 class LexerTest {
     def lex(string: String): List[CJToken] = CJLexer.lex("<test>", string)

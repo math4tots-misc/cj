@@ -1,8 +1,8 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRExpression
-import cjx.lang.CJIRType
-import cjx.lang.CJMark
+import compiler.CJIRExpression
+import compiler.CJIRType
+import compiler.CJMark
 
 class CJIRField {
     val mark: CJMark

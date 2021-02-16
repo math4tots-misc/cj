@@ -1,6 +1,6 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJMark
+import compiler.CJMark
 
 class CJAstItem {
     union Member {

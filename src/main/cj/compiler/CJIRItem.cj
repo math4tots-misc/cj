@@ -1,8 +1,8 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRField
-import cjx.lang.CJIRMethod
-import cjx.lang.CJMark
+import compiler.CJIRField
+import compiler.CJIRMethod
+import compiler.CJMark
 
 class CJIRItem {
 

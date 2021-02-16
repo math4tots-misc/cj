@@ -1,4 +1,4 @@
-package cjx.lang
+package compiler
 
 class CJToken : Repr {
     # general categories (1-10)

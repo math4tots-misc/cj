@@ -1,8 +1,8 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRType
-import cjx.lang.CJIRItem
-import cjx.lang.CJMark
+import compiler.CJIRType
+import compiler.CJIRItem
+import compiler.CJMark
 
 class CJIRTrait : Hash {
     val mark: CJMark

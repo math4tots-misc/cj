@@ -1,8 +1,8 @@
-package cjx.lang.main
+package compiler.main
 
 import cj.FS
 import cj.Argv
-import cjx.lang.CJLexer
+import compiler.CJLexer
 
 ## Sample main class that will simply lex and print each token in the given file
 class Lexer {

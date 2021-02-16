@@ -1,7 +1,7 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRType
-import cjx.lang.CJIRBoundMethod
+import compiler.CJIRType
+import compiler.CJIRBoundMethod
 
 ## Bound method together with the type arguments for this method
 class CJIRReifiedMethod {

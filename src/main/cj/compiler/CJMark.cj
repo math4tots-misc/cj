@@ -1,4 +1,4 @@
-package cjx.lang
+package compiler
 
 @derive(repr)
 class CJMark : Default {

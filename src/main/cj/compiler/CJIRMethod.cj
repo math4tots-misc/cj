@@ -1,11 +1,11 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRExpression
-import cjx.lang.CJIRParameter
-import cjx.lang.CJIRType
-import cjx.lang.CJIRTypeCondition
-import cjx.lang.CJIRTypeParameter
-import cjx.lang.CJMark
+import compiler.CJIRExpression
+import compiler.CJIRParameter
+import compiler.CJIRType
+import compiler.CJIRTypeCondition
+import compiler.CJIRTypeParameter
+import compiler.CJMark
 
 class CJIRMethod {
     val mark: CJMark

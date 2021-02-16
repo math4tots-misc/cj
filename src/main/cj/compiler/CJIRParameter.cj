@@ -1,7 +1,7 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRType
-import cjx.lang.CJMark
+import compiler.CJIRType
+import compiler.CJMark
 
 class CJIRParameter {
     val mark: CJMark

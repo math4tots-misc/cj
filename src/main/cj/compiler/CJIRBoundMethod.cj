@@ -1,8 +1,8 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRMethod
-import cjx.lang.CJIRTrait
-import cjx.lang.CJIRType
+import compiler.CJIRMethod
+import compiler.CJIRTrait
+import compiler.CJIRType
 
 
 ## Method together with the type or trait whose item body defined this method.

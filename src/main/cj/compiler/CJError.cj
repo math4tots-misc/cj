@@ -1,7 +1,7 @@
-package cjx.lang
+package compiler
 
 import cj.StringBuilder
-import cjx.lang.CJMark
+import compiler.CJMark
 import cj.Error
 
 class CJError : Repr {

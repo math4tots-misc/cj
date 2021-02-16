@@ -1,7 +1,7 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRTrait
-import cjx.lang.CJMark
+import compiler.CJIRTrait
+import compiler.CJMark
 
 class CJIRTypeCondition {
     val mark: CJMark

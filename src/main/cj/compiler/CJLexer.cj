@@ -1,9 +1,9 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJError
-import cjx.lang.CJMark
+import compiler.CJError
+import compiler.CJMark
 import cjx.re.Lexer
-import cjx.lang.CJToken
+import compiler.CJToken
 import cjx.re.Regex
 
 

@@ -1,8 +1,8 @@
-package cjx.lang
+package compiler
 
-import cjx.lang.CJIRReifiedMethod
-import cjx.lang.CJIRType
-import cjx.lang.CJMark
+import compiler.CJIRReifiedMethod
+import compiler.CJIRType
+import compiler.CJMark
 
 class CJIRExpression {
     union Data {
