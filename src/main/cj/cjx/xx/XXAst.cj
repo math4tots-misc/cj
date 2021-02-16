@@ -35,7 +35,6 @@ class XXAst {
         val modifiers: List[String]
         val shortName: String
         val templateParameters: List[TemplateParameter]
-        val bases: List[BaseDeclaration]
         val nestedItems: List[Item]
         val itemBody: ItemBody
     }
@@ -44,13 +43,6 @@ class XXAst {
     class TemplateParameter {
         val mark: XXMark
         val name: String
-    }
-
-    @derive(new)
-    class BaseDeclaration {
-        val mark: XXMark
-        val type: Type
-        val condition: Nullable[Expr]
     }
 
     union ItemBody {

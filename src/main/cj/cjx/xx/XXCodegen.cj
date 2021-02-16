@@ -87,6 +87,7 @@ class XXCodegen {
 
     def toJVMType(type: XXLLIRType): String = when type {
         case noreturn = "V"
+        case unit = "I"
         case void = "V"
         case bool = "Z"
         case int = "I"
@@ -141,6 +142,7 @@ class XXCodegen {
                 when expr.type {
                     case noreturn = ()
                     case void = jvmcode.return_()
+                    case unit = jvmcode.ireturn()
                     case bool = jvmcode.ireturn()
                     case int = jvmcode.ireturn()
                     case double = jvmcode.dreturn()
@@ -165,6 +167,7 @@ class XXCodegen {
         def slotSizeOfType(type: XXLLIRType): Int = when type {
             case noreturn = 0
             case void = 0
+            case unit = 1
             case bool = 1
             case int = 1
             case double = 2

@@ -7,6 +7,7 @@ import cjx.xx.XXMark
 @derive(new)
 class XXLLIRClass: Repr {
     val mark: XXMark
+    val id: Int
     val modifiers: List[String]
     val name: String
     var superClass = "java.lang.Object"

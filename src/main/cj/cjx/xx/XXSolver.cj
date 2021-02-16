@@ -1,5 +1,6 @@
 package cjx.xx
 
+import cj.StringBuilder
 import cjx.xx.llir.XXLLIRClass
 import cjx.xx.XXError
 import cjx.xx.XXMark
@@ -47,7 +48,15 @@ class XXSolver {
         val parent: Nullable[Scope]
         val map: Map[String, Data] = Map()
         def new(p: Self): Self = __malloc(null(p))
-        def newRoot(): Self = __malloc(null)
+        def newRoot(): Self = {
+            val self = __malloc(null)
+            self.map["NoReturn"] = Data.type(XXLLIRType.noreturn())
+            self.map["Unit"] = Data.type(XXLLIRType.unit())
+            self.map["Bool"] = Data.type(XXLLIRType.bool())
+            self.map["Int"] = Data.type(XXLLIRType.int())
+            self.map["Double"] = Data.type(XXLLIRType.double())
+            self
+        }
     }
 
     def scopeSet(self, mark: XXMark, scope: Scope, key: String, value: Data) {
@@ -86,12 +95,107 @@ class XXSolver {
         }
     }
 
-    def solveType(self, scope: Scope, astType: XXAst.Type): XXLLIRType {
-        throw XXError("TODO solveType", [astType.mark])
+    def checkNoTypeArgs(self, astType: XXAst.Type) {
+        if astType.args {
+            throw XXError("Template arguments are not allowed here", [astType.mark])
+        }
     }
 
-    def solveCompileTimeBoolExpr(self, scope: Scope, expr: XXAst.Expr): Bool {
-        throw XXError("TODO solveCompileTimeBoolExpr", [expr.mark])
+    ## Solve a compile time expression
+    def solveCTExpr(self, scope: Scope, expr: XXAst.Expr): Data {
+        when expr.data {
+            case type(t) = Data.type(solveType(scope, t))
+            case int(i) = Data.number(i)
+            else = throw XXError("Expected compile time expression", [expr.mark])
+        }
+    }
+
+    def solveType(self, scope: Scope, astType: XXAst.Type): XXLLIRType {
+        val data = scopeGet(astType.mark, scope, astType.name)
+        when data {
+            case type(type) = {
+                checkNoTypeArgs(astType)
+                type
+            }
+            case fullName(fullName) = {
+                val args = astType.args.map(arg -> solveCTExpr(scope, arg))
+                val reifiedName = getReifiedName(astType.mark, fullName, args)
+                if null(cls) = classMap.getOrNull(reifiedName) {
+                    XXLLIRType.klass(cls.name)
+                } else if null((itemScope, astItem)) = templateMap.getOrNull(fullName) {
+                    reifyItem(astType.mark, reifiedName, itemScope, astItem, args)
+                    if null(cls) = classMap.getOrNull(reifiedName) {
+                        XXLLIRType.klass(cls.name)
+                    } else {
+                        throw XXError(
+                            "" + reifiedName + " is probably not a class", [astType.mark])
+                    }
+                } else {
+                    throw XXError("Item " + fullName + " not found", [astType.mark])
+                }
+            }
+            else = throw XXError(data.repr() + " is not a type", [astType.mark])
+        }
+    }
+
+    def reifyItem(
+            self,
+            mark: XXMark,
+            reifiedName: String,
+            itemScope: Scope,
+            astItem: XXAst.Item,
+            args: List[Data]) {
+        val reifiedScope = Scope(itemScope)
+        val expected = astItem.templateParameters.size()
+        if expected != args.size() {
+            throw XXError(
+                "Expected " + expected + " template arguments but got " + args.size(), [mark])
+        }
+        for i = 0; i < expected; i++ {
+            scopeSet(mark, reifiedScope, astItem.templateParameters[i].name, args[i])
+        }
+        addItem(reifiedScope, reifiedName, astItem)
+    }
+
+    def getReifiedName(self, mark: XXMark, baseName: String, args: List[Data]): String {
+        val sb = StringBuilder()
+        sb.add(baseName)
+        if args {
+            sb.add("$t$")
+            for arg in args {
+                when arg {
+                    case number(d) = {
+                        val i = d.toInt()
+                        if i < 0 {
+                            sb.add("im" + -i)
+                        } else {
+                            sb.add("i" + i)
+                        }
+                    }
+                    case type(t) = when t {
+                        case noreturn = "N"
+                        case void = "V"
+                        case unit = "U"
+                        case bool = "Z"
+                        case int = "I"
+                        case double = "D"
+                        case klass(clsname) = classMap[clsname].id
+                    }
+                    else = throw XXError(arg.repr() + " is not a valid template argument", [mark])
+                }
+            }
+        }
+        sb.toString()
+    }
+
+    def solveCTBoolExpr(self, scope: Scope, expr: XXAst.Expr): Bool {
+        val data = solveCTExpr(scope, expr)
+        when data {
+            case number(d) = (d != 0)
+            case string(s) = s.size() != 0
+            else = throw XXError(
+                "Expected bool expression but got " + data, [expr.mark])
+        }
     }
 
     def solveClassOrInterfaceType(self, scope: Scope, astType: XXAst.Type): String {
@@ -141,27 +245,10 @@ class XXSolver {
         }
     }
 
-    private def addClass(self, itemScope: Scope, itemName: String, astItem: XXAst.Item) {
-        scopeSet(astItem.mark, itemScope, "Self", Data.fullName(itemName))
-        val cls = XXLLIRClass(astItem.mark, astItem.modifiers, itemName)
-        classMap[itemName] = cls
-        todo(0, () -> {
-            for decl in astItem.bases {
-                if (decl.condition.isEmpty() or
-                        solveCompileTimeBoolExpr(itemScope, decl.condition.get())) {
-                    val base = solveClassOrInterfaceType(itemScope, decl.type)
-                    if classMap[base].isInterface() {
-                        cls.interfaces.add(base)
-                    } else {
-                        if cls.superClass != "java.lang.Object" {
-                            throw XXError("Multiple base classes are not allowed", [decl.mark])
-                        }
-                        cls.superClass = base
-                    }
-                }
-            }
-        })
-        todo(1, () -> {
-        })
+    private def addClass(self, classScope: Scope, className: String, classItem: XXAst.Item) {
+        scopeSet(classItem.mark, classScope, "Self", Data.fullName(className))
+        val id = classMap.size()
+        val cls = XXLLIRClass(classItem.mark, id, classItem.modifiers, className)
+        classMap[className] = cls
     }
 }
