@@ -33,6 +33,7 @@ class CJLexer {
             m -> chartok(m))
 
         # multi-character symbol tokens
+        b.add("\\.\\.", m -> symtok(CJToken.tDOTDOT, m))
         b.add("==", m -> symtok(CJToken.tEQ, m))
         b.add("!=", m -> symtok(CJToken.tNE, m))
         b.add("<=", m -> symtok(CJToken.tLE, m))

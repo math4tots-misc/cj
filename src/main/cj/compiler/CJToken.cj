@@ -12,7 +12,8 @@ class CJToken : Repr {
     static val tCOMMENT = 8
     static val tBIGINT = 9
 
-    # multi-character symbols (14-31)
+    # multi-character symbols (13-31)
+    static val tDOTDOT = 13
     static val tMINUSMINUS = 14
     static val tPLUSPLUS = 15
     static val tRSHIFTU = 16
@@ -108,6 +109,7 @@ class CJToken : Repr {
         case tTYPEID = "tTYPEID"
         case tCOMMENT = "tCOMMENT"
         case tBIGINT = "tBIGINT"
+        case tDOTDOT = "tDOTDOT"
         case tMINUSMINUS = "tMINUSMINUS"
         case tPLUSPLUS = "tPLUSPLUS"
         case tRSHIFTU = "tRSHIFTU"

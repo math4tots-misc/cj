@@ -814,7 +814,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 }
                 for (var entry : e.getCases()) {
                     var caseDefn = entry.get2();
-                    var body = translateExpression(entry.get4());
+                    var body = translateExpression(entry.get5());
                     var tag = caseDefn.getTag();
                     var names = entry.get3().map(d -> translateLocalVariableName(d.getName()));
                     var mutable = entry.get3().any(d -> d.isMutable());

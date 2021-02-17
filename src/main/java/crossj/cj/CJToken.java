@@ -22,7 +22,8 @@ public final class CJToken {
     public static final int COMMENT = 8;
     public static final int BIGINT = 9;
 
-    // multi-character symbols (14-31)
+    // multi-character symbols (13-31)
+    public static final int DOTDOT = 13;
     public static final int MINUSMINUS = 14;
     public static final int PLUSPLUS = 15;
     public static final int RSHIFTU = 16;
@@ -155,6 +156,8 @@ public final class CJToken {
                 return "CJToken.COMMENT";
             case BIGINT:
                 return "CJToken.BIGINT";
+            case DOTDOT:
+                return "CJToken.DOTDOT";
             case MINUSMINUS:
                 return "CJToken.MINUSMINUS";
             case PLUSPLUS:

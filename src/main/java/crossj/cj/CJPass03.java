@@ -6,7 +6,7 @@ import crossj.base.Optional;
 import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Tuple3;
-import crossj.base.Tuple4;
+import crossj.base.Tuple5;
 
 /**
  * Pass 3
@@ -323,8 +323,9 @@ final class CJPass03 extends CJPassBaseEx {
         var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
         var selfExpr = newGetVar(mark, "self");
         var body = new CJAstUnion(mark, selfExpr,
-                cases.map(c -> Tuple4.of(mark, c.getName(),
+                cases.map(c -> Tuple5.of(mark, c.getName(),
                         Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(),
+                        false,
                         newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),
                                 newJoin(mark, ", ", Range.upto(c.getTypes().size())
                                         .map(i -> newRepr(newGetVar(mark, "a" + i))).list()),

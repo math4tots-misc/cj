@@ -29,6 +29,7 @@ public final class CJLexer {
         b.add("\\(|\\)|\\{|\\}|\\[|\\]|\\+|\\*|/|-|%|~|\\.|^|&|\\||!|@|=|;|,|:|<|>|\\?", m -> chartok(m));
 
         // multi-character symbol tokens
+        b.add("\\.\\.", m -> symtok(CJToken.DOTDOT, m));
         b.add("==", m -> symtok(CJToken.EQ, m));
         b.add("!=", m -> symtok(CJToken.NE, m));
         b.add("<=", m -> symtok(CJToken.LE, m));

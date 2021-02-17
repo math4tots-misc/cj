@@ -9,7 +9,7 @@ import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Tuple3;
-import crossj.base.Tuple4;
+import crossj.base.Tuple5;
 
 /**
  * Pass 4
@@ -446,8 +446,9 @@ final class CJPass04 extends CJPassBaseEx {
                         } else if (method.getParameters().size() == 2) {
                             var selfDecl = findLocalOrNull("self");
                             if (selfDecl == null) {
-                                throw CJError.of("Non-static field " + name
-                                        + " cannot be assigned without a 'self' in scope", e.getMark());
+                                throw CJError.of(
+                                        "Non-static field " + name + " cannot be assigned without a 'self' in scope",
+                                        e.getMark());
                             }
                             return evalUnitExpression(new CJAstMethodCall(e.getMark(),
                                     Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())),
@@ -707,12 +708,13 @@ final class CJPass04 extends CJPassBaseEx {
                 var caseTagsByName = Map
                         .fromIterable(Range.upto(casesByTag.size()).map(i -> Pair.of(caseNamesByTag.get(i), i)));
                 var sieve = Range.upto(caseTypesByTag.size()).map(i -> false).list();
-                var cases = List.<Tuple4<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, CJIRExpression>>of();
+                var cases = List.<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>>of();
                 for (var caseAst : e.getCases()) {
                     var caseMark = caseAst.get1();
                     var caseName = caseAst.get2();
                     var caseVars = caseAst.get3();
-                    var caseBody = caseAst.get4();
+                    var trailingArgs = caseAst.get4();
+                    var caseBody = caseAst.get5();
                     var tag = caseTagsByName.getOrNull(caseName);
                     if (tag == null) {
                         throw CJError.of(caseName + " is not a case in " + type.repr(), caseMark);
@@ -722,12 +724,19 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     sieve.set(tag, true);
                     var caseDefn = casesByTag.get(tag);
-                    if (caseDefn.getTypes().size() != caseVars.size()) {
-                        throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
-                                + caseVars.size(), caseMark);
+                    if (trailingArgs) {
+                        if (caseDefn.getTypes().size() < caseVars.size()) {
+                            throw CJError.of(caseName + " only has " + caseDefn.getTypes().size() + " values but got "
+                                    + caseVars.size() + " names", caseMark);
+                        }
+                    } else {
+                        if (caseDefn.getTypes().size() != caseVars.size()) {
+                            throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
+                                    + caseVars.size(), caseMark);
+                        }
                     }
                     var caseTypes = caseDefn.getTypes().map(bindings::apply);
-                    var vars = Range.upto(caseTypes.size()).map(i -> {
+                    var vars = Range.upto(caseVars.size()).map(i -> {
                         var varAst = caseVars.get(i);
                         var varMark = varAst.get1();
                         var mutable = varAst.get2();
@@ -742,7 +751,7 @@ final class CJPass04 extends CJPassBaseEx {
                     if (a.isEmpty()) {
                         a = Optional.of(body.getType());
                     }
-                    cases.add(Tuple4.of(caseMark, caseDefn, vars, body));
+                    cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
                 }
                 Optional<CJIRExpression> fallback;
                 if (e.getFallback().isPresent()) {

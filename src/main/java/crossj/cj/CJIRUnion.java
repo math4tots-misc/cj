@@ -2,15 +2,15 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.base.Optional;
-import crossj.base.Tuple4;
+import crossj.base.Tuple5;
 
 public final class CJIRUnion extends CJIRExpression {
     private final CJIRExpression target;
-    private final List<Tuple4<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, CJIRExpression>> cases;
+    private final List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases;
     private final Optional<CJIRExpression> fallback;
 
     CJIRUnion(CJAstExpression ast, CJIRType type, CJIRExpression target,
-            List<Tuple4<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, CJIRExpression>> cases,
+            List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases,
             Optional<CJIRExpression> fallback) {
         super(ast, type);
         this.target = target;
@@ -22,7 +22,7 @@ public final class CJIRUnion extends CJIRExpression {
         return target;
     }
 
-    public List<Tuple4<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, CJIRExpression>> getCases() {
+    public List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> getCases() {
         return cases;
     }
 

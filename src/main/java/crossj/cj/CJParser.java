@@ -5,7 +5,7 @@ import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Pair;
 import crossj.base.Tuple3;
-import crossj.base.Tuple4;
+import crossj.base.Tuple5;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
@@ -1252,14 +1252,20 @@ public final class CJParser {
                 var target = parseExpression();
                 expect('{');
                 skipDelimiters();
-                var cases = List.<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, CJAstExpression>>of();
+                var cases = List.<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>>of();
                 while (!at('}') && !at(CJToken.KW_ELSE)) {
                     var caseMark = getMark();
                     expect(CJToken.KW_CASE);
                     var caseName = parseId();
                     var decls = List.<Tuple3<CJMark, Boolean, String>>of();
+                    var trailingArgs = false;
                     if (consume('(')) {
                         while (!consume(')')) {
+                            if (consume(CJToken.DOTDOT)) {
+                                expect(')');
+                                trailingArgs = true;
+                                break;
+                            }
                             var mutable = consume(CJToken.KW_VAR);
                             var varMark = getMark();
                             var varName = parseId();
@@ -1271,7 +1277,7 @@ public final class CJParser {
                         }
                     }
                     var body = consume('=') ? parseExpression() : parseBlock();
-                    cases.add(Tuple4.of(caseMark, caseName, decls, body));
+                    cases.add(Tuple5.of(caseMark, caseName, decls, trailingArgs, body));
                     expectDelimiters();
                 }
                 var fallback = Optional.<CJAstExpression>empty();
