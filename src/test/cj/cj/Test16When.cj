@@ -29,4 +29,33 @@ class Test16When {
             }
         }
     }
+
+    union NoArgUnions {
+        case abc
+        case foo
+    }
+
+    @test
+    def noArgUnions() {
+        {
+            val x = NoArgUnions.abc
+            Assert.that(when x {
+                case abc = true
+                else = false
+            })
+            Assert.that(when x {
+                case foo = false
+                case abc = true
+            })
+            val y = NoArgUnions.foo
+            Assert.that(when y {
+                case foo = true
+                else = false
+            })
+            Assert.that(when y {
+                case foo = true
+                case abc = false
+            })
+        }
+    }
 }

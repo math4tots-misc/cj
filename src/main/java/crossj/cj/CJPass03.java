@@ -1,5 +1,6 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
@@ -125,6 +126,10 @@ final class CJPass03 extends CJPassBaseEx {
                 item.getCases().add(caseDefn);
                 var methodAst = synthesizeCaseMethod(item, caseAst);
                 materializeMethod(item, methodAst, true, null);
+                if (caseAst.getTypes().isEmpty()) {
+                    var caseMethodAst = synthesizeEmptyCaseMethod(item, caseAst);
+                    materializeMethod(item, caseMethodAst, false, null);
+                }
             } else if (memberAst instanceof CJAstItemDefinition) {
                 // item definitions are currently already pulled to the top level
             } else {
@@ -239,6 +244,15 @@ final class CJPass03 extends CJPassBaseEx {
         return synthesizeGenericMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
     }
 
+    private CJAstMethodDefinition synthesizeEmptyCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {
+        Assert.that(caseAst.getTypes().isEmpty());
+        var name = caseAst.getName();
+        var mark = caseAst.getMark();
+        var body = new CJAstMethodCall(mark, Optional.of(new CJAstTypeExpression(mark, "Self", List.of())), name,
+                List.of(), List.of());
+        return synthesizeGenericMethodWithBody(mark, "__get_" + name, List.of(), newSelfTypeExpression(mark), body);
+    }
+
     private CJAstMethodDefinition synthesizeNewMethod(CJIRItem item) {
         var mark = item.getMark();
         var fields = item.getFields().filter(f -> f.includeInMalloc());
@@ -324,8 +338,7 @@ final class CJPass03 extends CJPassBaseEx {
         var selfExpr = newGetVar(mark, "self");
         var body = new CJAstUnion(mark, selfExpr,
                 cases.map(c -> Tuple5.of(mark, c.getName(),
-                        Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(),
-                        false,
+                        Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(), false,
                         newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),
                                 newJoin(mark, ", ", Range.upto(c.getTypes().size())
                                         .map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
