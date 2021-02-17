@@ -24,7 +24,7 @@ class Map[K?: Hash, V?] :
     }
 
     @variadic
-    def __new(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
+    def(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
 
     def clone(self): Self = of(pairs().toList())
 

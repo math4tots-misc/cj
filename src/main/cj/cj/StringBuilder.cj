@@ -1,7 +1,7 @@
 package cj
 
 native class StringBuilder: ToString {
-    def __new(): Self
+    def(): Self
     def add(self: Self, string: String)
     def toString(self: Self): String
 }

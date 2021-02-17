@@ -17,7 +17,7 @@ class Ch02s01 : Base {
     @lateinit var vertices : Float32Array
     @lateinit var indices : Int16Array
     @lateinit var aVertexPosition : Int
-    def __new() : Self = Self.default()
+    def() : Self = Self.default()
     def main() = Self().run()
 
     def run(self: Self) = {

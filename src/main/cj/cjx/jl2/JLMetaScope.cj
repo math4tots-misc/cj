@@ -62,7 +62,7 @@ class JLMetaScope {
     val parent: Nullable[Self]
     val table: Map[String, Entry] = Map()
 
-    def __new(parent: Nullable[Self]): Self {
+    def(parent: Nullable[Self]): Self {
         if null(p) = parent {
             val scope = __malloc(p.depth + 1, null(p))
             for (name, f) in builtinFunctions.pairs() {

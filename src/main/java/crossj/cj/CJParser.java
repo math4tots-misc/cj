@@ -467,7 +467,7 @@ public final class CJParser {
         modifiers.addAll(parseModifiers());
         expect(CJToken.KW_DEF);
         var mark = getMark();
-        var name = parseId();
+        var name = at(CJToken.ID) ? parseId() : "__new";
         var typeParameters = parseTypeParameters(false);
         var parameters = parseParameters();
         var returnType = consume(':') ? Optional.of(parseTypeExpression()) : Optional.<CJAstTypeExpression>empty();

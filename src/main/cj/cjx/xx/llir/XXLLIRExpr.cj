@@ -14,7 +14,7 @@ class XXLLIRExpr {
     val data: Data
     val terminatesFlow: Bool
 
-    def __new(mark: XXMark, type: XXLLIRType, data: Data): Self {
+    def(mark: XXMark, type: XXLLIRType, data: Data): Self {
         __malloc(mark, type, data, type.isNoReturn() or when data {
             case block(exprs) = exprs and exprs.last().terminatesFlow
             else = false

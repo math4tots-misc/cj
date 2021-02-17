@@ -149,7 +149,7 @@ class JLIRExpr {
     val data: Data
     val terminatesFlow: Bool
 
-    def __new(mark: JLMark, type: JLType, data: Data): Self {
+    def(mark: JLMark, type: JLType, data: Data): Self {
         __malloc(mark, type, data, if type.isNoReturn() { true } else {
             when data {
                 case if_(cond, lhs, rhs) = (

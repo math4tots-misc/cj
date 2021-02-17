@@ -15,7 +15,7 @@ class Poly1[R : CommutativeRing] :
 
     val coefs : List[R]
 
-    @variadic def __new(coefs: List[R]): Self = fromCoefficients(coefs)
+    @variadic def(coefs: List[R]): Self = fromCoefficients(coefs)
 
     def fromCoefficients(coefs: List[R]): Self = {
         while coefs and coefs.last() == R.zero {

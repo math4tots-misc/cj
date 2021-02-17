@@ -6,7 +6,7 @@ import cj.Collection
 
 ## In Javascript, wraps Int32Array
 native class Int32Array : Collection[Int], Default, ToArrayBufferView, Repr, Default {
-    @variadic def __new(list: List[Int]): Self
+    @variadic def(list: List[Int]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Int]](c: C): Self
     def iter(self: Self): Iterator[Int]

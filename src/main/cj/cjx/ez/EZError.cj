@@ -7,5 +7,5 @@ class EZError {
     val error: Error
     val marks: List[EZMark]
 
-    def __new(message: String, marks: List[EZMark]): Self = __malloc(Error(message), marks)
+    def(message: String, marks: List[EZMark]): Self = __malloc(Error(message), marks)
 }

@@ -574,7 +574,7 @@ class JVMClass {
         val reader: BufferReader
         var cp: ConstantPool = ?
 
-        def __new(buffer: Buffer): Self {
+        def(buffer: Buffer): Self {
             buffer.useLittleEndian(false)
             __malloc(BufferReader(buffer))
         }

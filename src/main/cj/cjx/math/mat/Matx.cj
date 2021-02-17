@@ -18,7 +18,7 @@ class Matx : Hash, Approximate, Repr {
     ## Number of rows in this matrix
     def __get_r(self: Self): Int = data.size() // c
 
-    @variadic def __new(rows: List[List[Double]]): Self = fromRows(rows)
+    @variadic def(rows: List[List[Double]]): Self = fromRows(rows)
 
     def _fromParts(c: Int, data: Float64Array): Self = __malloc(c, data)
 

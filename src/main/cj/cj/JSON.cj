@@ -23,7 +23,7 @@ native class JSON : Repr, Eq {
         case object # 5
     }
 
-    def __new(self: JSON): JSON
+    def(self: JSON): JSON
 
     def parse(string: String): JSON
 

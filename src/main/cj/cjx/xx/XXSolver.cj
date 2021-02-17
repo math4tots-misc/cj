@@ -46,7 +46,7 @@ class XXSolver {
     class Scope {
         val parent: Nullable[Scope]
         val map: Map[String, Data] = Map()
-        def __new(p: Self): Self = __malloc(null(p))
+        def(p: Self): Self = __malloc(null(p))
         def newRoot(): Self = {
             val self = __malloc(null)
             self.map["NoReturn"] = Data.type(XXLLIRType.noreturn())

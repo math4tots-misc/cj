@@ -9,7 +9,7 @@ class InverseMatrixSolver : GaussianEliminationListener {
     private var invertible = true
     private val rows : List[Float64Array]
 
-    def __new(n: Int): Self = __malloc(Matx.identity(n).rows())
+    def(n: Int): Self = __malloc(Matx.identity(n).rows())
 
     def swap(self, i: Int, j: Int) {
         rows.swap(i, j)

@@ -8,7 +8,7 @@ import cj.Collection
 
 ## On Javascript targets, wraps Float32Array
 native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approximate, Repr, Default {
-    @variadic def __new(list: List[Double]): Self
+    @variadic def(list: List[Double]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Double]](c: C): Self
     def iter(self: Self): Iterator[Double]
