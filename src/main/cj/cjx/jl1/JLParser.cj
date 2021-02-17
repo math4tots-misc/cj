@@ -175,7 +175,7 @@ class JLParser {
         val modifiers: List[String] = []
         while consume('@') {
             val nullableName = switch peek().type {
-                case (JLToken.tID) = switch peek().text {
+                case JLToken.tID = switch peek().text {
                     case "test" = null(next().text)
                     else = null
                 }
@@ -303,16 +303,16 @@ class JLParser {
     def parseType(self): JLAstType {
         var mark = mark
         var type = switch peek().type {
-            case (JLToken.kwNORETURN) = { next(); JLAstType(mark, JLAstType.Data.noreturn()) }
-            case (JLToken.kwVOID) = { next(); JLAstType(mark, JLAstType.Data.void()) }
-            case (JLToken.kwBOOL) = { next(); JLAstType(mark, JLAstType.Data.bool()) }
-            case (JLToken.kwBYTE) = { next(); JLAstType(mark, JLAstType.Data.byte()) }
-            case (JLToken.kwCHAR) = { next(); JLAstType(mark, JLAstType.Data.char()) }
-            case (JLToken.kwSHORT) = { next(); JLAstType(mark, JLAstType.Data.short()) }
-            case (JLToken.kwINT) = { next(); JLAstType(mark, JLAstType.Data.int()) }
-            case (JLToken.kwLONG) = { next(); JLAstType(mark, JLAstType.Data.long()) }
-            case (JLToken.kwFLOAT) = { next(); JLAstType(mark, JLAstType.Data.float()) }
-            case (JLToken.kwDOUBLE) = { next(); JLAstType(mark, JLAstType.Data.double()) }
+            case JLToken.kwNORETURN = { next(); JLAstType(mark, JLAstType.Data.noreturn()) }
+            case JLToken.kwVOID = { next(); JLAstType(mark, JLAstType.Data.void()) }
+            case JLToken.kwBOOL = { next(); JLAstType(mark, JLAstType.Data.bool()) }
+            case JLToken.kwBYTE = { next(); JLAstType(mark, JLAstType.Data.byte()) }
+            case JLToken.kwCHAR = { next(); JLAstType(mark, JLAstType.Data.char()) }
+            case JLToken.kwSHORT = { next(); JLAstType(mark, JLAstType.Data.short()) }
+            case JLToken.kwINT = { next(); JLAstType(mark, JLAstType.Data.int()) }
+            case JLToken.kwLONG = { next(); JLAstType(mark, JLAstType.Data.long()) }
+            case JLToken.kwFLOAT = { next(); JLAstType(mark, JLAstType.Data.float()) }
+            case JLToken.kwDOUBLE = { next(); JLAstType(mark, JLAstType.Data.double()) }
             else = {
                 val name = parseTypeId()
                 val args = if at('[') and not atOffset(']', 1) { parseTemplateArgs() } else { [] }
@@ -334,12 +334,12 @@ class JLParser {
         val modifiers = parseAnnotationStyleModifiers()
         modifiers.addAll(parseModifiers())
         switch peek().type {
-            case (JLToken.kwVAR)
-            case (JLToken.kwVAL) = JLAstClass.Member.field(parseField(comment, modifiers))
-            case (JLToken.kwDEF) = JLAstClass.Member.method(parseMethod(comment, modifiers))
-            case (JLToken.kwCLASS)
-            case (JLToken.kwINTERFACE) = JLAstClass.Member.klass(parseClass(comment, modifiers))
-            case (JLToken.kwIF) = parseConditionalMembers()
+            case JLToken.kwVAR
+            case JLToken.kwVAL = JLAstClass.Member.field(parseField(comment, modifiers))
+            case JLToken.kwDEF = JLAstClass.Member.method(parseMethod(comment, modifiers))
+            case JLToken.kwCLASS
+            case JLToken.kwINTERFACE = JLAstClass.Member.klass(parseClass(comment, modifiers))
+            case JLToken.kwIF = parseConditionalMembers()
             else = throw JLError("Expected class member", [mark])
         }
     }
@@ -441,37 +441,37 @@ class JLParser {
 
     def getTokenPrecedence(tokenType: Int): Int = switch tokenType {
         case '='
-        case (JLToken.tPLUS_EQ)
-        case (JLToken.tMINUS_EQ)
-        case (JLToken.tSTAR_EQ)
-        case (JLToken.tREM_EQ) = 20
+        case JLToken.tPLUS_EQ
+        case JLToken.tMINUS_EQ
+        case JLToken.tSTAR_EQ
+        case JLToken.tREM_EQ = 20
         case ':' = 30
-        case (JLToken.kwOR) = 40
-        case (JLToken.kwAND) = 50
+        case JLToken.kwOR = 40
+        case JLToken.kwAND = 50
         case '<'
         case '>'
-        case (JLToken.tEQ)
-        case (JLToken.tNE)
-        case (JLToken.tGE)
-        case (JLToken.tLE)
-        case (JLToken.kwIS)
-        case (JLToken.kwIN)
-        case (JLToken.kwNOT) = 60
+        case JLToken.tEQ
+        case JLToken.tNE
+        case JLToken.tGE
+        case JLToken.tLE
+        case JLToken.kwIS
+        case JLToken.kwIN
+        case JLToken.kwNOT = 60
         case '|' = 70
         case '^' = 80
         case '&' = 90
-        case (JLToken.tLSHIFT)
-        case (JLToken.tRSHIFT)
-        case (JLToken.tRSHIFTU) = 100
+        case JLToken.tLSHIFT
+        case JLToken.tRSHIFT
+        case JLToken.tRSHIFTU = 100
         case '+'
         case '-' = 110
         case '*'
         case '/'
         case '%'
-        case (JLToken.tTRUNCDIV) = 120
-        case (JLToken.tPOWER) = 130
-        case (JLToken.tPLUSPLUS)
-        case (JLToken.tMINUSMINUS)
+        case JLToken.tTRUNCDIV = 120
+        case JLToken.tPOWER = 130
+        case JLToken.tPLUSPLUS
+        case JLToken.tMINUSMINUS
         case '.'
         case '['
         case '?' = 140
@@ -583,15 +583,15 @@ class JLParser {
                         throw JLError("The left hand side is not assignable", [mark])
                     }
                 }
-                case (JLToken.tPLUS_EQ)
-                case (JLToken.tPLUSPLUS)
-                case (JLToken.tMINUSMINUS) = {
+                case JLToken.tPLUS_EQ
+                case JLToken.tPLUSPLUS
+                case JLToken.tMINUSMINUS = {
                     val (op, valexpr) = switch next().type {
-                        case (JLToken.tPLUSPLUS) = (
+                        case JLToken.tPLUSPLUS = (
                             JLAstExpr.Operator.add(), JLAstExpr(mark, JLAstExpr.Data.int(1)))
-                        case (JLToken.tMINUSMINUS) = (
+                        case JLToken.tMINUSMINUS = (
                             JLAstExpr.Operator.add(), JLAstExpr(mark, JLAstExpr.Data.int(-1)))
-                        case (JLToken.tPLUS_EQ) = (JLAstExpr.Operator.add(), parseExpression())
+                        case JLToken.tPLUS_EQ = (JLAstExpr.Operator.add(), parseExpression())
                         else = throw JLError("FUBAR op switch", [mark])
                     }
                     val nullableData = when expr.data {
@@ -685,26 +685,26 @@ class JLParser {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.meta(parseMetaExpr()))
             }
-            case (JLToken.kwTRUE) = {
+            case JLToken.kwTRUE = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(true))
             }
-            case (JLToken.kwFALSE) = {
+            case JLToken.kwFALSE = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.bool(false))
             }
-            case (JLToken.kwTHIS) = {
+            case JLToken.kwTHIS = {
                 next()
                 JLAstExpr(mark, JLAstExpr.Data.this())
             }
-            case (JLToken.tINT) = {
+            case JLToken.tINT = {
                 JLAstExpr(mark, JLAstExpr.Data.int(translateInt(mark, next().text)))
             }
-            case (JLToken.tDOUBLE) = {
+            case JLToken.tDOUBLE = {
                 JLAstExpr(mark, JLAstExpr.Data.double(translateDouble(mark, next().text)))
             }
-            case (JLToken.kwVAR)
-            case (JLToken.kwVAL) = {
+            case JLToken.kwVAR
+            case JLToken.kwVAL = {
                 val modifiers = if consume(JLToken.kwVAR) { ["var"] } else {
                     expect(JLToken.kwVAL)
                     []
@@ -716,14 +716,14 @@ class JLParser {
                 JLAstExpr(mark, JLAstExpr.Data.declvar(JLAstLocal(
                     mark, modifiers, name, type, init)))
             }
-            case (JLToken.kwIF) = parseIf()
-            case (JLToken.kwWHILE) = {
+            case JLToken.kwIF = parseIf()
+            case JLToken.kwWHILE = {
                 next()
                 val cond = parseExpression()
                 val body = parseBlock()
                 JLAstExpr(mark, JLAstExpr.Data.while_(cond, body))
             }
-            case (JLToken.kwFOR) = {
+            case JLToken.kwFOR = {
                 next()
                 if at(';') or (at(JLToken.tID) and atOffset('=', 1)) {
                     val init = if not at(';') {
@@ -747,7 +747,7 @@ class JLParser {
                     JLAstExpr(mark, JLAstExpr.Data.for_(name, container, body))
                 }
             }
-            case (JLToken.tID) = {
+            case JLToken.tID = {
                 val name = parseId()
                 if at('(') {
                     val args = parseArgs()
@@ -756,10 +756,10 @@ class JLParser {
                     JLAstExpr(mark, JLAstExpr.Data.getvar(name))
                 }
             }
-            case (JLToken.tSTRING) = {
+            case JLToken.tSTRING = {
                 JLAstExpr(mark, JLAstExpr.Data.string(parseString()))
             }
-            case (JLToken.tTYPEID) = {
+            case JLToken.tTYPEID = {
                 val classtype = parseType()
                 if at('(') {
                     val args = parseArgs()
@@ -781,12 +781,12 @@ class JLParser {
                     }
                 }
             }
-            case (JLToken.kwTHROW) = {
+            case JLToken.kwTHROW = {
                 next()
                 val excExpr = parseExpression()
                 JLAstExpr(mark, JLAstExpr.Data.throw_(excExpr))
             }
-            case (JLToken.kwTRY) = {
+            case JLToken.kwTRY = {
                 next()
                 val body = parseBlock()
                 val catchClauses: List[Tuple[String, JLAstType, JLAstExpr]] = []
@@ -839,41 +839,41 @@ class JLParser {
                 }
                 JLAstMetaExpr.Data.apply("list", args)
             }
-            case (JLToken.kwTRUE) = {
+            case JLToken.kwTRUE = {
                 next()
                 JLAstMetaExpr.Data.value(JLIRMetaVal.number(1))
             }
-            case (JLToken.kwFALSE) = {
+            case JLToken.kwFALSE = {
                 next()
                 JLAstMetaExpr.Data.value(JLIRMetaVal.number(0))
             }
-            case (JLToken.kwVOID)
-            case (JLToken.kwBOOL)
-            case (JLToken.kwBYTE)
-            case (JLToken.kwCHAR)
-            case (JLToken.kwSHORT)
-            case (JLToken.kwINT)
-            case (JLToken.kwLONG)
-            case (JLToken.kwFLOAT)
-            case (JLToken.kwDOUBLE)
-            case (JLToken.tTYPEID) = JLAstMetaExpr.Data.type(parseType())
-            case (JLToken.tID) = JLAstMetaExpr.Data.name(parseId())
-            case (JLToken.kwNEW) = { next(); JLAstMetaExpr.Data.name("new") }
-            case (JLToken.tINT) = JLAstMetaExpr.Data.value(
+            case JLToken.kwVOID
+            case JLToken.kwBOOL
+            case JLToken.kwBYTE
+            case JLToken.kwCHAR
+            case JLToken.kwSHORT
+            case JLToken.kwINT
+            case JLToken.kwLONG
+            case JLToken.kwFLOAT
+            case JLToken.kwDOUBLE
+            case JLToken.tTYPEID = JLAstMetaExpr.Data.type(parseType())
+            case JLToken.tID = JLAstMetaExpr.Data.name(parseId())
+            case JLToken.kwNEW = { next(); JLAstMetaExpr.Data.name("new") }
+            case JLToken.tINT = JLAstMetaExpr.Data.value(
                 JLIRMetaVal.number(translateInt(mark, next().text)))
-            case (JLToken.tDOUBLE) = JLAstMetaExpr.Data.value(
+            case JLToken.tDOUBLE = JLAstMetaExpr.Data.value(
                 JLIRMetaVal.number(translateDouble(mark, next().text)))
-            case (JLToken.tSTRING) = JLAstMetaExpr.Data.value(
+            case JLToken.tSTRING = JLAstMetaExpr.Data.value(
                 JLIRMetaVal.string(parseString()))
             else = throw JLError("Expected meta expression", [mark])
         })
     }
 
     def parseNameForMetaFunc(self): String = switch peek().type {
-        case (JLToken.tID) = parseId()
-        case (JLToken.kwIF)
-        case (JLToken.kwAND)
-        case (JLToken.kwOR) = JLToken.keywordString(next().type)
+        case JLToken.tID = parseId()
+        case JLToken.kwIF
+        case JLToken.kwAND
+        case JLToken.kwOR = JLToken.keywordString(next().type)
         else = throw JLError("Expected meta function name", [mark])
     }
 

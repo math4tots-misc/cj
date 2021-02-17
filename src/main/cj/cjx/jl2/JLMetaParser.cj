@@ -159,20 +159,20 @@ class JLMetaParser {
                 }
                 JLMetaExpr(mark, JLMetaExpr.Data.apply("list", args))
             }
-            case (JLToken.kwTRUE) = JLMetaExpr(
+            case JLToken.kwTRUE = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.bool(true)))
-            case (JLToken.kwFALSE) = JLMetaExpr(
+            case JLToken.kwFALSE = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.bool(false)))
-            case (JLToken.tINT) = JLMetaExpr(
+            case JLToken.tINT = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.number(parseInt())))
-            case (JLToken.tDOUBLE) = JLMetaExpr(
+            case JLToken.tDOUBLE = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.number(parseDouble())))
-            case (JLToken.tSTRING) = JLMetaExpr(
+            case JLToken.tSTRING = JLMetaExpr(
                 mark, JLMetaExpr.Data.literal(JLMetaVal.string(parseString())))
-            case (JLToken.kwVAR)
-            case (JLToken.kwVAL) = JLMetaExpr(
+            case JLToken.kwVAR
+            case JLToken.kwVAL = JLMetaExpr(
                 mark, JLMetaExpr.Data.name(JLToken.keywordString(next().type)))
-            case (JLToken.tID) = {
+            case JLToken.tID = {
                 val name = parseIdEx()
                 switch name {
                     case "nil" = JLMetaExpr(mark, JLMetaExpr.Data.literal(JLMetaVal.nil()))

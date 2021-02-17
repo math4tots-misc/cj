@@ -85,38 +85,38 @@ class JVMCodeBuilder {
                     todo.add((pc + code.getI16(pc + 1), newStackSize))
                 } else {
                     switch opcode {
-                        case (Opcode.goto) = {
+                        case Opcode.goto = {
                             # 0xa7
                             # unconditional branching
                             todo.add((pc + code.getI16(pc + 1), stackSize))
                         }
-                        case (Opcode.getstatic) = {
+                        case Opcode.getstatic = {
                             # 0xb2
                             val newStackSize = stackSize + slotSizeForType(
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
-                        case (Opcode.putstatic) = {
+                        case Opcode.putstatic = {
                             # 0xb3
                             val newStackSize = stackSize - slotSizeForType(
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
-                        case (Opcode.getfield) = {
+                        case Opcode.getfield = {
                             # 0xb4
                             val newStackSize = stackSize - 1 + slotSizeForType(
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
-                        case (Opcode.putfield) = {
+                        case Opcode.putfield = {
                             # 0xb5
                             val newStackSize = stackSize - 1 - slotSizeForType(
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))
                             todo.add((nextPc, stackSize))
                         }
-                        case (Opcode.invokevirtual)
-                        case (Opcode.invokespecial)
-                        case (Opcode.invokeinterface) = {
+                        case Opcode.invokevirtual
+                        case Opcode.invokespecial
+                        case Opcode.invokeinterface = {
                             # 0xb6 invokevirtual
                             # 0xb7 invokespecial
                             # 0xb9 invokeinterface
@@ -124,7 +124,7 @@ class JVMCodeBuilder {
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
-                        case (Opcode.invokestatic) = {
+                        case Opcode.invokestatic = {
                             # 0xb8
                             val newStackSize = stackSize + slotChangeForFunction(
                                 cp.getMemberDescriptor(code.getU16(pc + 1)))

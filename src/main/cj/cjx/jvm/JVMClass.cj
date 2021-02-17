@@ -616,49 +616,49 @@ class JVMClass {
         def parseCpInfo(self): CpInfo {
             val tag = reader.getU8()
             switch tag {
-                case (JVMClass.cUtf8) = {
+                case JVMClass.cUtf8 = {
                     # TODO: Use the modified UTF-8 encoding as required by the JVM spec
                     val length = reader.getU16()
                     val string = reader.getUTF8(length)
                     Assert.equal(length, string.size())
                     CpInfo.utf8(string)
                 }
-                case (JVMClass.cInteger) = CpInfo.integer(reader.getI32())
-                case (JVMClass.cFloat) = CpInfo.float(reader.getF32())
-                case (JVMClass.cLong) = CpInfo.long(reader.getI64())
-                case (JVMClass.cDouble) = CpInfo.double(reader.getF64())
-                case (JVMClass.cClassref) = CpInfo.classref(reader.getU16())
-                case (JVMClass.cString) = CpInfo.string(reader.getU16())
-                case (JVMClass.cFieldref) = {
+                case JVMClass.cInteger = CpInfo.integer(reader.getI32())
+                case JVMClass.cFloat = CpInfo.float(reader.getF32())
+                case JVMClass.cLong = CpInfo.long(reader.getI64())
+                case JVMClass.cDouble = CpInfo.double(reader.getF64())
+                case JVMClass.cClassref = CpInfo.classref(reader.getU16())
+                case JVMClass.cString = CpInfo.string(reader.getU16())
+                case JVMClass.cFieldref = {
                     val classIndex = reader.getU16()
                     val nameAndTypeIndex = reader.getU16()
                     CpInfo.fieldref(classIndex, nameAndTypeIndex)
                 }
-                case (JVMClass.cMethodref) = {
+                case JVMClass.cMethodref = {
                     val classIndex = reader.getU16()
                     val nameAndTypeIndex = reader.getU16()
                     CpInfo.methodref(classIndex, nameAndTypeIndex)
                 }
-                case (JVMClass.cInterfaceMethodref) = {
+                case JVMClass.cInterfaceMethodref = {
                     val classIndex = reader.getU16()
                     val nameAndTypeIndex = reader.getU16()
                     CpInfo.interfaceMethodref(classIndex, nameAndTypeIndex)
                 }
-                case (JVMClass.cNameAndType) = {
+                case JVMClass.cNameAndType = {
                     val nameIndex = reader.getU16()
                     val descriptorIndex = reader.getU16()
                     CpInfo.nameAndType(nameIndex, descriptorIndex)
                 }
-                case (JVMClass.cMethodHandle) = {
+                case JVMClass.cMethodHandle = {
                     val referenceKind = reader.getU8()
                     val referenceIndex = reader.getU16()
                     CpInfo.methodHandle(referenceKind, referenceIndex)
                 }
-                case (JVMClass.cMethodType) = {
+                case JVMClass.cMethodType = {
                     val descriptorIndex = reader.getU16()
                     CpInfo.methodType(descriptorIndex)
                 }
-                case (JVMClass.cInvokeDynamic) = {
+                case JVMClass.cInvokeDynamic = {
                     val bootstrapMethodAttrIndex = reader.getU16()
                     val nameAndTypeIndex = reader.getU16()
                     CpInfo.invokeDynamic(bootstrapMethodAttrIndex, nameAndTypeIndex)
