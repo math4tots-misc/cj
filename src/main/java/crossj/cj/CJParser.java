@@ -1206,13 +1206,8 @@ public final class CJParser {
                     var target = parseTarget();
                     expect(CJToken.KW_IN);
                     var container = parseExpression();
-                    Optional<CJAstExpression> ifCondition = consume(CJToken.KW_IF) ? Optional.of(parseExpression())
-                            : Optional.empty();
-                    Optional<CJAstExpression> whileCondition = consume(CJToken.KW_WHILE)
-                            ? Optional.of(parseExpression())
-                            : Optional.empty();
                     var body = parseBlock();
-                    return new CJAstFor(mark, target, container, ifCondition, whileCondition, body);
+                    return new CJAstFor(mark, target, container, body);
                 }
             }
             case CJToken.KW_NOT: {

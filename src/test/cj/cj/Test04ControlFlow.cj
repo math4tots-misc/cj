@@ -98,38 +98,6 @@ class Test04ControlFlow {
     }
 
     @test
-    def forConditions() = {
-        {
-            val out = List[Int].empty()
-            for x in [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1] if x < 5 {
-                out.add(x)
-            }
-            Assert.equal(out, [1, 2, 3, 4, 4, 3, 2, 1])
-        }
-        {
-            val out = List[Int].empty()
-            for x in [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1] if x % 2 == 0 {
-                out.add(x)
-            }
-            Assert.equal(out, [2, 4, 6, 4, 2])
-        }
-        {
-            val out = List[Int].empty()
-            for x in [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1] while x < 5 {
-                out.add(x)
-            }
-            Assert.equal(out, [1, 2, 3, 4])
-        }
-        {
-            val out = List[Int].empty()
-            for x in [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1] if x % 2 == 0 while x < 5 {
-                out.add(x)
-            }
-            Assert.equal(out, [2, 4])
-        }
-    }
-
-    @test
     def classicForLoop() = {
         {
             val out = List[Int].empty()

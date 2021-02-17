@@ -292,14 +292,6 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var iterator = translateExpression(e.getIterator());
                 var target = translateTarget(e.getTarget());
                 out.append("for(const " + target + " of " + iterator + "){\n");
-                if (e.getIfCondition().isPresent()) {
-                    var condition = translateExpression(e.getIfCondition().get());
-                    out.append("if(!(" + condition + "))continue;\n");
-                }
-                if (e.getWhileCondition().isPresent()) {
-                    var condition = translateExpression(e.getWhileCondition().get());
-                    out.append("if(!(" + condition + "))break;\n");
-                }
                 translateExpression(e.getBody());
                 out.append("}\n");
                 return "undefined";

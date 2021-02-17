@@ -687,11 +687,9 @@ final class CJPass04 extends CJPassBaseEx {
                 enterScope();
                 var target = evalDeclarableTarget(e.getTarget(), false, targetType);
                 declareTarget(target);
-                var ifCondition = e.getIfCondition().map(b -> evalBoolExpression(b));
-                var whileCondition = e.getWhileCondition().map(b -> evalBoolExpression(b));
                 var body = evalUnitExpression(e.getBody());
                 exitScope();
-                return new CJIRFor(e, ctx.getUnitType(), target, iterator, ifCondition, whileCondition, body);
+                return new CJIRFor(e, ctx.getUnitType(), target, iterator, body);
             }
 
             @Override
