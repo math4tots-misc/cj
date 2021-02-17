@@ -1,9 +1,107 @@
 package compiler
 
+import compiler.CJItemKind
+import compiler.CJModifier
 import cj.BigInt
 import compiler.CJMark
 
 class CJAst {
+
+    class File {
+        val mark: CJMark
+        val packageName: String
+        val imports: List[Import]
+        val item: Item
+    }
+
+    class Import {
+        val mark: CJMark
+        val fullName: String
+        val alias: String
+    }
+
+    class Item {
+        val mark: CJMark
+        val comment: String?
+        val annotations: List[Annotation]
+        val modifiers: List[CJModifier]
+        val kind: CJItemKind
+        val name: String
+        val typeParameters: List[TypeParameter]
+        val traitDeclarations: List[TraitDeclaration]
+        val members: List[Member]
+    }
+
+    class TypeParameter {
+        val mark: CJMark
+        val itemLevel: Bool
+        val annotations: List[Annotation]
+        val name: String
+        val traits: List[Trait]
+    }
+
+    class TraitDeclaration {
+        val mark: CJMark
+        val trait_: Trait
+        val conditions: List[TypeCondition]
+    }
+
+    class TypeCondition {
+        val mark: CJMark
+        val variableName: String
+        val traits: List[Trait]
+    }
+
+    class Annotation {
+        val mark: CJMark
+        val name: String
+        val args: List[Annotation]
+    }
+
+    union Member {
+        case item(Item)
+        case case_(Case)
+        case field(Field)
+        case method(Method)
+    }
+
+    class Case {
+        val mark: CJMark
+        val comment: String?
+        val annotations: List[Annotation]
+        val modifiers: List[CJModifier]
+        val name: String
+        val types: List[Type]
+    }
+
+    class Field {
+        val mark: CJMark
+        val comment: String?
+        val annotations: List[Annotation]
+        val modifiers: List[CJModifier]
+        val mutable: Bool
+        val name: String
+        val type: Type
+        val init: Expr?
+    }
+
+    class Method {
+        val mark: CJMark
+        val comment: String?
+        val annotations: List[Annotation]
+        val modifiers: List[CJModifier]
+        val conditions: List[TypeCondition]
+        val name: String
+        val parameters: List[Local]
+        val returnType: Type
+        val body: Expr?
+    }
+
+    class Trait {
+        val mark: CJMark
+        val name: String
+        val args: List[Type]
+    }
 
     class Type {
         val mark: CJMark
