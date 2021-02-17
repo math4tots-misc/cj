@@ -1,17 +1,17 @@
 package crossj.cj;
 
 public final class CJAstAssignment extends CJAstExpression {
-    private final CJAstAssignmentTarget target;
+    private final String variableName;
     private final CJAstExpression expression;
 
-    CJAstAssignment(CJMark mark, CJAstAssignmentTarget target, CJAstExpression expression) {
+    CJAstAssignment(CJMark mark, String variableName, CJAstExpression expression) {
         super(mark);
-        this.target = target;
+        this.variableName = variableName;
         this.expression = expression;
     }
 
-    public CJAstAssignmentTarget getTarget() {
-        return target;
+    public String getVariableName() {
+        return variableName;
     }
 
     public CJAstExpression getExpression() {

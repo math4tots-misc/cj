@@ -1,17 +1,17 @@
 package crossj.cj;
 
 public final class CJIRAssignment extends CJIRExpression {
-    private final CJIRAssignmentTarget target;
+    private final String variableName;
     private final CJIRExpression expression;
 
-    CJIRAssignment(CJAstExpression ast, CJIRType type, CJIRAssignmentTarget target, CJIRExpression expression) {
+    CJIRAssignment(CJAstExpression ast, CJIRType type, String variableName, CJIRExpression expression) {
         super(ast, type);
-        this.target = target;
+        this.variableName = variableName;
         this.expression = expression;
     }
 
-    public CJIRAssignmentTarget getTarget() {
-        return target;
+    public String getVariableName() {
+        return variableName;
     }
 
     public CJIRExpression getExpression() {

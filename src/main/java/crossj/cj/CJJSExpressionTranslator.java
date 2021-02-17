@@ -174,7 +174,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             @Override
             public String visitAssignment(CJIRAssignment e, Void a) {
                 var expr = translateExpression(e.getExpression());
-                var target = translateTarget(e.getTarget());
+                var target = translateLocalVariableName(e.getVariableName());
                 out.append(target + "=" + expr + ";\n");
                 return "undefined";
             }

@@ -693,9 +693,12 @@ public final class CJParser {
                         var fieldName = call.getName().substring("__get_".length());
                         expr = new CJAstMethodCall(opMark, call.getOwner(), "__set_" + fieldName, List.of(),
                                 List.of(call.getArgs().get(0), valexpr));
+                    } else if (expr instanceof CJAstVariableAccess) {
+                        var name = ((CJAstVariableAccess) expr).getName();
+                        expr = new CJAstAssignment(opMark, name, valexpr);
                     } else {
-                        var target = expressionToTarget(expr);
-                        expr = new CJAstAssignment(opMark, target, valexpr);
+                        throw CJError.of("Expected assignment target but got " + expr.getClass().getName(),
+                                expr.getMark());
                     }
                     break;
                 }
@@ -1267,17 +1270,13 @@ public final class CJParser {
                             }
                         }
                     }
-                    expect('=');
-                    var body = parseExpression();
+                    var body = consume('=') ? parseExpression() : parseBlock();
                     cases.add(Tuple4.of(caseMark, caseName, decls, body));
                     expectDelimiters();
                 }
-                Optional<CJAstExpression> fallback;
+                var fallback = Optional.<CJAstExpression>empty();
                 if (consume(CJToken.KW_ELSE)) {
-                    expect('=');
-                    fallback = Optional.of(parseExpression());
-                } else {
-                    fallback = Optional.empty();
+                    fallback = Optional.of(consume('=') ? parseExpression() : parseBlock());
                 }
                 skipDelimiters();
                 expect('}');
@@ -1298,15 +1297,13 @@ public final class CJParser {
                         valexprs.add(parseExpression());
                         skipDelimiters();
                     }
-                    expect('=');
-                    var body = parseExpression();
+                    var body = consume('=') ? parseExpression() : parseBlock();
                     expectDelimiters();
                     cases.add(Pair.of(valexprs, body));
                 }
                 var fallback = Optional.<CJAstExpression>empty();
                 if (consume(CJToken.KW_ELSE)) {
-                    expect('=');
-                    fallback = Optional.of(parseExpression());
+                    fallback = Optional.of(consume('=') ? parseExpression() : parseBlock());
                     expectDelimiters();
                 }
                 expect('}');

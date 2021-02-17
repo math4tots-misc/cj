@@ -604,7 +604,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             @Override
             public CJJSBlob visitAssignment(CJIRAssignment e, Void a) {
                 var expr = translateExpression(e.getExpression());
-                var target = translateTarget(e.getTarget());
+                var target = translateLocalVariableName(e.getVariableName());
                 var lines = expr.getLines();
                 lines.add(target + "=" + expr.getExpression() + ";\n");
                 return new CJJSBlob(lines, "undefined", true);
