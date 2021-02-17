@@ -10,7 +10,7 @@ class Rational : Hash, Ord, Repr, ToBool, Field {
     val numerator : BigInt
     val denominator : BigInt
 
-    def new(numerator: BigInt, denominator: BigInt): Self = {
+    def __new(numerator: BigInt, denominator: BigInt): Self = {
         if denominator == 0n {
             throw Error("Division by zero")
         }

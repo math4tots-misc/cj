@@ -51,7 +51,7 @@ class EZIR {
 
     union Type: Repr {
         case klass(String)
-        def new(name: String): Self = klass(name)
+        def __new(name: String): Self = klass(name)
         def __get_name(self): String = when self { case klass(name) = name }
         def isNoReturn(self): Bool = name == "jl1.NoReturn"
         def isUnit(self): Bool = name == "jl1.Unit"
@@ -74,7 +74,7 @@ class EZIR {
         val type: Type
         val data: ExprData
         val terminatesFlow: Bool
-        def new(mark: EZMark, type: Type, data: ExprData): Self {
+        def __new(mark: EZMark, type: Type, data: ExprData): Self {
             __malloc(mark, type, data, type.isNoReturn())
         }
     }

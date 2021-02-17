@@ -138,8 +138,8 @@ final class CJPass03 extends CJPassBaseEx {
         }
 
         if (item.getKind() == CJIRItemKind.Class && !item.isNative()
-                && !item.getMethods().any(m -> m.getName().equals("new"))) {
-            deriveItemClassCheck(item, "new");
+                && !item.getMethods().any(m -> m.getName().equals("__new"))) {
+            deriveItemClassCheck(item, "__new");
             var methodAst = synthesizeNewMethod(item);
             materializeMethod(item, methodAst, true, null);
         }
@@ -246,7 +246,7 @@ final class CJPass03 extends CJPassBaseEx {
         var selfType = newSelfTypeExpression(item.getMark());
         var argexprs = fields.map(f -> newGetVar(f.getMark(), f.getName()));
         var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), argexprs);
-        return synthesizeGenericMethodWithBody(mark, "new", parameters, selfType, body);
+        return synthesizeGenericMethodWithBody(mark, "__new", parameters, selfType, body);
     }
 
     private CJAstMethodDefinition synthesizeDefaultMethod(CJIRItem item) {

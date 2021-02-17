@@ -1,5 +1,5 @@
 class MC$cj$Int32Array {
-    M$new(list) {
+    M$__new(list) {
         return new Int32Array(list);
     }
     M$withSize(n) {
@@ -21,7 +21,7 @@ class MC$cj$Int32Array {
         self[i] = v;
     }
     M$default() {
-        return this.M$new([]);
+        return this.M$__new([]);
     }
     M$toArrayBufferView(self) {
         return self;

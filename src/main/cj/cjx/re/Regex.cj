@@ -15,7 +15,7 @@ class Regex {
     val nfa: CachingNFA
 
     @variadic
-    def new(patterns: List[String]): Self = Self.fromPatterns(patterns)
+    def __new(patterns: List[String]): Self = Self.fromPatterns(patterns)
 
     def fromPatterns(patterns: List[String]): Self = (
         Self.__malloc(CachingNFA(NFA.fromPatterns(patterns))))
@@ -131,7 +131,7 @@ class Regex {
         val idToRepresentative: List[Int]
         val transitionMap: List[List[Int]]
 
-        def new(nfa: NFA): Self = {
+        def __new(nfa: NFA): Self = {
             val self = Self.__malloc(nfa, [], Map(), [], [])
             Assert.equal(self.getId(Set()), 0)
             self
@@ -309,7 +309,7 @@ class Regex {
         ## maps (node) -> (char-or-edge) -> (new-nodes)
         val transitionMap: List[Map[Int, Set[Int]]]
 
-        def new(): Self = Self.__malloc([])
+        def __new(): Self = Self.__malloc([])
 
         def newNode(self: Self): Int = {
             val node = self.transitionMap.size()
@@ -426,7 +426,7 @@ class Regex {
         private val pattern: String
         private var i: Int
 
-        def new(pattern: String): Self = Self.__malloc(pattern, 0)
+        def __new(pattern: String): Self = Self.__malloc(pattern, 0)
 
         def err(self: Self, message: String): Error = Error(message)
 

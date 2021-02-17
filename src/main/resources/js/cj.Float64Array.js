@@ -1,5 +1,5 @@
 class MC$cj$Float64Array {
-    M$new(list) {
+    M$__new(list) {
         return new Float64Array(list);
     }
     M$withSize(n) {

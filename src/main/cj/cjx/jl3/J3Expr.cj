@@ -14,7 +14,7 @@ class J3Expr {
     val data: Data
     val terminatesFlow: Bool
 
-    def new(mark: J3Mark, type: J3Type, data: Data): Self {
+    def __new(mark: J3Mark, type: J3Type, data: Data): Self {
         __malloc(mark, type, data, if type.isNoReturn() { true } else { false })
     }
 }

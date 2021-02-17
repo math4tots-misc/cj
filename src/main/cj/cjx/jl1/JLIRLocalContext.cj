@@ -44,7 +44,7 @@ class JLIRLocalContext {
 
     var _allLocals: List[JLIRLocal] = ?
 
-    def new(ctx: JLContext,
+    def __new(ctx: JLContext,
             typeMap: Map[String, String],
             className: String,
             methodName: String): Self {

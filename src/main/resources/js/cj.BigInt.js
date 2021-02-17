@@ -1,5 +1,5 @@
 class MC$cj$BigInt {
-    M$new(x) {
+    M$__new(x) {
         return x;
     }
     M$fromString(s) {
@@ -51,7 +51,7 @@ class MC$cj$BigInt {
         return self / other;
     }
     M$__div(self, other) {
-        return MO$cj$math$Rational.M$new(self, other);
+        return MO$cj$math$Rational.M$__new(self, other);
     }
     M$ipow(self, n) {
         return self ** BigInt(n);

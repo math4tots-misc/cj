@@ -7,5 +7,5 @@ class J3Error {
     val error: Error
     val marks: List[J3Mark]
 
-    def new(message: String, marks: List[J3Mark]): Self = __malloc(Error(message), marks)
+    def __new(message: String, marks: List[J3Mark]): Self = __malloc(Error(message), marks)
 }

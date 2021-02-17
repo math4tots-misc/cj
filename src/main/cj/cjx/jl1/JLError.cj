@@ -7,5 +7,5 @@ class JLError {
     val error: Error
     val marks: List[JLMark]
 
-    def new(message: String, marks: List[JLMark]): Self = __malloc(Error(message), marks)
+    def __new(message: String, marks: List[JLMark]): Self = __malloc(Error(message), marks)
 }

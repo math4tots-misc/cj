@@ -7,5 +7,5 @@ class Map_ {
     def of[K?: Hash, V?](pairs: List[Tuple[K, V]]): Map[K, V] = Map[K, V].of(pairs)
 
     @variadic
-    def new[K?: Hash, V?](pairs: List[Tuple[K, V]]): Map[K, V] = Self.of(pairs)
+    def __new[K?: Hash, V?](pairs: List[Tuple[K, V]]): Map[K, V] = Self.of(pairs)
 }

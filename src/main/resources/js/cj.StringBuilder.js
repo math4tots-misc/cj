@@ -1,5 +1,5 @@
 class MC$cj$StringBuilder {
-    M$new() {
+    M$__new() {
         return [];
     }
     M$add(self, string) {

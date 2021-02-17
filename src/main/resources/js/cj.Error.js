@@ -1,5 +1,5 @@
 class MC$cj$Error {
-    M$new(message) {
+    M$__new(message) {
         return new Error(message);
     }
     M$message(error) {

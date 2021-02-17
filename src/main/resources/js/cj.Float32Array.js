@@ -1,5 +1,5 @@
 class MC$cj$Float32Array {
-    M$new(list) {
+    M$__new(list) {
         return new Float32Array(list);
     }
     M$withSize(n) {

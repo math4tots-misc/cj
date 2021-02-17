@@ -1,5 +1,5 @@
 package cj
 
 class Default_ {
-    def new[T: Default](): T = T.default()
+    def __new[T: Default](): T = T.default()
 }

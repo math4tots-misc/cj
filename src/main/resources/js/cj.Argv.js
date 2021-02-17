@@ -1,5 +1,5 @@
 class MC$cj$Argv {
-    M$new() {
+    M$__new() {
         if (typeof process === 'undefined') {
             return [];
         } else {

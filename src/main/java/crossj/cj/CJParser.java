@@ -1048,7 +1048,7 @@ public final class CJParser {
                 if (at('(')) {
                     var mark = getMark();
                     var args = parseArgs();
-                    return new CJAstMethodCall(mark, Optional.of(owner), "new", List.of(), args);
+                    return new CJAstMethodCall(mark, Optional.of(owner), "__new", List.of(), args);
                 }
                 expect('.');
                 var mark = getMark();

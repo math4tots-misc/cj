@@ -54,7 +54,7 @@ class EZSolver {
     class Scope {
         val parent: Nullable[Scope]
         val map: Map[String, Data] = Map()
-        def new(p: Self): Self = __malloc(null(p))
+        def __new(p: Self): Self = __malloc(null(p))
         def newRoot(): Self = {
             val self = __malloc(null)
             self.map["NoReturn"] = Data.fullName("jl1.NoReturn")

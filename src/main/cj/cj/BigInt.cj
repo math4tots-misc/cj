@@ -17,7 +17,7 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, Euclidea
         def fromString(s: String): Self = __malloc(BigInt.fromString(s))
     }
 
-    def new(x: Converter): Self
+    def __new(x: Converter): Self
     def fromString(s: String): Self
     def fromInt(i: Int): Self
     def fromDouble(d: Double): Self

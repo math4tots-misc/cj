@@ -22,7 +22,7 @@ class Set[T?: Hash] :
     }
 
     @variadic
-    def new(ts: List[T]): Self = Set.of(ts)
+    def __new(ts: List[T]): Self = Set.of(ts)
 
     def size(self: Self): Int = self._map.size()
 

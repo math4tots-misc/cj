@@ -1,5 +1,5 @@
 package cj
 
 native class Argv {
-    def new(): List[String]
+    def __new(): List[String]
 }

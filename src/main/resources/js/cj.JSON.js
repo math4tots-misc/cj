@@ -1,5 +1,5 @@
 class MC$cj$JSON {
-    M$new(self) {
+    M$__new(self) {
         return self;
     }
     M$parse(string) {
