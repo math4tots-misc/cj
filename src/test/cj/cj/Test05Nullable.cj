@@ -8,4 +8,11 @@ class Test05Nullable {
         Assert.equal(list, ["foo"])
         Assert.equal(null[String].toList(), [])
     }
+
+    def foo(s: String?): Int? = if null(str) = s { null(str.size()) } else { null }
+
+    @test
+    def questionMarkSyntax() {
+        Assert.equal(foo(null("hello")), null(5))
+    }
 }

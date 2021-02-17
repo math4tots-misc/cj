@@ -291,7 +291,13 @@ public final class CJParser {
             name += "." + parseTypeId();
         }
         var args = parseTypeArgs();
-        return new CJAstTypeExpression(mark, name, args);
+        var typeExpr = new CJAstTypeExpression(mark, name, args);
+        if (at('?')) {
+            var qmark = getMark();
+            next();
+            typeExpr = new CJAstTypeExpression(qmark, "Nullable", List.of(typeExpr));
+        }
+        return typeExpr;
     }
 
     private List<CJAstTypeExpression> parseTypeArgs() {
