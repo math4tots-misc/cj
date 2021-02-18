@@ -73,6 +73,9 @@ class CJAstInspector {
     def _inspectField(self, field: CJAst.Field) {
         val lead = if field.mutable { "var " } else { "val " }
         line(lead + field.name + if val t = field.type { ": " + _type(t) } else { "" })
+        if val init = field.init {
+            _inspectExpr("init", init)
+        }
     }
 
     def _inspectCase(self, case_: CJAst.Case) {
@@ -83,7 +86,12 @@ class CJAstInspector {
         }
     }
 
-    def _inspectExpr(self, expr: CJAst.Expr) {
+    def _inspectExpr(self, header: String, expr: CJAst.Expr) {
+        if val s = _expr0(expr) {
+            line(header + " " + s)
+        } else {
+            line(header + " ...")
+        }
     }
 
     ## Tries to display the contents of the expression in a small string
