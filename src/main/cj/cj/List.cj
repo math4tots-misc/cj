@@ -12,7 +12,7 @@ native class List[T?] :
         Approximate if T : Approximate,
         Repr if T : Repr {
     @generic def empty(): Self
-
+    @variadic @generic def(list: Self): Self
     @generic def iter(self: Self): Iterator[T]
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
