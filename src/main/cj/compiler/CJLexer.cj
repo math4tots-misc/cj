@@ -82,5 +82,32 @@ class CJLexer {
     private def symtok(type: Int, m: Regex.MatchResult): List[CJToken] = [
         CJToken(type, "", m.line, m.column)]
 
-    def lex(filename: String, string: String): List[CJToken] = lexer.lex(filename, string)
+    def lex(filename: String, string: String): List[CJToken] = {
+        val oldTokens = lexer.lex(filename, string)
+        val newTokens = List[CJToken]()
+        val stack = List[Int]()
+        for token in oldTokens {
+            switch token.type {
+                case '('
+                case '['
+                case '{' = {
+                    stack.add(token.type)
+                    newTokens.add(token)
+                }
+                case ')'
+                case '}'
+                case ']' = {
+                    if stack {
+                        stack.pop()
+                    }
+                    newTokens.add(token)
+                }
+                case '\n' = if not stack or stack.last() == '{' {
+                    newTokens.add(token)
+                }
+                else = newTokens.add(token)
+            }
+        }
+        newTokens
+    }
 }
