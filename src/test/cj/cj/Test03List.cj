@@ -45,6 +45,11 @@ class Test03List {
     }
 
     @test
+    def add2() {
+        Assert.equal([1, 2, 3, 5, 6, 7], [1, 2, 3] + [5, 6, 7])
+    }
+
+    @test
     def repr() = {
         # Self.print([true, true, false])
         Assert.equal("print " + [true, true, false].repr(), "print [true, true, false]")
