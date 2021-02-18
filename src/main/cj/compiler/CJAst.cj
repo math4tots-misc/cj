@@ -26,7 +26,7 @@ class CJAst {
         val annotations: List[Annotation]
         val modifiers: List[CJModifier]
         val kind: CJItemKind
-        val name: String
+        val shortName: String
         val typeParameters: List[TypeParameter]
         val traitDeclarations: List[TraitDeclaration]
         val members: List[Member]
@@ -92,8 +92,9 @@ class CJAst {
         val modifiers: List[CJModifier]
         val conditions: List[TypeCondition]
         val name: String
+        val typeParameters: List[TypeParameter]
         val parameters: List[Local]
-        val returnType: Type
+        val returnType: Type?
         val body: Expr?
     }
 
