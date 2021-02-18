@@ -4,6 +4,17 @@ import cj.math.EuclideanDomain
 
 @implicit(Char, _fromChar)
 native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, EuclideanDomain {
+
+    @implicit(Int, __new)
+    @implicit(Double, fromDouble)
+    @implicit(String, fromString)
+    class Converter {
+        val x: Int
+        def fromDouble(d: Int): Self = __malloc(d.toInt())
+        def fromString(s: String): Self = __malloc(s.parseInt().get())
+    }
+
+    def(x: Converter): Self
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int

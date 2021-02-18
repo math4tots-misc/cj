@@ -1,4 +1,7 @@
 class MC$cj$Int {
+    M$__new(self) {
+        return self;
+    }
     M$repr(i) {
         return '' + i;
     }

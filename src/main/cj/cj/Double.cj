@@ -5,6 +5,17 @@ import cj.Approximate
 
 @implicit(Int, _fromInt)
 native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Default, Field {
+
+    @implicit(Double, __new)
+    @implicit(Int, fromInt)
+    @implicit(String, fromString)
+    class Converter {
+        val x: Double
+        def fromInt(i: Int): Self = __malloc(i.toDouble())
+        def fromString(s: String): Self = __malloc(s.parseDouble().get())
+    }
+
+    def(x: Converter): Self
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def approximates(self: Self, other: Self, tolerance: Double): Bool

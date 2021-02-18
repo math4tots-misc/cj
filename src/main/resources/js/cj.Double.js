@@ -1,4 +1,7 @@
 class MC$cj$Double {
+    M$__new(self) {
+        return self;
+    }
     M$repr(x) {
         return '' + x;
     }
