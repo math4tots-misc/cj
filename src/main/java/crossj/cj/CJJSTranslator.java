@@ -445,7 +445,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     case "cj.List_.empty":
                         return Pair.of("[]", false);
                     case "cj.List.__new":
-                        return Pair.of("[" + Str.join(",", allArgs) + "]", false);
+                        Assert.equals(allArgs.size(), 1);
+                        return Pair.of(allArgs.get(0), false);
                     case "cj.List.size":
                         Assert.equals(allArgs.size(), 1);
                         return Pair.of(allArgs.get(0) + ".length", false);

@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.CJLexer
 import compiler.CJAst
 import compiler.CJAst.Expr
 import compiler.CJAst.ExprData as ED
@@ -19,6 +20,12 @@ class CJParser {
     private val path: String
     private val tokens: List[CJToken]
     private var i = 0
+
+    def parse(filename: String, contents: String): CJAst.File {
+        val tokens = CJLexer.lex(filename, contents)
+        val parser = Self(filename, tokens)
+        parser.parseFile()
+    }
 
     private def __get_mark(self): CJMark = { val t = peek(); CJMark(path, t.line, t.column) }
     private def peek(self): CJToken = tokens[i]
@@ -515,6 +522,7 @@ class CJParser {
             case CJToken.tDOUBLE = Expr(mark, ED.double(Double(next().text)))
             case CJToken.tSTRING = Expr(mark, ED.string(lit2str(next().text, mark)))
             case CJToken.tBIGINT = Expr(mark, ED.bigint(BigInt(next().text)))
+            else = throw ekind("expression")
         }
     }
     private def atLambda(self): Bool {

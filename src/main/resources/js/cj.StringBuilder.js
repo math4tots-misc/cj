@@ -2,6 +2,9 @@ class MC$cj$StringBuilder {
     M$__new() {
         return [];
     }
+    M$default() {
+        return this.M$__new();
+    }
     M$add(self, string) {
         self.push(string);
     }
