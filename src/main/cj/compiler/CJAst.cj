@@ -81,7 +81,7 @@ class CJAst {
         val modifiers: List[CJModifier]
         val mutable: Bool
         val name: String
-        val type: Type
+        val type: Type?
         val init: Expr?
     }
 
