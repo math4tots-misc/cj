@@ -28,6 +28,16 @@ class MC$cj$List {
     M$pop(self) {
         return self.pop();
     }
+    M$__add(self, other) {
+        const ret = [];
+        for (let i = 0; i < self.length; i++) {
+            ret.push(self[i]);
+        }
+        for (let i = 0; i < other.length; i++) {
+            ret.push(other[i]);
+        }
+        return ret;
+    }
     M$__getitem(self, i) {
         if (i >= self.length) {
             throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);

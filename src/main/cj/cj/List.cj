@@ -19,6 +19,7 @@ native class List[T?] :
     @generic def add(self: Self, t: T)
     @genericSelf def addAll[C: Iterable[T]](self: Self, ts: C)
     @generic def pop(self): T
+    @generic def __add(self: Self, other: Self): Self
     @generic def __getitem(self: Self, i: Int): T
     @generic def __setitem(self: Self, i: Int, t: T)
     @generic def removeIndex(self: Self, i: Int): T
