@@ -152,7 +152,7 @@ class JLContext {
             }
         }
 
-        if null(scls) = superClass {
+        if val scls = superClass {
             ircls.superClass = scls
         } else if ircls.name != "java.lang.Object" {
             ircls.superClass = getClass(Default(), "java.lang.Object", false)
@@ -175,7 +175,7 @@ class JLContext {
     def getClassTemplateOrNull(
             self,
             qualifiedClassName: String): Nullable[JLAstClass] {
-        if null((typeMap, classTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+        if val (typeMap, classTemplate) = classTemplateMap.getOrNull(qualifiedClassName) {
             null(classTemplate)
         } else {
             null
@@ -186,7 +186,7 @@ class JLContext {
             self,
             mark: JLMark,
             qualifiedClassName: String): JLAstClass {
-        if null(classTemplate) = getClassTemplateOrNull(qualifiedClassName) {
+        if val classTemplate = getClassTemplateOrNull(qualifiedClassName) {
             classTemplate
         } else {
             throw JLError("Class template " + qualifiedClassName + " not found", [mark])
@@ -197,7 +197,7 @@ class JLContext {
         JLType.klass(getClass(mark, qualifiedClassName, ensurePass2)))
 
     def getClassOrNull(self, qualifiedClassName: String, ensurePass2: Bool): Nullable[JLIRClass] {
-        if null(cls) = classMap.getOrNull(qualifiedClassName) {
+        if val cls = classMap.getOrNull(qualifiedClassName) {
             if ensurePass2 {
                 resolvePendingClassesThroughPass2()
             }
@@ -208,7 +208,7 @@ class JLContext {
     }
 
     def getClass(self, mark: JLMark, qualifiedClassName: String, ensurePass2: Bool): JLIRClass {
-        if null(cls) = getClassOrNull(qualifiedClassName, ensurePass2) {
+        if val cls = getClassOrNull(qualifiedClassName, ensurePass2) {
             cls
         } else {
             throw JLError("Class " + qualifiedClassName + " not found", [mark])
@@ -223,7 +223,7 @@ class JLContext {
             ensurePass2: Bool): JLIRClass {
         val reifiedClassName = getReifiedClassName(mark, qualifiedClassName, templateArgs)
         if reifiedClassName not in classMap {
-            if null((typeMap, originalTemplate)) = classTemplateMap.getOrNull(qualifiedClassName) {
+            if val (typeMap, originalTemplate) = classTemplateMap.getOrNull(qualifiedClassName) {
                 val classTemplate = JLAstClass(
                     originalTemplate.mark,
                     originalTemplate.comment,
@@ -412,7 +412,7 @@ class JLContext {
             methodTemplate: JLAstMethod,
             targs: List[JLIRTemplateArgument]): JLIRMethodRef {
         val methodName = getReifiedMethodName(mark, methodTemplate.name, targs)
-        if null(methodref) = ircls.getMethodRefOrNull(methodName) {
+        if val methodref = ircls.getMethodRefOrNull(methodName) {
             methodref
         } else {
             JLIRMethodRef(ircls, reifyMethod(mark, ircls, methodTemplate, targs))

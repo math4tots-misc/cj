@@ -55,7 +55,7 @@ class XXCodegen {
                 jvmmethod.name = method.name
                 jvmmethod.descriptor = toJVMMethodType2(method)
 
-                if null(body) = method.body {
+                if val body = method.body {
                     jvmmethod.addCode(jvmcode -> {
                         val exprgen = ExprGen(
                             jvmcode,

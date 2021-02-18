@@ -50,9 +50,9 @@ union JLIRMetaVal: Repr, Eq, Default {
         val locals: Map[String, JLIRMetaVal] = Map()
 
         def getOrNull(self, name: String): Nullable[JLIRMetaVal] {
-            if null(v) = locals.getOrNull(name) {
+            if val v = locals.getOrNull(name) {
                 null(v)
-            } else if null(p) = parent {
+            } else if val p = parent {
                 p.getOrNull(name)
             } else {
                 null
@@ -60,7 +60,7 @@ union JLIRMetaVal: Repr, Eq, Default {
         }
 
         def get(self, mark: JLMark, name: String): JLIRMetaVal {
-            if null(v) = getOrNull(name) {
+            if val v = getOrNull(name) {
                 v
             } else {
                 throw JLError("Meta variable " + name + " not found", [mark])

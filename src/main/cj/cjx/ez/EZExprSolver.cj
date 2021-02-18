@@ -12,7 +12,7 @@ class EZExprSolver {
 
     def solve(self, astExpr: EZAst.Expr, expected: Nullable[EZIR.Type]): EZIR.Expr {
         val irExpr = solveRaw(astExpr, expected)
-        if null(etype) = expected {
+        if val etype = expected {
             implicitCast(irExpr, etype)
         } else {
             irExpr

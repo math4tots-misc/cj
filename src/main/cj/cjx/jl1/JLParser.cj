@@ -181,7 +181,7 @@ class JLParser {
                 }
                 else = null
             }
-            if null(name) = nullableName {
+            if val name = nullableName {
                 modifiers.add(name)
             } else {
                 throw JLError("Expected @modifier name", [mark])
@@ -577,7 +577,7 @@ class JLParser {
                         }
                         else = null
                     }
-                    if null(data) = nullableData {
+                    if val data = nullableData {
                         JLAstExpr(mark, data)
                     } else {
                         throw JLError("The left hand side is not assignable", [mark])
@@ -598,14 +598,14 @@ class JLParser {
                         case getvar(name) = null(JLAstExpr.Data.augvar(name, op, valexpr))
                         else = null
                     }
-                    if null(data) = nullableData {
+                    if val data = nullableData {
                         JLAstExpr(mark, data)
                     } else {
                         throw JLError("The left hand side is not augassignable", [mark])
                     }
                 }
                 else = {
-                    if null((isRightAssociative, operator)) = binopTable.getOrNull(toktype) {
+                    if val (isRightAssociative, operator) = binopTable.getOrNull(toktype) {
                         next()
                         mkop(mark, operator, expr, parseExpressionWithPrecedence(
                             tokenPrecedence + if isRightAssociative { 0 } else { 1 }))
@@ -801,7 +801,7 @@ class JLParser {
                 JLAstExpr(mark, JLAstExpr.Data.try_(body, catchClauses, fin))
             }
             else = {
-                if null((precedence, operator)) = unopTable.getOrNull(peek().type) {
+                if val (precedence, operator) = unopTable.getOrNull(peek().type) {
                     next()
                     val arg = parseExpressionWithPrecedence(precedence)
                     JLAstExpr(mark, JLAstExpr.Data.operation(operator, [arg]))
@@ -895,7 +895,7 @@ class JLParser {
     }
 
     private def translateInt(mark: JLMark, input: String): Int {
-        if null(i) = input.parseInt() {
+        if val i = input.parseInt() {
             i
         } else {
             throw JLError("Unrecognized int literal " + input, [mark])
@@ -903,7 +903,7 @@ class JLParser {
     }
 
     private def translateDouble(mark: JLMark, input: String): Double {
-        if null(f) = input.parseDouble() {
+        if val f = input.parseDouble() {
             f
         } else {
             throw JLError("Unrecognized double literal " + input, [mark])

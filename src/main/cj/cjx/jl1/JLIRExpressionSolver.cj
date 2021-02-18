@@ -67,7 +67,7 @@ class JLIRExpressionSolver {
             expectedType: Nullable[JLType]): JLIRExpr {
         val irExpr = solveExpressionUnchecked(astExpr, expectedType)
 
-        if null(etype) = expectedType {
+        if val etype = expectedType {
             checkTypeAndCast(etype, irExpr)
         } else {
             # If a void type was not specifically requested, it's not allowed
@@ -115,7 +115,7 @@ class JLIRExpressionSolver {
             else = null
         }
 
-        if null(ie) = nullableIrExpr {
+        if val ie = nullableIrExpr {
             ie
         } else {
             throw JLError("Expected bool expression", [astExpr.mark])
@@ -154,7 +154,7 @@ class JLIRExpressionSolver {
             else = null
         }
 
-        if null(ie) = nullableIrExpr {
+        if val ie = nullableIrExpr {
             ie
         } else {
             throw JLError("Expected String expression", [astExpr.mark])
@@ -284,12 +284,12 @@ class JLIRExpressionSolver {
             }
             case callstatic(astOwnerType, methodName, astTemplArgs, astArgs) = {
                 val ownercls = lctx.solveClass(astOwnerType)
-                if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
+                if val methodref = ownercls.getMethodRefOrNull(methodName) {
                     val methodref = ownercls.getMethodRef(mark, methodName)
                     val irArgs = checkMethodArgs(true, mark, methodref, astArgs, [])
                     JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                         methodref, irArgs))
-                } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(methodName) {
+                } else if val methodTemplate = ownercls.getMethodTemplateOrNull(methodName) {
                     val irArgs: List[JLIRExpr] = []
                     val templateArgs = if astTemplArgs {
                         lctx.solveTemplateArgs(mark, astTemplArgs)
@@ -382,11 +382,11 @@ class JLIRExpressionSolver {
                     fieldref, irOwner, valexpr))
             }
             case getvar(name) = {
-                if null(local) = lctx.getLocalOrNull(name) {
+                if val local = lctx.getLocalOrNull(name) {
                     JLIRExpr(mark, local.type, JLIRExpr.Data.getlocal(local))
                 } else {
                     val ownercls = lctx.thisClass
-                    if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                    if val fieldref = ownercls.getFieldRefOrNull(name) {
                         if fieldref.field.isStatic() {
                             solveExpression(
                                 JLAstExpr(mark, JLAstExpr.Data.getstatic(
@@ -404,7 +404,7 @@ class JLIRExpressionSolver {
                 }
             }
             case setvar(name, astValexpr) = {
-                if null(local) = lctx.getLocalOrNull(name) {
+                if val local = lctx.getLocalOrNull(name) {
                     if not local.isMutable() {
                         throw JLError("Variable " + name + " is not mutable", [mark])
                     }
@@ -412,7 +412,7 @@ class JLIRExpressionSolver {
                     JLIRExpr(mark, JLType.void(), JLIRExpr.Data.setlocal(local, valexpr))
                 } else {
                     val ownercls = lctx.thisClass
-                    if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                    if val fieldref = ownercls.getFieldRefOrNull(name) {
                         if fieldref.field.isStatic() {
                             solveExpression(
                                 JLAstExpr(mark, JLAstExpr.Data.setstatic(
@@ -435,7 +435,7 @@ class JLIRExpressionSolver {
                         null
                     } else {
                         val ownercls = lctx.thisClass
-                        if null(fieldref) = ownercls.getFieldRefOrNull(name) {
+                        if val fieldref = ownercls.getFieldRefOrNull(name) {
                             if fieldref.field.isStatic() {
                                 null
                             } else {
@@ -446,7 +446,7 @@ class JLIRExpressionSolver {
                         }
                     }
                 }
-                if null(fieldref) = nullableInstanceFieldref {
+                if val fieldref = nullableInstanceFieldref {
                     if (fieldref.field.type == JLType.int() and
                             operator == JLAstExpr.Operator.add()) {
                         # Because of how common this is, I just want to support this special
@@ -500,7 +500,7 @@ class JLIRExpressionSolver {
                 }
             }
             case list(astArgs) = {
-                var nullableInnerType = if null(etype) = expectedType {
+                var nullableInnerType = if val etype = expectedType {
                     when etype {
                         case array(it) = null(it)
                         else = null
@@ -514,7 +514,7 @@ class JLIRExpressionSolver {
                     }
                     irArgs.add(irArg)
                 }
-                val innerType = if null(it) = nullableInnerType {
+                val innerType = if val it = nullableInnerType {
                     it
                 } else {
                     throw JLError("Could not infer list type", [mark])
@@ -532,7 +532,7 @@ class JLIRExpressionSolver {
             }
             case if_(astCond, astBody, nullableOther) = {
                 val irCond = solveTruthyCoercedExpression(astCond)
-                if null(astOther) = nullableOther {
+                if val astOther = nullableOther {
                     val irBody = solveExpression(astBody, expectedType)
                     val irOther = solveExpression(astOther, null(irBody.type))
                     JLIRExpr(mark, irBody.type, JLIRExpr.Data.if_(irCond, irBody, irOther))
@@ -568,7 +568,7 @@ class JLIRExpressionSolver {
                     lctx.popScope()
                 }
                 val tc = JLIRExpr(mark, irBody.type, JLIRExpr.Data.trycatch(irBody, irEntries))
-                if null(f) = fin {
+                if val f = fin {
                     val irFin = solveVoidExpression(f)
                     JLIRExpr(mark, irBody.type, JLIRExpr.Data.tryfinally(
                         if astEntries.isEmpty() { irBody } else { tc },
@@ -584,19 +584,19 @@ class JLIRExpressionSolver {
             }
             case classicFor(astInit, astCond, astIncr, astBody) = {
                 val ainit = (
-                    if null(ainit) = astInit {
+                    if val ainit = astInit {
                         ainit
                     } else {
                         JLAstExpr(mark, JLAstExpr.Data.block([]))
                     })
                 val acond = (
-                    if null(acond) = astCond {
+                    if val acond = astCond {
                         acond
                     } else {
                         JLAstExpr(mark, JLAstExpr.Data.bool(true))
                     })
                 val aincr = (
-                    if null(aincr) = astIncr {
+                    if val aincr = astIncr {
                         aincr
                     } else {
                         JLAstExpr(mark, JLAstExpr.Data.block([]))
@@ -645,18 +645,18 @@ class JLIRExpressionSolver {
                         val irArg0 = solveExpression(astArgs[0], null)
                         val nullableIrExpr = when irArg0.type {
                             case int() = {
-                                if null(irOp) = homogeneousIntOps.getOrNull(operator) {
+                                if val irOp = homogeneousIntOps.getOrNull(operator) {
                                     null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
-                                } else if null(irOp) = comparisonIntOps.getOrNull(operator) {
+                                } else if val irOp = comparisonIntOps.getOrNull(operator) {
                                     null(handleCompareOps(mark, irOp, irArg0, astArgs))
-                                } else if null(irOp) = homogeneousUnaryIntOps.getOrNull(operator) {
+                                } else if val irOp = homogeneousUnaryIntOps.getOrNull(operator) {
                                     null(handleHomogeneousUnaryOp(mark, irOp, irArg0, astArgs))
                                 } else {
                                     null
                                 }
                             }
                             case double() = {
-                                if null(irOp) = homogeneousDoubleOps.getOrNull(operator) {
+                                if val irOp = homogeneousDoubleOps.getOrNull(operator) {
                                     null(handleHomogeneousOps(mark, irOp, irArg0, astArgs))
                                 } else {
                                     null
@@ -672,7 +672,7 @@ class JLIRExpressionSolver {
                             }
                             else = null
                         }
-                        if null(irExpr) = nullableIrExpr {
+                        if val irExpr = nullableIrExpr {
                             irExpr
                         } else {
                             var negate = false
@@ -738,13 +738,13 @@ class JLIRExpressionSolver {
                 solveExpression(innerAstExpr, null(irType))
             }
             case lambda(astParams, astBody) = {
-                val nullableFncls = if null(etype) = expectedType {
+                val nullableFncls = if val etype = expectedType {
                     when etype {
                         case klass(fcls) = null(fcls)
                         else = null
                     }
                 } else { null }
-                val fncls = if null(fncls) = nullableFncls { fncls } else {
+                val fncls = if val fncls = nullableFncls { fncls } else {
                     throw JLError("Could not infer type of lambda expression", [mark])
                 }
                 val expectedFunctionTemplateName = "jl1.Fn" + astParams.size()
@@ -894,7 +894,7 @@ class JLIRExpressionSolver {
                 }
                 else = null
             }
-            if null(newExpr) = nullableExpr {
+            if val newExpr = nullableExpr {
                 newExpr
             } else {
                 throw JLError("Expected " + type + " but got " + expr.type, [expr.mark])
@@ -981,12 +981,12 @@ class JLIRExpressionSolver {
                             "Method " + methodName + " not found for String", [mark])
                     }
                 } else {
-                    if null(methodref) = ownercls.getMethodRefOrNull(methodName) {
+                    if val methodref = ownercls.getMethodRefOrNull(methodName) {
                         val irArgs = checkMethodArgs(
                             false, mark, methodref, astArgs, [irOwner])
                         JLIRExpr(mark, methodref.method.returnType, JLIRExpr.Data.call(
                             methodref, irArgs))
-                    } else if null(methodTemplate) = ownercls.getMethodTemplateOrNull(
+                    } else if val methodTemplate = ownercls.getMethodTemplateOrNull(
                             methodName) {
                         val irArgs: List[JLIRExpr] = [irOwner]
                         val templateArgs = if astTemplArgs {

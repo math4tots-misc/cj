@@ -140,7 +140,7 @@ class Regex {
         def __get_patternCount(self: Self): Int = self.nfa.patternCount
 
         def getId(self: Self, states: Set[Int]): Int = {
-            if null(id) = self.statesToId.getOrNull(states) {
+            if val id = self.statesToId.getOrNull(states) {
                 id
             } else {
                 val id = self.idToStates.size()

@@ -69,7 +69,7 @@ class JLCodegen {
                 jvmmethod.name = jlmethod.name
                 jvmmethod.descriptor = jlmethod.getJVMDescriptor()
 
-                if null(body) = jlmethod.body {
+                if val body = jlmethod.body {
                     jvmmethod.addCode(jvmcode -> {
                         val exprgen = ExprGen(
                             ctx,
@@ -240,7 +240,7 @@ class JLCodegen {
                 }
                 case setlocal(local, valexpr) = {
                     # Try optimizing wth iinc for the really common case
-                    val opt = if null(incr) = getIntAddAssignIncr(local, valexpr) {
+                    val opt = if val incr = getIntAddAssignIncr(local, valexpr) {
                         val index = localMap[local.id]
                         if index < 128 and incr >= -128 and incr < 128 {
                             jvmcode.iinc(index, incr)

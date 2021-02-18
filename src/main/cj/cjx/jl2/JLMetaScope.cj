@@ -63,7 +63,7 @@ class JLMetaScope {
     val table: Map[String, Entry] = Map()
 
     def(parent: Nullable[Self]): Self {
-        if null(p) = parent {
+        if val p = parent {
             val scope = __malloc(p.depth + 1, null(p))
             for (name, f) in builtinFunctions.pairs() {
                 scope.table[name] = Entry(0, false, JLMetaVal.builtin(f))
@@ -75,10 +75,10 @@ class JLMetaScope {
     }
 
     def getEntryOrNull(self, name: String): Nullable[Entry] {
-        if null(entry) = table.getOrNull(name) {
+        if val entry = table.getOrNull(name) {
             null(entry)
-        } else if null(p) = parent {
-            if null(entry) = p.getEntryOrNull(name) {
+        } else if val p = parent {
+            if val entry = p.getEntryOrNull(name) {
                 table[name] = entry
                 null(entry)
             } else {
@@ -90,7 +90,7 @@ class JLMetaScope {
     }
 
     def getOrNull(self, name: String): Nullable[JLMetaVal] {
-        if null(entry) = getEntryOrNull(name) {
+        if val entry = getEntryOrNull(name) {
             null(entry.value)
         } else {
             null
@@ -98,7 +98,7 @@ class JLMetaScope {
     }
 
     def setOrMessage(self, name: String, value: JLMetaVal): Nullable[String] {
-        if null(entry) = getEntryOrNull(name) {
+        if val entry = getEntryOrNull(name) {
             if entry.mutable {
                 entry.value = value
                 null
@@ -112,7 +112,7 @@ class JLMetaScope {
 
     def declareOrMessage(
             self, name: String, value: JLMetaVal, mutable: Bool): Nullable[String] {
-        if null(entry) = table.getOrNull(name) {
+        if val entry = table.getOrNull(name) {
             if entry.depth == depth {
                 if entry.mutable {
                     entry.value = value

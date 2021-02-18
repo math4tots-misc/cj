@@ -3,6 +3,7 @@ package compiler
 import compiler.CJItemKind
 import cj.StringBuilder
 import compiler.CJAst
+import compiler.CJAst.Expr
 
 class CJAstInspector {
     val sb: StringBuilder = Default()
@@ -42,6 +43,8 @@ class CJAstInspector {
             t.name
         }
     }
+    def _ntype(nt: Nullable[CJAst.Type]): String = if val t = nt { _type(t) } else { "null" }
+    def _ltype(lt: List[CJAst.Type]): String = "[" + ", ".join(lt.map(t -> _type(t))) + "]"
 
     def _itemkind(itemKind: CJItemKind): String = when itemKind {
         case class_ = "class"
@@ -69,7 +72,7 @@ class CJAstInspector {
 
     def _inspectField(self, field: CJAst.Field) {
         val lead = if field.mutable { "var " } else { "val " }
-        line(lead + field.name + if null(t) = field.type { ": " + _type(t) } else { "" })
+        line(lead + field.name + if val t = field.type { ": " + _type(t) } else { "" })
     }
 
     def _inspectCase(self, case_: CJAst.Case) {
@@ -78,5 +81,24 @@ class CJAstInspector {
         } else {
             line("case " + case_.name)
         }
+    }
+
+    def _inspectExpr(self, expr: CJAst.Expr) {
+    }
+
+    ## Tries to display the contents of the expression in a small string
+    ## if it can
+    private def _expr0(expr: Expr): String? {
+        null(when expr.data {
+            case unit = "()"
+            case bool(x) = x.repr()
+            case char(x) = x.repr()
+            case int(x) = x.repr()
+            case double(x) = x.repr()
+            case string(x) = x.repr()
+            case bigint(x) = x.repr()
+            case call(nt, methodName, typeArgs, args) = return null
+            else = return null
+        })
     }
 }

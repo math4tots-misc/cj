@@ -58,7 +58,7 @@ class JLIRLocalContext {
         self
     }
 
-    def __get_thisClass(self): JLIRClass = if null(cls) = _thisClass {
+    def __get_thisClass(self): JLIRClass = if val cls = _thisClass {
             cls
         } else {
             val cls = ctx.classMap[className]
@@ -66,7 +66,7 @@ class JLIRLocalContext {
             cls
         }
 
-    def __get_thisMethod(self): JLIRMethod = if null(method) = _thisMethod {
+    def __get_thisMethod(self): JLIRMethod = if val method = _thisMethod {
             method
         } else if methodName {
             val method = thisClass.methodMap[methodName]
@@ -97,12 +97,12 @@ class JLIRLocalContext {
                 }
                 if shortName == "Self" {
                     JLType.klass(thisClass)
-                } else if null(templateArg) = getTemplateArgumentOrNull(shortName) {
+                } else if val templateArg = getTemplateArgumentOrNull(shortName) {
                     when templateArg {
                         case type(type) = type
                         else = throw JLError(shortName + " is not a type", [texpr.mark])
                     }
-                } else if null(qualifiedName) = typeMap.getOrNull(shortName) {
+                } else if val qualifiedName = typeMap.getOrNull(shortName) {
                     val mark = texpr.mark
                     if astArgs {
                         val irArgs = solveTemplateArgs(mark, astArgs)
@@ -118,9 +118,9 @@ class JLIRLocalContext {
     }
 
     def getTemplateArgumentOrNull(self, shortName: String): Nullable[JLIRTemplateArgument] {
-        if null(templateArg) = additionalTemplateArgsMap.getOrNull(shortName) {
+        if val templateArg = additionalTemplateArgsMap.getOrNull(shortName) {
             null(templateArg)
-        } else if null(templateArg) = thisClass.getTemplateArgumentOrNull(shortName) {
+        } else if val templateArg = thisClass.getTemplateArgumentOrNull(shortName) {
             null(templateArg)
         } else {
             null
@@ -168,7 +168,7 @@ class JLIRLocalContext {
 
     def getLocalOrNull(self, name: String): Nullable[JLIRLocal] {
         for i = localStack.size() - 1; i >= 0; i-- {
-            if null(entry) = localStack[i].getOrNull(name) {
+            if val entry = localStack[i].getOrNull(name) {
                 return null(entry)
             }
         }
@@ -247,7 +247,7 @@ class JLIRLocalContext {
         val variableNames = methodTemplate.templateParameters.map(tp -> (tp.name, tp)).toMap()
         val target = variableNames.size()
         val map: Map[String, JLIRTemplateArgument] = Map()
-        if null(returnType) = expectedReturnType {
+        if val returnType = expectedReturnType {
             stack.add((
                 outerMark,
                 JLAstTemplateArgument(outerMark, JLAstTemplateArgument.Data.type(
@@ -276,7 +276,7 @@ class JLIRLocalContext {
                         JLAstTemplateArgument.Data.type(
                             # if the parameter type is empty, this probably means
                             # the parameter is a 'this' argument
-                            if null(t) = methodTemplate.parameters[i].type {
+                            if val t = methodTemplate.parameters[i].type {
                                 t
                             } else {
                                 JLAstType(expr.mark, JLAstType.Data.int())
@@ -293,7 +293,7 @@ class JLIRLocalContext {
                                     # bind: type argument
                                     map[shortName] = actual
                                 }
-                            } else if null(qualifiedName) = ownerlctx.typeMap.getOrNull(
+                            } else if val qualifiedName = ownerlctx.typeMap.getOrNull(
                                     shortName) {
                                 when actual {
                                     case type(actualType) = when actualType {

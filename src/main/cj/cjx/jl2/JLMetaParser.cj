@@ -77,7 +77,7 @@ class JLMetaParser {
     }
 
     private def translateInt(mark: JLMark, input: String): Int {
-        if null(i) = input.parseInt() {
+        if val i = input.parseInt() {
             i
         } else {
             throw JLError("Unrecognized int literal " + input, [mark])
@@ -85,7 +85,7 @@ class JLMetaParser {
     }
 
     private def translateDouble(mark: JLMark, input: String): Double {
-        if null(f) = input.parseDouble() {
+        if val f = input.parseDouble() {
             f
         } else {
             throw JLError("Unrecognized double literal " + input, [mark])

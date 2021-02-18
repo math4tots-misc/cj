@@ -40,7 +40,7 @@ class Lexer[Token] {
         val tokens: List[Token] = []
         var ok = true
         while ok and not matcher.eof() {
-            if null(matchResult) = matcher.match() {
+            if val matchResult = matcher.match() {
                 tokens.addAll(callbacks[matchResult.matchIndex].call(matchResult))
             } else {
                 onError.call(matcher)

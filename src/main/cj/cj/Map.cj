@@ -98,7 +98,7 @@ class Map[K?: Hash, V?] :
     }
 
     def getOrInsert(self: Self, key: K, f: Fn[V]): V = {
-        if null(triple) = self._getTriple(key) {
+        if val triple = self._getTriple(key) {
             triple.get2()
         } else {
             val value = f.call()
@@ -108,13 +108,13 @@ class Map[K?: Hash, V?] :
     }
 
     def getOrDefault(self: Self, key: K, d: V): V = (
-        if null(t) = self._getTriple(key) { t.get2() } else { d })
+        if val t = self._getTriple(key) { t.get2() } else { d })
 
     def getOrElse(self: Self, key: K, f: Fn[V]): V = (
-        if null(t) = self._getTriple(key) { t.get2() } else { f.call() })
+        if val t = self._getTriple(key) { t.get2() } else { f.call() })
 
     if V : NonNull def getOrNull(self: Self, key: K) : Nullable[V] = (
-        if null(t) = self._getTriple(key) { null(t.get2()) } else { null })
+        if val t = self._getTriple(key) { null(t.get2()) } else { null })
 
     def __contains(self: Self, key: K): Bool = self._getTriple(key).isPresent()
 
@@ -176,7 +176,7 @@ class Map[K?: Hash, V?] :
             return true
         }
         for (hash, k, v) in self._list.iter().flatMap(bucket -> bucket) {
-            if null((_h, _k, otherV)) = other._getTripleWithHash(k, hash) {
+            if val (_h, _k, otherV) = other._getTripleWithHash(k, hash) {
                 if v != otherV {
                     return false
                 }

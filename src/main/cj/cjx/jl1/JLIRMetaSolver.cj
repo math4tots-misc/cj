@@ -23,7 +23,7 @@ class JLIRMetaSolver {
     }
 
     def solveExpr(self, expr: JLAstMetaExpr, expectedType: Nullable[JLType]): JLIRExpr {
-        val constraint = if null(type) = expectedType {
+        val constraint = if val type = expectedType {
             JLIRMetaVal.Constraint.expr(type)
         } else {
             JLIRMetaVal.Constraint.anyExpr()
@@ -114,9 +114,9 @@ class JLIRMetaSolver {
                 }))
             }
             case name(name) = {
-                if null(arg) = currentScope.getOrNull(name) {
+                if val arg = currentScope.getOrNull(name) {
                     arg
-                } else if null(arg) = lctx.getTemplateArgumentOrNull(name) {
+                } else if val arg = lctx.getTemplateArgumentOrNull(name) {
                     when arg {
                         case int(i) = JLIRMetaVal.number(i)
                         case type(t) = JLIRMetaVal.type(t)
@@ -184,7 +184,7 @@ class JLIRMetaSolver {
                                 result = null(solve(args[i + 1], constraint))
                             }
                         }
-                        if null(v) = result {
+                        if val v = result {
                             v
                         } else {
                             throw JLError("cond with no matching branches", [mark])
@@ -297,7 +297,7 @@ class JLIRMetaSolver {
             }
             else = null
         }
-        if null(args) = nullable {
+        if val args = nullable {
             args
         } else {
             throw JLError("Expected raw list", [expr.mark])

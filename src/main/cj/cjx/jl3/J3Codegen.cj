@@ -17,7 +17,7 @@ class J3Codegen {
         val jvmcls = JVMClass()
         val lambdaNameFactory = LambdaNameFactory(ircls.name + "$l$")
         jvmcls.thisClass = jvmcls.cp.classref(jvmName(ircls))
-        jvmcls.superClass = jvmcls.cp.classref(if null(scls) = ircls.superClass {
+        jvmcls.superClass = jvmcls.cp.classref(if val scls = ircls.superClass {
             jvmName(scls) } else { "java/lang/Object" })
         jvmcls.attributes.add(JVMClass.AttributeInfo(
             jvmcls.cp.utf8("SourceFile"),
@@ -54,7 +54,7 @@ class J3Codegen {
                     jvmmethod.accessFlags = accessFlags
                     jvmmethod.name = irmethod.name
                     jvmmethod.descriptor = jvmType(irmethod.returnType)
-                    if null(body) = irmethod.body {
+                    if val body = irmethod.body {
                         jvmmethod.addCode(jvmcode -> {
                             val egen = ExprGen(jvmcode, lambdaNameFactory)
                             egen.top(body)

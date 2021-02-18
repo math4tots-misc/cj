@@ -75,10 +75,10 @@ class EZSolver {
 
     def scopeGetOrNull(self, var scope: Scope, key: String): Nullable[Data] {
         while true {
-            if null(value) = scope.map.getOrNull(key) {
+            if val value = scope.map.getOrNull(key) {
                 return null(value)
             }
-            if null(parent) = scope.parent {
+            if val parent = scope.parent {
                 scope = parent
             } else {
                 return null
@@ -87,7 +87,7 @@ class EZSolver {
     }
 
     def scopeGet(self, mark: EZMark, scope: Scope, key: String): Data {
-        if null(value) = scopeGetOrNull(scope, key) {
+        if val value = scopeGetOrNull(scope, key) {
             value
         } else {
             throw EZError("Name '" + key + "' not found in this scope", [mark])
@@ -115,7 +115,7 @@ class EZSolver {
         if args {
             throw EZError("Type arguments not yet supported", [mark])
         }
-        if null(cls) = classMap.getOrNull(fullName) {
+        if val cls = classMap.getOrNull(fullName) {
             EZIR.Type(cls.name)
         } else {
             throw EZError("Type " + fullName + " not found", [mark])
@@ -201,7 +201,7 @@ class EZSolver {
                 parameters,
                 returnType)
             ircls.addMethod(irMethod)
-            if null(astBody) = astMethod.body {
+            if val astBody = astMethod.body {
                 todo(2, () -> {
                     val methodScope = Scope(classScope)
                     for parameter in parameters {

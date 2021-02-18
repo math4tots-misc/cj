@@ -1124,16 +1124,9 @@ public final class CJParser {
                 var mark = getMark();
                 next();
                 var mutable = consume(CJToken.KW_VAR);
-                var condition = parseExpression();
-                if (condition instanceof CJAstNullWrap && consume('=')) {
-                    var wrap = (CJAstNullWrap) condition;
-                    if (wrap.getInnerType().isPresent()) {
-                        throw CJError.of("Inner null wrap type cannot be specified here", mark);
-                    }
-                    if (wrap.getInner().isEmpty()) {
-                        throw CJError.of("if null must specify a target", mark);
-                    }
-                    var target = expressionToTarget(wrap.getInner().get());
+                if (mutable || consume(CJToken.KW_VAL)) {
+                    var target = parseTarget();
+                    expect('=');
                     var inner = parseExpression();
                     var left = parseBlock();
                     Optional<CJAstExpression> right = consume(CJToken.KW_ELSE)
@@ -1141,6 +1134,7 @@ public final class CJParser {
                             : Optional.empty();
                     return new CJAstIfNull(mark, mutable, target, inner, left, right);
                 } else {
+                    var condition = parseExpression();
                     if (mutable) {
                         throw CJError.of("Expected null wrapped assignment target", mark);
                     }

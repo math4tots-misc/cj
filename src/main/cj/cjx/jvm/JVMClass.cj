@@ -1250,7 +1250,7 @@ class JVMClass {
 
         def build(self): MethodInfo {
             val attributes: List[AttributeInfo] = []
-            if null(cattr) = code {
+            if val cattr = code {
                 attributes.add(AttributeInfo(
                     cls.cp.utf8("Code"),
                     AttributeInfoData.code(cattr)))

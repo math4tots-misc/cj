@@ -65,7 +65,7 @@ class Test04ControlFlow {
     def ifNull() = {
         {
             val t = null(10)
-            val x = if null(i) = t {
+            val x = if val i = t {
                 "not null: " + i
             } else {
                 "null"
@@ -74,7 +74,7 @@ class Test04ControlFlow {
         }
         {
             val t = null[Int]
-            val x = if null(i) = t {
+            val x = if val i = t {
                 "not null: " + i
             } else {
                 "null"

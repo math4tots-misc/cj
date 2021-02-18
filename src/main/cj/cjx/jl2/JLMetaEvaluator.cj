@@ -118,7 +118,7 @@ class JLMetaEvaluator {
                 for ; i < argnames.size(); i++ {
                     declvar(lmark, argnames[i], JLMetaVal.nil(), true)
                 }
-                if null(va) = vararg {
+                if val va = vararg {
                     val list = args[i:]
                     declvar(lmark, va, JLMetaVal.list(list), true)
                 }
@@ -182,7 +182,7 @@ class JLMetaEvaluator {
     }
 
     def getvar(self, mark: JLMark, name: String): JLMetaVal {
-        if null(value) = scope.getOrNull(name) {
+        if val value = scope.getOrNull(name) {
             value
         } else {
             throw _err(mark, "Meta variable " + name + " not found")
@@ -190,13 +190,13 @@ class JLMetaEvaluator {
     }
 
     def setvar(self, mark: JLMark, name: String, value: JLMetaVal) {
-        if null(message) = scope.setOrMessage(name, value) {
+        if val message = scope.setOrMessage(name, value) {
             throw _err(mark, message)
         }
     }
 
     def declvar(self, mark: JLMark, name: String, value: JLMetaVal, mutable: Bool) {
-        if null(message) = scope.declareOrMessage(name, value, mutable) {
+        if val message = scope.declareOrMessage(name, value, mutable) {
             throw _err(mark, message)
         }
     }

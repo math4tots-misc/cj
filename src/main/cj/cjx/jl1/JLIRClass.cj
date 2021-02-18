@@ -66,7 +66,7 @@ class JLIRClass: Repr {
     }
 
     def getDeclaredMethod(self, mark: JLMark, name: String): JLIRMethod = {
-        if null(method) = methodMap.getOrNull(name) {
+        if val method = methodMap.getOrNull(name) {
             method
         } else {
             throw JLError("Method " + name + " not found in class " + self.name, [mark])
@@ -74,7 +74,7 @@ class JLIRClass: Repr {
     }
 
     def getFieldRef(self, mark: JLMark, name: String): JLIRFieldRef = {
-        if null(fieldref) = getFieldRefOrNull(name) {
+        if val fieldref = getFieldRefOrNull(name) {
             fieldref
         } else {
             throw JLError("Field " + name + " not found in class " + self.name, [mark])
@@ -82,7 +82,7 @@ class JLIRClass: Repr {
     }
 
     def getFieldRefOrNull(self, name: String): Nullable[JLIRFieldRef] = {
-        if null(field) = fieldMap.getOrNull(name) {
+        if val field = fieldMap.getOrNull(name) {
             null(JLIRFieldRef(self, field))
         } else {
             null
@@ -90,7 +90,7 @@ class JLIRClass: Repr {
     }
 
     def getMethodRef(self, mark: JLMark, name: String): JLIRMethodRef = {
-        if null(methoddref) = getMethodRefOrNull(name) {
+        if val methoddref = getMethodRefOrNull(name) {
             methoddref
         } else {
             throw JLError("Method " + name + " not found in class " + self.name, [mark])
@@ -98,11 +98,11 @@ class JLIRClass: Repr {
     }
 
     def getMethodRefOrNull(self, name: String): Nullable[JLIRMethodRef] = {
-        if null(method) = methodMap.getOrNull(name) {
+        if val method = methodMap.getOrNull(name) {
             null(JLIRMethodRef(self, method))
         } else {
             for iface in interfaces {
-                if null(methodref) = iface.getMethodRefOrNull(name) {
+                if val methodref = iface.getMethodRefOrNull(name) {
                     return null(methodref)
                 }
             }
@@ -111,7 +111,7 @@ class JLIRClass: Repr {
     }
 
     def getMethodTemplateOrNull(self, name: String): Nullable[JLAstMethod] {
-        if null(template) = methodTemplateMap.getOrNull(name) {
+        if val template = methodTemplateMap.getOrNull(name) {
             null(template)
         } else {
             null

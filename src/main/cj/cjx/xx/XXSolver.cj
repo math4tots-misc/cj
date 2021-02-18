@@ -67,10 +67,10 @@ class XXSolver {
 
     def scopeGetOrNull(self, var scope: Scope, key: String): Nullable[Data] {
         while true {
-            if null(value) = scope.map.getOrNull(key) {
+            if val value = scope.map.getOrNull(key) {
                 return null(value)
             }
-            if null(parent) = scope.parent {
+            if val parent = scope.parent {
                 scope = parent
             } else {
                 return null
@@ -79,7 +79,7 @@ class XXSolver {
     }
 
     def scopeGet(self, mark: XXMark, scope: Scope, key: String): Data {
-        if null(value) = scopeGetOrNull(scope, key) {
+        if val value = scopeGetOrNull(scope, key) {
             value
         } else {
             throw XXError("Name '" + key + "' not found in this scope", [mark])
@@ -119,11 +119,11 @@ class XXSolver {
             case fullName(fullName) = {
                 val args = astType.args.map(arg -> solveCTExpr(scope, arg))
                 val reifiedName = getReifiedName(astType.mark, fullName, args)
-                if null(cls) = classMap.getOrNull(reifiedName) {
+                if val cls = classMap.getOrNull(reifiedName) {
                     XXLLIRType.klass(cls.name)
-                } else if null((itemScope, astItem)) = templateMap.getOrNull(fullName) {
+                } else if val (itemScope, astItem) = templateMap.getOrNull(fullName) {
                     reifyItem(astType.mark, reifiedName, itemScope, astItem, args)
-                    if null(cls) = classMap.getOrNull(reifiedName) {
+                    if val cls = classMap.getOrNull(reifiedName) {
                         XXLLIRType.klass(cls.name)
                     } else {
                         throw XXError(

@@ -66,7 +66,7 @@ class JVMCodeBuilder {
                 # already handled
             } else {
                 seen.add(pc)
-                if null(stackChange) = Opcode.simpleStackChangeOpcodes.getOrNull(opcode) {
+                if val stackChange = Opcode.simpleStackChangeOpcodes.getOrNull(opcode) {
                     val newStackSize = stackSize + stackChange
                     todo.add((nextPc, newStackSize))
                 } else if opcode in Opcode.terminalStackChangeOpcodes {

@@ -39,10 +39,10 @@ class JLPass2 {
         for astMember in lctx.listMembers(ircls) {
             when astMember {
                 case field(astField) = {
-                    val fieldtype = if null(ftype) = astField.type {
+                    val fieldtype = if val ftype = astField.type {
                         ftype
-                    } else if null(init) = astField.init {
-                        if null(ftype) = simpleInferExpressionType(init) {
+                    } else if val init = astField.init {
+                        if val ftype = simpleInferExpressionType(init) {
                             ftype
                         } else {
                             throw JLError("Could not infer field type", [astField.mark])
@@ -80,7 +80,7 @@ class JLPass2 {
             case string(s) = null(JLAstType.Data.klass("java.lang.String", []))
             else = null
         }
-        if null(data) = nullableData {
+        if val data = nullableData {
             null(JLAstType(expr.mark, data))
         } else {
             null

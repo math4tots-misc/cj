@@ -45,7 +45,7 @@ class EZCodegen {
                 jvmmethod.accessFlags = JVMClass.cACC_PUBLIC | JVMClass.cACC_STATIC
                 jvmmethod.name = method.name
                 jvmmethod.descriptor = toJVMMethodType2(method)
-                if null(body) = method.body {
+                if val body = method.body {
                     jvmmethod.addCode(jvmcode -> {
                         val exprgen = ExprGen(jvmcode)
                         for parameter in method.parameters {
