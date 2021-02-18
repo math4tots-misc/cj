@@ -6,6 +6,7 @@ import cj.math.EuclideanDomain
 @implicit(Int, fromInt)
 native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, EuclideanDomain {
 
+    @implicit(BigInt, __new)
     @implicit(Int, fromInt)
     @implicit(Double, fromDouble)
     @implicit(String, fromString)
