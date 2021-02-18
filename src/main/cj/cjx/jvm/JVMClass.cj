@@ -581,7 +581,7 @@ class JVMClass {
 
         def parseJVMClass(self): JVMClass {
             val cls = JVMClass()
-            val magic: BigInt = reader.getU32()
+            val magic = BigInt(reader.getU32())
             if magic != JVMClass.magic {
                 throw Error("Invalid magic: " + magic.hex())
             }

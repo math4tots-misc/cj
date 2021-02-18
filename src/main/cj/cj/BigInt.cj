@@ -4,7 +4,6 @@ import cj.math.Rational
 import cj.math.EuclideanDomain
 
 @implicit(Int, fromInt)
-@implicit(Double, fromDouble)
 native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, EuclideanDomain {
 
     @implicit(Int, fromInt)
@@ -13,7 +12,7 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, Euclidea
     class Converter {
         val x: BigInt
         def fromInt(i: Int): Self = __malloc(i)
-        def fromDouble(f: Int): Self = __malloc(f)
+        def fromDouble(f: Double): Self = __malloc(BigInt.fromDouble(f))
         def fromString(s: String): Self = __malloc(BigInt.fromString(s))
     }
 

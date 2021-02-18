@@ -92,7 +92,7 @@ class Dump {
         println("Reading file " + path)
 
         # Check magic
-        val magic: BigInt = reader.getU32()
+        val magic = BigInt(reader.getU32())
         Assert.equal(magic.hex(), "CAFEBABE")
         println("magic " + magic.hex())
 
