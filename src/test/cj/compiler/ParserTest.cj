@@ -33,6 +33,10 @@ class ParserTest {
                 parse2("i++"),
                 "augvar(\"i\", AugKind.add(), int(1))",
             )
+            Assert.equal(
+                parse2("(a, b) -> a + b"),
+                "lambda(false, [a, b], call(null, \"__add\", [], [getvar(\"a\"), getvar(\"b\")]))",
+            )
         }
     }
 }
