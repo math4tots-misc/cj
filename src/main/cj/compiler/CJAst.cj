@@ -104,17 +104,25 @@ class CJAst {
         val args: List[Type]
     }
 
-    class Type {
+    class Type: Repr {
         val mark: CJMark
         val name: String
         val args: List[Type]
+
+        def repr(self): String = {
+            if args {
+                name + "[" + ", ".join(args.map(a -> a.repr())) + "]"
+            } else { name }
+        }
     }
 
-    class Expr {
+    class Expr: Repr {
         val mark: CJMark
         val data: ExprData
+        def repr(self): String = data.repr()
     }
 
+    @derive(repr)
     union ExprData {
         case unit
         case bool(Bool)
@@ -124,9 +132,9 @@ class CJAst {
         case string(String)
         case bigint(BigInt)
         case block(List[Expr])
-        case call(Nullable[Type], String, List[Type], List[Expr])
+        case call(Type?, String, List[Type], List[Expr])
         case callname(String, List[Type], List[Expr])
-        case decl(DeclTarget, Nullable[Type], Expr)
+        case decl(DeclTarget, Type?, Expr)
         case getvar(String)
         case setvar(String, Expr)
         case augvar(String, AugKind, Expr)
@@ -140,7 +148,7 @@ class CJAst {
         case logicalAnd(Expr, Expr)
         case logicalOr(Expr, Expr)
         case is_(Expr, Expr)
-        case null_(Nullable[Type], Expr?)
+        case null_(Type?, Expr?)
         case list(List[Expr])
         case tuple(List[Expr])
         case if_(Expr, Expr, Expr?)
@@ -156,32 +164,43 @@ class CJAst {
         case try_(Expr, List[Catch], Expr?)
     }
 
-    class WhenCase {
+    class WhenCase: Repr {
         val mark: CJMark
         val name: String
         val decls: List[Local]
         val dotdot: Bool
         val body: Expr
+        def repr(self): String {
+            "CaseWhen(mark, " + name.repr() + ", " + decls + ", " + dotdot + ", " + body + ")"
+        }
     }
 
-    class SwitchCase {
+    @derive(repr)
+    class SwitchCase: Repr {
         val valexprs: List[Expr]
         val body: Expr
     }
 
-    class Catch {
+    @derive(repr)
+    class Catch: Repr {
         val target: DeclTarget
         val type: Type
         val body: Expr
     }
 
-    class Local {
+    class Local: Repr {
         val mark: CJMark
         val mutable: Bool
         val name: String
         val type: Type?
+        def repr(self): String {
+            val lead = if mutable { "var " } else { "" }
+            val tail = if val t = type { ": " + type } else { "" }
+            lead + name + tail
+        }
     }
 
+    @derive(repr)
     union AugKind {
         case add
         case subtract
@@ -189,13 +208,18 @@ class CJAst {
         case remainder
     }
 
-    class DeclTarget {
+    class DeclTarget: Repr {
         val mark: CJMark
         val data: DeclTargetData
+        def repr(self): String = data.repr()
     }
 
-    union DeclTargetData {
+    union DeclTargetData: Repr {
         case name(Local)
         case tuple(List[DeclTarget])
+        def repr(self): String = when self {
+            case name(local) = local.repr()
+            case tuple(decls) = "(" + decls.map(d -> d.repr()) + ")"
+        }
     }
 }

@@ -2,6 +2,7 @@ package compiler
 
 import compiler.CJLexer
 import compiler.CJAst
+import compiler.CJAst.Local
 import compiler.CJAst.Expr
 import compiler.CJAst.ExprData as ED
 import cj.StringBuilder
@@ -25,6 +26,16 @@ class CJParser {
         val tokens = CJLexer.lex(filename, contents)
         val parser = Self(filename, tokens)
         parser.parseFile()
+    }
+
+    def parseExpression(filename: String, contents: String): Expr {
+        val tokens = CJLexer.lex(filename, contents)
+        val parser = Self(filename, tokens)
+        val expr = parser.parseExprPr(0)
+        if not parser.at(CJToken.tEOF) {
+            throw parser.ekind("EOF")
+        }
+        expr
     }
 
     private def __get_mark(self): CJMark = { val t = peek(); CJMark(path, t.line, t.column) }
@@ -291,9 +302,9 @@ class CJParser {
             returnType,
             body)
     }
-    private def parseParameters(self): List[CJAst.Local] = (
+    private def parseParameters(self): List[Local] = (
         parseJoin('(', ')', ',', () -> parseParameter()))
-    private def parseParameter(self): CJAst.Local {
+    private def parseParameter(self): Local {
         val mutable = consume(CJToken.kwVAR)
         val mark = mark
         val name = parseId()
@@ -303,7 +314,7 @@ class CJParser {
             expect(':')
             parseType()
         }
-        CJAst.Local(mark, mutable, name, null(type))
+        Local(mark, mutable, name, null(type))
     }
     private def parseComment(self): String? {
         if at(CJToken.tCOMMENT) {
@@ -444,6 +455,8 @@ class CJParser {
     }
     private def getTokenPrecedence(tokenType: Int): Int = switch tokenType {
         case '='
+        case CJToken.tPLUSPLUS
+        case CJToken.tMINUSMINUS
         case CJToken.tPLUS_EQ
         case CJToken.tMINUS_EQ
         case CJToken.tSTAR_EQ
@@ -479,6 +492,7 @@ class CJParser {
         else = -1
     }
     private def parseExpr(self): Expr = parseExprPr(normalExpressionPrecedence)
+    private def parseIndexExpr(self): Expr = parseExprPr(indexExpressionPrecedence)
     private def parseExprPr(self, precedence: Int): Expr {
         var expr = parseAtom()
         var tokenPrecedence = getTokenPrecedence(peek().type)
@@ -501,6 +515,96 @@ class CJParser {
                             expr = Expr(methodMark, ED.getfield(expr, name))
                         }
                     }
+                }
+                case '[' {
+                    if consume(':') {
+                        val index = parseIndexExpr()
+                        expect(']')
+                        expr = Expr(opMark, ED.call(null, "__sliceTo", [], [expr, index]))
+                    } else {
+                        val index = parseIndexExpr()
+                        if consume(':') {
+                            if (consume(']')) {
+                                expr = Expr(
+                                    opMark, ED.call(null, "__sliceFrom", [], [expr, index]))
+                            } else {
+                                val limit = parseIndexExpr()
+                                expect(']')
+                                expr = Expr(opMark, ED.call(null, "__slice", [], [
+                                    expr, index, limit]))
+                            }
+                        } else {
+                            val allArgs = [expr, index]
+                            while consume(',') {
+                                allArgs.add(parseIndexExpr())
+                            }
+                            expect(']')
+                            if consume('=') {
+                                val valexpr = parseExpr()
+                                allArgs.add(valexpr)
+                                expr = Expr(opMark, ED.call(null, "__setitem", [], allArgs))
+                            } else {
+                                expr = Expr(opMark, ED.call(null, "__getitem", [], allArgs))
+                            }
+                        }
+                    }
+                }
+                case ':' {
+                    # a : b is syntactic sugar for (a, b)
+                    next()
+                    val second = parseExpr()
+                    expr = Expr(opMark, ED.tuple([expr, second]))
+                }
+                case '=' {
+                    next()
+                    val valexpr = parseExprPr(tokenPrecedence + 1)
+                    expr = Expr(opMark, when expr.data {
+                        case getvar(name) = ED.setvar(name, valexpr)
+                        case getfield(owner, name) = ED.setfield(owner, name, valexpr)
+                        case getstatic(owner, name) = ED.setstatic(owner, name, valexpr)
+                        else = throw CJError("Left hand side is not assignable", [opMark])
+                    })
+                }
+                case CJToken.tPLUS_EQ; case CJToken.tMINUS_EQ;
+                case CJToken.tSTAR_EQ; case CJToken.tREM_EQ;
+                case CJToken.tPLUSPLUS; case CJToken.tMINUSMINUS {
+                    val tokenType = next().type
+                    val kind = switch tokenType {
+                        case CJToken.tPLUSPLUS
+                        case CJToken.tPLUS_EQ = CJAst.AugKind.add
+                        case CJToken.tMINUSMINUS
+                        case CJToken.tMINUS_EQ = CJAst.AugKind.subtract
+                        case CJToken.tSTAR_EQ = CJAst.AugKind.multiply
+                        case CJToken.tREM_EQ = CJAst.AugKind.remainder
+                    }
+                    val valexpr = switch tokenType {
+                        case CJToken.tPLUSPLUS
+                        case CJToken.tMINUSMINUS = Expr(opMark, ED.int(1))
+                        else = parseExprPr(tokenPrecedence + 1)
+                    }
+                    expr = Expr(opMark, when expr.data {
+                        case getvar(name) = ED.augvar(name, kind, valexpr)
+                        case getfield(owner, name) = ED.augfield(owner, name, kind, valexpr)
+                        case getstatic(owner, name) = ED.augstatic(owner, name, kind, valexpr)
+                        else = throw CJError("Left hand side is not aug-assignable", [opMark])
+                    })
+                }
+                case CJToken.kwAND {
+                    next()
+                    val right = parseExprPr(tokenPrecedence + 1)
+                    expr = Expr(opMark, ED.logicalAnd(expr, right))
+                }
+                case CJToken.kwOR {
+                    next()
+                    val right = parseExprPr(tokenPrecedence + 1)
+                    expr = Expr(opMark, ED.logicalOr(expr, right))
+                }
+                case CJToken.kwIS {
+                    next()
+                    val not_ = consume(CJToken.kwNOT)
+                    val rhs = parseExprPr(tokenPrecedence + 1)
+                    expr = Expr(opMark, ED.is_(expr, rhs))
+                    if not_ { expr = Expr(opMark, ED.logicalNot(expr)) }
                 }
                 case '+';case '-';case '*';case '/';case '%'
                 case '<';case '>';case '|';case '^';case '&'
@@ -686,12 +790,24 @@ class CJParser {
                         } else { [] } +
                         [Expr(mark, ED.while_(condition, body))]))
                 } else {
-                    val target = parseTarget(true)
+                    val target = parseTarget(false)
                     expect(CJToken.kwIN)
                     val container = parseExpr()
                     val body = parseBlock()
                     Expr(mark, ED.for_(target, container, body))
                 }
+            }
+            case CJToken.kwNOT {
+                next()
+                Expr(mark, ED.logicalNot(parseExprPr(logicalNotPrecedence)))
+            }
+            case '+'; case '-'; case '~' {
+                val methodName = switch next().type {
+                    case '+' = "__pos"
+                    case '-' = "__neg"
+                    case '~' = "__invert"
+                }
+                Expr(mark, ED.call(null, methodName, [], [parseExprPr(unaryOpPrecedence)]))
             }
             case CJToken.kwVAL; case CJToken.kwVAR {
                 val mutable = next().type == CJToken.kwVAR
@@ -701,6 +817,85 @@ class CJParser {
                 expect('=')
                 val init = parseExpr()
                 Expr(opmark, ED.decl(target, decltype, init))
+            }
+            case CJToken.kwWHEN {
+                next()
+                val target = parseExpr()
+                expect('{')
+                skipDelimiters()
+                val cases = List[CJAst.WhenCase]()
+                while not at('}') and not at(CJToken.kwELSE) {
+                    val caseMark = self.mark
+                    expect(CJToken.kwCASE)
+                    val caseName = parseId()
+                    val decls = List[Local]()
+                    var trailingArgs = false
+                    if consume('(') {
+                        while not consume(')') {
+                            if consume(CJToken.tDOTDOT) {
+                                expect(')')
+                                trailingArgs = true
+                                assert(')')
+                            } else {
+                                val mutable = consume(CJToken.kwVAR)
+                                val varMark = self.mark
+                                val varName = parseId()
+                                decls.add(Local(varMark, mutable, varName, null))
+                                if not consume(',') {
+                                    assert(')')
+                                }
+                            }
+                        }
+                    }
+                    val body = if consume('=') { parseExpr() } else { parseBlock() }
+                    cases.add(CJAst.WhenCase(caseMark, caseName, decls, trailingArgs, body))
+                    expectDelimiters()
+                }
+                val fallback = if consume(CJToken.kwELSE) {
+                    null(if consume('=') { parseExpr() } else { parseBlock() })
+                } else { null }
+                skipDelimiters()
+                expect('}')
+                Expr(mark, ED.when_(target, cases, fallback))
+            }
+            case CJToken.kwSWITCH {
+                next()
+                val target = parseExpr()
+                expect('{')
+                skipDelimiters()
+                val cases = List[CJAst.SwitchCase]()
+                while not at('}') and not at(CJToken.kwELSE) {
+                    expect(CJToken.kwCASE)
+                    val valexprs = [parseExpr()]
+                    skipDelimiters()
+                    while consume(CJToken.kwCASE) {
+                        valexprs.add(parseExpr())
+                        skipDelimiters()
+                    }
+                    val body = if consume('=') { parseExpr() } else { parseBlock() }
+                    expectDelimiters()
+                    cases.add(CJAst.SwitchCase(valexprs, body))
+                }
+                val fallback = if consume(CJToken.kwELSE) {
+                    null(if consume('=') { parseExpr() } else { parseBlock() })
+                } else { null }
+                expect('}')
+                Expr(mark, ED.switch_(target, cases, fallback))
+            }
+            case CJToken.kwTHROW { next(); Expr(mark, ED.throw_(parseExpr())) }
+            case CJToken.kwTRY {
+                next()
+                val body = parseBlock()
+                val clauses = List[CJAst.Catch]()
+                while consume(CJToken.kwCATCH) {
+                    val target = parseTarget(false)
+                    expect(':')
+                    val excType = parseType()
+                    val clauseBody = parseBlock()
+                    clauses.add(CJAst.Catch(target, excType, clauseBody))
+                }
+                val fin = if consume(CJToken.kwFINALLY) { null(parseBlock()) } else { null }
+                Expr(mark, ED.try_(body, clauses, fin))
             }
             else = throw ekind("expression")
         }
@@ -744,13 +939,13 @@ class CJParser {
         val isAsync = consume(CJToken.kwASYNC)
         val parameters = if at(CJToken.tID) {
             val pname = parseId()
-            [CJAst.Local(mark, false, pname, null)]
+            [Local(mark, false, pname, null)]
         } else {
             parseJoin('(', ')', ',', () -> {
                 val mutable = consume(CJToken.kwVAR)
                 val pmark = self.mark
                 val pname = parseId()
-                CJAst.Local(pmark, mutable, pname, null)
+                Local(pmark, mutable, pname, null)
             })
         }
         expect(CJToken.tRIGHT_ARROW)
@@ -777,7 +972,7 @@ class CJParser {
         switch peek().type {
             case CJToken.tID {
                 val name = parseId()
-                CJAst.DeclTarget(mark, CJAst.DeclTargetData.name(CJAst.Local(
+                CJAst.DeclTarget(mark, CJAst.DeclTargetData.name(Local(
                     mark, mutable, name, null)))
             }
             case '(' {
