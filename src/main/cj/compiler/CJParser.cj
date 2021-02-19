@@ -134,14 +134,14 @@ class CJParser {
             rawText[1:rawText.size() - 1]
         } else if rawText.startsWith("\"\"\"") {
             Assert.that(rawText.size() >= 6 and rawText.endsWith("\"\"\""))
-            litchars2str(rawText[3:rawText.size() - 3].iter(), mark)
+            litchars2str(rawText, rawText[3:rawText.size() - 3].iter(), mark)
         } else {
             Assert.that(
                 rawText.size() >= 2 and rawText.startsWith("\"") and rawText.endsWith("\""))
-            litchars2str(rawText[1:rawText.size() - 1].iter(), mark)
+            litchars2str(rawText, rawText[1:rawText.size() - 1].iter(), mark)
         }
     }
-    private def litchars2str(chars: Iterator[Char], mark: CJMark): String {
+    private def litchars2str(rawText: String, chars: Iterator[Char], mark: CJMark): String {
         val sb = StringBuilder()
         var escape = false
         for ch in chars {
@@ -156,9 +156,11 @@ class CJParser {
                     case 'f' = '\f'
                     case '0' = '\0'
                     else = {
-                        throw CJError("Unrecognized escape " + ch.repr(), [mark])
+                        throw CJError(
+                            "Unrecognized escape " + ch.repr() + " (in " + rawText + ")", [mark])
                     }
                 })
+                escape = false
             } else if ch == '\\' {
                 escape = true
             } else {
@@ -692,8 +694,16 @@ class CJParser {
             }
             case CJToken.kwNULL {
                 next()
-                val innerType = if consume('[') { null(parseType()) } else { null }
-                val inner = if consume('(') { null(parseExpr()) } else { null }
+                val innerType = if consume('[') {
+                    val t = parseType()
+                    expect(']')
+                    null(t)
+                } else { null }
+                val inner = if consume('(') {
+                    val e = parseExpr()
+                    expect(')')
+                    null(e)
+                } else { null }
                 Expr(mark, ED.null_(innerType, inner))
             }
             case CJToken.kwTRUE { next(); Expr(mark, ED.bool(true)) }
@@ -702,7 +712,10 @@ class CJParser {
             case CJToken.tINT = Expr(mark, ED.int(Int(next().text)))
             case CJToken.tDOUBLE = Expr(mark, ED.double(Double(next().text)))
             case CJToken.tSTRING = Expr(mark, ED.string(lit2str(next().text, mark)))
-            case CJToken.tBIGINT = Expr(mark, ED.bigint(BigInt(next().text)))
+            case CJToken.tBIGINT = Expr(mark, ED.bigint(BigInt({
+                val text = next().text
+                text[:text.size() - 1]
+            })))
             case CJToken.tTYPEID {
                 val owner = parseType()
                 if at('(') {

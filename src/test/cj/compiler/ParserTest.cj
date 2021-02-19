@@ -15,6 +15,13 @@ class ParserTest {
     }
 
     @test
+    def sampleStr() {
+        Assert.equal(
+            parse2("\"(\\\\d+\\\\.\\\\d*|\\\\.\\\\d+)(e|E-?\\\\d+)?\""),
+            "string(\"(\\d+\\.\\d*|\\.\\d+)(e|E-?\\d+)?\")")
+    }
+
+    @test
     def sampleExprs() {
         {
             Assert.equal(
