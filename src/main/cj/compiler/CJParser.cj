@@ -632,6 +632,67 @@ class CJParser {
                     Expr(opmark, ED.getvar(name))
                 }
             }
+            case CJToken.kwIF {
+                next()
+                val mutable = consume(CJToken.kwVAR)
+                if mutable or consume(CJToken.kwVAL) {
+                    val target = parseTarget(mutable)
+                    expect('=')
+                    val inner = parseExpr()
+                    val left = parseBlock()
+                    val right = if consume(CJToken.kwELSE) {
+                        null(if at(CJToken.kwIF) { parseExpr() } else { parseBlock() })
+                    } else { null }
+                    Expr(mark, ED.ifNull(target, inner, left, right))
+                } else {
+                    val condition = parseExpr()
+                    val left = parseBlock()
+                    val right = if consume(CJToken.kwELSE) {
+                        null(if at(CJToken.kwIF) { parseExpr() } else { parseBlock() })
+                    } else { null }
+                    Expr(mark, ED.if_(condition, left, right))
+                }
+            }
+            case CJToken.kwRETURN {
+                next()
+                Expr(mark, ED.return_(parseExpr()))
+            }
+            case CJToken.kwWHILE {
+                next()
+                val condition = parseExpr()
+                val body = parseBlock()
+                Expr(mark, ED.while_(condition, body))
+            }
+            case CJToken.kwFOR {
+                next()
+                if at(';') or at(CJToken.tID) and atOffset('=', 1) {
+                    # c-style for loop -- parse-time syntactic sugar
+                    val initpair = if not at(';') {
+                        val target = parseTarget(true)
+                        expect('=')
+                        val init = parseExpr()
+                        null((target, init))
+                    } else { null }
+                    expect(';')
+                    val condition = if at(';') { Expr(mark, ED.bool(true)) } else { parseExpr() }
+                    expect(';')
+                    val incr: Expr? = if at('{') { null } else { null(parseExprPr(0)) }
+                    val bodyexprs = parseBlockExprs()
+                    if val inc = incr { bodyexprs.add(inc) }
+                    val body = Expr(mark, ED.block(bodyexprs))
+                    Expr(mark, ED.block(
+                        if val (target, init) = initpair {
+                            [Expr(mark, ED.decl(target, null, init))]
+                        } else { [] } +
+                        [Expr(mark, ED.while_(condition, body))]))
+                } else {
+                    val target = parseTarget(true)
+                    expect(CJToken.kwIN)
+                    val container = parseExpr()
+                    val body = parseBlock()
+                    Expr(mark, ED.for_(target, container, body))
+                }
+            }
             case CJToken.kwVAL; case CJToken.kwVAR {
                 val mutable = next().type == CJToken.kwVAR
                 val opmark = mark
@@ -698,6 +759,10 @@ class CJParser {
     }
     private def parseBlock(self): Expr {
         val mark = mark
+        val exprs = parseBlockExprs()
+        Expr(mark, ED.block(exprs))
+    }
+    private def parseBlockExprs(self): List[Expr] {
         expect('{')
         skipDelimiters()
         val exprs = List[Expr]()
@@ -705,7 +770,7 @@ class CJParser {
             exprs.add(parseExprPr(0))
             expectDelimiters()
         }
-        Expr(mark, ED.block(exprs))
+        exprs
     }
     private def parseTarget(self, mutable: Bool): CJAst.DeclTarget {
         val mark = mark

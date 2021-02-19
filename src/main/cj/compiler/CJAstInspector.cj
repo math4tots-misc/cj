@@ -8,6 +8,7 @@ import compiler.CJAst.Expr
 class CJAstInspector {
     val sb: StringBuilder = Default()
     var depth = 0
+    var showExprs = false
 
     private def line(self, line: String) {
         sb.add("  " * depth + line + "\n")
@@ -66,7 +67,7 @@ class CJAstInspector {
             case item(item) = _inspectItem(item)
             case field(field) = _inspectField(field)
             case case_(case_) = _inspectCase(case_)
-            else = ()
+            case method(method) = _inspectMethod(method)
         }
     }
 
@@ -74,7 +75,7 @@ class CJAstInspector {
         val lead = if field.mutable { "var " } else { "val " }
         line(lead + field.name + if val t = field.type { ": " + _type(t) } else { "" })
         if val init = field.init {
-            nest(() -> _inspectExpr("init", init))
+            nest(() -> _inspectExprTop("init", init))
         }
     }
 
@@ -86,12 +87,33 @@ class CJAstInspector {
         }
     }
 
-    def _inspectExpr(self, header: String, expr: CJAst.Expr) {
-        if val s = _expr0(expr) {
-            line(header + " " + s)
+    def _inspectExprTop(self, header: String, expr: CJAst.Expr) {
+        if showExprs {
+            if val s = _expr0(expr) {
+                line(header + " " + s)
+            } else {
+                line(header + ":")
+                nest(() -> _inspectExpr(expr))
+            }
         } else {
-            line(header + " ...")
+            line(header + " (expr)")
         }
+    }
+
+    def _inspectMethod(self, method: CJAst.Method) {
+        val params = ", ".join(method.parameters.map(p -> _local(p)))
+        line("method " + method.name + "(" + params + ")")
+        nest(() -> {
+            if val body = method.body {
+                _inspectExprTop("body", body)
+            }
+        })
+    }
+
+    private def _local(local: CJAst.Local): String {
+        if val type = local.type {
+            local.name + ": " + _type(type)
+        } else { local.name }
     }
 
     ## Tries to display the contents of the expression in a small string
@@ -105,8 +127,50 @@ class CJAstInspector {
             case double(x) = x.repr()
             case string(x) = x.repr()
             case bigint(x) = x.repr()
-            case call(nt, methodName, typeArgs, args) = return null
+            case call(nt, methodName, typeArgs, args) {
+                val argstrs = List[String]()
+                for arg in args {
+                    if val argstr = _expr0(arg) { argstrs.add(argstr) } else { return null }
+                }
+                val typestrs = "[" + ", ".join(typeArgs.map(t -> _type(t))) + "]"
+                val owner = if val (t) = nt { _type(t) } else { "null" }
+                "call(" + owner + ", " + typestrs + ", [" + ", ".join(argstrs) + "])"
+            }
+            case callname(methodName, typeArgs, args) {
+                val argstrs = List[String]()
+                for arg in args {
+                    if val argstr = _expr0(arg) { argstrs.add(argstr) } else { return null }
+                }
+                val typestrs = "[" + ", ".join(typeArgs.map(t -> _type(t))) + "]"
+                "callname(" + typestrs + ", [" + ", ".join(argstrs) + "])"
+            }
             else = return null
         })
+    }
+
+    def _inspectExpr(self, expr: CJAst.Expr) {
+        if val s = _expr0(expr) {
+            line(s)
+        } else {
+            when expr.data {
+                case block(subexprs) {
+                    line("block")
+                    nest(() -> {
+                        for subexpr in subexprs {
+                            _inspectExpr(subexpr)
+                        }
+                    })
+                }
+                case call(nt, methodName, typeArgs, args) {
+                    line("method " + methodName + if val t = nt { " " + _type(t) } else { "" })
+                    nest(() -> {
+                        for arg in args {
+                            _inspectExpr(arg)
+                        }
+                    })
+                }
+                else = line("<unrecognized>")
+            }
+        }
     }
 }
