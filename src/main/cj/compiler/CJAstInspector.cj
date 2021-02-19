@@ -74,7 +74,7 @@ class CJAstInspector {
         val lead = if field.mutable { "var " } else { "val " }
         line(lead + field.name + if val t = field.type { ": " + _type(t) } else { "" })
         if val init = field.init {
-            _inspectExpr("init", init)
+            nest(() -> _inspectExpr("init", init))
         }
     }
 

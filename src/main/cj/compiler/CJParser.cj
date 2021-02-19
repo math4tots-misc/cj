@@ -478,9 +478,85 @@ class CJParser {
         case '?' = 140
         else = -1
     }
-    private def parseExpr(self): Expr = parseExpr0(normalExpressionPrecedence)
-    private def parseExpr0(self, precedence: Int): Expr {
-        parseAtom()
+    private def parseExpr(self): Expr = parseExprPr(normalExpressionPrecedence)
+    private def parseExprPr(self, precedence: Int): Expr {
+        var expr = parseAtom()
+        var tokenPrecedence = getTokenPrecedence(peek().type)
+        while tokenPrecedence >= precedence {
+            val opMark = self.mark
+            switch peek().type {
+                case '.' {
+                    next()
+                    val methodMark = mark
+                    if consume(CJToken.kwAWAIT) {
+                        expr = Expr(methodMark, ED.await_(expr))
+                    } else {
+                        val name = parseId()
+                        if atMethodArgsStart(i) {
+                            val typeArgs = parseTypeArgs()
+                            val args = [expr]
+                            args.addAll(parseArgs())
+                            expr = Expr(methodMark, ED.call(null, name, typeArgs, args))
+                        } else {
+                            expr = Expr(methodMark, ED.getfield(expr, name))
+                        }
+                    }
+                }
+                case '+';case '-';case '*';case '/';case '%'
+                case '<';case '>';case '|';case '^';case '&'
+                case CJToken.tLSHIFT;case CJToken.tRSHIFT
+                case CJToken.tRSHIFTU;case CJToken.tPOWER
+                case CJToken.tTRUNCDIV;case CJToken.tEQ
+                case CJToken.tNE;case CJToken.tLE
+                case CJToken.tGE;case CJToken.kwIN
+                case CJToken.kwNOT {
+                    var logicalNot = false
+                    var rightAssociative = false
+                    var swap = false
+                    val methodName = switch next().type {
+                        case '+' = "__add"
+                        case '-' = "__sub"
+                        case '*' = "__mul"
+                        case '/' = "__div"
+                        case '%' = "__rem"
+                        case '<' = "__lt"
+                        case '>' = "__gt"
+                        case '|' = "__or"
+                        case '^' = "__xor"
+                        case '&' = "__and"
+                        case CJToken.tLSHIFT = "__lshift"
+                        case CJToken.tRSHIFT = "__rshift"
+                        case CJToken.tRSHIFTU = "__rshiftu"
+                        case CJToken.tPOWER { rightAssociative = true; "__pow" }
+                        case CJToken.tTRUNCDIV = "__truncdiv"
+                        case CJToken.tEQ = "__eq"
+                        case CJToken.tNE { logicalNot = true; "__eq" }
+                        case CJToken.tLE = "__le"
+                        case CJToken.tGE = "__ge"
+                        case CJToken.kwIN { swap = true; "__contains" }
+                        case CJToken.kwNOT {
+                            expect(CJToken.kwIN)
+                            logicalNot = true
+                            swap = true
+                            "__contains"
+                        }
+                    }
+                    var rhs = parseExprPr(tokenPrecedence + if rightAssociative { 0 } else { 1 })
+                    if swap {
+                        val tmp = rhs
+                        rhs = expr
+                        expr = tmp
+                    }
+                    expr = Expr(mark, ED.call(null, methodName, [], [expr, rhs]))
+                    if logicalNot {
+                        expr = Expr(mark, ED.logicalNot(expr))
+                    }
+                }
+                else = throw ekind("expression operator (TODO)")
+            }
+            tokenPrecedence = getTokenPrecedence(peek().type)
+        }
+        expr
     }
     private def parseAtom(self): Expr {
         val mark = mark
@@ -522,24 +598,85 @@ class CJParser {
             case CJToken.tDOUBLE = Expr(mark, ED.double(Double(next().text)))
             case CJToken.tSTRING = Expr(mark, ED.string(lit2str(next().text, mark)))
             case CJToken.tBIGINT = Expr(mark, ED.bigint(BigInt(next().text)))
+            case CJToken.tTYPEID {
+                val owner = parseType()
+                if at('(') {
+                    val opmark = self.mark
+                    val args = parseArgs()
+                    Expr(opmark, ED.call(null(owner), "__new", [], args))
+                } else {
+                    expect('.')
+                    val opmark = self.mark
+                    val name = parseId()
+                    if atMethodArgsStart(i) {
+                        val typeArgs = parseTypeArgs()
+                        val args = parseArgs()
+                        Expr(opmark, ED.call(null(owner), name, typeArgs, args))
+                    } else {
+                        Expr(opmark, ED.getstatic(owner, name))
+                    }
+                }
+            }
+            case CJToken.tID {
+                if atLambda() {
+                    parseLambda()
+                } else if atMethodArgsStart(i + 1) {
+                    val opmark = self.mark
+                    val methodName = parseId()
+                    val typeArgs = parseTypeArgs()
+                    val args = parseArgs()
+                    Expr(opmark, ED.callname(methodName, typeArgs, args))
+                } else {
+                    val opmark = self.mark
+                    val name = parseId()
+                    Expr(opmark, ED.getvar(name))
+                }
+            }
+            case CJToken.kwVAL; case CJToken.kwVAR {
+                val mutable = next().type == CJToken.kwVAR
+                val opmark = mark
+                val target = parseTarget(mutable)
+                val decltype = if consume(':') { null(parseType()) } else { null }
+                expect('=')
+                val init = parseExpr()
+                Expr(opmark, ED.decl(target, decltype, init))
+            }
             else = throw ekind("expression")
         }
     }
+
+    private def atMethodArgsStart(self, i: Int): Bool {
+        if i >= tokens.size() { return false }
+        switch tokens[i].type {
+            case '(' = true
+            case '[' {
+                val j = indexAfterMatching(i)
+                j < tokens.size() and tokens[j].type == CJToken.tRIGHT_ARROW
+            }
+            else = false
+        }
+    }
+    private def indexAfterMatching(self, i: Int): Int {
+        var j = i + 1
+        var depth = 1
+        while j < tokens.size() and depth > 0 {
+            val token = tokens[j]
+            switch token.type {
+                case '('; case '{'; case '[' { depth++ }
+                case ')'; case '}'; case ']' { depth-- }
+                else = ()
+            }
+            j++
+        }
+        j
+    }
+    private def parseArgs(self): List[Expr] = parseJoin('(', ')', ',', () -> parseExpr())
     private def atLambda(self): Bool {
-        if at(CJToken.kwASYNC) {
-            return true
-        }
-        if at(CJToken.tID) and atOffset(CJToken.tRIGHT_ARROW, 1) {
-            return true
-        }
-        val start = i
-        if not consume('(') {
-            return false
-        }
-        while consume(',') or consume(CJToken.kwVAR) or consume(CJToken.tID) {}
-        val ret = consume(')') and consume(CJToken.tRIGHT_ARROW)
-        i = start
-        ret
+        if at(CJToken.kwASYNC) { return true }
+        if at(CJToken.tID) and atOffset(CJToken.tRIGHT_ARROW, 1) { return true }
+        if not at('(') { return false }
+        val j = indexAfterMatching(i)
+        j < tokens.size() and tokens[j].type == CJToken.tRIGHT_ARROW
     }
     private def parseLambda(self): Expr {
         val mark = mark
@@ -565,9 +702,24 @@ class CJParser {
         skipDelimiters()
         val exprs = List[Expr]()
         while not consume('}') {
-            exprs.add(parseExpr0(0))
+            exprs.add(parseExprPr(0))
             expectDelimiters()
         }
         Expr(mark, ED.block(exprs))
+    }
+    private def parseTarget(self, mutable: Bool): CJAst.DeclTarget {
+        val mark = mark
+        switch peek().type {
+            case CJToken.tID {
+                val name = parseId()
+                CJAst.DeclTarget(mark, CJAst.DeclTargetData.name(CJAst.Local(
+                    mark, mutable, name, null)))
+            }
+            case '(' {
+                val subtargets = parseJoin('(', ')', ',', () -> parseTarget(mutable))
+                CJAst.DeclTarget(mark, CJAst.DeclTargetData.tuple(subtargets))
+            }
+            else = throw CJError("Expected declaration target", [mark])
+        }
     }
 }
