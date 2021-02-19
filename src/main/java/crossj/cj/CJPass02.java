@@ -18,7 +18,7 @@ final class CJPass02 extends CJPassBase {
     void handleItem(CJIRItem item) {
         if (item.getShortName().endsWith("_") && !item.isValidCompanionClass()) {
             throw CJError.of("Items that end in underscore must be a valid companion class "
-                    + "(i.e. class and no type parameters)", item.getMark());
+                    + "(i.e. class or union and no type parameters)", item.getMark());
         }
         for (var typeParameter : item.getTypeParameters()) {
             var typeParameterAst = typeParameter.getAst();

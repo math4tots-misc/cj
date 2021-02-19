@@ -66,6 +66,6 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     }
 
     public boolean isValidCompanionClass() {
-        return kind == CJIRItemKind.Class && typeParameters.isEmpty();
+        return kind != CJIRItemKind.Trait && typeParameters.isEmpty();
     }
 }
