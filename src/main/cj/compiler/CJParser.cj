@@ -517,6 +517,7 @@ class CJParser {
                     }
                 }
                 case '[' {
+                    next()
                     if consume(':') {
                         val index = parseIndexExpr()
                         expect(']')
@@ -879,6 +880,7 @@ class CJParser {
                 val fallback = if consume(CJToken.kwELSE) {
                     null(if consume('=') { parseExpr() } else { parseBlock() })
                 } else { null }
+                skipDelimiters()
                 expect('}')
                 Expr(mark, ED.switch_(target, cases, fallback))
             }
