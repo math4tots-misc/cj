@@ -848,7 +848,6 @@ class CJParser {
                     if consume('(') {
                         while not consume(')') {
                             if consume(CJToken.tDOTDOT) {
-                                expect(')')
                                 trailingArgs = true
                                 assert(')')
                             } else {

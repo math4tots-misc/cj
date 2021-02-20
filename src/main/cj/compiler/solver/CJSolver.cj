@@ -1,5 +1,7 @@
 package compiler.solver
 
+import compiler.solver.CJItemFinderMixin
+import compiler.solver.CJTypeSolverMixin
 import compiler.CJError
 import compiler.CJData
 import compiler.CJScope
@@ -7,7 +9,7 @@ import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
 
-class CJSolver {
+class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
 
     class Task: Repr {
         val name: String
@@ -53,6 +55,19 @@ class CJSolver {
         }
         val fullName = packageName + "." + file.item.shortName
         addItem(fileScope, fullName, file.item)
+    }
+
+    def getItemDefOrNull(self, fullName: String): CJIR.ItemDef? {
+        if val item = itemMap.getOrNull(fullName) {
+            null(item)
+        } else {
+            if val astFile = parseFileForItem(fullName) {
+                addFile(astFile)
+                if val item = itemMap.getOrNull(fullName) {
+                    null(item)
+                } else { null }
+            } else { null }
+        }
     }
 
     private def addItem(self, outerScope: CJScope, fullName: String, item: CJAst.Item) {

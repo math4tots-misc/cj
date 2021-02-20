@@ -2,6 +2,15 @@ class MC$cj$FS {
     M$__get_sep() {
         return require('path').sep;
     }
+    M$join(parts) {
+        return require('path').join(...parts);
+    }
+    M$isfile(path) {
+        return require('fs').lstatSync(path).isFile();
+    }
+    M$isdir(path) {
+        return require('fs').lstatSync(path).isDirectory();
+    }
     M$readFile(p) {
         return require('fs').readFileSync(p, 'utf-8');
     }
