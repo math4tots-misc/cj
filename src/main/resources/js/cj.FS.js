@@ -1,4 +1,7 @@
 class MC$cj$FS {
+    M$__get_sep() {
+        return require('path').sep;
+    }
     M$readFile(p) {
         return require('fs').readFileSync(p, 'utf-8');
     }

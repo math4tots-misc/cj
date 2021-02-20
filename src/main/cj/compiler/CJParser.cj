@@ -543,6 +543,7 @@ class CJParser {
                             }
                             expect(']')
                             if consume('=') {
+                                # TODO: This should really be handled in parseExprPr in case '='
                                 val valexpr = parseExpr()
                                 allArgs.add(valexpr)
                                 expr = Expr(opMark, ED.call(null, "__setitem", [], allArgs))

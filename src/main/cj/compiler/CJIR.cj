@@ -27,6 +27,11 @@ class CJIR {
             case union_(i) = i.name
             case trait_(i) = i.name
         }
+        def __get_kind(self): CJItemKind = when self {
+            case class_(i) = CJItemKind.class_
+            case union_(i) = CJItemKind.union_
+            case trait_(i) = CJItemKind.trait_
+        }
     }
 
     trait ClassOrUnion: Item {}

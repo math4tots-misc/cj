@@ -41,6 +41,11 @@ trait Iterable[T?]: ToList[T] {
         list.sort()
         list
     }
+    def sortedBy[X: Ord](self, f: Fn[T, X]): List[T] {
+        val list = toList()
+        list.sortBy(f)
+        list
+    }
     if T : Ord def min(self: Self): T = self.reduce((a, b) -> if a < b { a } else { b })
     if T : Ord def max(self: Self): T = self.reduce((a, b) -> if a < b { b } else { a })
 }

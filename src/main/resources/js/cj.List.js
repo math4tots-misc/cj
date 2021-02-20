@@ -129,6 +129,9 @@ class MC$cj$List {
         const TV$T = this.TV$T;
         self.sort((a, b) => TV$T.M$__cmp(a, b));
     }
+    M$sortBy(TV$X, self, f) {
+        self.sort((a, b) => TV$X.M$__cmp(f(a), f(b)));
+    }
     M$__eq(self, other) {
         const T = this.TV$T;
         if (self.length !== other.length) {
