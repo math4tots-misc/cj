@@ -37,10 +37,13 @@ public final class CJIRLocalContext extends CJIRContextBase {
     }
 
     private CJIRItem getTraitItem(String shortName, CJMark... marks) {
-        var fullName = item.getShortNameMap().getOrNull(shortName);
-        if (fullName == null) {
+        var dotIndex = shortName.indexOf('.');
+        var outerShortName = dotIndex == -1 ? shortName : shortName.substring(0, dotIndex);
+        var outerFullName = item.getShortNameMap().getOrNull(outerShortName);
+        if (outerFullName == null) {
             throw CJError.of("Trait " + Repr.of(shortName) + " not found", marks);
         }
+        var fullName = dotIndex == -1 ? outerFullName : (outerFullName + shortName.substring(dotIndex));
         var item = global.loadItem(fullName, marks);
         if (!item.getKind().isTraitKind()) {
             throw CJError.of(fullName + " is not a trait item", marks);

@@ -5,6 +5,7 @@ import compiler.CJData
 import compiler.CJScope
 import compiler.CJAst
 import compiler.CJIR
+import compiler.CJIR.Type
 
 class CJSolver {
 
@@ -16,7 +17,7 @@ class CJSolver {
 
     val sourceRoots: List[String]
     val todos: List[List[Task]] = []
-    val itemMap: Map[String, CJIR.Item] = Map()
+    val itemMap: Map[String, CJIR.ItemDef] = Map()
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
@@ -58,16 +59,19 @@ class CJSolver {
         val itemScope = CJScope(outerScope)
         itemMap[fullName] = when item.kind {
             case class_ {
-                val ircls = CJIR.Class(item.mark, item.comment, item.modifiers, fullName)
-                CJIR.Item.class_(ircls)
+                val iritem = CJIR.ClassDef(item.mark, item.comment, item.modifiers, fullName)
+                processItemTypeParams(itemScope, item, iritem)
+                CJIR.ItemDef.class_(iritem)
             }
             case union_ {
-                val irunion = CJIR.Union(item.mark, item.comment, item.modifiers, fullName)
-                CJIR.Item.union_(irunion)
+                val iritem = CJIR.UnionDef(item.mark, item.comment, item.modifiers, fullName)
+                processItemTypeParams(itemScope, item, iritem)
+                CJIR.ItemDef.union_(iritem)
             }
             case trait_ = {
-                val irtrait = CJIR.Trait(item.mark, item.comment, item.modifiers, fullName)
-                CJIR.Item.trait_(irtrait)
+                val iritem = CJIR.TraitDef(item.mark, item.comment, item.modifiers, fullName)
+                processItemTypeParams(itemScope, item, iritem)
+                CJIR.ItemDef.trait_(iritem)
             }
         }
         for member in item.members {
@@ -76,6 +80,15 @@ class CJSolver {
                     itemScope, fullName + "$" + subitem.shortName, subitem)
                 else = ()
             }
+        }
+    }
+
+    private def processItemTypeParams[I: CJIR.ItemDef](
+            self, scope: CJScope, astItem: CJAst.Item, item: I) {
+        for astTypeParam in astItem.typeParameters {
+            val typeParam = CJIR.TypeParameter(astTypeParam.mark, true, astTypeParam.name)
+            scope.set(typeParam.mark, typeParam.name, CJData.type(Type.variable(typeParam)))
+            item.addTypeParameter(typeParam)
         }
     }
 }

@@ -18,13 +18,13 @@ class CJIRInspector {
         depth = depth - 1
     }
 
-    def inspectItem(item: CJIR.Item): String {
+    def inspectItem(item: CJIR.ItemDef): String {
         val self = Self()
         self._inspectItem(item)
         self.sb.toString()
     }
 
-    def _inspectItem(self, item: CJIR.Item) {
+    def _inspectItem(self, item: CJIR.ItemDef) {
         when item {
             case class_(cls) = _inspectClass(cls)
             case union_(u) = _inspectUnion(u)
@@ -32,15 +32,35 @@ class CJIRInspector {
         }
     }
 
-    def _inspectClass(self, cls: CJIR.Class) {
+    def _inspectClass(self, cls: CJIR.ClassDef) {
         line("class " + cls.name)
+        nest(() -> {
+            _inspectItemTypeParams(cls)
+        })
     }
 
-    def _inspectUnion(self, uni: CJIR.Union) {
+    def _inspectUnion(self, uni: CJIR.UnionDef) {
         line("union " + uni.name)
+        nest(() -> {
+            _inspectItemTypeParams(uni)
+        })
     }
 
-    def _inspectTrait(self, tr: CJIR.Trait) {
+    def _inspectTrait(self, tr: CJIR.TraitDef) {
         line("trait " + tr.name)
+        nest(() -> {
+            _inspectItemTypeParams(tr)
+        })
+    }
+
+    def _inspectItemTypeParams[I: CJIR.ItemDef](self, item: I) {
+        if item.typeParameters {
+            line("Type Parameters")
+            nest(() -> {
+                for tp in item.typeParameters {
+                    line(tp.name)
+                }
+            })
+        }
     }
 }

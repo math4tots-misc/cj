@@ -422,7 +422,7 @@ class CJParser {
         val type = CJAst.Type(mark, name, args)
         val qmark = self.mark
         if consume('?') {
-            CJAst.Type(mark, "Nullable", [type])
+            CJAst.Type(qmark, "Nullable", [type])
         } else { type }
     }
     private def parseTypeArgs(self): List[CJAst.Type] {
