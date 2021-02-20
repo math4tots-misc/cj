@@ -13,6 +13,11 @@ trait CJTypeSolverMixin {
 
     def getItemDefOrNull(self, fullName: String): CJIR.ItemDef?
 
+    def solveTrait(self, scope: CJScope, expr: CJAst.Trait): Trait {
+        val args = expr.args.map(arg -> solveType(scope, arg))
+        solveTraitEx(scope, expr.mark, expr.name, args)
+    }
+
     def solveTraitEx(
             self, scope: CJScope, mark: CJMark, shortName: String, args: List[Type]): Trait {
         val dotIndex = shortName.indexOf(".")
@@ -29,7 +34,9 @@ trait CJTypeSolverMixin {
                     throw CJError("Expected trait but got type", [mark])
                 }
             }
-        } else { throw CJError("Name " + outerShortName + " not found in this scope", [mark]) }
+        } else {
+            throw CJError("Name " + outerShortName + " not found in this scope", [mark])
+        }
     }
 
     def solveType(self, scope: CJScope, expr: CJAst.Type): Type {

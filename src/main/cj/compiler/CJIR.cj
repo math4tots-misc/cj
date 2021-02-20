@@ -19,6 +19,9 @@ class CJIR {
         def addTypeParameter(self, typeParameter: TypeParameter) {
             typeParameters.add(typeParameter)
         }
+        def addTrait(self, trait_: Trait) {
+            traits.add(trait_)
+        }
     }
     union ItemDef_: ItemDef {
         case class_(ClassDef)
@@ -67,9 +70,41 @@ class CJIR {
     }
 
     trait ClassOrUnionDef: ItemDef {}
-    union ClassOrUnionDef_ {
+    union ClassOrUnionDef_ : ClassOrUnionDef {
         case class_(ClassDef)
         case union_(UnionDef)
+        def __get_mark(self): CJMark = when self {
+            case class_(i) = i.mark
+            case union_(i) = i.mark
+        }
+        def __get_comment(self): String? = when self {
+            case class_(i) = i.comment
+            case union_(i) = i.comment
+        }
+        def __get_modifiers(self): List[CJModifier] = when self {
+            case class_(i) = i.modifiers
+            case union_(i) = i.modifiers
+        }
+        def __get_kind(self): CJItemKind = when self {
+            case class_(i) = CJItemKind.class_
+            case union_(i) = CJItemKind.union_
+        }
+        def __get_name(self): String = when self {
+            case class_(i) = i.name
+            case union_(i) = i.name
+        }
+        def __get_typeParameters(self): List[TypeParameter] = when self {
+            case class_(i) = i.typeParameters
+            case union_(i) = i.typeParameters
+        }
+        def __get_traits(self): List[Trait] = when self {
+            case class_(i) = i.traits
+            case union_(i) = i.traits
+        }
+        def __get_methods(self): List[Method] = when self {
+            case class_(i) = i.methods
+            case union_(i) = i.methods
+        }
     }
 
     class ClassDef: ClassOrUnionDef {
@@ -106,19 +141,27 @@ class CJIR {
         def __get_kind(self): CJItemKind = CJItemKind.trait_
     }
 
-    union Type {
+    union Type: Repr {
         case reified(ReifiedType)
         case variable(TypeParameter)
+        def repr(self): String = when self {
+            case reified(t) = t.toString()
+            case variable(tp) = tp.name
+        }
     }
 
+    @derive(repr)
     class ReifiedType {
         val defn: ClassOrUnionDef
         val args: List[Type]
+        def toString(self): String = if args { defn.name + args } else { defn.name }
     }
 
+    @derive(repr)
     class Trait {
         val defn: TraitDef
         val args: List[Type]
+        def toString(self): String = if args { defn.name + args } else { defn.name }
     }
 
     class Field {
@@ -127,10 +170,14 @@ class CJIR {
     class Method {
     }
 
-    class TypeParameter {
+    class TypeParameter: ToString {
         val mark: CJMark
         val itemLevel: Bool
         val name: String
         val traits: List[Trait] = []
+        def addTrait(self, trait_: Trait) {
+            traits.add(trait_)
+        }
+        def toString(self): String = name
     }
 }

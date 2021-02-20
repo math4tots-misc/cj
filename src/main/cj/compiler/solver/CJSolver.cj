@@ -11,6 +11,11 @@ import compiler.CJIR.Type
 
 class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
 
+    # various todo levels
+    private static val tlTypeParamTraits = 0
+    private static val tlTraitDecl = 1
+    private static val tlTraitDeclCond = 2
+
     class Task: Repr {
         val name: String
         val detail: String
@@ -37,7 +42,9 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
                 i++
             }
             if i < todos.size() {
-                todos[i].pop().f.call()
+                val task = todos[i].pop()
+                # IO.println(task)
+                task.f.call()
             } else {
                 repeat = false
             }
@@ -45,7 +52,7 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     }
 
     def addFile(self, file: CJAst.File) {
-        val fileScope = CJScope.newRoot()
+        val fileScope = CJScope.newFileScope()
         val packageName = file.packageName
         for import_ in file.imports {
             fileScope.set(
@@ -76,17 +83,20 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
         itemMap[fullName] = when item.kind {
             case class_ {
                 val iritem = CJIR.ClassDef(item.mark, item.comment, item.modifiers, fullName)
-                processItemTypeParams(itemScope, item, iritem)
+                handleItemTypeParams(itemScope, item, iritem)
+                handleItemTraits(itemScope, item, iritem)
                 CJIR.ItemDef.class_(iritem)
             }
             case union_ {
                 val iritem = CJIR.UnionDef(item.mark, item.comment, item.modifiers, fullName)
-                processItemTypeParams(itemScope, item, iritem)
+                handleItemTypeParams(itemScope, item, iritem)
+                handleItemTraits(itemScope, item, iritem)
                 CJIR.ItemDef.union_(iritem)
             }
             case trait_ = {
                 val iritem = CJIR.TraitDef(item.mark, item.comment, item.modifiers, fullName)
-                processItemTypeParams(itemScope, item, iritem)
+                handleItemTypeParams(itemScope, item, iritem)
+                handleItemTraits(itemScope, item, iritem)
                 CJIR.ItemDef.trait_(iritem)
             }
         }
@@ -99,12 +109,37 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
         }
     }
 
-    private def processItemTypeParams[I: CJIR.ItemDef](
+    private def handleItemTypeParams[I: CJIR.ItemDef](
             self, scope: CJScope, astItem: CJAst.Item, item: I) {
         for astTypeParam in astItem.typeParameters {
             val typeParam = CJIR.TypeParameter(astTypeParam.mark, true, astTypeParam.name)
             scope.set(typeParam.mark, typeParam.name, CJData.type(Type.variable(typeParam)))
             item.addTypeParameter(typeParam)
+            todo(tlTypeParamTraits, "typeParamTrait", item.name, () -> {
+                for astTrait in astTypeParam.traits {
+                    typeParam.addTrait(solveTrait(scope, astTrait))
+                }
+            })
         }
+    }
+
+    private def handleItemTraits[I: CJIR.ItemDef](
+            self, scope: CJScope, astItem: CJAst.Item, item: I) {
+        for astTraitDecl in astItem.traitDeclarations {
+            if astTraitDecl.conditions {
+                todo(tlTraitDeclCond, "traitdecl(cond)", item.name, () -> {
+                    # TODO
+                })
+            } else {
+                todo(tlTraitDecl, "traitdecl", item.name, () -> {
+                    val trait_ = solveTrait(scope, astTraitDecl.trait_)
+                    item.addTrait(trait_)
+                })
+            }
+        }
+    }
+
+    private def handleClassFields(self, scope: CJScope, astItem: CJAst.Item, cls: CJIR.ClassDef) {
+        # TODO
     }
 }

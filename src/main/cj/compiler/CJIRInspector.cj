@@ -36,6 +36,7 @@ class CJIRInspector {
         line("class " + cls.name)
         nest(() -> {
             _inspectItemTypeParams(cls)
+            _inspectItemTraits(cls)
         })
     }
 
@@ -43,6 +44,7 @@ class CJIRInspector {
         line("union " + uni.name)
         nest(() -> {
             _inspectItemTypeParams(uni)
+            _inspectItemTraits(uni)
         })
     }
 
@@ -50,6 +52,7 @@ class CJIRInspector {
         line("trait " + tr.name)
         nest(() -> {
             _inspectItemTypeParams(tr)
+            _inspectItemTraits(tr)
         })
     }
 
@@ -59,6 +62,17 @@ class CJIRInspector {
             nest(() -> {
                 for tp in item.typeParameters {
                     line(tp.name)
+                }
+            })
+        }
+    }
+
+    def _inspectItemTraits[I: CJIR.ItemDef](self, item: I) {
+        if item.traits {
+            line("Traits")
+            nest(() -> {
+                for trait_ in item.traits {
+                    line("" + trait_)
                 }
             })
         }
