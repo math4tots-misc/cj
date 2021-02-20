@@ -98,22 +98,26 @@ class CJAst {
         val body: Expr?
     }
 
-    class Trait {
-        val mark: CJMark
-        val name: String
-        val args: List[Type]
-    }
-
-    class Type: Repr {
-        val mark: CJMark
-        val name: String
-        val args: List[Type]
-
+    trait TraitOrType: Repr {
+        def __get_name(self): String
+        def __get_args(self): List[Type]
         def repr(self): String = {
             if args {
                 name + "[" + ", ".join(args.map(a -> a.repr())) + "]"
             } else { name }
         }
+    }
+
+    class Trait: TraitOrType {
+        val mark: CJMark
+        val name: String
+        val args: List[Type]
+    }
+
+    class Type: TraitOrType {
+        val mark: CJMark
+        val name: String
+        val args: List[Type]
     }
 
     class Expr: Repr {
