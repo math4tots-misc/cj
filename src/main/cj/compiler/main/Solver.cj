@@ -4,7 +4,7 @@ import compiler.CJIRInspector
 import compiler.CJParser
 import cj.FS
 import cj.Argv
-import compiler.CJSolver
+import compiler.solver.CJSolver
 
 class Solver {
     def main() {

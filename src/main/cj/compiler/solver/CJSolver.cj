@@ -1,4 +1,4 @@
-package compiler
+package compiler.solver
 
 import compiler.CJError
 import compiler.CJData
@@ -9,10 +9,11 @@ import compiler.CJIR.Type
 
 class CJSolver {
 
-    class Task {
+    class Task: Repr {
         val name: String
         val detail: String
         val f: Fn[Unit]
+        def repr(self): String = "Task(" + name + "," + detail + ")"
     }
 
     val sourceRoots: List[String]
