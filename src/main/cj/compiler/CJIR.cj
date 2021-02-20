@@ -10,6 +10,7 @@ class CJIR {
         def __get_comment(self): String?
         def __get_modifiers(self): List[CJModifier]
         def __get_name(self): String
+        def __get_typeParameters(self): List[TypeParameter]
         def __get_traits(self): List[Trait]
         def __get_methods(self): List[Method]
     }
