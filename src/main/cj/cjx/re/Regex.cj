@@ -130,6 +130,7 @@ class Regex {
         val statesToId: Map[Set[Int], Int]
         val idToRepresentative: List[Int]
         val transitionMap: List[List[Int]]
+        var _start: Int? = null
 
         def(nfa: NFA): Self = {
             val self = Self.__malloc(nfa, [], Map(), [], [])
@@ -156,7 +157,11 @@ class Regex {
 
         def getRepresentative(self: Self, id: Int): Int = self.idToRepresentative[id]
 
-        def newStart(self: Self): Int = self.getId(self.nfa.newStart())
+        def newStart(self: Self): Int = if val start = _start { start } else {
+            val start = self.getId(self.nfa.newStart())
+            _start = null(start)
+            start
+        }
 
         def transition(self: Self, id: Int, var ch: Int): Int = {
             if ch > 127 { ch = NFA.nonAscii }
