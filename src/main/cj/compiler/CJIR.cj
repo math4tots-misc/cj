@@ -5,19 +5,27 @@ import compiler.CJModifier
 import compiler.CJMark
 
 class CJIR {
-    trait Item {
+    trait Item: Repr {
         def __get_mark(self): CJMark
         def __get_comment(self): String?
         def __get_modifiers(self): List[CJModifier]
+        def __get_kind(self): CJItemKind
         def __get_name(self): String
         def __get_typeParameters(self): List[TypeParameter]
         def __get_traits(self): List[Trait]
         def __get_methods(self): List[Method]
+        def toString(self): String = name
+        def repr(self): String = "(" + kind + " " + name + ")"
     }
     union Item_ {
         case class_(Class)
         case union_(Union)
         case trait_(Trait)
+        def __get_kind(self): CJItemKind = when self {
+            case class_(i) = i.kind
+            case union_(i) = i.kind
+            case trait_(i) = i.kind
+        }
         def __get_mark(self): CJMark = when self {
             case class_(i) = i.mark
             case union_(i) = i.mark
@@ -50,6 +58,7 @@ class CJIR {
         val traits: List[Trait] = []
         val fields: List[Field] = []
         val methods: List[Method] = []
+        def __get_kind(self): CJItemKind = CJItemKind.class_
     }
 
     class Union: ClassOrUnion {
@@ -60,6 +69,7 @@ class CJIR {
         val typeParameters: List[TypeParameter] = []
         val traits: List[Trait] = []
         val methods: List[Method] = []
+        def __get_kind(self): CJItemKind = CJItemKind.union_
     }
 
     class Trait: Item {
@@ -70,6 +80,7 @@ class CJIR {
         val typeParameters: List[TypeParameter] = []
         val traits: List[Trait] = []
         val methods: List[Method] = []
+        def __get_kind(self): CJItemKind = CJItemKind.trait_
     }
 
     class Field {
@@ -79,5 +90,9 @@ class CJIR {
     }
 
     class TypeParameter {
+        val mark: CJMark
+        val itemLevel: Bool
+        val name: String
+        val traits: List[Trait]
     }
 }
