@@ -108,4 +108,8 @@ trait CJTypeSolverMixin {
         val traits = astCond.traits.map(t -> solveTrait(scope, t))
         CJIR.TypeCondition(astCond.mark, astCond.variableName, traits)
     }
+
+    def checkTypeCondition(self, scope: CJScope, cond: CJIR.TypeCondition): Bool {
+        throw CJError("TODO", [cond.mark])
+    }
 }

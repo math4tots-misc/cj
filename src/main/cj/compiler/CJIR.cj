@@ -153,27 +153,36 @@ class CJIR {
         val traits: List[Trait]
     }
 
-    union Type: Repr {
+    class TypeVar {
+        val decl: TypeParameter
+        def __get_mark(self): CJMark = decl.mark
+        def __get_name(self): String = decl.name
+    }
+
+    union Type: Repr, Eq {
         case reified(ReifiedType)
-        case variable(TypeParameter)
+        case variable(TypeVar)
         def repr(self): String = when self {
             case reified(t) = t.toString()
             case variable(tp) = tp.name
         }
+        def __eq(self, other: Self): Bool = repr() == other.repr()
     }
 
     @derive(repr)
-    class ReifiedType {
+    class ReifiedType: Eq {
         val defn: ClassOrUnionDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
+        def __eq(self, other: Self): Bool = toString() == other.toString()
     }
 
     @derive(repr)
-    class Trait {
+    class Trait: Eq {
         val defn: TraitDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
+        def __eq(self, other: Self): Bool = toString() == other.toString()
     }
 
     class Field {

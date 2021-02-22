@@ -113,7 +113,7 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
             self, scope: CJScope, astItem: CJAst.Item, item: I) {
         for astTypeParam in astItem.typeParameters {
             val typeParam = CJIR.TypeParameter(astTypeParam.mark, true, astTypeParam.name)
-            scope.set(typeParam.mark, typeParam.name, CJData.type(Type.variable(typeParam)))
+            scope.set(typeParam.mark, typeParam.name, CJData.type(Type.variable(CJIR.TypeVar(typeParam))))
             item.addTypeParameter(typeParam)
             todo(tlTypeParamTraits, "typeParamTrait", item.name, () -> {
                 for astTrait in astTypeParam.traits {
