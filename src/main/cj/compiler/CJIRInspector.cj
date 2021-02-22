@@ -68,13 +68,28 @@ class CJIRInspector {
     }
 
     def _inspectItemTraits[I: CJIR.ItemDef](self, item: I) {
-        if item.traits {
+        if item.traitDeclarations {
             line("Traits")
             nest(() -> {
-                for trait_ in item.traits {
-                    line("" + trait_)
+                for tdecl in item.traitDeclarations {
+                    val hasConditions = tdecl.conditions.size() > 0
+                    line("" + tdecl.trait_ + if hasConditions { " (conditional)" } else { "" })
+                    nest(() -> {
+                        for cond in tdecl.conditions {
+                            _inspectTypeCondition(cond)
+                        }
+                    })
                 }
             })
         }
+    }
+
+    def _inspectTypeCondition(self, cond: CJIR.TypeCondition) {
+        line(cond.variableName)
+        nest(() -> {
+            for trait_ in cond.traits {
+                line("" + trait_)
+            }
+        })
     }
 }

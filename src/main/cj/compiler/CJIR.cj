@@ -12,15 +12,15 @@ class CJIR {
         def __get_kind(self): CJItemKind
         def __get_name(self): String
         def __get_typeParameters(self): List[TypeParameter]
-        def __get_traits(self): List[Trait]
+        def __get_traitDeclarations(self): List[TraitDeclaration]
         def __get_methods(self): List[Method]
         def toString(self): String = name
         def repr(self): String = "(" + kind + " " + name + ")"
         def addTypeParameter(self, typeParameter: TypeParameter) {
             typeParameters.add(typeParameter)
         }
-        def addTrait(self, trait_: Trait) {
-            traits.add(trait_)
+        def addTraitDeclaration(self, traitDecl: TraitDeclaration) {
+            traitDeclarations.add(traitDecl)
         }
     }
     union ItemDef_: ItemDef {
@@ -57,10 +57,10 @@ class CJIR {
             case union_(i) = i.typeParameters
             case trait_(i) = i.typeParameters
         }
-        def __get_traits(self): List[Trait] = when self {
-            case class_(i) = i.traits
-            case union_(i) = i.traits
-            case trait_(i) = i.traits
+        def __get_traitDeclarations(self): List[TraitDeclaration] = when self {
+            case class_(i) = i.traitDeclarations
+            case union_(i) = i.traitDeclarations
+            case trait_(i) = i.traitDeclarations
         }
         def __get_methods(self): List[Method] = when self {
             case class_(i) = i.methods
@@ -97,9 +97,9 @@ class CJIR {
             case class_(i) = i.typeParameters
             case union_(i) = i.typeParameters
         }
-        def __get_traits(self): List[Trait] = when self {
-            case class_(i) = i.traits
-            case union_(i) = i.traits
+        def __get_traitDeclarations(self): List[TraitDeclaration] = when self {
+            case class_(i) = i.traitDeclarations
+            case union_(i) = i.traitDeclarations
         }
         def __get_methods(self): List[Method] = when self {
             case class_(i) = i.methods
@@ -113,7 +113,7 @@ class CJIR {
         val modifiers: List[CJModifier]
         val name: String
         val typeParameters: List[TypeParameter] = []
-        val traits: List[Trait] = []
+        val traitDeclarations: List[TraitDeclaration] = []
         val fields: List[Field] = []
         val methods: List[Method] = []
         def __get_kind(self): CJItemKind = CJItemKind.class_
@@ -125,7 +125,7 @@ class CJIR {
         val modifiers: List[CJModifier]
         val name: String
         val typeParameters: List[TypeParameter] = []
-        val traits: List[Trait] = []
+        val traitDeclarations: List[TraitDeclaration] = []
         val methods: List[Method] = []
         def __get_kind(self): CJItemKind = CJItemKind.union_
     }
@@ -136,9 +136,21 @@ class CJIR {
         val modifiers: List[CJModifier]
         val name: String
         val typeParameters: List[TypeParameter] = []
-        val traits: List[Trait] = []
+        val traitDeclarations: List[TraitDeclaration] = []
         val methods: List[Method] = []
         def __get_kind(self): CJItemKind = CJItemKind.trait_
+    }
+
+    class TraitDeclaration {
+        val mark: CJMark
+        val trait_: Trait
+        val conditions: List[TypeCondition]
+    }
+
+    class TypeCondition {
+        val mark: CJMark
+        val variableName: String
+        val traits: List[Trait]
     }
 
     union Type: Repr {

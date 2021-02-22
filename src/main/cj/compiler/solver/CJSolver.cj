@@ -126,16 +126,12 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     private def handleItemTraits[I: CJIR.ItemDef](
             self, scope: CJScope, astItem: CJAst.Item, item: I) {
         for astTraitDecl in astItem.traitDeclarations {
-            if astTraitDecl.conditions {
-                todo(tlTraitDeclCond, "traitdecl(cond)", item.name, () -> {
-                    # TODO
-                })
-            } else {
-                todo(tlTraitDecl, "traitdecl", item.name, () -> {
-                    val trait_ = solveTrait(scope, astTraitDecl.trait_)
-                    item.addTrait(trait_)
-                })
-            }
+            todo(tlTraitDecl, "traitdecl", item.name, () -> {
+                val trait_ = solveTrait(scope, astTraitDecl.trait_)
+                val conds = astTraitDecl.conditions.map(c -> solveTypeCondition(scope, c))
+                item.addTraitDeclaration(CJIR.TraitDeclaration(
+                    astTraitDecl.mark, trait_, conds))
+            })
         }
     }
 

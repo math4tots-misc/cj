@@ -103,4 +103,9 @@ trait CJTypeSolverMixin {
             Trait(traitdef, args)
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
     }
+
+    def solveTypeCondition(self, scope: CJScope, astCond: CJAst.TypeCondition): CJIR.TypeCondition {
+        val traits = astCond.traits.map(t -> solveTrait(scope, t))
+        CJIR.TypeCondition(astCond.mark, astCond.variableName, traits)
+    }
 }
