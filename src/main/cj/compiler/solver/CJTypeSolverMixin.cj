@@ -30,9 +30,8 @@ trait CJTypeSolverMixin {
                     }
                     getReifiedTrait(mark, fullName, args)
                 }
-                case type(type) {
-                    throw CJError("Expected trait but got type", [mark])
-                }
+                case type(type) = throw CJError("Expected trait but got type", [mark])
+                else = throw CJError("Expected trait", [mark])
             }
         } else {
             throw CJError("Name " + outerShortName + " not found in this scope", [mark])
@@ -47,7 +46,13 @@ trait CJTypeSolverMixin {
     def solveTypeEx(
             self, scope: CJScope, mark: CJMark, shortName: String, args: List[Type]): Type {
         val dotIndex = shortName.indexOf(".")
-        val outerShortName = if dotIndex == -1 { shortName } else { shortName[:dotIndex] }
+        val outerShortName = if dotIndex == -1 {
+            switch shortName {
+                case "Fn" = if args { "Fn" + (args.size() - 1) } else { shortName }
+                case "Tuple" = "Tuple" + args.size()
+                else = shortName
+            }
+        } else { shortName[:dotIndex] }
         if val data = scope.getOrNull(outerShortName) {
             when data {
                 case fullName(prefix) {
@@ -62,6 +67,7 @@ trait CJTypeSolverMixin {
                     }
                     type
                 }
+                else = throw CJError("Expected type", [mark])
             }
         } else { throw CJError("Name " + outerShortName + " not found in this scope", [mark]) }
     }
@@ -74,7 +80,7 @@ trait CJTypeSolverMixin {
             if itemdef.typeParameters.size() != args.size() {
                 throw CJError(
                     "Expected " + itemdef.typeParameters.size() +
-                    " args but got " + args.size(), [mark])
+                    " type args but got " + args.size(), [mark])
             }
             val classOrUnionDef = when itemdef {
                 case class_(cls) = CJIR.ClassOrUnionDef.class_(cls)
@@ -84,7 +90,7 @@ trait CJTypeSolverMixin {
                 } else { throw CJError(fullName + " is a trait, not a type", [mark]) }
             }
             val rtype = ReifiedType(classOrUnionDef, args)
-            _checkTypeArgs(mark, rtype._getBinding(), classOrUnionDef.typeParameters, args)
+            _checkReifiedTypeTypeArgs(mark, rtype)
             rtype
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
     }
@@ -94,16 +100,24 @@ trait CJTypeSolverMixin {
             if itemdef.typeParameters.size() != args.size() {
                 throw CJError(
                     "Expected " + itemdef.typeParameters.size() +
-                    " args but got " + args.size(), [mark])
+                    " type args but got " + args.size(), [mark])
             }
             val traitdef = when itemdef {
                 case trait_(t) = t
                 else = throw CJError(fullName + " is a type, not a trait", [mark])
             }
             val trait_ = Trait(traitdef, args)
-            _checkTypeArgs(mark, trait_._getBinding(), traitdef.typeParameters, args)
+            _checkTraitTypeArgs(mark, trait_)
             trait_
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
+    }
+
+    def _checkTraitTypeArgs(self, mark: CJMark, trait_: Trait) {
+        _checkTypeArgs(mark, trait_._getBinding(), trait_.defn.typeParameters, trait_.args)
+    }
+
+    def _checkReifiedTypeTypeArgs(self, mark: CJMark, rtype: ReifiedType) {
+        _checkTypeArgs(mark, rtype._getBinding(), rtype.defn.typeParameters, rtype.args)
     }
 
     def _checkTypeArgs(

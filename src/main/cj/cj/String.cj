@@ -52,6 +52,8 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def upper(self): String
     def replace(self, old: String, new: String): String
 
+    def split(self, sep: String): List[String]
+
     ## Return -1 if not found
     def indexOf(self, substring: String): Int
 

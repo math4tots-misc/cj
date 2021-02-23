@@ -23,6 +23,9 @@ class CJIR {
         def addTraitDeclaration(self, traitDecl: TraitDeclaration) {
             traitDeclarations.add(traitDecl)
         }
+        def addMethod(self, method: Method) {
+            methods.add(method)
+        }
     }
     union ItemDef_: ItemDef {
         case class_(ClassDef)
@@ -300,6 +303,15 @@ class CJIR {
     }
 
     class Method {
+        val mark: CJMark
+        val comment: String?
+        val modifiers: List[CJModifier]
+        val conditions: List[TypeCondition]
+        val name: String
+        val typeParameters: List[TypeParameter]
+        val parameters: List[Local]
+        val returnType: Type
+        var body: Expr? = null
     }
 
     class TypeParameter: ToString {
@@ -311,5 +323,20 @@ class CJIR {
             traits.add(trait_)
         }
         def toString(self): String = name
+    }
+
+    class Local {
+        val mark: CJMark
+        val mutable: Bool
+        val name: String
+        val type: Type
+    }
+
+    class Expr {
+        val mark: CJMark
+    }
+
+    union ExprData {
+        case unit
     }
 }

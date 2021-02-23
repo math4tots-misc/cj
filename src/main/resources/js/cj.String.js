@@ -127,6 +127,14 @@ class MC$cj$String {
     M$replace(self, old, new_) {
         return self.split(old).join(new_);
     }
+    M$split(self, sep) {
+        if (sep === "") {
+            // This way, surrogate pairs are preserved
+            return Array.from(self);
+        } else {
+            return self.split(sep);
+        }
+    }
     M$indexOf(self, substring) {
         return self.indexOf(substring);
     }

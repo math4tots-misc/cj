@@ -44,6 +44,7 @@ class CJScope {
             }
         }
     }
+    def __contains(self, key: String): Bool = getOrNull(key).isPresent()
     def get(self, mark: CJMark, key: String): CJData {
         if val data = getOrNull(key) {
             data

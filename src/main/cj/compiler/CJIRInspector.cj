@@ -37,6 +37,7 @@ class CJIRInspector {
         nest(() -> {
             _inspectItemTypeParams(cls)
             _inspectItemTraits(cls)
+            _inspectItemMethods(cls)
         })
     }
 
@@ -45,6 +46,7 @@ class CJIRInspector {
         nest(() -> {
             _inspectItemTypeParams(uni)
             _inspectItemTraits(uni)
+            _inspectItemMethods(uni)
         })
     }
 
@@ -53,6 +55,7 @@ class CJIRInspector {
         nest(() -> {
             _inspectItemTypeParams(tr)
             _inspectItemTraits(tr)
+            _inspectItemMethods(tr)
         })
     }
 
@@ -79,6 +82,17 @@ class CJIRInspector {
                             _inspectTypeCondition(cond)
                         }
                     })
+                }
+            })
+        }
+    }
+
+    def _inspectItemMethods[I: CJIR.ItemDef](self, item: I) {
+        if item.methods {
+            line("Methods")
+            nest(() -> {
+                for method in item.methods {
+                    line("" + method.name)
                 }
             })
         }

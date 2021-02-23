@@ -1,5 +1,6 @@
 package compiler.solver
 
+import compiler.CJMark
 import compiler.solver.CJItemFinderMixin
 import compiler.solver.CJTypeSolverMixin
 import compiler.CJError
@@ -14,6 +15,7 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     # various todo levels
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
+    private static val tlMethod = 2
 
     class Task: Repr {
         val name: String
@@ -25,6 +27,8 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     val sourceRoots: List[String]
     val todos: List[List[Task]] = []
     val itemMap: Map[String, CJIR.ItemDef] = Map()
+
+    var _unitType: Type? = null
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
@@ -47,6 +51,14 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
             } else {
                 repeat = false
             }
+        }
+    }
+
+    def __get_unitType(self): Type {
+        if val type = _unitType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.Unit", []))
+            _unitType = null(type)
+            type
         }
     }
 
@@ -79,33 +91,61 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     private def addItem(self, outerScope: CJScope, fullName: String, item: CJAst.Item) {
         outerScope.set(item.mark, item.shortName, CJData.fullName(fullName))
         val itemScope = CJScope(outerScope)
-        itemMap[fullName] = when item.kind {
+        when item.kind {
             case class_ {
                 val iritem = CJIR.ClassDef(item.mark, item.comment, item.modifiers, fullName)
+                itemMap[fullName] = CJIR.ItemDef.class_(iritem)
                 handleItemTypeParams(itemScope, item, iritem)
+                addSelfToTypeScope(itemScope, iritem)
                 handleItemTraits(itemScope, item, iritem)
+                handleItemMethods(itemScope, item, iritem)
                 CJIR.ItemDef.class_(iritem)
             }
             case union_ {
                 val iritem = CJIR.UnionDef(item.mark, item.comment, item.modifiers, fullName)
+                itemMap[fullName] = CJIR.ItemDef.union_(iritem)
                 handleItemTypeParams(itemScope, item, iritem)
+                addSelfToTypeScope(itemScope, iritem)
                 handleItemTraits(itemScope, item, iritem)
-                CJIR.ItemDef.union_(iritem)
+                handleItemMethods(itemScope, item, iritem)
             }
             case trait_ = {
                 val iritem = CJIR.TraitDef(item.mark, item.comment, item.modifiers, fullName)
+                itemMap[fullName] = CJIR.ItemDef.trait_(iritem)
                 handleItemTypeParams(itemScope, item, iritem)
+                addSelfToTraitScope(itemScope, iritem)
                 handleItemTraits(itemScope, item, iritem)
-                CJIR.ItemDef.trait_(iritem)
+                handleItemMethods(itemScope, item, iritem)
             }
         }
         for member in item.members {
             when member {
                 case item(subitem) = addItem(
-                    itemScope, fullName + "$" + subitem.shortName, subitem)
+                    itemScope, fullName + "." + subitem.shortName, subitem)
                 else = ()
             }
         }
+    }
+
+    private def addSelfToTypeScope[I: CJIR.ClassOrUnionDef](
+            self, itemScope: CJScope, item: I) {
+        val mark = item.mark
+        val args = item.typeParameters.map(tp -> when itemScope.get(mark, tp.name) {
+            case type(t) = t
+            else = throw CJError("Expected " + tp.name + " to be a type", [mark])
+        })
+        val selfType = Type.reified(getReifiedType(mark, item.name, args))
+        itemScope.set(mark, "Self", CJData.type(selfType))
+    }
+
+    private def addSelfToTraitScope(self, itemScope: CJScope, item: CJIR.TraitDef) {
+        val mark = item.mark
+        val args = item.typeParameters.map(tp -> when itemScope.get(mark, tp.name) {
+            case type(t) = t
+            else = throw CJError("Expected " + tp.name + " to be a type", [mark])
+        })
+        val selfType = Type.self_(getReifiedTrait(mark, item.name, args))
+        itemScope.set(mark, "Self", CJData.type(selfType))
     }
 
     private def handleItemTypeParams[I: CJIR.ItemDef](
@@ -132,6 +172,86 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
                     astTraitDecl.mark, trait_, conds))
             })
         }
+    }
+
+    private def handleItemMethods[I: CJIR.ItemDef](
+            self, scope: CJScope, astItem: CJAst.Item, item: I) {
+        for member in astItem.members {
+            when member {
+                case method(astMethod) = todo(tlMethod, "method", item.name, () ->
+                    handleItemMethod(scope, item, astMethod))
+                else = ()
+            }
+        }
+    }
+
+    private def handleItemMethod[I: CJIR.ItemDef](
+            self, itemScope: CJScope, item: I, astMethod: CJAst.Method) {
+        val methodScope = CJScope(itemScope)
+
+        # update type variables with the conditions of the method
+        val conditions = List[CJIR.TypeCondition]()
+        for astCondition in astMethod.conditions {
+            val condition = solveTypeCondition(itemScope, astCondition)
+            val itemTypeVar = when itemScope.get(astCondition.mark, condition.variableName) {
+                case type(type) = when type {
+                    case variable(tv) = tv
+                    else = throw CJError("Expected type variable", [astCondition.mark])
+                }
+                else = throw CJError("Expected type variable", [astCondition.mark])
+            }
+            val newTypeVar = CJIR.TypeVar(itemTypeVar.decl)
+            newTypeVar.additionalTraits.addAll(itemTypeVar.additionalTraits)
+            newTypeVar.additionalTraits.addAll(condition.traits)
+            methodScope.set(
+                astCondition.mark, newTypeVar.name, CJData.type(Type.variable(newTypeVar)))
+        }
+
+        # method level type parameters
+        val typeParameters = List[CJIR.TypeParameter]()
+        for astTypeParam in astMethod.typeParameters {
+            val typeParam = CJIR.TypeParameter(
+                astTypeParam.mark,
+                false,
+                astTypeParam.name)
+            if typeParam.name in itemScope {
+                throw CJError(
+                    "Method level type parameters may not shadow another type", [typeParam.mark])
+            }
+            for astTrait in astTypeParam.traits {
+                typeParam.addTrait(solveTrait(methodScope, astTrait))
+            }
+            typeParameters.add(typeParam)
+            methodScope.set(
+                typeParam.mark,
+                typeParam.name,
+                CJData.type(Type.variable(CJIR.TypeVar(typeParam))))
+        }
+
+        # parameters
+        val parameters = List[CJIR.Local]()
+        for astParam in astMethod.parameters {
+            val paramType = solveType(methodScope, astParam.type.get())
+            val param = CJIR.Local(astParam.mark, astParam.mutable, astParam.name, paramType)
+            parameters.add(param)
+            methodScope.set(param.mark, param.name, CJData.local(param))
+        }
+
+        # return type
+        val returnType = if val rt = astMethod.returnType { solveType(methodScope, rt) } else {
+            unitType
+        }
+
+        val method = CJIR.Method(
+            astMethod.mark,
+            astMethod.comment,
+            astMethod.modifiers,
+            conditions,
+            astMethod.name,
+            typeParameters,
+            parameters,
+            returnType)
+        item.addMethod(method)
     }
 
     private def handleClassFields(self, scope: CJScope, astItem: CJAst.Item, cls: CJIR.ClassDef) {
