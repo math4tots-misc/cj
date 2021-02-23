@@ -83,8 +83,9 @@ trait CJTypeSolverMixin {
                     getReifiedType(mark, fullName + "_", args)
                 } else { throw CJError(fullName + " is a trait, not a type", [mark]) }
             }
-            # TODO: Check type parameter trait constraints
-            ReifiedType(classOrUnionDef, args)
+            val rtype = ReifiedType(classOrUnionDef, args)
+            _checkTypeArgs(mark, rtype._getBinding(), classOrUnionDef.typeParameters, args)
+            rtype
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
     }
 
@@ -99,9 +100,32 @@ trait CJTypeSolverMixin {
                 case trait_(t) = t
                 else = throw CJError(fullName + " is a type, not a trait", [mark])
             }
-            # TODO: Check type parameter trait constraints
-            Trait(traitdef, args)
+            val trait_ = Trait(traitdef, args)
+            _checkTypeArgs(mark, trait_._getBinding(), traitdef.typeParameters, args)
+            trait_
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
+    }
+
+    def _checkTypeArgs(
+            self,
+            mark: CJMark,
+            binding: CJIR.Binding,
+            params: List[CJIR.TypeParameter],
+            args: List[Type]) {
+        if params.size() != args.size() {
+            throw CJError(
+                "Expected " + params.size() + " type args but got " + args.size(), [mark])
+        }
+        for i = 0; i < args.size(); i++ {
+            val param = params[i]
+            val arg = args[i]
+            for originalTrait in param.traits {
+                val trait_ = originalTrait.applyBinding(mark, binding)
+                if not arg.implementsTrait(mark, trait_) {
+                    throw CJError("" + arg + " does not implement " + trait_, [mark, param.mark])
+                }
+            }
+        }
     }
 
     def solveTypeCondition(self, scope: CJScope, astCond: CJAst.TypeCondition): CJIR.TypeCondition {
