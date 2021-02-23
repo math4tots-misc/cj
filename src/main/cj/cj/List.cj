@@ -48,6 +48,7 @@ native class List[T?] :
     if T : Eq def __contains(self, t: T): Bool
     if T : Ord def sort(self)
     def sortBy[X: Ord](self, f: Fn[T, X])
+    @generic def reverse(self)
     if T : Eq def __eq(self: Self,  other: Self): Bool
     if T : Hash def hash(self: Self): Int
     if T : Approximate def approximates(self: Self, other: Self, tolerance: Double): Int

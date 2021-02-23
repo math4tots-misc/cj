@@ -160,4 +160,10 @@ class Test03List {
         Assert([1, 0, 3].any(x -> x))
         Assert(not [0, 0, 0].any(x -> x))
     }
+
+    @test
+    def reverse() {
+        Assert.equal(List[Int]().reversed(), [])
+        Assert.equal([1, 2, 3].reversed(), [3, 2, 1])
+    }
 }

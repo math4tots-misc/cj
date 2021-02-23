@@ -54,6 +54,11 @@ trait Iterable[T?]: ToList[T] {
         false
     }
 
+    def reversed(self): List[T] {
+        val list = toList()
+        list.reverse()
+        list
+    }
     if T : Ord def sorted(self): List[T] = {
         val list = toList()
         list.sort()
