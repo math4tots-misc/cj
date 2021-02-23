@@ -148,4 +148,16 @@ class Test03List {
             Assert.equal(set, Set(1, 2, 3, 4, 5, 6, 7))
         }
     }
+
+    @test
+    def allAny() {
+        Assert(List[Int]().all(x -> x))
+        Assert(not List[String]().any(x -> x))
+        Assert([1, 2, 3].all(x -> x))
+        Assert(not [1, 0, 3].all(x -> x))
+        Assert(not [0, 0, 0].all(x -> x))
+        Assert([1, 2, 3].any(x -> x))
+        Assert([1, 0, 3].any(x -> x))
+        Assert(not [0, 0, 0].any(x -> x))
+    }
 }

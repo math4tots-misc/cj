@@ -36,6 +36,24 @@ trait Iterable[T?]: ToList[T] {
         ret
     }
 
+    def all[B: ToBool](self, f: Fn[T, B]): Bool {
+        for t in self {
+            if not f.call(t) {
+                return false
+            }
+        }
+        true
+    }
+
+    def any[B: ToBool](self, f: Fn[T, B]): Bool {
+        for t in self {
+            if f.call(t) {
+                return true
+            }
+        }
+        false
+    }
+
     if T : Ord def sorted(self): List[T] = {
         val list = toList()
         list.sort()
