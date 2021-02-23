@@ -1,5 +1,7 @@
 package compiler.solver
 
+import compiler.solver.CJSolverBaseMixin
+import compiler.solver.CJInferTypeMixin
 import compiler.CJMark
 import compiler.solver.CJItemFinderMixin
 import compiler.solver.CJTypeSolverMixin
@@ -10,12 +12,13 @@ import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
 
-class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
+class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInferTypeMixin {
 
     # various todo levels
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
-    private static val tlMethod = 2
+    private static val tlField = 2
+    private static val tlMethod = 3
 
     class Task: Repr {
         val name: String
@@ -29,6 +32,11 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     val itemMap: Map[String, CJIR.ItemDef] = Map()
 
     var _unitType: Type? = null
+    var _boolType: Type? = null
+    var _charType: Type? = null
+    var _intType: Type? = null
+    var _doubleType: Type? = null
+    var _stringType: Type? = null
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
@@ -58,6 +66,46 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
         if val type = _unitType { type } else {
             val type = Type.reified(getReifiedType(Default(), "cj.Unit", []))
             _unitType = null(type)
+            type
+        }
+    }
+
+    def __get_boolType(self): Type {
+        if val type = _boolType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.Bool", []))
+            _boolType = null(type)
+            type
+        }
+    }
+
+    def __get_charType(self): Type {
+        if val type = _charType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.Char", []))
+            _charType = null(type)
+            type
+        }
+    }
+
+    def __get_intType(self): Type {
+        if val type = _intType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.Int", []))
+            _intType = null(type)
+            type
+        }
+    }
+
+    def __get_doubleType(self): Type {
+        if val type = _doubleType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.Double", []))
+            _doubleType = null(type)
+            type
+        }
+    }
+
+    def __get_stringType(self): Type {
+        if val type = _stringType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.String", []))
+            _stringType = null(type)
             type
         }
     }
@@ -98,6 +146,7 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
                 handleItemTypeParams(itemScope, item, iritem)
                 addSelfToTypeScope(itemScope, iritem)
                 handleItemTraits(itemScope, item, iritem)
+                handleClassFields(itemScope, item, iritem)
                 handleItemMethods(itemScope, item, iritem)
                 CJIR.ItemDef.class_(iritem)
             }
@@ -250,11 +299,75 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
             astMethod.name,
             typeParameters,
             parameters,
-            returnType)
+            returnType,
+            item.isNative() or astMethod.body.isPresent())
         item.addMethod(method)
     }
 
     private def handleClassFields(self, scope: CJScope, astItem: CJAst.Item, cls: CJIR.ClassDef) {
-        # TODO
+        todo(tlField, "field", cls.name, () -> {
+            for member in astItem.members {
+                when member {
+                    case field(astField) = handleClassField(scope, astField, cls)
+                    else = ()
+                }
+            }
+        })
+    }
+
+    private def handleClassField(self, scope: CJScope, astField: CJAst.Field, cls: CJIR.ClassDef) {
+        val fieldType = if val te = astField.type {
+            solveType(scope, te)
+        } else if val init = astField.init {
+            inferTypeOfAst(scope, init)
+        } else {
+            throw CJError("Could not infer type of field", [astField.mark])
+        }
+
+        val field = CJIR.Field(
+            astField.mark,
+            astField.comment,
+            astField.modifiers,
+            astField.mutable,
+            astField.name,
+            fieldType)
+        cls.addField(field)
+
+        val selfparams: List[CJIR.Local] = if field.isStatic() { [] } else {
+            [CJIR.Local(
+                field.mark,
+                false,
+                "self",
+                solveTypeEx(scope, field.mark, "Self", []))]
+        }
+
+        val getterMethod = CJIR.Method(
+            field.mark,
+            field.comment,
+            [],
+            [],
+            "__get_" + field.name,
+            [],
+            selfparams,
+            fieldType,
+            true)
+        cls.addMethod(getterMethod)
+
+        if field.mutable {
+            val setterMethod = CJIR.Method(
+                field.mark,
+                field.comment,
+                [],
+                [],
+                "__set_" + field.name,
+                [],
+                selfparams + [CJIR.Local(
+                    field.mark,
+                    false,
+                    "value",
+                    fieldType)],
+                unitType,
+                true)
+        }
     }
 }

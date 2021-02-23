@@ -37,6 +37,7 @@ class CJIRInspector {
         nest(() -> {
             _inspectItemTypeParams(cls)
             _inspectItemTraits(cls)
+            _inspectClassFields(cls)
             _inspectItemMethods(cls)
         })
     }
@@ -93,6 +94,19 @@ class CJIRInspector {
             nest(() -> {
                 for method in item.methods {
                     line("" + method.name)
+                }
+            })
+        }
+    }
+
+    def _inspectClassFields(self, cls: CJIR.ClassDef) {
+        if cls.fields {
+            line("Fields")
+            nest(() -> {
+                for field in cls.fields {
+                    val static_ = if field.isStatic() { "static " } else { "" }
+                    val mutable = if field.mutable { "var " } else { "val " }
+                    line(static_ + mutable + field.name + ": " + field.type)
                 }
             })
         }

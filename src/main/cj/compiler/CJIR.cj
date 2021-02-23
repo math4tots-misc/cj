@@ -26,6 +26,7 @@ class CJIR {
         def addMethod(self, method: Method) {
             methods.add(method)
         }
+        def isNative(self): Bool = CJModifier.native_ in modifiers
     }
     union ItemDef_: ItemDef {
         case class_(ClassDef)
@@ -121,6 +122,9 @@ class CJIR {
         val fields: List[Field] = []
         val methods: List[Method] = []
         def __get_kind(self): CJItemKind = CJItemKind.class_
+        def addField(self, field: Field) {
+            fields.add(field)
+        }
     }
 
     class UnionDef: ClassOrUnionDef {
@@ -300,6 +304,13 @@ class CJIR {
     }
 
     class Field {
+        val mark: CJMark
+        val comment: String?
+        val modifiers: List[CJModifier]
+        val mutable: Bool
+        val name: String
+        val type: Type
+        def isStatic(self): Bool = CJModifier.static_ in modifiers
     }
 
     class Method {
@@ -311,6 +322,7 @@ class CJIR {
         val typeParameters: List[TypeParameter]
         val parameters: List[Local]
         val returnType: Type
+        val hasImpl: Bool
         var body: Expr? = null
     }
 
