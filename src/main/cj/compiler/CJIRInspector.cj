@@ -93,7 +93,15 @@ class CJIRInspector {
             line("Methods")
             nest(() -> {
                 for method in item.methods {
-                    line("" + method.name)
+                    val tparams = if method.typeParameters {
+                        "[" + ",".join(method.typeParameters.map(tp -> tp.name)) + "]"
+                    } else { "" }
+                    val params = "(" + ",".join(method.parameters.map(p -> if p.name == "self" {
+                        "self"
+                    } else {
+                        "" + p.type
+                    })) + "):"
+                    line("" + method.name + tparams + params + method.returnType)
                 }
             })
         }
