@@ -14,7 +14,6 @@ class CJSolver: CJTypeSolverMixin, CJItemFinderMixin {
     # various todo levels
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
-    private static val tlTraitDeclCond = 2
 
     class Task: Repr {
         val name: String
