@@ -1,4 +1,7 @@
 class MC$cj$Assert {
+    M$__new(TV$B, b) {
+        this.M$that(TV$B, b);
+    }
     M$that(TV$B, b) {
         if (!TV$B.M$toBool(b)) {
             throw new Error("Assertion failed");

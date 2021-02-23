@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.CJError
 import compiler.CJItemKind
 import compiler.CJModifier
 import compiler.CJMark
@@ -151,22 +152,65 @@ class CJIR {
         val mark: CJMark
         val variableName: String
         val traits: List[Trait]
+        def isSatisfied(self, mark: CJMark, binding: Binding): Bool {
+            if val variableType = binding.map.getOrNull(variableName) {
+                traits.all(trait_ -> variableType.implementsTrait(mark, trait_))
+            } else { throw CJError(variableName + " not found in binding", [mark]) }
+        }
     }
 
-    class TypeVar {
+    class TypeVar: Eq {
         val decl: TypeParameter
+        val additionalTraits: List[Trait] = [] # e.g. from conditions on methods
         def __get_mark(self): CJMark = decl.mark
         def __get_name(self): String = decl.name
+        def getTraits(self, mark: CJMark): List[Trait] = decl.traits + additionalTraits
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+            CJIR._findTraitByName(getTraits(mark), mark, traitName)
+        }
+        def __eq(self, other: Self): Bool = name == other.name
+    }
+
+    class Binding {
+        val selfType: Type
+        val map: Map[String, Type]
     }
 
     union Type: Repr, Eq {
+        case self_(Trait)
         case reified(ReifiedType)
         case variable(TypeVar)
         def repr(self): String = when self {
+            case self_(t) = "Self"
             case reified(t) = t.toString()
-            case variable(tp) = tp.name
+            case variable(tv) = tv.name
         }
-        def __eq(self, other: Self): Bool = repr() == other.repr()
+        def __eq(self, other: Self): Bool = when self {
+            case self_(t) = when other { case self_(ot) = true; else = false }
+            case reified(rt) = when other { case reified(ot) = rt == ot; else = false }
+            case variable(tvar) = when other { case variable(ovar) = tvar == ovar; else = false }
+        }
+        def applyBinding(self, mark: CJMark, binding: Binding): Self {
+            when self {
+                case self_(trait_) = binding.selfType
+                case reified(rtype) = Type.reified(rtype.applyBinding(mark, binding))
+                case variable(tv) = if val t = binding.map.getOrNull(tv.name) { t } else {
+                    throw CJError(tv.name + " not found in binding", [mark])
+                }
+            }
+        }
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+            when self {
+                case self_(trait_) = trait_.findTraitByName(mark, traitName)
+                case reified(rtype) = rtype.findTraitByName(mark, traitName)
+                case variable(tvar) = tvar.findTraitByName(mark, traitName)
+            }
+        }
+        def implementsTrait(self, mark: CJMark, trait_: Trait): Bool {
+            if val implTrait = findTraitByName(mark, trait_.defn.name) {
+                implTrait == trait_
+            } else { false }
+        }
     }
 
     @derive(repr)
@@ -174,7 +218,24 @@ class CJIR {
         val defn: ClassOrUnionDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
-        def __eq(self, other: Self): Bool = toString() == other.toString()
+        def __eq(self, other: Self): Bool = defn is other.defn and args == other.args
+        def applyBinding(self, mark: CJMark, binding: Binding): Self {
+            ReifiedType(defn, args.map(arg -> arg.applyBinding(mark, binding)))
+        }
+        def _getBinding(self): Binding {
+            val map: Map[String, Type] = Map()
+            for i = 0; i < args.size(); i++ {
+                map[defn.typeParameters[i].name] = args[i]
+            }
+            Binding(Type.reified(self), map)
+        }
+        def getTraits(self, mark: CJMark): List[Trait] {
+            val binding = _getBinding()
+            CJIR._getTraits(mark, binding, defn.traitDeclarations)
+        }
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+            CJIR._findTraitByName(getTraits(mark), mark, traitName)
+        }
     }
 
     @derive(repr)
@@ -182,7 +243,57 @@ class CJIR {
         val defn: TraitDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
-        def __eq(self, other: Self): Bool = toString() == other.toString()
+        def __eq(self, other: Self): Bool = defn is other.defn and args ==  other.args
+        def applyBinding(self, mark: CJMark, binding: Binding): Trait {
+            Trait(defn, args.map(arg -> arg.applyBinding(mark, binding)))
+        }
+        def _getBinding(self): Binding {
+            val map: Map[String, Type] = Map()
+            for i = 0; i < args.size(); i++ {
+                map[defn.typeParameters[i].name] = args[i]
+            }
+            Binding(Type.self_(self), map)
+        }
+        def getTraits(self, mark: CJMark): List[Trait] {
+            val binding = _getBinding()
+            CJIR._getTraits(mark, binding, defn.traitDeclarations)
+        }
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+            CJIR._findTraitByName([self], mark, traitName)
+        }
+    }
+
+    def _getTraits(mark: CJMark, binding: Binding, decls: List[TraitDeclaration]): List[Trait] {
+        val traits = List[Trait]()
+        for traitDecl in decls {
+            if traitDecl.conditions.all(c -> c.isSatisfied(mark, binding)) {
+                traits.add(traitDecl.trait_.applyBinding(mark, binding))
+            }
+        }
+        traits
+    }
+
+    def _findTraitByName(rootTraits: List[Trait], mark: CJMark, traitName: String): Trait? {
+        for rootTrait in rootTraits {
+            if rootTrait.defn.name == traitName {
+                return null(rootTrait)
+            }
+        }
+        val stack = rootTraits.reversed()
+        val seen = stack.map(t -> t.defn.name).toSet()
+        while stack {
+            val trait_ = stack.pop()
+            val subtraits = trait_.getTraits(mark).filter(t -> t.defn.name not in seen)
+            for subtrait in subtraits {
+                if subtrait.defn.name == traitName {
+                    return null(subtrait)
+                }
+            }
+            subtraits.reverse()
+            stack.addAll(subtraits)
+            seen.addAll(subtraits.map(t -> t.defn.name))
+        }
+        null
     }
 
     class Field {
