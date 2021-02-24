@@ -26,7 +26,7 @@ class CJIR {
         def addMethod(self, method: Method) {
             methods.add(method)
         }
-        def isNative(self): Bool = CJModifier.native_ in modifiers
+        def __get_native_(self): Bool = CJModifier.native_ in modifiers
     }
     union ItemDef_: ItemDef {
         case class_(ClassDef)
@@ -310,7 +310,9 @@ class CJIR {
         val mutable: Bool
         val name: String
         val type: Type
-        def isStatic(self): Bool = CJModifier.static_ in modifiers
+        var init: Expr? = null
+        var lateinit = false
+        def __get_static_(self): Bool = CJModifier.static_ in modifiers
     }
 
     class Method {

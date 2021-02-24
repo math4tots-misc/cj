@@ -112,7 +112,7 @@ class CJIRInspector {
             line("Fields")
             nest(() -> {
                 for field in cls.fields {
-                    val static_ = if field.isStatic() { "static " } else { "" }
+                    val static_ = if field.static_ { "static " } else { "" }
                     val mutable = if field.mutable { "var " } else { "val " }
                     line(static_ + mutable + field.name + ": " + field.type)
                 }

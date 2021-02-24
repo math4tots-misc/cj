@@ -30,6 +30,7 @@ class CJAst {
         val typeParameters: List[TypeParameter]
         val traitDeclarations: List[TraitDeclaration]
         val members: List[Member]
+        def __get_native_(self): Bool = CJModifier.native_ in modifiers
     }
 
     class TypeParameter {
@@ -83,6 +84,7 @@ class CJAst {
         val name: String
         val type: Type?
         val init: Expr?
+        def __get_static_(self): Bool = CJModifier.static_ in modifiers
     }
 
     class Method {

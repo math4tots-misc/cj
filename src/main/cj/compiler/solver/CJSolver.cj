@@ -1,5 +1,6 @@
 package compiler.solver
 
+import compiler.solver.CJMethodSynthesizerMixin
 import compiler.solver.CJSolverBaseMixin
 import compiler.solver.CJInferTypeMixin
 import compiler.CJMark
@@ -12,13 +13,19 @@ import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
 
-class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInferTypeMixin {
+class CJSolver:
+        CJSolverBaseMixin,
+        CJMethodSynthesizerMixin,
+        CJTypeSolverMixin,
+        CJItemFinderMixin,
+        CJInferTypeMixin {
 
     # various todo levels
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
     private static val tlField = 2
     private static val tlMethod = 3
+    private static val tlMalloc = 4
 
     class Task: Repr {
         val name: String
@@ -141,6 +148,7 @@ class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInfer
         val itemScope = CJScope(outerScope)
         when item.kind {
             case class_ {
+                synthesizeNew(item)
                 val iritem = CJIR.ClassDef(item.mark, item.comment, item.modifiers, fullName)
                 itemMap[fullName] = CJIR.ItemDef.class_(iritem)
                 handleItemTypeParams(itemScope, item, iritem)
@@ -148,6 +156,9 @@ class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInfer
                 handleItemTraits(itemScope, item, iritem)
                 handleClassFields(itemScope, item, iritem)
                 handleItemMethods(itemScope, item, iritem)
+                if not iritem.native_ {
+                    createClassMallocMethod(itemScope, iritem)
+                }
                 CJIR.ItemDef.class_(iritem)
             }
             case union_ {
@@ -300,8 +311,34 @@ class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInfer
             typeParameters,
             parameters,
             returnType,
-            item.isNative() or astMethod.body.isPresent())
+            item.native_ or astMethod.body.isPresent())
         item.addMethod(method)
+    }
+
+    private def createClassMallocMethod(self, scope: CJScope, cls: CJIR.ClassDef) {
+        todo(tlMalloc, "malloc", cls.name, () -> {
+            val parameters = List[CJIR.Local]()
+            for field in cls.fields {
+                if not field.static_ and field.init.isEmpty() and not field.lateinit {
+                    parameters.add(CJIR.Local(
+                        field.mark,
+                        false,
+                        field.name,
+                        field.type))
+                }
+            }
+            val method = CJIR.Method(
+                cls.mark,
+                null,
+                [],
+                [],
+                "__malloc",
+                [],
+                parameters,
+                solveTypeEx(scope, cls.mark, "Self", []),
+                true)
+            cls.addMethod(method)
+        })
     }
 
     private def handleClassFields(self, scope: CJScope, astItem: CJAst.Item, cls: CJIR.ClassDef) {
@@ -333,7 +370,7 @@ class CJSolver: CJSolverBaseMixin, CJTypeSolverMixin, CJItemFinderMixin, CJInfer
             fieldType)
         cls.addField(field)
 
-        val selfparams: List[CJIR.Local] = if field.isStatic() { [] } else {
+        val selfparams: List[CJIR.Local] = if field.static_ { [] } else {
             [CJIR.Local(
                 field.mark,
                 false,
