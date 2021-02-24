@@ -28,9 +28,9 @@ class CJSolver:
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
     private static val tlField = 2
-    private static val tlCase = 2
+    private static val tlCase = 2 # same as tlField
     private static val tlMethod = 3
-    private static val tlMalloc = 4
+    private static val tlMalloc = 3 # same as tlMethod
 
     class Task: Repr {
         val name: String
@@ -42,6 +42,7 @@ class CJSolver:
     val sourceRoots: List[String]
     val todos: List[Deque[Task]] = []
     val itemMap: Map[String, CJIR.ItemDef] = Map()
+    var verbose = true
 
     var _unitType: Type? = null
     var _boolType: Type? = null
@@ -66,7 +67,9 @@ class CJSolver:
             }
             if i < todos.size() {
                 val task = todos[i].popleft()
-                # IO.println(task)
+                if verbose {
+                    IO.println(task)
+                }
                 task.f.call()
             } else {
                 repeat = false
@@ -221,7 +224,7 @@ class CJSolver:
             val typeParam = CJIR.TypeParameter(astTypeParam.mark, true, astTypeParam.name)
             scope.set(typeParam.mark, typeParam.name, CJData.type(Type.variable(CJIR.TypeVar(typeParam))))
             item.addTypeParameter(typeParam)
-            todo(tlTypeParamTraits, "typeParamTrait", item.name, () -> {
+            todo(tlTypeParamTraits, "typeParamTrait", item.name + " " + typeParam.name, () -> {
                 for astTrait in astTypeParam.traits {
                     typeParam.addTrait(solveTrait(scope, astTrait))
                 }
@@ -232,7 +235,7 @@ class CJSolver:
     private def handleItemTraits[I: CJIR.ItemDef](
             self, scope: CJScope, astItem: CJAst.Item, item: I) {
         for astTraitDecl in astItem.traitDeclarations {
-            todo(tlTraitDecl, "traitdecl", item.name, () -> {
+            todo(tlTraitDecl, "traitdecl", item.name + ":" + astTraitDecl.trait_.name, () -> {
                 val trait_ = solveTrait(scope, astTraitDecl.trait_)
                 val conds = astTraitDecl.conditions.map(c -> solveTypeCondition(scope, c))
                 item.addTraitDeclaration(CJIR.TraitDeclaration(
@@ -245,8 +248,11 @@ class CJSolver:
             self, scope: CJScope, astItem: CJAst.Item, item: I) {
         for member in astItem.members {
             when member {
-                case method(astMethod) = todo(tlMethod, "method", item.name, () ->
-                    handleItemMethod(scope, item, astMethod))
+                case method(astMethod) = todo(
+                    tlMethod,
+                    "method",
+                    item.name + "." + astMethod.name,
+                    () -> handleItemMethod(scope, item, astMethod))
                 else = ()
             }
         }
@@ -350,7 +356,7 @@ class CJSolver:
     }
 
     private def handleClassFields(self, scope: CJScope, astItem: CJAst.Item, cls: CJIR.ClassDef) {
-        todo(tlField, "field", cls.name, () -> {
+        todo(tlField, "fields", cls.name, () -> {
             for member in astItem.members {
                 when member {
                     case field(astField) = handleClassField(scope, astField, cls)
@@ -418,7 +424,7 @@ class CJSolver:
     }
 
     private def handleUnionCases(self, scope: CJScope, astItem: CJAst.Item, uni: CJIR.UnionDef) {
-        todo(tlCase, "case", uni.name, () -> {
+        todo(tlCase, "cases", uni.name, () -> {
             for member in astItem.members {
                 when member {
                     case case_(astCase) = handleUnionCase(scope, astCase, uni)
