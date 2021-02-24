@@ -1,5 +1,6 @@
 package compiler.solver
 
+import compiler.CJModifier
 import compiler.solver.CJAnnotationMixin
 import compiler.solver.CJMethodSynthesizerMixin
 import compiler.solver.CJSolverBaseMixin
@@ -334,7 +335,7 @@ class CJSolver:
             val method = CJIR.Method(
                 cls.mark,
                 null,
-                [],
+                [CJModifier.synthetic],
                 [],
                 "__malloc",
                 [],
@@ -386,7 +387,7 @@ class CJSolver:
         val getterMethod = CJIR.Method(
             field.mark,
             field.comment,
-            [],
+            [CJModifier.synthetic],
             [],
             "__get_" + field.name,
             [],
@@ -399,7 +400,7 @@ class CJSolver:
             val setterMethod = CJIR.Method(
                 field.mark,
                 field.comment,
-                [],
+                [CJModifier.synthetic],
                 [],
                 "__set_" + field.name,
                 [],

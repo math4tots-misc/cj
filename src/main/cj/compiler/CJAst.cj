@@ -31,6 +31,26 @@ class CJAst {
         val traitDeclarations: List[TraitDeclaration]
         val members: List[Member]
         def __get_native_(self): Bool = CJModifier.native_ in modifiers
+        def __get_nonStaticFields(self): List[Field] {
+            val fields = List[Field]()
+            for member in members {
+                when member {
+                    case field(field) = fields.add(field)
+                    else = ()
+                }
+            }
+            fields
+        }
+        def __get_cases(self): List[Case] {
+            val cases = List[Case]()
+            for member in members {
+                when member {
+                    case case_(case_) = cases.add(case_)
+                    else = ()
+                }
+            }
+            cases
+        }
     }
 
     class TypeParameter {
@@ -85,6 +105,15 @@ class CJAst {
         val type: Type?
         val init: Expr?
         def __get_static_(self): Bool = CJModifier.static_ in modifiers
+        def __get_lateinit(self): Bool {
+            for annotation in annotations {
+                switch annotation.name {
+                    case "lateinit" = return true
+                    else = ()
+                }
+            }
+            false
+        }
     }
 
     class Method {

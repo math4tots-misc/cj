@@ -328,6 +328,7 @@ class CJIR {
         var body: Expr? = null
         var variadic = false
         var test = false
+        def __get_synthetic(self): Bool = CJModifier.synthetic in modifiers
     }
 
     class TypeParameter: ToString {

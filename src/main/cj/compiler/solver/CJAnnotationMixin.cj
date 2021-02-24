@@ -1,12 +1,13 @@
 package compiler.solver
 
+import compiler.solver.CJMethodSynthesizerMixin
 import compiler.CJItemKind
 import compiler.solver.CJSolverBaseMixin
 import compiler.CJError
 import compiler.CJAst
 import compiler.CJIR
 
-trait CJAnnotationMixin: CJSolverBaseMixin {
+trait CJAnnotationMixin: CJSolverBaseMixin, CJMethodSynthesizerMixin {
 
     def annotateMethod(self, method: CJIR.Method, annotations: List[CJAst.Annotation]) {
         for annotation in annotations {
@@ -33,6 +34,11 @@ trait CJAnnotationMixin: CJSolverBaseMixin {
 
     def annotateItem(self, item: CJAst.Item, annotations: List[CJAst.Annotation]) {
         var nullable = false
+        var eq = false
+        var hash = false
+        var default = false
+        var repr = false
+        var pod = false
         for annotation in annotations {
             switch annotation.name {
                 case "implicit" = ()
@@ -40,10 +46,11 @@ trait CJAnnotationMixin: CJSolverBaseMixin {
                 case "derive" {
                     for arg in annotation.args {
                         switch arg.name {
-                            case "hash" = ()
-                            case "default" = ()
-                            case "repr" = ()
-                            case "pod" = ()
+                            case "eq" = { eq = true }
+                            case "hash" = { hash = true }
+                            case "default" = { default = true }
+                            case "repr" = { repr = true }
+                            case "pod" = { pod = true }
                             else = throw CJError(
                                 "Unrecognized derive " + arg.name.repr(), [arg.mark])
                         }
@@ -54,10 +61,28 @@ trait CJAnnotationMixin: CJSolverBaseMixin {
             }
         }
         if item.kind != CJItemKind.trait_ and not nullable {
-            item.traitDeclarations.add(CJAst.TraitDeclaration(
-                item.mark,
-                CJAst.Trait(item.mark, "NonNull", []),
-                []))
+            _addTraitDecl(item, "NonNull")
         }
+        if eq or hash or pod {
+            _addTraitDecl(item, "Eq")
+            synthesizeEq(item)
+        }
+        if hash or pod {
+            _addTraitDecl(item, "Hash")
+            synthesizeHash(item)
+        }
+        if repr or pod {
+            _addTraitDecl(item, "Repr")
+            synthesizeRepr(item)
+        }
+        if default {
+            _addTraitDecl(item, "Default")
+            synthesizeDefault(item)
+        }
+    }
+
+    def _addTraitDecl(self, item: CJAst.Item, traitName: String) {
+        item.traitDeclarations.add(CJAst.TraitDeclaration(
+            item.mark, CJAst.Trait(item.mark, traitName, []), []))
     }
 }

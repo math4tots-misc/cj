@@ -93,6 +93,7 @@ class CJIRInspector {
             line("Methods")
             nest(() -> {
                 for method in item.methods {
+                    val synthetic = if method.synthetic { "(synthetic) " } else { "" }
                     val tparams = if method.typeParameters {
                         "[" + ",".join(method.typeParameters.map(tp -> tp.name)) + "]"
                     } else { "" }
@@ -101,7 +102,7 @@ class CJIRInspector {
                     } else {
                         "" + p.type
                     })) + "):"
-                    line("" + method.name + tparams + params + method.returnType)
+                    line(synthetic + method.name + tparams + params + method.returnType)
                 }
             })
         }
