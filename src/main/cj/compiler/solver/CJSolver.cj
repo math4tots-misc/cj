@@ -44,7 +44,7 @@ class CJSolver:
     val sourceRoots: List[String]
     val todos: List[Deque[Task]] = []
     val itemMap: Map[String, CJIR.ItemDef] = Map()
-    var verbose = true
+    var verbose = false
 
     var _unitType: Type? = null
     var _boolType: Type? = null

@@ -360,6 +360,8 @@ class CJIR {
 
     class Expr {
         val mark: CJMark
+        val type: Type
+        val data: ExprData
     }
 
     union ExprData {
