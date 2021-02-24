@@ -37,7 +37,18 @@ trait CJAnnotationMixin: CJSolverBaseMixin {
             switch annotation.name {
                 case "implicit" = ()
                 case "nullable" = { nullable = true }
-                case "derive" = ()
+                case "derive" {
+                    for arg in annotation.args {
+                        switch arg.name {
+                            case "hash" = ()
+                            case "default" = ()
+                            case "repr" = ()
+                            case "pod" = ()
+                            else = throw CJError(
+                                "Unrecognized derive " + arg.name.repr(), [arg.mark])
+                        }
+                    }
+                }
                 else = throw CJError(
                     "Unrecognized item annotation " + annotation.name.repr(), [annotation.mark])
             }
