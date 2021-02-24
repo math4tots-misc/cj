@@ -31,6 +31,8 @@ class CJSolver:
     private static val tlCase = 2 # same as tlField
     private static val tlMethod = 3
     private static val tlMalloc = 3 # same as tlMethod
+    private static val tlMethodBody = 4
+    private static val tlFieldInit = 4 # same as tlMethodBody
 
     class Task: Repr {
         val name: String
