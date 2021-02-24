@@ -1,5 +1,6 @@
 package compiler.solver
 
+import cj.Deque
 import compiler.CJModifier
 import compiler.solver.CJAnnotationMixin
 import compiler.solver.CJMethodSynthesizerMixin
@@ -39,7 +40,7 @@ class CJSolver:
     }
 
     val sourceRoots: List[String]
-    val todos: List[List[Task]] = []
+    val todos: List[Deque[Task]] = []
     val itemMap: Map[String, CJIR.ItemDef] = Map()
 
     var _unitType: Type? = null
@@ -51,7 +52,7 @@ class CJSolver:
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
-            todos.add([])
+            todos.add(Deque())
         }
         todos[level].add(Task(name, detail, f))
     }
@@ -64,7 +65,7 @@ class CJSolver:
                 i++
             }
             if i < todos.size() {
-                val task = todos[i].pop()
+                val task = todos[i].popleft()
                 # IO.println(task)
                 task.f.call()
             } else {

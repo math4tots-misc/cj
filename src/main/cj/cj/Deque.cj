@@ -5,7 +5,6 @@ import cj.Collection
 
 class Deque[T?] :
         Collection[T],
-        ToBool,
         Default,
         Eq if T : Eq,
         Hash if T : Hash,
@@ -20,7 +19,6 @@ class Deque[T?] :
 
     def iter(self): Iterator[T] = list.iterFrom(start)
     def size(self): Int = list.size() - start
-    def isEmpty(self): Bool = size() == 0
     @generic def add(self, t: T) = list.add(t)
     @genericSelf def addAll[C: Iterable[T]](self, c: C) = list.addAll(c)
     def addleft(self, t: T) {
