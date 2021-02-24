@@ -1,5 +1,6 @@
 package compiler.solver
 
+import compiler.solver.CJExprSolver
 import cj.Deque
 import compiler.CJModifier
 import compiler.solver.CJAnnotationMixin
@@ -386,6 +387,14 @@ class CJSolver:
             fieldType)
         annotateField(field, astField.annotations)
         cls.addField(field)
+
+        if val astInit = astField.init {
+            todo(tlFieldInit, "fieldinit", cls.name + "." + field.name, () -> {
+                val esolver = CJExprSolver(self, scope, null)
+                val init = esolver.solveExprEx(astInit, null(field.type))
+                field.init = null(init)
+            })
+        }
 
         val selfparams: List[CJIR.Local] = if field.static_ { [] } else {
             [CJIR.Local(

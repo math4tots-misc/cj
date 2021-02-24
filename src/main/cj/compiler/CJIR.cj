@@ -366,5 +366,6 @@ class CJIR {
 
     union ExprData {
         case unit
+        case int(Int)
     }
 }
