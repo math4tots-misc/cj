@@ -326,6 +326,8 @@ class CJIR {
         val returnType: Type
         val hasImpl: Bool
         var body: Expr? = null
+        var variadic = false
+        var test = false
     }
 
     class TypeParameter: ToString {

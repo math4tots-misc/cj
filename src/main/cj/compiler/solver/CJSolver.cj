@@ -1,5 +1,6 @@
 package compiler.solver
 
+import compiler.solver.CJAnnotationMixin
 import compiler.solver.CJMethodSynthesizerMixin
 import compiler.solver.CJSolverBaseMixin
 import compiler.solver.CJInferTypeMixin
@@ -18,7 +19,8 @@ class CJSolver:
         CJMethodSynthesizerMixin,
         CJTypeSolverMixin,
         CJItemFinderMixin,
-        CJInferTypeMixin {
+        CJInferTypeMixin,
+        CJAnnotationMixin {
 
     # various todo levels
     private static val tlTypeParamTraits = 0
@@ -312,6 +314,7 @@ class CJSolver:
             parameters,
             returnType,
             item.native_ or astMethod.body.isPresent())
+        annotateMethod(method, astMethod.annotations)
         item.addMethod(method)
     }
 
