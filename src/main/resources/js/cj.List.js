@@ -11,6 +11,11 @@ class MC$cj$List {
     M$iter(self) {
         return self[Symbol.iterator]();
     }
+    *M$iterFrom(self, start) {
+        for (let i = start; i < self.length; i++) {
+            yield self[i];
+        }
+    }
     M$size(self) {
         return self.length;
     }
@@ -93,6 +98,12 @@ class MC$cj$List {
     }
     M$clone(self) {
         return Array.from(self);
+    }
+    M$_clearListWithSize(size) {
+        return Array(size);
+    }
+    M$_clearItem(self, i) {
+        self[i] = undefined;
     }
     M$toBool(self) {
         return self.length !== 0;

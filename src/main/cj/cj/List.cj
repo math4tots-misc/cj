@@ -14,6 +14,7 @@ native class List[T?] :
     @generic def empty(): Self
     @variadic @generic def(list: Self): Self
     @generic def iter(self: Self): Iterator[T]
+    @generic def iterFrom(self: Self, start: Int): Iterator[T]
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
     @generic def add(self: Self, t: T)
@@ -35,6 +36,9 @@ native class List[T?] :
     @generic def map[R?](self: Self, f: Fn[T, R]): List[R]
     @generic def filter(self: Self, f: Fn[T, Bool]): Self
     @generic def clone(self): Self
+
+    @generic def _clearListWithSize(size: Int): Self
+    @generic def _clearItem(self, i: Int)
 
     def toBool(self: Self): Bool
 
