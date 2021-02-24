@@ -146,6 +146,7 @@ class CJSolver:
     }
 
     private def addItem(self, outerScope: CJScope, fullName: String, item: CJAst.Item) {
+        annotateItem(item, item.annotations)
         outerScope.set(item.mark, item.shortName, CJData.fullName(fullName))
         val itemScope = CJScope(outerScope)
         when item.kind {
@@ -371,6 +372,7 @@ class CJSolver:
             astField.mutable,
             astField.name,
             fieldType)
+        annotateField(field, astField.annotations)
         cls.addField(field)
 
         val selfparams: List[CJIR.Local] = if field.static_ { [] } else {
