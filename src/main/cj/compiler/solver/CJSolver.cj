@@ -27,6 +27,7 @@ class CJSolver:
     private static val tlTypeParamTraits = 0
     private static val tlTraitDecl = 1
     private static val tlField = 2
+    private static val tlCase = 2
     private static val tlMethod = 3
     private static val tlMalloc = 4
 
@@ -171,6 +172,7 @@ class CJSolver:
                 handleItemTypeParams(itemScope, item, iritem)
                 addSelfToTypeScope(itemScope, iritem)
                 handleItemTraits(itemScope, item, iritem)
+                handleUnionCases(itemScope, item, iritem)
                 handleItemMethods(itemScope, item, iritem)
             }
             case trait_ = {
@@ -411,6 +413,58 @@ class CJSolver:
                     fieldType)],
                 unitType,
                 true)
+        }
+    }
+
+    private def handleUnionCases(self, scope: CJScope, astItem: CJAst.Item, uni: CJIR.UnionDef) {
+        todo(tlCase, "case", uni.name, () -> {
+            for member in astItem.members {
+                when member {
+                    case case_(astCase) = handleUnionCase(scope, astCase, uni)
+                    else = ()
+                }
+            }
+        })
+    }
+
+    private def handleUnionCase(self, scope: CJScope, astCase: CJAst.Case, uni: CJIR.UnionDef) {
+        val types = astCase.types.map(t -> solveType(scope, t))
+        val case_ = CJIR.Case(
+            astCase.mark,
+            astCase.comment,
+            astCase.modifiers,
+            astCase.name,
+            types)
+        uni.cases.add(case_)
+
+        val params = List[CJIR.Local]()
+        for i = 0; i < types.size(); i++ {
+            params.add(CJIR.Local(astCase.types[i].mark, false, "a" + i, types[i]))
+        }
+
+        val method = CJIR.Method(
+            case_.mark,
+            case_.comment,
+            [CJModifier.synthetic],
+            [], # conditions
+            case_.name,
+            [], # type parameters
+            params,
+            solveTypeEx(scope, astCase.mark, "Self", []),
+            true)
+        uni.addMethod(method)
+
+        if not params {
+            uni.addMethod(CJIR.Method(
+                case_.mark,
+                case_.comment,
+                [CJModifier.synthetic],
+                [], # conditions
+                "__get_" + case_.name,
+                [], # type parameters
+                [], # parameters
+                solveTypeEx(scope, astCase.mark, "Self", []),
+                true))
         }
     }
 }

@@ -134,6 +134,7 @@ class CJIR {
         val name: String
         val typeParameters: List[TypeParameter] = []
         val traitDeclarations: List[TraitDeclaration] = []
+        val cases: List[Case] = []
         val methods: List[Method] = []
         def __get_kind(self): CJItemKind = CJItemKind.union_
     }
@@ -301,6 +302,14 @@ class CJIR {
             seen.addAll(subtraits.map(t -> t.defn.name))
         }
         null
+    }
+
+    class Case {
+        val mark: CJMark
+        val comment: String?
+        val modifiers: List[CJModifier]
+        val name: String
+        val types: List[Type]
     }
 
     class Field {
