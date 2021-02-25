@@ -227,8 +227,44 @@ class CJIR {
         }
     }
 
+    trait ReifiedTypeOrTrait: Repr {
+        def applyBinding(self, mark: CJMark, binding: Binding): Self
+        def _getBinding(self): Binding
+        def getTraits(self, mark: CJMark): List[Trait]
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait?
+    }
+
+    union ReifiedTypeOrTrait_: ReifiedTypeOrTrait {
+        case reified(ReifiedType)
+        case trait_(Trait)
+        def applyBinding(self, mark: CJMark, binding: Binding): Self = when self {
+            case reified(t) = reified(t.applyBinding(mark, binding))
+            case trait_(t) = trait_(t.applyBinding(mark, binding))
+        }
+        def _getBinding(self): Binding = when self {
+            case reified(t) = t._getBinding()
+            case trait_(t) = t._getBinding()
+        }
+        def getTraits(self, mark: CJMark): List[Trait] = when self {
+            case reified(t) = t.getTraits(mark)
+            case trait_(t) = t.getTraits(mark)
+        }
+        def findTraitByName(self, mark: CJMark, traitName: String): Trait? = when self {
+            case reified(t) = t.findTraitByName(mark, traitName)
+            case trait_(t) = t.findTraitByName(mark, traitName)
+        }
+        def repr(self): String = when self {
+            case reified(t) = t.repr()
+            case trait_(t) = t.repr()
+        }
+        def toString(self): String = when self {
+            case reified(t) = t.toString()
+            case trait_(t) = t.toString()
+        }
+    }
+
     @derive(repr)
-    class ReifiedType: Eq {
+    class ReifiedType: Eq, ReifiedTypeOrTrait {
         val defn: ClassOrUnionDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
@@ -253,11 +289,11 @@ class CJIR {
     }
 
     @derive(repr)
-    class Trait: Eq {
+    class Trait: Eq, ReifiedTypeOrTrait {
         val defn: TraitDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
-        def __eq(self, other: Self): Bool = defn is other.defn and args ==  other.args
+        def __eq(self, other: Self): Bool = defn is other.defn and args == other.args
         def applyBinding(self, mark: CJMark, binding: Binding): Trait {
             Trait(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
