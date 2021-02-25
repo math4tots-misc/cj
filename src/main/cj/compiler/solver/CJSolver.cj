@@ -47,12 +47,14 @@ class CJSolver:
     val itemMap: Map[String, CJIR.ItemDef] = Map()
     var verbose = false
 
+    var _noreturnType: Type? = null
     var _unitType: Type? = null
     var _boolType: Type? = null
     var _charType: Type? = null
     var _intType: Type? = null
     var _doubleType: Type? = null
     var _stringType: Type? = null
+    var _bigintType: Type? = null
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
@@ -77,6 +79,14 @@ class CJSolver:
             } else {
                 repeat = false
             }
+        }
+    }
+
+    def __get_noreturnType(self): Type {
+        if val type = _noreturnType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.NoReturn", []))
+            _noreturnType = null(type)
+            type
         }
     }
 
@@ -126,6 +136,18 @@ class CJSolver:
             _stringType = null(type)
             type
         }
+    }
+
+    def __get_bigintType(self): Type {
+        if val type = _bigintType { type } else {
+            val type = Type.reified(getReifiedType(Default(), "cj.String", []))
+            _bigintType = null(type)
+            type
+        }
+    }
+
+    def getNullableType(self, mark: CJMark, inner: Type): Type {
+        Type.reified(getReifiedType(mark, "cj.Nullable", [inner]))
     }
 
     def addFile(self, file: CJAst.File) {

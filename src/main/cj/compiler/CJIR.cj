@@ -1,5 +1,6 @@
 package compiler
 
+import cj.BigInt
 import compiler.CJError
 import compiler.CJItemKind
 import compiler.CJModifier
@@ -193,6 +194,11 @@ class CJIR {
             case reified(t) = t.toString()
             case variable(tv) = tv.name
         }
+        def __get_name(self): String = when self {
+            case self_(t) = "Self"
+            case reified(t) = t.defn.name
+            case variable(tv) = tv.name
+        }
         def __eq(self, other: Self): Bool = when self {
             case self_(t) = when other { case self_(ot) = true; else = false }
             case reified(rt) = when other { case reified(ot) = rt == ot; else = false }
@@ -226,7 +232,7 @@ class CJIR {
         val defn: ClassOrUnionDef
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
-        def __eq(self, other: Self): Bool = defn is other.defn and args == other.args
+        def __eq(self, other: Self): Bool = defn.name == other.defn.name and args == other.args
         def applyBinding(self, mark: CJMark, binding: Binding): Self {
             ReifiedType(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
@@ -366,6 +372,12 @@ class CJIR {
 
     union ExprData {
         case unit
+        case bool(Bool)
+        case char(Char)
         case int(Int)
+        case double(Double)
+        case string(String)
+        case bigint(BigInt)
+        case null_(Expr?)
     }
 }
