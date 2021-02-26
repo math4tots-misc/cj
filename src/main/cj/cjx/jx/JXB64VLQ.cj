@@ -7,9 +7,6 @@ import cj.Error
 class JXB64VLQ {
 
     def encode(var x: Int): String {
-        if x == 0 {
-            return "A"
-        }
         val sb = StringBuilder()
         val negative = if x < 0 { x = -x; 1 } else { 0 }
         val firstChunk = x % 16

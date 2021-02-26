@@ -27,13 +27,16 @@ class MC$cj$Assert {
         }
     }
     M$throws(f) {
+        const stackDefined = typeof stack !== 'undefined';
         let thrown = false;
-        const LEN = stack.length;
+        const LEN = stackDefined ? stack.length : 0;
         try {
             f();
         } catch (e) {
-            while (stack.length > LEN) {
-                stack.pop();
+            if (stackDefined) {
+                while (stack.length > LEN) {
+                    stack.pop();
+                }
             }
             thrown = true;
         }
