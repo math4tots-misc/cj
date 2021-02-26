@@ -2,19 +2,20 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.base.Pair;
 import crossj.base.Tuple3;
-import crossj.base.Tuple5;
+import crossj.base.Tuple4;
 
 /**
  * Union expression
  */
 public final class CJAstWhen extends CJAstExpression {
     private final CJAstExpression target;
-    private final List<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>> cases;
+    private final List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> cases;
     private final Optional<CJAstExpression> fallback;
 
     CJAstWhen(CJMark mark, CJAstExpression target,
-            List<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>> cases,
+            List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> cases,
             Optional<CJAstExpression> fallback) {
         super(mark);
         this.target = target;
@@ -26,7 +27,7 @@ public final class CJAstWhen extends CJAstExpression {
         return target;
     }
 
-    public List<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>> getCases() {
+    public List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> getCases() {
         return cases;
     }
 

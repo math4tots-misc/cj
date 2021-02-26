@@ -5,7 +5,7 @@ import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Pair;
 import crossj.base.Tuple3;
-import crossj.base.Tuple5;
+import crossj.base.Tuple4;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
@@ -1251,32 +1251,38 @@ public final class CJParser {
                 var target = parseExpression();
                 expect('{');
                 skipDelimiters();
-                var cases = List.<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>>of();
+                var cases = List
+                        .<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>>of();
                 while (!at('}') && !at(CJToken.KW_ELSE)) {
-                    var caseMark = getMark();
-                    expect(CJToken.KW_CASE);
-                    var caseName = parseId();
-                    var decls = List.<Tuple3<CJMark, Boolean, String>>of();
-                    var trailingArgs = false;
-                    if (consume('(')) {
-                        while (!consume(')')) {
-                            if (consume(CJToken.DOTDOT)) {
-                                expect(')');
-                                trailingArgs = true;
-                                break;
-                            }
-                            var mutable = consume(CJToken.KW_VAR);
-                            var varMark = getMark();
-                            var varName = parseId();
-                            decls.add(Tuple3.of(varMark, mutable, varName));
-                            if (!consume(',')) {
-                                expect(')');
-                                break;
+                    var patterns = List.<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>of();
+                    while (at(CJToken.KW_CASE)) {
+                        var caseMark = getMark();
+                        expect(CJToken.KW_CASE);
+                        var caseName = parseId();
+                        var decls = List.<Tuple3<CJMark, Boolean, String>>of();
+                        var trailingArgs = false;
+                        if (consume('(')) {
+                            while (!consume(')')) {
+                                if (consume(CJToken.DOTDOT)) {
+                                    expect(')');
+                                    trailingArgs = true;
+                                    break;
+                                }
+                                var mutable = consume(CJToken.KW_VAR);
+                                var varMark = getMark();
+                                var varName = parseId();
+                                decls.add(Tuple3.of(varMark, mutable, varName));
+                                if (!consume(',')) {
+                                    expect(')');
+                                    break;
+                                }
                             }
                         }
+                        patterns.add(Tuple4.of(caseMark, caseName, decls, trailingArgs));
+                        skipDelimiters();
                     }
                     var body = consume('=') ? parseExpression() : parseBlock();
-                    cases.add(Tuple5.of(caseMark, caseName, decls, trailingArgs, body));
+                    cases.add(Pair.of(patterns, body));
                     expectDelimiters();
                 }
                 var fallback = Optional.<CJAstExpression>empty();

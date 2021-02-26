@@ -840,29 +840,34 @@ class CJParser {
                 skipDelimiters()
                 val cases = List[CJAst.WhenCase]()
                 while not at('}') and not at(CJToken.kwELSE) {
-                    val caseMark = self.mark
-                    expect(CJToken.kwCASE)
-                    val caseName = parseId()
-                    val decls = List[Local]()
-                    var trailingArgs = false
-                    if consume('(') {
-                        while not consume(')') {
-                            if consume(CJToken.tDOTDOT) {
-                                trailingArgs = true
-                                assert(')')
-                            } else {
-                                val mutable = consume(CJToken.kwVAR)
-                                val varMark = self.mark
-                                val varName = parseId()
-                                decls.add(Local(varMark, mutable, varName, null))
-                                if not consume(',') {
+                    val patterns = List[Tuple[CJMark, String, List[CJAst.Local], Bool]]()
+                    while at(CJToken.kwCASE) {
+                        val caseMark = self.mark
+                        expect(CJToken.kwCASE)
+                        val caseName = parseId()
+                        val decls = List[Local]()
+                        var trailingArgs = false
+                        if consume('(') {
+                            while not consume(')') {
+                                if consume(CJToken.tDOTDOT) {
+                                    trailingArgs = true
                                     assert(')')
+                                } else {
+                                    val mutable = consume(CJToken.kwVAR)
+                                    val varMark = self.mark
+                                    val varName = parseId()
+                                    decls.add(Local(varMark, mutable, varName, null))
+                                    if not consume(',') {
+                                        assert(')')
+                                    }
                                 }
                             }
                         }
+                        skipDelimiters()
+                        patterns.add((caseMark, caseName, decls, trailingArgs))
                     }
                     val body = if consume('=') { parseExpr() } else { parseBlock() }
-                    cases.add(CJAst.WhenCase(caseMark, caseName, decls, trailingArgs, body))
+                    cases.add(CJAst.WhenCase(patterns, body))
                     expectDelimiters()
                 }
                 val fallback = if consume(CJToken.kwELSE) {

@@ -200,13 +200,11 @@ class CJAst {
     }
 
     class WhenCase: Repr {
-        val mark: CJMark
-        val name: String
-        val decls: List[Local]
-        val dotdot: Bool
+        val patterns: List[Tuple[CJMark, String, List[Local], Bool]]
         val body: Expr
         def repr(self): String {
-            "CaseWhen(mark, " + name.repr() + ", " + decls + ", " + dotdot + ", " + body + ")"
+            "CaseWhen(" + ", ".join(patterns.map(t ->
+                "[" + t.get1() + ", " + t.get2() + ", " + t.get3() + "]")) + ", " + body + ")"
         }
     }
 

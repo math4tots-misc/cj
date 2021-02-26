@@ -706,50 +706,54 @@ final class CJPass04 extends CJPassBaseEx {
                 var caseTagsByName = Map
                         .fromIterable(Range.upto(casesByTag.size()).map(i -> Pair.of(caseNamesByTag.get(i), i)));
                 var sieve = Range.upto(caseTypesByTag.size()).map(i -> false).list();
-                var cases = List.<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>>of();
+                var cases = List
+                        .<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>>of();
                 for (var caseAst : e.getCases()) {
-                    var caseMark = caseAst.get1();
-                    var caseName = caseAst.get2();
-                    var caseVars = caseAst.get3();
-                    var trailingArgs = caseAst.get4();
-                    var caseBody = caseAst.get5();
-                    var tag = caseTagsByName.getOrNull(caseName);
-                    if (tag == null) {
-                        throw CJError.of(caseName + " is not a case in " + type.repr(), caseMark);
-                    }
-                    if (sieve.get(tag)) {
-                        throw CJError.of("Duplicate entry for " + caseName, caseMark);
-                    }
-                    sieve.set(tag, true);
-                    var caseDefn = casesByTag.get(tag);
-                    if (trailingArgs) {
-                        if (caseDefn.getTypes().size() < caseVars.size()) {
-                            throw CJError.of(caseName + " only has " + caseDefn.getTypes().size() + " values but got "
-                                    + caseVars.size() + " names", caseMark);
+                    var patternAsts = caseAst.get1();
+                    var caseBody = caseAst.get2();
+                    for (var patternAst : patternAsts) {
+                        var caseMark = patternAst.get1();
+                        var caseName = patternAst.get2();
+                        var caseVars = patternAst.get3();
+                        var trailingArgs = patternAst.get4();
+                        var tag = caseTagsByName.getOrNull(caseName);
+                        if (tag == null) {
+                            throw CJError.of(caseName + " is not a case in " + type.repr(), caseMark);
                         }
-                    } else {
-                        if (caseDefn.getTypes().size() != caseVars.size()) {
-                            throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
-                                    + caseVars.size(), caseMark);
+                        if (sieve.get(tag)) {
+                            throw CJError.of("Duplicate entry for " + caseName, caseMark);
                         }
+                        sieve.set(tag, true);
+                        var caseDefn = casesByTag.get(tag);
+                        if (trailingArgs) {
+                            if (caseDefn.getTypes().size() < caseVars.size()) {
+                                throw CJError.of(caseName + " only has " + caseDefn.getTypes().size()
+                                        + " values but got " + caseVars.size() + " names", caseMark);
+                            }
+                        } else {
+                            if (caseDefn.getTypes().size() != caseVars.size()) {
+                                throw CJError.of(caseName + " expects " + caseDefn.getTypes().size() + " args but got "
+                                        + caseVars.size(), caseMark);
+                            }
+                        }
+                        var caseTypes = caseDefn.getTypes().map(bindings::apply);
+                        var vars = Range.upto(caseVars.size()).map(i -> {
+                            var varAst = caseVars.get(i);
+                            var varMark = varAst.get1();
+                            var mutable = varAst.get2();
+                            var varName = varAst.get3();
+                            var varType = caseTypes.get(i);
+                            return new CJIRAdHocVariableDeclaration(varMark, mutable, varName, varType);
+                        }).list();
+                        enterScope();
+                        vars.forEach(t -> declareLocal(t));
+                        var body = evalExpressionEx(caseBody, a);
+                        exitScope();
+                        if (a.isEmpty()) {
+                            a = Optional.of(body.getType());
+                        }
+                        cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
                     }
-                    var caseTypes = caseDefn.getTypes().map(bindings::apply);
-                    var vars = Range.upto(caseVars.size()).map(i -> {
-                        var varAst = caseVars.get(i);
-                        var varMark = varAst.get1();
-                        var mutable = varAst.get2();
-                        var varName = varAst.get3();
-                        var varType = caseTypes.get(i);
-                        return new CJIRAdHocVariableDeclaration(varMark, mutable, varName, varType);
-                    }).list();
-                    enterScope();
-                    vars.forEach(t -> declareLocal(t));
-                    var body = evalExpressionEx(caseBody, a);
-                    exitScope();
-                    if (a.isEmpty()) {
-                        a = Optional.of(body.getType());
-                    }
-                    cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
                 }
                 Optional<CJIRExpression> fallback;
                 if (e.getFallback().isPresent()) {

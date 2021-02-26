@@ -215,10 +215,7 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
                 b
             } else { Expr(mark, ED.string(case_.name)) }
             cases.add(CJAst.WhenCase(
-                mark,
-                case_.name,
-                decls,
-                false,
+                [(mark, case_.name, decls, false)],
                 caseBody))
         }
         val body = Expr(mark, ED.when_(Expr(mark, ED.getvar("self")), cases, null))

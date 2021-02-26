@@ -7,7 +7,7 @@ import crossj.base.Optional;
 import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Tuple3;
-import crossj.base.Tuple5;
+import crossj.base.Tuple4;
 
 /**
  * Pass 3
@@ -336,13 +336,15 @@ final class CJPass03 extends CJPassBaseEx {
         var selfType = newSelfTypeExpression(mark);
         var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
         var selfExpr = newGetVar(mark, "self");
-        var body = new CJAstWhen(mark, selfExpr,
-                cases.map(c -> Tuple5.of(mark, c.getName(),
-                        Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(), false,
-                        newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),
-                                newJoin(mark, ", ", Range.upto(c.getTypes().size())
-                                        .map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
-                                newString(mark, ")"))))),
+        var body = new CJAstWhen(mark, selfExpr, cases.map(c -> Pair.of(
+                List.of(Tuple4.of(mark, c.getName(),
+                        Range.upto(c.getTypes().size())
+                                .map(i -> Tuple3.<CJMark, Boolean, String>of(mark, false, "a" + i)).list(),
+                        false)),
+                newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),
+                        newJoin(mark, ", ",
+                                Range.upto(c.getTypes().size()).map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
+                        newString(mark, ")"))))),
                 Optional.empty());
         return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
     }
