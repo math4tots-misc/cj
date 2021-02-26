@@ -8,12 +8,12 @@ import crossj.base.Tuple5;
 /**
  * Union expression
  */
-public final class CJAstUnion extends CJAstExpression {
+public final class CJAstWhen extends CJAstExpression {
     private final CJAstExpression target;
     private final List<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>> cases;
     private final Optional<CJAstExpression> fallback;
 
-    CJAstUnion(CJMark mark, CJAstExpression target,
+    CJAstWhen(CJMark mark, CJAstExpression target,
             List<Tuple5<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean, CJAstExpression>> cases,
             Optional<CJAstExpression> fallback) {
         super(mark);

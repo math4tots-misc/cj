@@ -1285,7 +1285,7 @@ public final class CJParser {
                 }
                 skipDelimiters();
                 expect('}');
-                return new CJAstUnion(mark, target, cases, fallback);
+                return new CJAstWhen(mark, target, cases, fallback);
             }
             case CJToken.KW_SWITCH: {
                 var mark = getMark();

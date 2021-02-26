@@ -795,7 +795,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             }
 
             @Override
-            public CJJSBlob visitUnion(CJIRUnion e, Void a) {
+            public CJJSBlob visitUnion(CJIRWhen e, Void a) {
                 var target = translateExpression(e.getTarget()).toPure(ctx);
                 var lines = target.getLines();
                 var tmpvar = ctx.newTempVarName();

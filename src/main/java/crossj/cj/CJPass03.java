@@ -336,7 +336,7 @@ final class CJPass03 extends CJPassBaseEx {
         var selfType = newSelfTypeExpression(mark);
         var parameters = List.of(new CJAstParameter(mark, false, "self", selfType));
         var selfExpr = newGetVar(mark, "self");
-        var body = new CJAstUnion(mark, selfExpr,
+        var body = new CJAstWhen(mark, selfExpr,
                 cases.map(c -> Tuple5.of(mark, c.getName(),
                         Range.upto(c.getTypes().size()).map(i -> Tuple3.of(mark, false, "a" + i)).list(), false,
                         newAddList(List.of(newString(mark, item.getShortName() + "." + c.getName() + "("),

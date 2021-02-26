@@ -693,7 +693,7 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
-            public CJIRExpression visitUnion(CJAstUnion e, Optional<CJIRType> a) {
+            public CJIRExpression visitUnion(CJAstWhen e, Optional<CJIRType> a) {
                 var target = evalExpression(e.getTarget());
                 if (!target.getType().isUnionType()) {
                     throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());
@@ -773,7 +773,7 @@ final class CJPass04 extends CJPassBaseEx {
                         throw CJError.of("Empty unions require at least a default case", e.getMark());
                     }
                 }
-                return new CJIRUnion(e, a.get(), target, cases, fallback);
+                return new CJIRWhen(e, a.get(), target, cases, fallback);
             }
 
             @Override

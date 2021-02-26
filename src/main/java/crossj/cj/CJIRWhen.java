@@ -4,12 +4,12 @@ import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Tuple5;
 
-public final class CJIRUnion extends CJIRExpression {
+public final class CJIRWhen extends CJIRExpression {
     private final CJIRExpression target;
     private final List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases;
     private final Optional<CJIRExpression> fallback;
 
-    CJIRUnion(CJAstExpression ast, CJIRType type, CJIRExpression target,
+    CJIRWhen(CJAstExpression ast, CJIRType type, CJIRExpression target,
             List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases,
             Optional<CJIRExpression> fallback) {
         super(ast, type);
