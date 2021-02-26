@@ -762,6 +762,7 @@ final class CJPass04 extends CJPassBaseEx {
                         var caseNameVar = patternAst.getCaseNameVar();
                         var caseVars = patternAst.getDecls();
                         var trailingArgs = patternAst.isVariadic();
+                        var matchFound = false;
                         for (int tag = 0; tag < casesByTag.size(); tag++) {
                             if (sieve.get(tag)) {
                                 // skip cases we've already covered
@@ -774,6 +775,7 @@ final class CJPass04 extends CJPassBaseEx {
                             } else if (casesByTag.get(tag).getTypes().size() != caseVars.size()) {
                                 continue;
                             }
+                            matchFound = true;
                             var caseName = casesByTag.get(tag).getName();
                             sieve.set(tag, true);
                             var caseDefn = casesByTag.get(tag);
@@ -804,6 +806,9 @@ final class CJPass04 extends CJPassBaseEx {
                                 a = Optional.of(body.getType());
                             }
                             cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
+                        }
+                        if (!matchFound) {
+                            throw CJError.of("Else pattern with no matching cases", caseMark);
                         }
                     }
                 }
