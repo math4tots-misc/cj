@@ -870,6 +870,38 @@ class CJParser {
                     cases.add(CJAst.WhenCase(patterns, body))
                     expectDelimiters()
                 }
+                # TODO: actually save the parsed else-cases
+                while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
+                    while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
+                        val patterns = List[Tuple[CJMark, String?, List[CJAst.Local], Bool]]()
+                        val caseMark = self.mark
+                        expect(CJToken.kwELSE)
+                        val caseNameVar = if at(CJToken.tID) { null(parseId()) } else { null }
+                        val decls = List[Local]()
+                        var trailingArgs = false
+                        if consume('(') {
+                            while not consume(')') {
+                                if consume(CJToken.tDOTDOT) {
+                                    trailingArgs = true
+                                    assert(')')
+                                } else {
+                                    val mutable = consume(CJToken.kwVAR)
+                                    val varMark = self.mark
+                                    val varName = parseId()
+                                    decls.add(Local(varMark, mutable, varName, null))
+                                    if not consume(',') {
+                                        assert(')')
+                                    }
+                                }
+                            }
+                        }
+                        skipDelimiters()
+                        patterns.add((caseMark, caseNameVar, decls, trailingArgs))
+                    }
+                    val body = if consume('=') { parseExpr() } else { parseBlock() }
+                    # cases.add(CJAst.WhenCase(patterns, body))
+                    expectDelimiters()
+                }
                 val fallback = if consume(CJToken.kwELSE) {
                     null(if consume('=') { parseExpr() } else { parseBlock() })
                 } else { null }
