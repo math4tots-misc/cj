@@ -1,5 +1,6 @@
 package cjx.jx
 
+import cjx.jx.JXExpr
 import compiler.CJMark
 import compiler.CJError
 import cjx.jx.JXScope
@@ -21,9 +22,36 @@ class JXParser {
         "Expected " + kind + " but got " + CJToken.typeRepr(peek().type), [mark])
 
     def parseFile(self, scope: JXScope) {
+
     }
 
-    def parseAtom(self, scope: JXScope): Fn[Unit] {
-        () -> ()
+    def parseExpr(self, scope: JXScope): JXExpr = parseAtom(scope)
+
+    def parseAtom(self, scope: JXScope): JXExpr {
+        val mark = mark
+        switch peek().type {
+            case CJToken.tINT {
+                val text = next().text
+                JXExpr(
+                    mark,
+                    () -> (),
+                    () -> {
+                        val out = scope.getCodeGen(mark, "@out")
+                        out.write(text)
+                    })
+            }
+            case CJToken.tSTRING {
+                val text = next().text
+                JXExpr(
+                    mark,
+                    () -> (),
+                    () -> {
+                        val out = scope.getCodeGen(mark, "@out")
+                        out.write(text)
+                    }
+                )
+            }
+            else = throw ekind("expression")
+        }
     }
 }

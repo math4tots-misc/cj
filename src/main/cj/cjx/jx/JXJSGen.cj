@@ -28,4 +28,8 @@ class JXJSGen {
         src.add(line + "\n")
         mapping.add(";")
     }
+    def write(self, s: String) {
+        Assert.that("\n" not in s)
+        src.add(s)
+    }
 }
