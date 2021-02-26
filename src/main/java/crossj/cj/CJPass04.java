@@ -755,6 +755,58 @@ final class CJPass04 extends CJPassBaseEx {
                         cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
                     }
                 }
+                for (var elseCaseAst : e.getElseCases()) {
+                    var caseBody = elseCaseAst.get2();
+                    for (var patternAst : elseCaseAst.get1()) {
+                        var caseMark = patternAst.getMark();
+                        var caseNameVar = patternAst.getCaseNameVar();
+                        var caseVars = patternAst.getDecls();
+                        var trailingArgs = patternAst.isVariadic();
+                        for (int tag = 0; tag < casesByTag.size(); tag++) {
+                            if (sieve.get(tag)) {
+                                // skip cases we've already covered
+                                continue;
+                            }
+                            if (trailingArgs) {
+                                if (casesByTag.get(tag).getTypes().size() < caseVars.size()) {
+                                    continue;
+                                }
+                            } else if (casesByTag.get(tag).getTypes().size() != caseVars.size()) {
+                                continue;
+                            }
+                            var caseName = casesByTag.get(tag).getName();
+                            sieve.set(tag, true);
+                            var caseDefn = casesByTag.get(tag);
+                            var caseTypes = caseDefn.getTypes().map(bindings::apply);
+                            var vars = Range.upto(caseVars.size()).map(i -> {
+                                var varAst = caseVars.get(i);
+                                var varMark = varAst.get1();
+                                var mutable = varAst.get2();
+                                var varName = varAst.get3();
+                                var varType = caseTypes.get(i);
+                                return new CJIRAdHocVariableDeclaration(varMark, mutable, varName, varType);
+                            }).list();
+                            enterScope();
+                            vars.forEach(t -> declareLocal(t));
+                            var patternBody = caseBody;
+                            if (caseNameVar.isPresent()) {
+                                patternBody = new CJAstBlock(caseMark,
+                                        List.<CJAstExpression>of(
+                                                new CJAstVariableDeclaration(caseMark, false,
+                                                        new CJAstNameAssignmentTarget(caseMark, caseNameVar.get()),
+                                                        Optional.empty(), new CJAstLiteral(caseMark,
+                                                                CJIRLiteralKind.String, "\"" + caseName + "\"")),
+                                                caseBody));
+                            }
+                            var body = evalExpressionEx(patternBody, a);
+                            exitScope();
+                            if (a.isEmpty()) {
+                                a = Optional.of(body.getType());
+                            }
+                            cases.add(Tuple5.of(caseMark, caseDefn, vars, trailingArgs, body));
+                        }
+                    }
+                }
                 Optional<CJIRExpression> fallback;
                 if (e.getFallback().isPresent()) {
                     fallback = Optional.of(evalExpressionEx(e.getFallback().get(), a));

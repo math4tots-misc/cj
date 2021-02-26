@@ -12,14 +12,16 @@ import crossj.base.Tuple4;
 public final class CJAstWhen extends CJAstExpression {
     private final CJAstExpression target;
     private final List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> cases;
+    private final List<Pair<List<CJAstWhenElsePattern>, CJAstExpression>> elseCases;
     private final Optional<CJAstExpression> fallback;
 
     CJAstWhen(CJMark mark, CJAstExpression target,
             List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> cases,
-            Optional<CJAstExpression> fallback) {
+            List<Pair<List<CJAstWhenElsePattern>, CJAstExpression>> elseCases, Optional<CJAstExpression> fallback) {
         super(mark);
         this.target = target;
         this.cases = cases;
+        this.elseCases = elseCases;
         this.fallback = fallback;
     }
 
@@ -29,6 +31,10 @@ public final class CJAstWhen extends CJAstExpression {
 
     public List<Pair<List<Tuple4<CJMark, String, List<Tuple3<CJMark, Boolean, String>>, Boolean>>, CJAstExpression>> getCases() {
         return cases;
+    }
+
+    public List<Pair<List<CJAstWhenElsePattern>, CJAstExpression>> getElseCases() {
+        return elseCases;
     }
 
     public Optional<CJAstExpression> getFallback() {

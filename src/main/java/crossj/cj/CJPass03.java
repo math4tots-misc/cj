@@ -345,6 +345,7 @@ final class CJPass03 extends CJPassBaseEx {
                         newJoin(mark, ", ",
                                 Range.upto(c.getTypes().size()).map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
                         newString(mark, ")"))))),
+                List.of(),
                 Optional.empty());
         return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
     }

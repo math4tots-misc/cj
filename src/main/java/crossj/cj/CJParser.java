@@ -1285,13 +1285,46 @@ public final class CJParser {
                     cases.add(Pair.of(patterns, body));
                     expectDelimiters();
                 }
+                var elseCases = List.<Pair<List<CJAstWhenElsePattern>, CJAstExpression>>of();
+                while (at(CJToken.KW_ELSE) && (atOffset('(', 1) || atOffset(CJToken.ID, 1))) {
+                    var patterns = List.<CJAstWhenElsePattern>of();
+                    while (at(CJToken.KW_ELSE) && (atOffset('(', 1) || atOffset(CJToken.ID, 1))) {
+                        var caseMark = getMark();
+                        expect(CJToken.KW_ELSE);
+                        Optional<String> caseName = at(CJToken.ID) ? Optional.of(parseId()) : Optional.empty();
+                        var decls = List.<Tuple3<CJMark, Boolean, String>>of();
+                        var trailingArgs = false;
+                        if (consume('(')) {
+                            while (!consume(')')) {
+                                if (consume(CJToken.DOTDOT)) {
+                                    expect(')');
+                                    trailingArgs = true;
+                                    break;
+                                }
+                                var mutable = consume(CJToken.KW_VAR);
+                                var varMark = getMark();
+                                var varName = parseId();
+                                decls.add(Tuple3.of(varMark, mutable, varName));
+                                if (!consume(',')) {
+                                    expect(')');
+                                    break;
+                                }
+                            }
+                        }
+                        patterns.add(new CJAstWhenElsePattern(caseMark, caseName, decls, trailingArgs));
+                        skipDelimiters();
+                    }
+                    var body = consume('=') ? parseExpression() : parseBlock();
+                    elseCases.add(Pair.of(patterns, body));
+                    expectDelimiters();
+                }
                 var fallback = Optional.<CJAstExpression>empty();
                 if (consume(CJToken.KW_ELSE)) {
                     fallback = Optional.of(consume('=') ? parseExpression() : parseBlock());
                 }
                 skipDelimiters();
                 expect('}');
-                return new CJAstWhen(mark, target, cases, fallback);
+                return new CJAstWhen(mark, target, cases, elseCases, fallback);
             }
             case CJToken.KW_SWITCH: {
                 var mark = getMark();

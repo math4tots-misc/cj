@@ -58,4 +58,37 @@ class Test16When {
             })
         }
     }
+
+    union SampleUnion {
+        case foo
+        case bar
+        case x(Int)
+        case y(String)
+    }
+
+    def ustr(u: SampleUnion): String = when u {
+        case foo;case bar = "foo or bar"
+        case x(v);case y(v) = v.repr()
+    }
+
+    @test
+    def sharedBody() {
+        Assert.equal(ustr(SampleUnion.foo), "foo or bar")
+        Assert.equal(ustr(SampleUnion.bar), "foo or bar")
+        Assert.equal(ustr(SampleUnion.x(728)), "728")
+        Assert.equal(ustr(SampleUnion.y("some str")), "\"some str\"")
+    }
+
+    def ustr2(u: SampleUnion): String = when u {
+        else name(v) = name + "(" + v + ")"
+        else = "else (foo or bar)"
+    }
+
+    @test
+    def elseWithPattern() {
+        Assert.equal(ustr2(SampleUnion.foo), "else (foo or bar)")
+        Assert.equal(ustr2(SampleUnion.bar), "else (foo or bar)")
+        Assert.equal(ustr2(SampleUnion.x(728)), "x(728)")
+        Assert.equal(ustr2(SampleUnion.y("some str")), "y(some str)")
+    }
 }
