@@ -18,7 +18,7 @@ public abstract class CJAstExpressionVisitor<R, A> {
     public abstract R visitIfNull(CJAstIfNull e, A a);
     public abstract R visitWhile(CJAstWhile e, A a);
     public abstract R visitFor(CJAstFor e, A a);
-    public abstract R visitUnion(CJAstWhen e, A a);
+    public abstract R visitWhen(CJAstWhen e, A a);
     public abstract R visitSwitch(CJAstSwitch e, A a);
     public abstract R visitLambda(CJAstLambda e, A a);
     public abstract R visitReturn(CJAstReturn e, A a);

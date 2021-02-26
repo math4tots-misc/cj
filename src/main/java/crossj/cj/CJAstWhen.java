@@ -36,6 +36,6 @@ public final class CJAstWhen extends CJAstExpression {
 
     @Override
     public <R, A> R accept(CJAstExpressionVisitor<R, A> visitor, A a) {
-        return visitor.visitUnion(this, a);
+        return visitor.visitWhen(this, a);
     }
 }

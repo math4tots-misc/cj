@@ -693,7 +693,7 @@ final class CJPass04 extends CJPassBaseEx {
             }
 
             @Override
-            public CJIRExpression visitUnion(CJAstWhen e, Optional<CJIRType> a) {
+            public CJIRExpression visitWhen(CJAstWhen e, Optional<CJIRType> a) {
                 var target = evalExpression(e.getTarget());
                 if (!target.getType().isUnionType()) {
                     throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());

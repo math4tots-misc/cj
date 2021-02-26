@@ -32,6 +32,6 @@ public final class CJIRWhen extends CJIRExpression {
 
     @Override
     public <R, A> R accept(CJIRExpressionVisitor<R, A> visitor, A a) {
-        return visitor.visitUnion(this, a);
+        return visitor.visitWhen(this, a);
     }
 }

@@ -298,7 +298,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             }
 
             @Override
-            public String visitUnion(CJIRWhen e, Void a) {
+            public String visitWhen(CJIRWhen e, Void a) {
                 // TODO Auto-generated method stub
                 throw new RuntimeException("TODO");
             }
