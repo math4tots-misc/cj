@@ -11,20 +11,10 @@ import crossj.cj.CJIRRunModeMain;
 import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
-import crossj.cj.CJJSTranslator;
 import crossj.cj.CJJSTranslator2;
 
 public final class JSMain {
-    private static boolean useTr2 = true;
-
     public static void main(String[] args) {
-
-        if (useTr2) {
-            IO.println("USING TR 2");
-        } else {
-            IO.println("USING TR 1");
-        }
-
         var mode = Mode.Default;
         var sourceRoots = List.of(FS.join("src", "main", "cj"));
         var outPath = "";
@@ -127,43 +117,26 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        if (useTr2) {
-            var jsSink = CJJSTranslator2.translate(ctx, enableStack, runMode);
-            if (runMode instanceof CJIRRunModeWWW) {
-                var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
-                IO.delete(outPath);
-                IO.copyFolder(wwwdir, outPath);
-                var filePath = FS.join(outPath, "main.js");
-                var sourceMapPath = filePath + ".map";
-                var js = jsSink.getSource(filePath);
-                var sourceMap = jsSink.getSourceMap(filePath);
-                IO.writeFile(filePath, js);
-                IO.writeFile(sourceMapPath, sourceMap);
-            } else {
-                if (outPath.equals("-")) {
-                    IO.print(jsSink.getSource(""));
-                } else {
-                    var sourceMapPath = outPath + ".map";
-                    var js = jsSink.getSource(outPath);
-                    var sourceMap = jsSink.getSourceMap(outPath);
-                    IO.writeFile(outPath, js);
-                    IO.writeFile(sourceMapPath, sourceMap);
-                }
-            }
+        var jsSink = CJJSTranslator2.translate(ctx, enableStack, runMode);
+        if (runMode instanceof CJIRRunModeWWW) {
+            var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
+            IO.delete(outPath);
+            IO.copyFolder(wwwdir, outPath);
+            var filePath = FS.join(outPath, "main.js");
+            var sourceMapPath = filePath + ".map";
+            var js = jsSink.getSource(filePath);
+            var sourceMap = jsSink.getSourceMap(filePath);
+            IO.writeFile(filePath, js);
+            IO.writeFile(sourceMapPath, sourceMap);
         } else {
-            var js = CJJSTranslator.translate(ctx, enableStack, runMode);
-            if (runMode instanceof CJIRRunModeWWW) {
-                var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
-                IO.delete(outPath);
-                IO.copyFolder(wwwdir, outPath);
-                var filePath = FS.join(outPath, "main.js");
-                IO.writeFile(filePath, js);
+            if (outPath.equals("-")) {
+                IO.print(jsSink.getSource(""));
             } else {
-                if (outPath.equals("-")) {
-                    IO.print(js);
-                } else {
-                    IO.writeFile(outPath, js);
-                }
+                var sourceMapPath = outPath + ".map";
+                var js = jsSink.getSource(outPath);
+                var sourceMap = jsSink.getSourceMap(outPath);
+                IO.writeFile(outPath, js);
+                IO.writeFile(sourceMapPath, sourceMap);
             }
         }
     }
