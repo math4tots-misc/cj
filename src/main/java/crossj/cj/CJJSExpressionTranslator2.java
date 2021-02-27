@@ -1,0 +1,856 @@
+package crossj.cj;
+
+import crossj.base.Assert;
+import crossj.base.Func1;
+import crossj.base.List;
+import crossj.base.Optional;
+import crossj.base.Str;
+
+public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
+    CJJSExpressionTranslator2(CJJSSink out, CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
+        super(out, ctx, item, selfType);
+    }
+
+    CJJSBlob2 translateExpression(CJIRExpression expression) {
+        return expression.accept(new CJIRExpressionVisitor<CJJSBlob2, Void>() {
+
+            @Override
+            public CJJSBlob2 visitLiteral(CJIRLiteral e, Void a) {
+                switch (e.getKind()) {
+                    case Unit:
+                        return CJJSBlob2.pure("undefined");
+                    case Char:
+                        return CJJSBlob2.pure("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()));
+                    case Bool:
+                    case Int:
+                    case Double:
+                    case String:
+                    case BigInt:
+                        return CJJSBlob2.pure(e.getRawText());
+                }
+                throw CJError.of("TODO: " + e.getKind(), e.getMark());
+            }
+
+            @Override
+            public CJJSBlob2 visitBlock(CJIRBlock e, Void a) {
+                var exprs = e.getExpressions();
+                var returns = !e.getType().isUnitType();
+                var tmpvar = returns ? ctx.newTempVarName() : "undefined";
+                var prep = new Func1<Void, CJJSSink>(){
+                    @Override
+                    public Void apply(CJJSSink a) {
+                        if (returns) {
+                            out.append("let " + tmpvar + ";");
+                        }
+                        out.append("{\n");
+                        for (int i = 0; i + 1 < exprs.size(); i++) {
+                            translateExpression(exprs.get(i)).emitDrop(out);
+                        }
+                        var last = translateExpression(exprs.last());
+                        if (returns) {
+                            last.emitSet(out, tmpvar + "=");
+                        } else {
+                            last.emitDrop(out);
+                        }
+                        out.append("}\n");
+                        return null;
+                    }
+                };
+                var main = new Func1<Void, CJJSSink>(){
+                    @Override
+                    public Void apply(CJJSSink a) {
+                        out.append(tmpvar);
+                        return null;
+                    }
+                };
+                return CJJSBlob2.withPrep(prep, main, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitMethodCall(CJIRMethodCall e, Void a) {
+                var typeArgs = e.getMethodRef().isGeneric() ? e.getTypeArgs().map(i -> "null")
+                        : translateTypeArgs(e.getMethodRef().getMethod().getTypeParameters(), e.getTypeArgs());
+                var args0 = e.getArgs().map(CJJSExpressionTranslator2.this::translateExpression);
+                var args = args0.all(arg -> arg.isSimple()) ? args0 : args0.map(arg -> arg.toPure(ctx));
+
+                Optional<Func1<Void, CJJSSink>> prep = args.all(arg -> arg.isSimple()) ? Optional.empty() : Optional.of(out -> {
+                    for (var arg : args) {
+                        arg.emitPrep(out);
+                    }
+                    return null;
+                });
+                var allArgs = List.of(typeArgs.map(CJJSBlob2::pure), args).flatMap(x -> x);
+                var call = joinMethodCall(prep, e.getMark(), e.getOwner(), e.getMethodRef(), e.getArgs(), allArgs);
+                Optional<Func1<Void, CJJSSink>> newPrep = prep.isPresent() || call.getPrep().isPresent() ? Optional.of(out -> {
+                    if (prep.isPresent()) { prep.get().apply(out); }
+                    if (call.getPrep().isPresent()) { call.getPrep().get().apply(out); }
+                    return null;
+                }) : Optional.empty();
+                return new CJJSBlob2(newPrep, call.getMain(), call.isPure());
+            }
+
+            private CJJSBlob2 joinOp(String prefix, String suffix, String sep, List<CJJSBlob2> args) {
+                return CJJSBlob2.simple(out -> {
+                    out.append(prefix);
+                    for (int i = 0; i < args.size(); i++) {
+                        if (i > 0) {
+                            out.append(sep);
+                        }
+                        args.get(i).emitMain(out);
+                    }
+                    out.append(suffix);
+                    return null;
+                });
+            }
+
+            private CJJSBlob2 joinMethodCall(Optional<Func1<Void, CJJSSink>> prep, CJMark mark, CJIRType owner,
+                    CJIRMethodRef methodRef, List<CJIRExpression> args, List<CJJSBlob2> allArgs) {
+                var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
+                switch (fullMethodName) {
+                    case "cj.Int.__neg":
+                        return joinOp("(-", ")", "", allArgs);
+                    case "cj.Int.__add":
+                        return joinOp("((", ")|0)", "+", allArgs);
+                    case "cj.Int.__mul":
+                        return joinOp("((", ")|0)", "*", allArgs);
+                    case "cj.Int.__sub":
+                        return joinOp("((", ")|0)", "-", allArgs);
+                    case "cj.Int.__truncdiv":
+                        return joinOp("((", ")|0)", "/", allArgs);
+                    case "cj.Int.__div":
+                        return joinOp("(", ")", "/", allArgs);
+                    case "cj.Int.__or":
+                        return joinOp("(", ")", "|", allArgs);
+                    case "cj.Int.__and":
+                        return joinOp("(", ")", "&", allArgs);
+                    case "cj.Int.__lshift":
+                        return joinOp("(", ")", "<<", allArgs);
+                    case "cj.Int.__rshift":
+                        return joinOp("(", ")", ">>", allArgs);
+                    case "cj.Int.__rshiftu":
+                        return joinOp("(", ")", ">>>", allArgs);
+                    case "cj.Double.__neg":
+                        return joinOp("(-", ")", "", allArgs);
+                    case "cj.Double.__add":
+                        return joinOp("(", ")", "+", allArgs);
+                    case "cj.Double.__mul":
+                        return joinOp("(", ")", "*", allArgs);
+                    case "cj.Double.__sub":
+                        return joinOp("(", ")", "-", allArgs);
+                    case "cj.Double.__truncdiv":
+                        return joinOp("((", ")|0)", "/", allArgs);
+                    case "cj.Double.__div":
+                        return joinOp("(", ")", "/", allArgs);
+                    case "cj.List.empty":
+                        return CJJSBlob2.simplestr("[]");
+                    case "cj.List_.empty":
+                        return CJJSBlob2.simplestr("[]");
+                    case "cj.List.__new":
+                        Assert.equals(allArgs.size(), 1);
+                        return allArgs.get(0).toPure(ctx);
+                    case "cj.List.size":
+                        Assert.equals(allArgs.size(), 1);
+                        return CJJSBlob2.simple(out -> {
+                            allArgs.get(0).emitMain(out);
+                            out.append(".length");
+                            return null;
+                        });
+                    case "cj.String.__add":
+                        Assert.equals(allArgs.size(), 3);
+                        Assert.equals(args.size(), 2);
+                        switch (args.get(1).getType().toRawQualifiedName()) {
+                            case "cj.String":
+                            case "cj.Int":
+                            case "cj.Double":
+                            case "cj.Bool":
+                                return joinOp("(", ")", "+", allArgs.sliceFrom(1));
+                        }
+                        break;
+                    case "cj.Nullable.default":
+                        Assert.equals(allArgs.size(), 0);
+                        return CJJSBlob2.pure("null");
+                    case "cj.Int.default":
+                    case "cj.Double.default":
+                    case "cj.Char.default":
+                        Assert.equals(allArgs.size(), 0);
+                        return CJJSBlob2.pure("0");
+                    case "cj.List.default":
+                        Assert.equals(allArgs.size(), 0);
+                        return CJJSBlob2.simplestr("[]");
+                    case "cj.js.JSObject.field":
+                    case "cj.js.JSWrapper.field":
+                        Assert.equals(allArgs.size(), 2);
+                        return CJJSBlob2.simple(out -> {
+                            allArgs.get(0).emitMain(out);
+                            out.append("[");
+                            allArgs.get(1).emitMain(out);
+                            out.append("]");
+                            return null;
+                        });
+                    case "cj.js.JSObject.setField":
+                    case "cj.js.JSWrapper.setField":
+                        Assert.equals(allArgs.size(), 4);
+                        return CJJSBlob2.withPrep(out -> {
+                            allArgs.get(1).emitMain(out);
+                            out.append("[");
+                            allArgs.get(2).emitMain(out);
+                            out.append("]=");
+                            allArgs.get(3).emitMain(out);
+                            out.append(";\n");
+                            return null;
+                        }, out -> {
+                            out.append("undefined");
+                            return null;
+                        }, true);
+                    case "cj.js.JSObject.call1":
+                    case "cj.js.JSObject.call":
+                    case "cj.js.JSWrapper.call": {
+                        Assert.equals(allArgs.size(), 3);
+                        return CJJSBlob2.simple(out -> {
+                            allArgs.get(0).emitMain(out);
+                            out.append("[");
+                            allArgs.get(1).emitMain(out);
+                            out.append("](...");
+                            allArgs.get(2).emitMain(out);
+                            out.append(")");
+                            return null;
+                        });
+                    }
+                    case "cj.js.JSON.fromList":
+                    case "cj.Double._fromInt":
+                    case "cj.Double.toDouble":
+                    case "cj.Int.toDouble":
+                    case "cj.Int._fromChar":
+                        Assert.equals(allArgs.size(), 1);
+                        return allArgs.get(0);
+                    case "cj.js.JSON._unsafeCast":
+                    case "cj.js.JSObject.unsafeCast":
+                        Assert.equals(allArgs.size(), 2);
+                        return allArgs.get(1);
+                    case "cj.Fn0":
+                    case "cj.Fn1":
+                    case "cj.Fn2":
+                    case "cj.Fn3":
+                    case "cj.Fn4": {
+                        return CJJSBlob2.simple(out -> {
+                            allArgs.get(0).emitMain(out);
+                            out.append("(");
+                            for (int i = 1; i < allArgs.size(); i++) {
+                                if (i > 1) {
+                                    out.append(",");
+                                }
+                                allArgs.get(i).emitMain(out);
+                            }
+                            out.append(")");
+                            return null;
+                        });
+                    }
+                }
+                String ownerStr;
+                if (methodRef.getMethod().isGenericSelf() && owner instanceof CJIRClassType) {
+                    ownerStr = translateItemMetaObjectName(((CJIRClassType) owner).getItem().getFullName());
+                } else {
+                    ownerStr = translateType(owner);
+                }
+
+                var extra = methodRef.getMethod().getExtra();
+
+                if (extra instanceof CJIRFieldMethodInfo) {
+                    var info = (CJIRFieldMethodInfo) extra;
+                    var field = info.getField();
+                    if (field.isStatic()) {
+                        var target = ownerStr + "." + translateFieldName(field.getName());
+                        switch (info.getKind()) {
+                            case "":
+                                if (!field.isMutable() && field.getExpression().isPresent() &&
+                                        field.getExpression().get() instanceof CJIRLiteral) {
+                                    var literal = (CJIRLiteral) field.getExpression().get();
+                                    var result = visitLiteral(literal, null);
+                                    Assert.that(result.isSimpleAndPure());
+                                    return result;
+                                }
+                                break;
+                            case "=":
+                                Assert.equals(allArgs.size(), 1);
+                                return CJJSBlob2.simple(out -> {
+                                    out.append(target + info.getKind());
+                                    allArgs.last().emitMain(out);
+                                    return null;
+                                });
+                            case "+=":
+                                Assert.equals(allArgs.size(), 1);
+                                return CJJSBlob2.simple(out -> {
+                                    out.append(target + "=(" + ownerStr + "." + translateMethodName(field.getGetterName()) + "())+");
+                                    allArgs.last().emitMain(out);
+                                    return null;
+                                });
+                        }
+                    } else if (!field.isStatic()) {
+                        switch (info.getKind()) {
+                            case "":
+                                Assert.equals(allArgs.size(), 1);
+                                if (field.isLateinit()) {
+                                    break;
+                                }
+                                return CJJSBlob2.simple(out -> {
+                                    if (isWrapperType(owner)) {
+                                        allArgs.get(0).emitMain(out);
+                                    } else {
+                                        allArgs.get(0).emitMain(out);
+                                        out.append("[" + field.getIndex() + "]");
+                                    }
+                                    return null;
+                                });
+                            case "=":
+                            case "+=":
+                                Assert.equals(allArgs.size(), 2);
+                                Assert.that(field.isMutable());
+                                Assert.that(!isWrapperType(owner));
+                                return CJJSBlob2.simple(out -> {
+                                    allArgs.get(0).emitMain(out);
+                                    out.append("[" + field.getIndex() + "]" + info.getKind());
+                                    allArgs.last().emitMain(out);
+                                    return null;
+                                });
+                        }
+                    }
+                }
+
+                return CJJSBlob2.simple(out -> {
+                    out.append(ownerStr);
+                    out.append(".");
+                    out.addMark(mark);
+                    out.append(translateMethodName(methodRef.getName()));
+                    out.append("(");
+                    for (int i = 0; i < allArgs.size(); i++) {
+                        if (i > 0) {
+                            out.append(",");
+                        }
+                        allArgs.get(i).emitMain(out);
+                    }
+                    out.append(")");
+                    return null;
+                });
+            }
+
+            @Override
+            public CJJSBlob2 visitVariableDeclaration(CJIRVariableDeclaration e, Void a) {
+                var inner = translateExpression(e.getExpression());
+                return CJJSBlob2.withPrep(out -> {
+                    inner.emitPrep(out);
+                    out.append(e.isMutable() ? "let " : "const ");
+                    out.append(translateTarget(e.getTarget()));
+                    out.append("=");
+                    inner.emitMain(out);
+                    out.append(";\n");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitVariableAccess(CJIRVariableAccess e, Void a) {
+                return CJJSBlob2.simple(out -> {
+                    out.addMark(e.getMark());
+                    out.append(translateLocalVariableName(e.getDeclaration().getName()));
+                    return null;
+                });
+            }
+
+            @Override
+            public CJJSBlob2 visitAssignment(CJIRAssignment e, Void a) {
+                var expr = translateExpression(e.getExpression());
+                var target = translateLocalVariableName(e.getVariableName());
+                return CJJSBlob2.withPrep(out -> {
+                    expr.emitSet(out, target + "=");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            private boolean isOne(CJIRExpression e) {
+                if (e instanceof CJIRLiteral) {
+                    var lit = (CJIRLiteral) e;
+                    if (lit.getKind().equals(CJIRLiteralKind.Int) && lit.getRawText().equals("1")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public CJJSBlob2 visitAugmentedAssignment(CJIRAugmentedAssignment e, Void a) {
+                var target = translateLocalVariableName(e.getTarget().getName());
+                var augexpr = translateExpression(e.getExpression());
+                String op;
+                switch (e.getKind()) {
+                    case Add:
+                        op = "+=";
+                        break;
+                    case Subtract:
+                        op = "-=";
+                        break;
+                    case Multiply:
+                        op = "*=";
+                        break;
+                    case Remainder:
+                        op = "%=";
+                        break;
+                    default:
+                        throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
+                }
+
+                return CJJSBlob2.withPrep(out -> {
+                    if (e.getKind() == CJIRAugAssignKind.Add && isOne(e.getExpression())) {
+                        out.append(target + "++;\n");
+                    } else if (e.getKind() == CJIRAugAssignKind.Subtract && isOne(e.getExpression())) {
+                        out.append(target + "--;\n");
+                    } else {
+                        augexpr.emitPrep(out);
+                        out.append(target + op);
+                        augexpr.emitMain(out);
+                        out.append(";\n");
+                    }
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitLogicalNot(CJIRLogicalNot e, Void a) {
+                var inner = translateExpression(e.getInner());
+                return new CJJSBlob2(inner.getPrep(), out -> {
+                    out.append("(!");
+                    inner.emitMain(out);
+                    out.append(")");
+                    return null;
+                }, inner.isPure());
+            }
+
+            @Override
+            public CJJSBlob2 visitLogicalBinop(CJIRLogicalBinop e, Void a) {
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (left.isSimple() && right.isSimple()) {
+                    var op = e.isAnd() ? "&&" : "||";
+                    return CJJSBlob2.simple(out -> {
+                        out.append("((");
+                        left.emitMain(out);
+                        out.append(")" + op + "(");
+                        right.emitMain(out);
+                        out.append("))");
+                        return null;
+                    });
+                } else {
+                    var tmpvar = ctx.newTempVarName();
+                    return CJJSBlob2.withPrep(out -> {
+                        out.append("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";\n");
+                        out.append("if(" + (e.isAnd() ? "" : "!") + "(");
+                        left.emitMain(out);
+                        out.append(")){\n");
+                        right.emitSet(out, tmpvar + "=");
+                        out.append("}\n");
+                        return null;
+                    }, out -> {
+                        out.append(tmpvar);
+                        return null;
+                    }, true);
+                }
+            }
+
+            @Override
+            public CJJSBlob2 visitIs(CJIRIs e, Void a) {
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (left.isSimple() && right.isSimple()) {
+                    return CJJSBlob2.simple(out -> {
+                        out.append("(");
+                        left.emitMain(out);
+                        out.append("===");
+                        right.emitMain(out);
+                        out.append(")");
+                        return null;
+                    });
+                } else {
+                    var pureLeft = left.toPure(ctx);
+                    return CJJSBlob2.withPrep(out -> {
+                        pureLeft.emitPrep(out);
+                        right.emitPrep(out);
+                        return null;
+                    }, out -> {
+                        out.append("(");
+                        pureLeft.emitMain(out);
+                        out.append("===");
+                        right.emitMain(out);
+                        out.append(")");
+                        return null;
+                    }, false);
+                }
+            }
+
+            @Override
+            public CJJSBlob2 visitNullWrap(CJIRNullWrap e, Void a) {
+                return e.getInner().map(i -> translateExpression(i)).getOrElseDo(() -> CJJSBlob2.pure("null"));
+            }
+
+            @Override
+            public CJJSBlob2 visitListDisplay(CJIRListDisplay e, Void a) {
+                return handleList(e.getExpressions());
+            }
+
+            @Override
+            public CJJSBlob2 visitTupleDisplay(CJIRTupleDisplay e, Void a) {
+                return handleList(e.getExpressions());
+            }
+
+            private CJJSBlob2 handleList(List<CJIRExpression> expressions) {
+                var args = expressions.map(arg -> translateExpression(arg));
+                if (args.all(arg -> arg.isSimple())) {
+                    return CJJSBlob2.simple(out -> {
+                        out.append("[");
+                        for (int i = 0; i < args.size(); i++) {
+                            if (i > 0) {
+                                out.append(",");
+                            }
+                            args.get(i).emitMain(out);
+                        }
+                        out.append("]");
+                        return null;
+                    });
+                }
+                var pureArgs = args.map(arg -> arg.toPure(ctx));
+                return CJJSBlob2.withPrep(out -> {
+                    for (var arg : pureArgs) {
+                        arg.emitPrep(out);
+                    }
+                    return null;
+                }, out -> {
+                    out.append("[");
+                    for (int i = 0; i < pureArgs.size(); i++) {
+                        if (i > 0) {
+                            out.append(",");
+                        }
+                        args.get(i).emitMain(out);
+                    }
+                    out.append("]");
+                    return null;
+                }, false);
+            }
+
+            @Override
+            public CJJSBlob2 visitIf(CJIRIf e, Void a) {
+                var condition = translateExpression(e.getCondition());
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                if (condition.isSimple() && left.isSimple() && right.isSimple()) {
+                    return CJJSBlob2.simple(out -> {
+                        out.append("(");
+                        condition.emitMain(out);
+                        out.append("?");
+                        left.emitMain(out);
+                        out.append(":");
+                        right.emitMain(out);
+                        out.append(")");
+                        return null;
+                    });
+                } else {
+                    var tmpvar = ctx.newTempVarName();
+                    return CJJSBlob2.withPrep(out -> {
+                        out.append("let " + tmpvar + ";\n");
+                        condition.emitPrep(out);
+                        out.append("if(");
+                        condition.emitMain(out);
+                        out.append("){\n");
+                        left.emitSet(out, tmpvar + "=");
+                        out.append("}else{\n");
+                        right.emitSet(out, tmpvar + "=");
+                        out.append("}\n");
+                        return null;
+                    }, out -> {
+                        out.append(tmpvar);
+                        return null;
+                    }, true);
+                }
+            }
+
+            @Override
+            public CJJSBlob2 visitIfNull(CJIRIfNull e, Void a) {
+                var inner = translateExpression(e.getExpression()).toPure(ctx);
+                var target = translateTarget(e.getTarget());
+                var left = translateExpression(e.getLeft());
+                var right = translateExpression(e.getRight());
+                var tmpvar = ctx.newTempVarName();
+
+                return CJJSBlob2.withPrep(out -> {
+                    out.append("let " + tmpvar + ";\n");
+                    inner.emitPrep(out);
+                    out.append("if((");
+                    inner.emitMain(out);
+                    out.append(")!==null){\n");
+                    out.append("let " + target + "=");
+                    inner.emitMain(out);
+                    out.append(";\n");
+                    left.emitSet(out, tmpvar + "=");
+                    out.append("}else{\n");
+                    right.emitSet(out, tmpvar + "=");
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append(tmpvar);
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitWhile(CJIRWhile e, Void a) {
+                var condition = translateExpression(e.getCondition());
+                var body = translateExpression(e.getBody());
+                return CJJSBlob2.withPrep(out -> {
+                    if (condition.isSimple()) {
+                        out.append("while(");
+                        condition.emitMain(out);
+                        out.append("){\n");
+                    } else {
+                        out.append("while(true){\n");
+                        condition.emitPrep(out);
+                        out.append("if(!(");
+                        condition.emitMain(out);
+                        out.append("))break;\n");
+                    }
+                    body.emitDrop(out);
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitFor(CJIRFor e, Void a) {
+                var iterator = translateExpression(e.getIterator());
+                var target = translateTarget(e.getTarget());
+                var body = translateExpression(e.getBody());
+                return CJJSBlob2.withPrep(out -> {
+                    iterator.emitPrep(out);
+                    out.append("for (const " + target + " of ");
+                    iterator.emitMain(out);
+                    out.append("){\n");
+                    body.emitDrop(out);
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitWhen(CJIRWhen e, Void a) {
+                var target = translateExpression(e.getTarget()).toPure(ctx);
+                var tmpvar = ctx.newTempVarName();
+                return CJJSBlob2.withPrep(out -> {
+                    target.emitPrep(out);
+                    out.append("let " + tmpvar + ";\n");
+                    if (e.getTarget().getType().isSimpleUnion()) {
+                        out.append("switch(");
+                        target.emitMain(out);
+                        out.append("){\n");
+                    } else {
+                        out.append("switch((");
+                        target.emitMain(out);
+                        out.append(")[0]){\n");
+                    }
+                    for (var entry : e.getCases()) {
+                        var caseDefn = entry.get2();
+                        var body = translateExpression(entry.get5());
+                        var tag = caseDefn.getTag();
+                        var names = entry.get3().map(d -> translateLocalVariableName(d.getName()));
+                        var mutable = entry.get3().any(d -> d.isMutable());
+                        var prefix = mutable ? "let " : "const ";
+                        out.append("case " + tag + ":{\n");
+                        if (!e.getTarget().getType().isSimpleUnion()) {
+                            out.append(prefix + "[," + Str.join(",", names) + "]=");
+                            target.emitMain(out);
+                            out.append(";\n");
+                        }
+                        body.emitSet(out, tmpvar + "=");
+                        out.append("break;\n");
+                        out.append("}\n");
+                    }
+                    if (e.getFallback().isPresent()) {
+                        var fallback = translateExpression(e.getFallback().get());
+                        out.append("default:{\n");
+                        fallback.emitSet(out, tmpvar + "=");
+                        out.append("}\n");
+                    } else {
+                        out.append("default:throw new Error(\"Invalid tag\");\n");
+                    }
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append(tmpvar);
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitSwitch(CJIRSwitch e, Void a) {
+                var target = translateExpression(e.getTarget());
+                var tmpvar = ctx.newTempVarName();
+
+                return CJJSBlob2.withPrep(out -> {
+                    target.emitPrep(out);
+                    out.append("let " + tmpvar + ";\n");
+                    out.append("switch(");
+                    target.emitMain(out);
+                    out.append("){\n");
+                    for (var case_ : e.getCases()) {
+                        var values = case_.get1().map(c -> {
+                            var v = translateExpression(c);
+                            // TODO: Reconsider this restriction
+                            // At the very least, a check like this should live in one of the JSPass*
+                            // classees and not in code generation.
+                            if (!v.isSimple()) {
+                                throw CJError.of("Only simple expressions are allowed here", c.getMark());
+                            }
+                            return v;
+                        });
+                        for (var value : values) {
+                            out.append("case ");
+                            value.emitMain(out);
+                            out.append(":\n");
+                        }
+                        out.append("{\n");
+                        var body = translateExpression(case_.get2());
+                        body.emitSet(out, tmpvar + "=");
+                        out.append("break;\n");
+                        out.append("}\n");
+                    }
+                    out.append("default:");
+                    if (e.getFallback().isPresent()) {
+                        out.append("{\n");
+                        var fallback = translateExpression(e.getFallback().get());
+                        fallback.emitSet(out, tmpvar + "=");
+                        out.append("}\n");
+                    } else {
+                        out.append("throw new Error('Unhandled switch case');\n");
+                    }
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append(tmpvar);
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitLambda(CJIRLambda e, Void a) {
+                var parameters = e.getParameters();
+                var parameterNames = parameters.map(p -> translateLocalVariableName(p.getName()));
+                var paramstr = "(" + Str.join(",", parameterNames) + ")=>";
+                var blob = translateExpression(e.getBody());
+
+                if (blob.isSimple()) {
+                    return CJJSBlob2.simple(out -> {
+                        out.append(paramstr + "(");
+                        blob.emitMain(out);
+                        out.append(")");
+                        return null;
+                    });
+                } else {
+                    return CJJSBlob2.simple(out -> {
+                        out.append("(" + paramstr + "{\n");
+                        if (e.getReturnType().isUnionType()) {
+                            blob.emitDrop(out);
+                        } else {
+                            blob.emitSet(out, "return ");
+                        }
+                        out.append("}\n");
+                        out.append(")");
+                        return null;
+                    });
+                }
+            }
+
+            @Override
+            public CJJSBlob2 visitReturn(CJIRReturn e, Void a) {
+                var inner = translateExpression(e.getExpression());
+                return CJJSBlob2.withPrep(out -> {
+                    inner.emitSet(out, "return ");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitAwait(CJIRAwait e, Void a) {
+                var inner = translateExpression(e.getInner());
+                return new CJJSBlob2(inner.getPrep(), out -> {
+                    out.append("(await ");
+                    inner.emitMain(out);
+                    out.append(")");
+                    return null;
+                }, false);
+            }
+
+            @Override
+            public CJJSBlob2 visitThrow(CJIRThrow e, Void a) {
+                var inner = translateExpression(e.getExpression());
+                var type = translateType(e.getExpression().getType());
+                return CJJSBlob2.withPrep(out -> {
+                    inner.emitPrep(out);
+                    out.append("throw [");
+                    inner.emitMain(out);
+                    out.append("," + type + "];\n");
+                    return null;
+                }, out -> {
+                    out.append("undefined");
+                    return null;
+                }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitTry(CJIRTry e, Void a) {
+                var tmpvar = ctx.newTempVarName();
+                var body = translateExpression(e.getBody());
+
+                return CJJSBlob2.withPrep(out -> {
+                    out.append("let " + tmpvar + ";\n");
+                    out.append("try{\n");
+                    body.emitSet(out, tmpvar + "=");
+                    if (e.getClauses().size() > 0) {
+                        out.append("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;\n");
+                        for (int i = 0; i < e.getClauses().size(); i++) {
+                            var clause = e.getClauses().get(i);
+                            out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){\n");
+                            out.append("const " + translateTarget(clause.get1()) + "=e;\n");
+                            var clauseBody = translateExpression(clause.get3());
+                            clauseBody.emitSet(out, tmpvar + "=");
+                            out.append("}\n");
+                        }
+                        out.append("else{throw p;}\n");
+                    }
+                    out.append("}\n");
+                    if (e.getFin().isPresent()) {
+                        out.append("finally{\n");
+                        translateExpression(e.getFin().get()).emitDrop(out);
+                        out.append("}\n");
+                    }
+                    return null;
+                }, out -> {
+                    out.append(tmpvar);
+                    return null;
+                }, true);
+            }
+        }, null);
+    }
+}
