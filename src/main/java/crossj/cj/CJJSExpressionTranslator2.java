@@ -36,7 +36,7 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                 var exprs = e.getExpressions();
                 var returns = !e.getType().isUnitType();
                 var tmpvar = returns ? ctx.newTempVarName() : "undefined";
-                var prep = new Func1<Void, CJJSSink>(){
+                var prep = new Func1<Void, CJJSSink>() {
                     @Override
                     public Void apply(CJJSSink a) {
                         if (returns) {
@@ -56,7 +56,7 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                         return null;
                     }
                 };
-                var main = new Func1<Void, CJJSSink>(){
+                var main = new Func1<Void, CJJSSink>() {
                     @Override
                     public Void apply(CJJSSink a) {
                         out.append(tmpvar);
@@ -73,19 +73,26 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                 var args0 = e.getArgs().map(CJJSExpressionTranslator2.this::translateExpression);
                 var args = args0.all(arg -> arg.isSimple()) ? args0 : args0.map(arg -> arg.toPure(ctx));
 
-                Optional<Func1<Void, CJJSSink>> prep = args.all(arg -> arg.isSimple()) ? Optional.empty() : Optional.of(out -> {
-                    for (var arg : args) {
-                        arg.emitPrep(out);
-                    }
-                    return null;
-                });
+                Optional<Func1<Void, CJJSSink>> prep = args.all(arg -> arg.isSimple()) ? Optional.empty()
+                        : Optional.of(out -> {
+                            for (var arg : args) {
+                                arg.emitPrep(out);
+                            }
+                            return null;
+                        });
                 var allArgs = List.of(typeArgs.map(CJJSBlob2::pure), args).flatMap(x -> x);
                 var call = joinMethodCall(prep, e.getMark(), e.getOwner(), e.getMethodRef(), e.getArgs(), allArgs);
-                Optional<Func1<Void, CJJSSink>> newPrep = prep.isPresent() || call.getPrep().isPresent() ? Optional.of(out -> {
-                    if (prep.isPresent()) { prep.get().apply(out); }
-                    if (call.getPrep().isPresent()) { call.getPrep().get().apply(out); }
-                    return null;
-                }) : Optional.empty();
+                Optional<Func1<Void, CJJSSink>> newPrep = prep.isPresent() || call.getPrep().isPresent()
+                        ? Optional.of(out -> {
+                            if (prep.isPresent()) {
+                                prep.get().apply(out);
+                            }
+                            if (call.getPrep().isPresent()) {
+                                call.getPrep().get().apply(out);
+                            }
+                            return null;
+                        })
+                        : Optional.empty();
                 return new CJJSBlob2(newPrep, call.getMain(), call.isPure());
             }
 
@@ -262,8 +269,8 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                         var target = ownerStr + "." + translateFieldName(field.getName());
                         switch (info.getKind()) {
                             case "":
-                                if (!field.isMutable() && field.getExpression().isPresent() &&
-                                        field.getExpression().get() instanceof CJIRLiteral) {
+                                if (!field.isMutable() && field.getExpression().isPresent()
+                                        && field.getExpression().get() instanceof CJIRLiteral) {
                                     var literal = (CJIRLiteral) field.getExpression().get();
                                     var result = visitLiteral(literal, null);
                                     Assert.that(result.isSimpleAndPure());
@@ -280,7 +287,8 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                             case "+=":
                                 Assert.equals(allArgs.size(), 1);
                                 return CJJSBlob2.simple(out -> {
-                                    out.append(target + "=(" + ownerStr + "." + translateMethodName(field.getGetterName()) + "())+");
+                                    out.append(target + "=(" + ownerStr + "."
+                                            + translateMethodName(field.getGetterName()) + "())+");
                                     allArgs.last().emitMain(out);
                                     return null;
                                 });
@@ -831,7 +839,8 @@ public final class CJJSExpressionTranslator2 extends CJJSTranslatorBase2 {
                         out.append("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;\n");
                         for (int i = 0; i < e.getClauses().size(); i++) {
                             var clause = e.getClauses().get(i);
-                            out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){\n");
+                            out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2())
+                                    + ")){\n");
                             out.append("const " + translateTarget(clause.get1()) + "=e;\n");
                             var clauseBody = translateExpression(clause.get3());
                             clauseBody.emitSet(out, tmpvar + "=");
