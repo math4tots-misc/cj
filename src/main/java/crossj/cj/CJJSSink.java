@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.FS;
 import crossj.base.List;
 import crossj.base.Map;
 
@@ -16,15 +17,17 @@ public final class CJJSSink {
     private int lastSourceColumn = 0;
     private boolean generatedLineStart = true;
 
-    String getSource() {
-        return src.toString();
+    public String getSource(String outFilePath) {
+        var index = outFilePath.lastIndexOf(FS.getSeparator());
+        var outFileName = index == -1 ? outFilePath : outFilePath.substring(index + 1);
+        return src.toString() + "\n//# sourceMappingURL=" + outFileName + ".map";
     }
 
-    String getSourceMap(String outFileName) {
+    public String getSourceMap(String outFileName) {
         var sb = new StringBuilder();
         sb.append("{\"version\":3,");
         sb.append("\"file\":\"" + outFileName + "\",");
-        sb.append("\"sourceRoot\":\"\",");
+        sb.append("\"sourceRoot\":\"../\","); // TODO: address this hack
         sb.append("\"sources\":[");
         for (int i = 0; i < sources.size(); i++) {
             if (i > 0) {
@@ -138,7 +141,7 @@ public final class CJJSSink {
             return '+';
         } else {
             Assert.equals(d, 63);
-            return '-';
+            return '/';
         }
     }
 }

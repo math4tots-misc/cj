@@ -12,7 +12,7 @@ import crossj.base.Str;
 public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
     private static final String jsroot = FS.join("src", "main", "resources", "js");
 
-    public static String translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
+    public static CJJSSink translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
         var out = new CJJSSink();
         var jsctx = new CJJSContext(enableStack);
         out.append("(function(){\n");
@@ -41,6 +41,7 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
                 var items = irctx.getAllLoadedItems();
                 int testCount = 0;
                 int itemCount = 0;
+                out.addMark(CJMark.of("<test>", 1, 1));
                 for (var item : items) {
                     var testMethods = item.getMethods().filter(meth -> meth.isTest());
                     if (testMethods.isEmpty()) {
@@ -61,7 +62,7 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
             }
         }, null);
         out.append("})();\n");
-        return out.getSource();
+        return out;
     }
 
     private static void emitPrelude(CJJSSink out) {
@@ -286,7 +287,10 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
                 var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
                 var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
                 var prefix = method.isAsync() ? "async " : "";
-                out.append(prefix + methodName + "(" + Str.join(",", allArgNames) + "){\n");
+                out.append(prefix);
+                out.addMark(method.getMark());
+                out.append(methodName);
+                out.append("(" + Str.join(",", allArgNames) + "){\n");
                 // inAsyncContext = method.isAsync();
                 var body = translateExpression(optionalBody.get());
                 for (var line : body.getLines()) {

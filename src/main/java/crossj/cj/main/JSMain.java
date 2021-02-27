@@ -117,17 +117,26 @@ public final class JSMain {
             var mainClass = ((CJIRRunModeWWW) runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
-        var js = CJJSTranslator2.translate(ctx, enableStack, runMode);
+        var jsSink = CJJSTranslator2.translate(ctx, enableStack, runMode);
         if (runMode instanceof CJIRRunModeWWW) {
             var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
             IO.delete(outPath);
             IO.copyFolder(wwwdir, outPath);
-            IO.writeFile(FS.join(outPath, "main.js"), js);
+            var filePath = FS.join(outPath, "main.js");
+            var sourceMapPath = filePath + ".map";
+            var js = jsSink.getSource(filePath);
+            var sourceMap = jsSink.getSourceMap(filePath);
+            IO.writeFile(filePath, js);
+            IO.writeFile(sourceMapPath, sourceMap);
         } else {
             if (outPath.equals("-")) {
-                IO.print(js);
+                IO.print(jsSink.getSource(""));
             } else {
+                var sourceMapPath = outPath + ".map";
+                var js = jsSink.getSource(outPath);
+                var sourceMap = jsSink.getSourceMap(outPath);
                 IO.writeFile(outPath, js);
+                IO.writeFile(sourceMapPath, sourceMap);
             }
         }
     }
