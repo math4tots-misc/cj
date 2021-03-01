@@ -18,7 +18,6 @@ public final class JSMain {
         var mode = Mode.Default;
         var sourceRoots = List.of(FS.join("src", "main", "cj"));
         var outPath = "";
-        var enableStack = true;
         String appId = "";
         CJIRRunMode runMode = null;
         for (var arg : args) {
@@ -45,12 +44,6 @@ public final class JSMain {
                         case "-o":
                         case "--out":
                             mode = Mode.Out;
-                            break;
-                        case "--disable-stack":
-                            enableStack = false;
-                            break;
-                        case "--enable-stack":
-                            enableStack = true;
                             break;
                         default:
                             throw new RuntimeException("Unrecognized arg: " + arg);
@@ -117,7 +110,7 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = CJJSTranslator.translate(ctx, enableStack, runMode);
+        var jsSink = CJJSTranslator.translate(ctx, runMode);
         if (runMode instanceof CJIRRunModeWWW) {
             var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
             IO.delete(outPath);

@@ -11,11 +11,11 @@ import crossj.base.Str;
 public final class CJJSTranslator extends CJJSTranslatorBase {
     private static final String jsroot = FS.join("src", "main", "resources", "js");
 
-    final CJJSSink out;
+    private final CJJSSink out;
 
-    public static CJJSSink translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
+    public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
         var out = new CJJSSink();
-        var jsctx = new CJJSContext(enableStack);
+        var jsctx = new CJJSContext();
         out.append("(function(){\n");
         out.append("\"use strict\";\n");
         emitPrelude(out);
