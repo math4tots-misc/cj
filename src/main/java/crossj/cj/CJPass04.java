@@ -167,7 +167,7 @@ final class CJPass04 extends CJPassBaseEx {
             checkResultType(arg.getMark(), parameterType, arg.getType());
         }
         var returnType = reifiedMethodRef.getReturnType();
-        return new CJIRMethodCall(ast, returnType, owner, methodRef, typeArgs, args);
+        return new CJIRMethodCall(ast, returnType, owner, reifiedMethodRef, args);
     }
 
     private CJIRMethodCall inferAndSynthesizeMethodCall(CJAstExpression ast, CJIRType owner, CJIRMethodRef methodRef,
@@ -184,7 +184,7 @@ final class CJPass04 extends CJPassBaseEx {
             checkResultType(arg.getMark(), parameterType, arg.getType());
         }
         var returnType = reifiedMethodRef.getReturnType();
-        return new CJIRMethodCall(ast, returnType, owner, methodRef, typeArgs, args);
+        return new CJIRMethodCall(ast, returnType, owner, reifiedMethodRef, args);
     }
 
     private CJIRExpression evalExpressionWithType(CJAstExpression expression, CJIRType type) {
@@ -380,7 +380,7 @@ final class CJPass04 extends CJPassBaseEx {
                     args.add(evalExpressionWithType(argAst, parameterType));
                 }
                 var returnType = reifiedMethodRef.getReturnType();
-                return new CJIRMethodCall(e, returnType, owner, methodRef, typeArgs, args);
+                return new CJIRMethodCall(e, returnType, owner, reifiedMethodRef, args);
             }
 
             @Override
