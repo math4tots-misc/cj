@@ -34,11 +34,11 @@ class MatrixTest {
     }
 
     @test
-    def multiply() = {
+    def multiply1() = {
         {
             val a = Matx([1, 2, 3], [4, 5, 6])
             val b = Matx([8, 9], [10, 11], [12, 13])
-            Assert.equal(a * b, Matx([36, 39], [45, 48]))
+            Assert.equal(a * b, Matx([64, 70], [154, 169]))
         }
     }
 
@@ -52,7 +52,7 @@ class MatrixTest {
     }
 
     @test
-    def multiply() {
+    def multiply2() {
         {
             # Multiplying two matrices
             val a = Matx(

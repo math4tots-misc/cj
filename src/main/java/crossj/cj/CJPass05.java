@@ -30,12 +30,24 @@ final class CJPass05 extends CJPassBaseEx {
 
     @Override
     void handleItem(CJIRItem item) {
+        checkForDuplicateMethods(item);
         if (item.isTrait()) {
             if (item.isNative()) {
                 throw CJError.of("Traits cannot be native", item.getMark());
             }
         } else {
             checkMethods(item);
+        }
+    }
+
+    private void checkForDuplicateMethods(CJIRItem item) {
+        var map = Map.<String, CJMark>of();
+        for (var method : item.getMethods()) {
+            var oldMark = map.getOrNull(method.getName());
+            if (oldMark != null) {
+                throw CJError.of("Duplicate method definition \"" + method.getName() + "\"", oldMark, method.getMark());
+            }
+            map.put(method.getName(), method.getMark());
         }
     }
 

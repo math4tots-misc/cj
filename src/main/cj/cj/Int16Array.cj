@@ -16,5 +16,4 @@ native class Int16Array : Collection[Int], Default, ToArrayBufferView, Repr, Def
     def default(): Self
     def toArrayBufferView(self: Self): ArrayBufferView
     def repr(self): String
-    def default(): Self
 }

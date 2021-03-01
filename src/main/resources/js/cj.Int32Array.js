@@ -29,7 +29,4 @@ class MC$cj$Int32Array {
     M$repr(self) {
         return "Int32Array(" + Array.from(self).join(", ") + ")";
     }
-    M$default() {
-        return new Int32Array();
-    }
 }

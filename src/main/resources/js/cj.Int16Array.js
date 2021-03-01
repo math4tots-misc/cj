@@ -29,7 +29,4 @@ class MC$cj$Int16Array {
     M$repr(self) {
         return "Int16Array(" + Array.from(self).join(", ") + ")";
     }
-    M$default() {
-        return new Int16Array();
-    }
 }
