@@ -11,6 +11,8 @@ import crossj.base.Str;
 public final class CJJSTranslator extends CJJSTranslatorBase {
     private static final String jsroot = FS.join("src", "main", "resources", "js");
 
+    final CJJSSink out;
+
     public static CJJSSink translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
         var out = new CJJSSink();
         var jsctx = new CJJSContext(enableStack);
@@ -145,8 +147,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
     }
 
     CJJSTranslator(CJJSSink out, CJJSContext ctx, CJIRItem item) {
-        super(out, ctx, item, item.isTrait() ? null
+        super(ctx, item, item.isTrait() ? null
                 : new CJIRClassType(item, item.getTypeParameters().map(tp -> new CJIRVariableType(tp, List.of()))));
+        this.out = out;
     }
 
     // private boolean inAsyncContext = false;
@@ -318,6 +321,6 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
     }
 
     private CJJSBlob translateExpression(CJIRExpression expression) {
-        return new CJJSExpressionTranslator(out, ctx, item, selfType).translateExpression(expression);
+        return new CJJSExpressionTranslator(ctx, item, selfType).translateExpression(expression);
     }
 }

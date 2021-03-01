@@ -5,13 +5,11 @@ import crossj.base.List;
 import crossj.base.Str;
 
 public abstract class CJJSTranslatorBase {
-    final CJJSSink out;
     final CJJSContext ctx;
     final CJIRItem item;
     final CJIRClassType selfType;
 
-    CJJSTranslatorBase(CJJSSink out, CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
-        this.out = out;
+    CJJSTranslatorBase(CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
         this.ctx = ctx;
         this.item = item;
         this.selfType = selfType;
@@ -145,17 +143,6 @@ public abstract class CJJSTranslatorBase {
         }
         var item = ((CJIRClassType) type).getItem();
         return isWrapperItem(item);
-    }
-
-    String toVariableOrLiteral(String expression) {
-        if (isVariableOrLiteral(expression)) {
-            return expression;
-        } else {
-            var tmpvar = ctx.newTempVarName();
-            out.append("const " + tmpvar + "=" + expression + ";\n");
-            Assert.that(isVariableOrLiteral(tmpvar));
-            return tmpvar;
-        }
     }
 
     boolean isVariableOrLiteral(String expression) {

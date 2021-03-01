@@ -7,8 +7,8 @@ import crossj.base.Optional;
 import crossj.base.Str;
 
 public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
-    CJJSExpressionTranslator(CJJSSink out, CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
-        super(out, ctx, item, selfType);
+    CJJSExpressionTranslator(CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
+        super(ctx, item, selfType);
     }
 
     CJJSBlob translateExpression(CJIRExpression expression) {
@@ -36,34 +36,26 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var exprs = e.getExpressions();
                 var returns = !e.getType().isUnitType();
                 var tmpvar = returns ? ctx.newTempVarName() : "undefined";
-                var prep = new Func1<Void, CJJSSink>() {
-                    @Override
-                    public Void apply(CJJSSink a) {
-                        if (returns) {
-                            out.append("let " + tmpvar + ";");
-                        }
-                        out.append("{\n");
-                        for (int i = 0; i + 1 < exprs.size(); i++) {
-                            translateExpression(exprs.get(i)).emitDrop(out);
-                        }
-                        var last = translateExpression(exprs.last());
-                        if (returns) {
-                            last.emitSet(out, tmpvar + "=");
-                        } else {
-                            last.emitDrop(out);
-                        }
-                        out.append("}\n");
-                        return null;
+                return CJJSBlob.withPrep(out -> {
+                    if (returns) {
+                        out.append("let " + tmpvar + ";");
                     }
-                };
-                var main = new Func1<Void, CJJSSink>() {
-                    @Override
-                    public Void apply(CJJSSink a) {
-                        out.append(tmpvar);
-                        return null;
+                    out.append("{\n");
+                    for (int i = 0; i + 1 < exprs.size(); i++) {
+                        translateExpression(exprs.get(i)).emitDrop(out);
                     }
-                };
-                return CJJSBlob.withPrep(prep, main, true);
+                    var last = translateExpression(exprs.last());
+                    if (returns) {
+                        last.emitSet(out, tmpvar + "=");
+                    } else {
+                        last.emitDrop(out);
+                    }
+                    out.append("}\n");
+                    return null;
+                }, out -> {
+                    out.append(tmpvar);
+                    return null;
+                }, true);
             }
 
             @Override
