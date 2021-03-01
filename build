@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Build a CJ program
+java -cp target/classes crossj.cj.main.JSMain -m "$1" -o target/out.js
