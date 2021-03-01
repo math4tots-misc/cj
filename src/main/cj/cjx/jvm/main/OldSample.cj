@@ -10,7 +10,7 @@ import cj.Buffer
 ## References:
 ##   - https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html
 ##   - https://en.wikipedia.org/wiki/Java_class_file
-class Sample {
+class OldSample {
 
     ## Constant pool tags
     static val cUtf8 = 1
@@ -227,17 +227,17 @@ class Sample {
         case nameAndType(Int, Int)
 
         def __get_tag(self): Int = when self {
-            case utf8(data) = Sample.cUtf8
-            case integer(i) = Sample.cInteger
-            case float(f) = Sample.cFloat
-            case long(i) = Sample.cLong
-            case double(f) = Sample.cDouble
-            case classref(nameIndex) = Sample.cClassref
-            case string(utf8Index) = Sample.cString
-            case fieldref(ci, nti) = Sample.cFieldref
-            case methodref(ci, nti) = Sample.cMethodref
-            case interfaceMethodref(ci, nti) = Sample.cInterfaceMethodref
-            case nameAndType(ni, di) = Sample.cNameAndType
+            case utf8(data) = OldSample.cUtf8
+            case integer(i) = OldSample.cInteger
+            case float(f) = OldSample.cFloat
+            case long(i) = OldSample.cLong
+            case double(f) = OldSample.cDouble
+            case classref(nameIndex) = OldSample.cClassref
+            case string(utf8Index) = OldSample.cString
+            case fieldref(ci, nti) = OldSample.cFieldref
+            case methodref(ci, nti) = OldSample.cMethodref
+            case interfaceMethodref(ci, nti) = OldSample.cInterfaceMethodref
+            case nameAndType(ni, di) = OldSample.cNameAndType
         }
 
         def emit(self, out: Buffer) {

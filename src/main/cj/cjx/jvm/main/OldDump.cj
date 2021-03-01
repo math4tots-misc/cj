@@ -9,7 +9,7 @@ import cj.Buffer
 import cj.FS
 
 ## Load and dump the contents of a JVM class file
-class Dump {
+class OldDump {
 
     ## Constant pool tags
     static val cUtf8 = 1
