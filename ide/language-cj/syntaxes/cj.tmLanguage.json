@@ -1,0 +1,103 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "cj",
+	"patterns": [
+		{
+			"match": "\\b(def\\b)(\\s+[a-z_]\\w*)?",
+			"captures": {
+				"1": {
+					"name": "keyword.control.cj"
+				},
+				"2": {
+					"name": "entity.name.function.cj"
+				}
+			}
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"name": "constant.numeric.cj",
+			"match": "0x[0-9A-Fa-f]+"
+		},
+		{
+			"name": "constant.numeric.cj",
+			"match": "\\d+\\.\\d*|\\.\\d+|\\d+"
+		},
+		{
+			"name": "entity.name.class.cj",
+			"match": "[A-Z]\\w*"
+		},
+		{
+			"comment": "Not perfect, but checks for up to 3 levels of nested '[...]' type args",
+			"name": "entity.name.function.cj",
+			"match": "[a-z_]\\w*(?=(\\[([A-Z]\\w*|\\.|,|\\?|\\[([A-Z]\\w*|\\.|,|\\?|\\[([A-Z]\\w*|\\.|,|\\?|\\[\\])*\\])*\\])*\\])?\\()"
+		},
+		{
+			"name": "variable.cj",
+			"match": "[a-z_]\\w*"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"comment": "Even though I prefer the coloring with 'constant.character.cj', bracket matching requires I use string",
+			"name": "string.quoted.single.cj",
+			"match": "'\\\\.'|'[^'\\\\]'"
+		},
+		{
+			"name": "comment.cj",
+			"match": "#[^\n]*(\n\\s*#[^\n]*)*"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "storage.type.item.cj",
+					"match": "\\b(class|union|trait|enum)\\b"
+				},
+				{
+					"name": "storage.type.cj",
+					"match": "\\b(enum|var|val)\\b"
+				},
+				{
+					"name": "storage.modifier.cj",
+					"match": "\\b(native|static|private|public|async)\\b"
+				},
+				{
+					"name": "keyword.control.cj",
+					"match": "\\b(throw|try|catch|finally|if|else|import|while|break|continue|new|package|return|and|or|is|not|in|then|switch|case|as|for|when|await)\\b"
+				},
+				{
+					"name": "keyword.operator.cj",
+					"match": "\\b(and|or|is|not|in)\\b"
+				},
+				{
+					"name": "support.other.cj",
+					"match": "\\bself\\b"
+				},
+				{
+					"name": "keyword.other.cj",
+					"match": "\\bSelf\\b"
+				},
+				{
+					"name": "constant.language.cj",
+					"match": "\\b(true|false|null)\\b"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.cj",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.cj",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.cj"
+}
