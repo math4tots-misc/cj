@@ -1,10 +1,10 @@
-package cjx.jx
+package cjx.js.sourcemap
 
-import cj.StringBuilder
 import cj.Error
+import cj.StringBuilder
 
-## Base 64 VLQ encoder util
-class JXB64VLQ {
+## Base 64 VLQ for javascript sourcemaps
+class JSB64VLQ {
 
     def encode(var x: Int): String {
         val sb = StringBuilder()
