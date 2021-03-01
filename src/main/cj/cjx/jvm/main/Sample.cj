@@ -7,7 +7,7 @@ import cjx.jvm.JVMClass
 ##
 ## Kinda like Sample, but uses JVMClass to do the heavy lifting
 ##
-class Sample2 {
+class Sample {
     def main() {
         val cls = JVMClass()
         cls.thisClass = cls.cp.classref("sample/Sample2")

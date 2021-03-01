@@ -6,7 +6,7 @@ import cjx.jvm.JVMClass
 import cj.Argv
 
 ## Like cjx.jvm.main.Dump, but uses the JVMClass class to parse and dump
-class Dump2 {
+class Dump {
     def main() {
         var includeConstantPool = false
         for path in Argv() {
