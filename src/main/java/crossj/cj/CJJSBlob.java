@@ -3,39 +3,39 @@ package crossj.cj;
 import crossj.base.Func1;
 import crossj.base.Optional;
 
-public final class CJJSBlob2 {
+public final class CJJSBlob {
     private final Optional<Func1<Void, CJJSSink>> prep;
     private final Func1<Void, CJJSSink> main;
     private final boolean pure;
 
-    static CJJSBlob2 simple(Func1<Void, CJJSSink> main) {
-        return new CJJSBlob2(Optional.empty(), main, false);
+    static CJJSBlob simple(Func1<Void, CJJSSink> main) {
+        return new CJJSBlob(Optional.empty(), main, false);
     }
 
-    static CJJSBlob2 simplestr(String js) {
-        return new CJJSBlob2(Optional.empty(), out -> {
+    static CJJSBlob simplestr(String js) {
+        return new CJJSBlob(Optional.empty(), out -> {
             out.append(js);
             return null;
         }, false);
     }
 
-    static CJJSBlob2 pure(String js) {
-        return new CJJSBlob2(Optional.empty(), out -> {
+    static CJJSBlob pure(String js) {
+        return new CJJSBlob(Optional.empty(), out -> {
             out.append(js);
             return null;
         }, true);
     }
 
-    static CJJSBlob2 markedPure(String js, CJMark mark) {
-        return new CJJSBlob2(Optional.empty(), out -> {
+    static CJJSBlob markedPure(String js, CJMark mark) {
+        return new CJJSBlob(Optional.empty(), out -> {
             out.addMark(mark);
             out.append(js);
             return null;
         }, true);
     }
 
-    static CJJSBlob2 withPrep(Func1<Void, CJJSSink> prep, Func1<Void, CJJSSink> main, boolean pure) {
-        return new CJJSBlob2(Optional.of(prep), main, pure);
+    static CJJSBlob withPrep(Func1<Void, CJJSSink> prep, Func1<Void, CJJSSink> main, boolean pure) {
+        return new CJJSBlob(Optional.of(prep), main, pure);
     }
 
     public Optional<Func1<Void, CJJSSink>> getPrep() {
@@ -46,7 +46,7 @@ public final class CJJSBlob2 {
         return main;
     }
 
-    public CJJSBlob2(Optional<Func1<Void, CJJSSink>> prep, Func1<Void, CJJSSink> main, boolean pure) {
+    public CJJSBlob(Optional<Func1<Void, CJJSSink>> prep, Func1<Void, CJJSSink> main, boolean pure) {
         this.prep = prep;
         this.main = main;
         this.pure = pure;
@@ -95,12 +95,12 @@ public final class CJJSBlob2 {
         return isSimple() && isPure();
     }
 
-    CJJSBlob2 toPure(CJJSContext ctx) {
+    CJJSBlob toPure(CJJSContext ctx) {
         if (pure) {
             return this;
         } else {
             var tmpvar = ctx.newTempVarName();
-            return new CJJSBlob2(Optional.of(out -> {
+            return new CJJSBlob(Optional.of(out -> {
                 if (prep.isPresent()) {
                     prep.get().apply(out);
                 }

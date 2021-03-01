@@ -8,7 +8,7 @@ import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
 
-public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
+public final class CJJSTranslator extends CJJSTranslatorBase {
     private static final String jsroot = FS.join("src", "main", "resources", "js");
 
     public static CJJSSink translate(CJIRContext irctx, boolean enableStack, CJIRRunMode runMode) {
@@ -106,7 +106,7 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
 
     private static void addTypeVariableMethods(CJJSSink out, CJJSContext jsctx, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
-        var translator = new CJJSTranslator2(out, jsctx, item);
+        var translator = new CJJSTranslator(out, jsctx, item);
         CJIRContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
             var params = trait.getItem().getTypeParameters();
             var args = trait.getArgs();
@@ -141,10 +141,10 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
     }
 
     private static void translateItem(CJJSSink out, CJJSContext ctx, CJIRItem item) {
-        new CJJSTranslator2(out, ctx, item).emitItem();
+        new CJJSTranslator(out, ctx, item).emitItem();
     }
 
-    CJJSTranslator2(CJJSSink out, CJJSContext ctx, CJIRItem item) {
+    CJJSTranslator(CJJSSink out, CJJSContext ctx, CJIRItem item) {
         super(out, ctx, item, item.isTrait() ? null
                 : new CJIRClassType(item, item.getTypeParameters().map(tp -> new CJIRVariableType(tp, List.of()))));
     }
@@ -242,14 +242,14 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
                         out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
                     } else {
                         out.append(mallocMethodName + "(" + argnames + "){\n");
-                        var initexprs = List.<CJJSBlob2>of();
+                        var initexprs = List.<CJJSBlob>of();
                         {
                             int i = 0;
                             for (var field : nonStaticFields) {
                                 if (field.includeInMalloc()) {
-                                    initexprs.add(CJJSBlob2.pure("a" + (i++)));
+                                    initexprs.add(CJJSBlob.pure("a" + (i++)));
                                 } else if (field.isLateinit()) {
-                                    initexprs.add(CJJSBlob2.pure("undefined"));
+                                    initexprs.add(CJJSBlob.pure("undefined"));
                                 } else {
                                     var expr = translateExpression(field.getExpression().get()).toPure(ctx);
                                     expr.emitPrep(out);
@@ -317,7 +317,7 @@ public final class CJJSTranslator2 extends CJJSTranslatorBase2 {
         out.append("}\n");
     }
 
-    private CJJSBlob2 translateExpression(CJIRExpression expression) {
-        return new CJJSExpressionTranslator2(out, ctx, item, selfType).translateExpression(expression);
+    private CJJSBlob translateExpression(CJIRExpression expression) {
+        return new CJJSExpressionTranslator(out, ctx, item, selfType).translateExpression(expression);
     }
 }

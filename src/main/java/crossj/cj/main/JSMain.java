@@ -11,7 +11,7 @@ import crossj.cj.CJIRRunModeMain;
 import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
-import crossj.cj.CJJSTranslator2;
+import crossj.cj.CJJSTranslator;
 
 public final class JSMain {
     public static void main(String[] args) {
@@ -117,7 +117,7 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = CJJSTranslator2.translate(ctx, enableStack, runMode);
+        var jsSink = CJJSTranslator.translate(ctx, enableStack, runMode);
         if (runMode instanceof CJIRRunModeWWW) {
             var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
             IO.delete(outPath);

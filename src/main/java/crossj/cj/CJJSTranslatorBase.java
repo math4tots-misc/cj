@@ -4,13 +4,13 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Str;
 
-public abstract class CJJSTranslatorBase2 {
+public abstract class CJJSTranslatorBase {
     final CJJSSink out;
     final CJJSContext ctx;
     final CJIRItem item;
     final CJIRClassType selfType;
 
-    CJJSTranslatorBase2(CJJSSink out, CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
+    CJJSTranslatorBase(CJJSSink out, CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {
         this.out = out;
         this.ctx = ctx;
         this.item = item;
