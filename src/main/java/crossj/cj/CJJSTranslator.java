@@ -31,8 +31,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             @Override
             public Void visitWWW(CJIRRunModeWWW m, Void a) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
-                out.append("window.onload = () => {\n");
-                out.append(mainClass + "." + translateMethodName("main") + "();\n");
+                out.append("window.onload = () => {");
+                out.append(mainClass + "." + translateMethodName("main") + "();");
                 out.append("}\n");
                 return null;
             }
@@ -115,9 +115,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             for (int i = 0; i < args.size(); i++) {
                 var typeMethodName = translateTraitLevelTypeVariableNameWithTraitName(trait.getItem().getFullName(),
                         params.get(i).getName());
-                out.append(itemMetaClassName + ".prototype." + typeMethodName + "=function(){\n");
-                out.append("return " + translator.translateType(args.get(i)) + ";\n");
-                out.append("}\n");
+                out.append(itemMetaClassName + ".prototype." + typeMethodName + "=function(){");
+                out.append("return " + translator.translateType(args.get(i)) + "}\n");
             }
             return null;
         });
@@ -167,9 +166,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         out.append("class " + metaClassName + "{\n");
         if (!item.isTrait() && item.getTypeParameters().size() > 0) {
             var args = item.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
-            out.append("constructor(" + Str.join(",", args) + "){\n");
+            out.append("constructor(" + Str.join(",", args) + "){");
             for (var arg : args) {
-                out.append("this." + arg + "=" + arg + ";\n");
+                out.append("this." + arg + "=" + arg + ";");
             }
             out.append("}\n");
         }
@@ -178,8 +177,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         for (var field : item.getFields().filter(f -> f.isStatic())) {
             var getterMethodName = translateMethodName(field.getGetterName());
             var fieldName = translateFieldName(field.getName());
-            out.append(getterMethodName + "(){\n");
-            out.append("if (!('" + fieldName + "' in this)){\n");
+            out.append(getterMethodName + "(){");
+            out.append("if(!('" + fieldName + "' in this)){");
             if (field.isLateinit()) {
                 out.append("throw new Error('lateinit field used before init')");
             } else {
@@ -187,10 +186,10 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 blob.emitPrep(out);
                 out.append("this." + fieldName + "=");
                 blob.emitMain(out);
-                out.append(";\n");
+                out.append(";");
             }
-            out.append("}\n");
-            out.append("return this." + fieldName + ";\n");
+            out.append("}");
+            out.append("return this." + fieldName + ";");
             out.append("}\n");
             if (field.isMutable()) {
                 var setterMethodName = translateMethodName(field.getSetterName());
@@ -213,11 +212,10 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var mallocMethodName = translateMethodName("__malloc");
                 if (field.getExpression().isPresent()) {
                     var expr = translateExpression(field.getExpression().get());
-                    out.append(mallocMethodName + "(){\n");
+                    out.append(mallocMethodName + "(){");
                     expr.emitPrep(out);
                     out.append("return ");
                     expr.emitMain(out);
-                    out.append(";\n");
                     out.append("}\n");
                 } else {
                     out.append(mallocMethodName + "(a){return a}\n");
@@ -244,7 +242,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     if (nonStaticFields.all(f -> f.includeInMalloc())) {
                         out.append(mallocMethodName + "(" + argnames + "){return [" + argnames + "]}\n");
                     } else {
-                        out.append(mallocMethodName + "(" + argnames + "){\n");
+                        out.append(mallocMethodName + "(" + argnames + "){");
                         var initexprs = List.<CJJSBlob>of();
                         {
                             int i = 0;
@@ -267,8 +265,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                             }
                             initexprs.get(i).emitMain(out);
                         }
-                        out.append("];\n");
-                        out.append("}\n");
+                        out.append("]}\n");
                     }
                 }
             }
@@ -299,19 +296,19 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 out.append(prefix);
                 out.addMark(method.getMark());
                 out.append(methodName);
-                out.append("(" + Str.join(",", allArgNames) + "){\n");
+                out.append("(" + Str.join(",", allArgNames) + "){");
                 // inAsyncContext = method.isAsync();
                 var body = translateExpression(optionalBody.get());
                 body.emitPrep(out);
                 if (method.getReturnType().isUnitType()) {
                     if (!body.isPure()) {
                         body.emitMain(out);
-                        out.append(";\n");
+                        out.append(";");
                     }
                 } else {
                     out.append("return ");
                     body.emitMain(out);
-                    out.append(";\n");
+                    out.append(";");
                 }
                 out.append("}\n");
                 // inAsyncContext = false;

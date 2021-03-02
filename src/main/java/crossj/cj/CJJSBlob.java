@@ -66,7 +66,7 @@ public final class CJJSBlob {
         emitPrep(out);
         if (!pure) {
             emitMain(out);
-            out.append(";\n");
+            out.append(";");
         }
     }
 
@@ -74,7 +74,7 @@ public final class CJJSBlob {
         emitPrep(out);
         out.append(target);
         emitMain(out);
-        out.append(";\n");
+        out.append(";");
     }
 
     /**
@@ -106,7 +106,7 @@ public final class CJJSBlob {
                 }
                 out.append("const " + tmpvar + "=");
                 main.apply(out);
-                out.append(";\n");
+                out.append(";");
                 return null;
             }), out -> {
                 out.append(tmpvar);

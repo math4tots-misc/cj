@@ -40,7 +40,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     if (returns) {
                         out.append("let " + tmpvar + ";");
                     }
-                    out.append("{\n");
+                    out.append("{");
                     for (int i = 0; i + 1 < exprs.size(); i++) {
                         translateExpression(exprs.get(i)).emitDrop(out);
                     }
@@ -50,7 +50,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     } else {
                         last.emitDrop(out);
                     }
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append(tmpvar);
@@ -195,7 +195,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             allArgs.get(2).emitMain(out);
                             out.append("]=");
                             allArgs.get(3).emitMain(out);
-                            out.append(";\n");
+                            out.append(";");
                             return null;
                         }, out -> {
                             out.append("undefined");
@@ -342,7 +342,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     out.append(translateTarget(e.getTarget()));
                     out.append("=");
                     inner.emitMain(out);
-                    out.append(";\n");
+                    out.append(";");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -406,14 +406,14 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
 
                 return CJJSBlob.withPrep(out -> {
                     if (e.getKind() == CJIRAugAssignKind.Add && isOne(e.getExpression())) {
-                        out.append(target + "++;\n");
+                        out.append(target + "++;");
                     } else if (e.getKind() == CJIRAugAssignKind.Subtract && isOne(e.getExpression())) {
-                        out.append(target + "--;\n");
+                        out.append(target + "--;");
                     } else {
                         augexpr.emitPrep(out);
                         out.append(target + op);
                         augexpr.emitMain(out);
-                        out.append(";\n");
+                        out.append(";");
                     }
                     return null;
                 }, out -> {
@@ -450,12 +450,12 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 } else {
                     var tmpvar = ctx.newTempVarName();
                     return CJJSBlob.withPrep(out -> {
-                        out.append("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";\n");
+                        out.append("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";");
                         out.append("if(" + (e.isAnd() ? "" : "!") + "(");
                         left.emitMain(out);
-                        out.append(")){\n");
+                        out.append(")){");
                         right.emitSet(out, tmpvar + "=");
-                        out.append("}\n");
+                        out.append("}");
                         return null;
                     }, out -> {
                         out.append(tmpvar);
@@ -562,15 +562,15 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 } else {
                     var tmpvar = ctx.newTempVarName();
                     return CJJSBlob.withPrep(out -> {
-                        out.append("let " + tmpvar + ";\n");
+                        out.append("let " + tmpvar + ";");
                         condition.emitPrep(out);
                         out.append("if(");
                         condition.emitMain(out);
-                        out.append("){\n");
+                        out.append("){");
                         left.emitSet(out, tmpvar + "=");
-                        out.append("}else{\n");
+                        out.append("}else{");
                         right.emitSet(out, tmpvar + "=");
-                        out.append("}\n");
+                        out.append("}");
                         return null;
                     }, out -> {
                         out.append(tmpvar);
@@ -588,18 +588,18 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var tmpvar = ctx.newTempVarName();
 
                 return CJJSBlob.withPrep(out -> {
-                    out.append("let " + tmpvar + ";\n");
+                    out.append("let " + tmpvar + ";");
                     inner.emitPrep(out);
                     out.append("if((");
                     inner.emitMain(out);
-                    out.append(")!==null){\n");
+                    out.append(")!==null){");
                     out.append("let " + target + "=");
                     inner.emitMain(out);
-                    out.append(";\n");
+                    out.append(";");
                     left.emitSet(out, tmpvar + "=");
-                    out.append("}else{\n");
+                    out.append("}else{");
                     right.emitSet(out, tmpvar + "=");
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append(tmpvar);
@@ -615,16 +615,16 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     if (condition.isSimple()) {
                         out.append("while(");
                         condition.emitMain(out);
-                        out.append("){\n");
+                        out.append("){");
                     } else {
-                        out.append("while(true){\n");
+                        out.append("while(true){");
                         condition.emitPrep(out);
                         out.append("if(!(");
                         condition.emitMain(out);
-                        out.append("))break;\n");
+                        out.append("))break;");
                     }
                     body.emitDrop(out);
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -641,9 +641,9 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     iterator.emitPrep(out);
                     out.append("for (const " + target + " of ");
                     iterator.emitMain(out);
-                    out.append("){\n");
+                    out.append("){");
                     body.emitDrop(out);
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -657,15 +657,15 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var tmpvar = ctx.newTempVarName();
                 return CJJSBlob.withPrep(out -> {
                     target.emitPrep(out);
-                    out.append("let " + tmpvar + ";\n");
+                    out.append("let " + tmpvar + ";");
                     if (e.getTarget().getType().isSimpleUnion()) {
                         out.append("switch(");
                         target.emitMain(out);
-                        out.append("){\n");
+                        out.append("){");
                     } else {
                         out.append("switch((");
                         target.emitMain(out);
-                        out.append(")[0]){\n");
+                        out.append(")[0]){");
                     }
                     for (var entry : e.getCases()) {
                         var caseDefn = entry.get2();
@@ -674,25 +674,25 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                         var names = entry.get3().map(d -> translateLocalVariableName(d.getName()));
                         var mutable = entry.get3().any(d -> d.isMutable());
                         var prefix = mutable ? "let " : "const ";
-                        out.append("case " + tag + ":{\n");
+                        out.append("case " + tag + ":{");
                         if (!e.getTarget().getType().isSimpleUnion()) {
                             out.append(prefix + "[," + Str.join(",", names) + "]=");
                             target.emitMain(out);
-                            out.append(";\n");
+                            out.append(";");
                         }
                         body.emitSet(out, tmpvar + "=");
-                        out.append("break;\n");
-                        out.append("}\n");
+                        out.append("break;");
+                        out.append("}");
                     }
                     if (e.getFallback().isPresent()) {
                         var fallback = translateExpression(e.getFallback().get());
-                        out.append("default:{\n");
+                        out.append("default:{");
                         fallback.emitSet(out, tmpvar + "=");
-                        out.append("}\n");
+                        out.append("}");
                     } else {
-                        out.append("default:throw new Error(\"Invalid tag\");\n");
+                        out.append("default:throw new Error(\"Invalid tag\");");
                     }
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append(tmpvar);
@@ -707,10 +707,10 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
 
                 return CJJSBlob.withPrep(out -> {
                     target.emitPrep(out);
-                    out.append("let " + tmpvar + ";\n");
+                    out.append("let " + tmpvar + ";");
                     out.append("switch(");
                     target.emitMain(out);
-                    out.append("){\n");
+                    out.append("){");
                     for (var case_ : e.getCases()) {
                         var values = case_.get1().map(c -> {
                             var v = translateExpression(c);
@@ -725,24 +725,24 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                         for (var value : values) {
                             out.append("case ");
                             value.emitMain(out);
-                            out.append(":\n");
+                            out.append(":");
                         }
-                        out.append("{\n");
+                        out.append("{");
                         var body = translateExpression(case_.get2());
                         body.emitSet(out, tmpvar + "=");
-                        out.append("break;\n");
-                        out.append("}\n");
+                        out.append("break;");
+                        out.append("}");
                     }
                     out.append("default:");
                     if (e.getFallback().isPresent()) {
-                        out.append("{\n");
+                        out.append("{");
                         var fallback = translateExpression(e.getFallback().get());
                         fallback.emitSet(out, tmpvar + "=");
-                        out.append("}\n");
+                        out.append("}");
                     } else {
-                        out.append("throw new Error('Unhandled switch case');\n");
+                        out.append("throw new Error('Unhandled switch case');");
                     }
-                    out.append("}\n");
+                    out.append("}");
                     return null;
                 }, out -> {
                     out.append(tmpvar);
@@ -766,13 +766,13 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     });
                 } else {
                     return CJJSBlob.simple(out -> {
-                        out.append("(" + paramstr + "{\n");
+                        out.append("(" + paramstr + "{");
                         if (e.getReturnType().isUnionType()) {
                             blob.emitDrop(out);
                         } else {
                             blob.emitSet(out, "return ");
                         }
-                        out.append("}\n");
+                        out.append("}");
                         out.append(")");
                         return null;
                     });
@@ -810,7 +810,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     inner.emitPrep(out);
                     out.append("throw [");
                     inner.emitMain(out);
-                    out.append("," + type + "];\n");
+                    out.append("," + type + "];");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -824,27 +824,27 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var body = translateExpression(e.getBody());
 
                 return CJJSBlob.withPrep(out -> {
-                    out.append("let " + tmpvar + ";\n");
-                    out.append("try{\n");
+                    out.append("let " + tmpvar + ";");
+                    out.append("try{");
                     body.emitSet(out, tmpvar + "=");
                     if (e.getClauses().size() > 0) {
-                        out.append("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;\n");
+                        out.append("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;");
                         for (int i = 0; i < e.getClauses().size(); i++) {
                             var clause = e.getClauses().get(i);
                             out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2())
-                                    + ")){\n");
-                            out.append("const " + translateTarget(clause.get1()) + "=e;\n");
+                                    + ")){");
+                            out.append("const " + translateTarget(clause.get1()) + "=e;");
                             var clauseBody = translateExpression(clause.get3());
                             clauseBody.emitSet(out, tmpvar + "=");
-                            out.append("}\n");
+                            out.append("}");
                         }
-                        out.append("else{throw p;}\n");
+                        out.append("else{throw p;}");
                     }
-                    out.append("}\n");
+                    out.append("}");
                     if (e.getFin().isPresent()) {
-                        out.append("finally{\n");
+                        out.append("finally{");
                         translateExpression(e.getFin().get()).emitDrop(out);
-                        out.append("}\n");
+                        out.append("}");
                     }
                     return null;
                 }, out -> {
