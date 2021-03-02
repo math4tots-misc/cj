@@ -1,8 +1,8 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.Window
-import cj.js.JSObject
-import cj.js.JSWrapper
+import cjx.js.web.Window
+import cjx.js.JSObject
+import cjx.js.JSWrapper
 
 class WebGLShader : JSWrapper {
     val _obj :  JSObject

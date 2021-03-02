@@ -1,13 +1,13 @@
 package cjx.books.webgl.main
 
-import cj.js.web.WebGLBuffer
+import cjx.js.web.WebGLBuffer
 import cjx.books.webgl.main.Base
 import cj.Int16Array
 import cj.Float32Array
-import cj.js.web.HTMLCanvasElement
-import cj.js.web.WebGL2RenderingContext
-import cj.js.web.Document
-import cj.js.web.Window
+import cjx.js.web.HTMLCanvasElement
+import cjx.js.web.WebGL2RenderingContext
+import cjx.js.web.Document
+import cjx.js.web.Window
 
 @derive(default)
 class Ch02s01 : Base {

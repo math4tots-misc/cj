@@ -1,10 +1,10 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.WebGLVertexArrayObject
-import cj.js.web.WebGLRenderingContext
-import cj.js.JSWrapper
-import cj.js.web.Window
-import cj.js.JSObject
+import cjx.js.web.WebGLVertexArrayObject
+import cjx.js.web.WebGLRenderingContext
+import cjx.js.JSWrapper
+import cjx.js.web.Window
+import cjx.js.JSObject
 
 class WebGL2RenderingContext : WebGLRenderingContext {
     val _obj : JSObject

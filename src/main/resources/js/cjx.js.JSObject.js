@@ -1,4 +1,4 @@
-class MC$cj$js$JSObject {
+class MC$cjx$js$JSObject {
     M$field(self, key) {
         return self[key];
     }

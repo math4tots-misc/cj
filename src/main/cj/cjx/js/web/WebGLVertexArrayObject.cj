@@ -1,8 +1,8 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.Window
-import cj.js.JSWrapper
-import cj.js.JSObject
+import cjx.js.web.Window
+import cjx.js.JSWrapper
+import cjx.js.JSObject
 
 class WebGLVertexArrayObject : JSWrapper {
     val _obj :  JSObject

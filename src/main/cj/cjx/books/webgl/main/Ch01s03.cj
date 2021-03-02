@@ -1,11 +1,11 @@
 package cjx.books.webgl.main
 
 import cj.Math
-import cj.js.web.KeyboardEvent
-import cj.js.web.WebGL2RenderingContext
-import cj.js.web.Window
-import cj.js.web.HTMLCanvasElement
-import cj.js.web.Document
+import cjx.js.web.KeyboardEvent
+import cjx.js.web.WebGL2RenderingContext
+import cjx.js.web.Window
+import cjx.js.web.HTMLCanvasElement
+import cjx.js.web.Document
 
 class Ch01s03 {
     def main() = {

@@ -1,8 +1,8 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.Window
-import cj.js.JSObject
-import cj.js.web.UIEvent
+import cjx.js.web.Window
+import cjx.js.JSObject
+import cjx.js.web.UIEvent
 
 class KeyboardEvent : UIEvent {
     val _obj :  JSObject

@@ -1,4 +1,4 @@
-class MC$cj$js$web$Web {
+class MC$cjx$js$web$Web {
     M$document() {
         return document;
     }

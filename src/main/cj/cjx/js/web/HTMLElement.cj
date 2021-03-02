@@ -1,7 +1,7 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.GlobalEventHandlers
-import cj.js.web.Element
+import cjx.js.web.GlobalEventHandlers
+import cjx.js.web.Element
 
 trait HTMLElement : Element, GlobalEventHandlers {
     def __get_innerText(self): String = self.field("innerText").unsafeCast()

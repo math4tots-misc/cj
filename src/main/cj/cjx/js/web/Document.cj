@@ -1,10 +1,10 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.GlobalEventHandlers
-import cj.js.web.Element
-import cj.js.web.Web
-import cj.js.JSObject
-import cj.js.JSWrapper
+import cjx.js.web.GlobalEventHandlers
+import cjx.js.web.Element
+import cjx.js.web.Web
+import cjx.js.JSObject
+import cjx.js.JSWrapper
 
 class Document : JSWrapper, GlobalEventHandlers {
     val _obj : JSObject

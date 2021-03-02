@@ -1,7 +1,7 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.JSObject
-import cj.js.web.Window
+import cjx.js.JSObject
+import cjx.js.web.Window
 
 class WebGLUniformLocation {
     val _obj :  JSObject

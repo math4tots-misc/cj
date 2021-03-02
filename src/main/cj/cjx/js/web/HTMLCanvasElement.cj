@@ -1,10 +1,10 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.WebGL2RenderingContext
-import cj.js.web.CanvasRenderingContext2D
-import cj.js.web.Window
-import cj.js.JSObject
-import cj.js.web.HTMLElement
+import cjx.js.web.WebGL2RenderingContext
+import cjx.js.web.CanvasRenderingContext2D
+import cjx.js.web.Window
+import cjx.js.JSObject
+import cjx.js.web.HTMLElement
 
 class HTMLCanvasElement : HTMLElement {
     val _obj :  JSObject

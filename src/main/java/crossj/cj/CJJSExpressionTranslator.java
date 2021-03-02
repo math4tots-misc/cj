@@ -176,8 +176,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     case "cj.List.default":
                         Assert.equals(allArgs.size(), 0);
                         return CJJSBlob.simplestr("[]");
-                    case "cj.js.JSObject.field":
-                    case "cj.js.JSWrapper.field":
+                    case "cjx.js.JSObject.field":
+                    case "cjx.js.JSWrapper.field":
                         Assert.equals(allArgs.size(), 2);
                         return CJJSBlob.simple(out -> {
                             allArgs.get(0).emitMain(out);
@@ -186,8 +186,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             out.append("]");
                             return null;
                         });
-                    case "cj.js.JSObject.setField":
-                    case "cj.js.JSWrapper.setField":
+                    case "cjx.js.JSObject.setField":
+                    case "cjx.js.JSWrapper.setField":
                         Assert.equals(allArgs.size(), 4);
                         return CJJSBlob.withPrep(out -> {
                             allArgs.get(1).emitMain(out);
@@ -201,9 +201,9 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             out.append("undefined");
                             return null;
                         }, true);
-                    case "cj.js.JSObject.call1":
-                    case "cj.js.JSObject.call":
-                    case "cj.js.JSWrapper.call": {
+                    case "cjx.js.JSObject.call1":
+                    case "cjx.js.JSObject.call":
+                    case "cjx.js.JSWrapper.call": {
                         Assert.equals(allArgs.size(), 3);
                         return CJJSBlob.simple(out -> {
                             allArgs.get(0).emitMain(out);
@@ -215,15 +215,15 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             return null;
                         });
                     }
-                    case "cj.js.JSON.fromList":
+                    case "cjx.js.JSON.fromList":
                     case "cj.Double._fromInt":
                     case "cj.Double.toDouble":
                     case "cj.Int.toDouble":
                     case "cj.Int._fromChar":
                         Assert.equals(allArgs.size(), 1);
                         return allArgs.get(0);
-                    case "cj.js.JSON._unsafeCast":
-                    case "cj.js.JSObject.unsafeCast":
+                    case "cjx.js.JSON._unsafeCast":
+                    case "cjx.js.JSObject.unsafeCast":
                         Assert.equals(allArgs.size(), 2);
                         return allArgs.get(1);
                     case "cj.Fn0":

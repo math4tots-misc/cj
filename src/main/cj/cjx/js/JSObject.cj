@@ -1,4 +1,4 @@
-package cj.js
+package cjx.js
 
 
 @implicit(Any, _fromAny)

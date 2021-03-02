@@ -1,6 +1,6 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.Node
+import cjx.js.web.Node
 
 trait Element : Node {
     def __get_innerHTML(self: Self): String = self.field("innerHTML").toString()

@@ -1,8 +1,8 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.KeyboardEvent
-import cj.js.web.MouseEvent
-import cj.js.JSWrapper
+import cjx.js.web.KeyboardEvent
+import cjx.js.web.MouseEvent
+import cjx.js.JSWrapper
 
 trait GlobalEventHandlers : JSWrapper {
     def onclick(self: Self, f: Fn[MouseEvent, Unit]) = self.setField("onclick", f)

@@ -1,7 +1,7 @@
 package sample.web
 
-import cj.js.web.HTMLCanvasElement
-import cj.js.web.Document
+import cjx.js.web.HTMLCanvasElement
+import cjx.js.web.Document
 
 class Sample2 {
     def main() = {

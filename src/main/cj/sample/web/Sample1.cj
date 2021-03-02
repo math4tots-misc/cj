@@ -1,8 +1,8 @@
 package sample.web
 
-import cj.js.web.HTMLElement
-import cj.js.web.HTMLDivElement
-import cj.js.web.Document
+import cjx.js.web.HTMLElement
+import cjx.js.web.HTMLDivElement
+import cjx.js.web.Document
 
 class Sample1 {
     def main() = {

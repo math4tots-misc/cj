@@ -1,12 +1,12 @@
-package cj.js.web
+package cjx.js.web
 
-import cj.js.web.WebGLUniformLocation
-import cj.js.web.WebGLProgram
-import cj.js.web.WebGLShader
+import cjx.js.web.WebGLUniformLocation
+import cjx.js.web.WebGLProgram
+import cjx.js.web.WebGLShader
 import cj.ToArrayBufferView
-import cj.js.web.WebGLBuffer
+import cjx.js.web.WebGLBuffer
 import cj.Float32Array
-import cj.js.JSWrapper
+import cjx.js.JSWrapper
 
 trait WebGLRenderingContext : JSWrapper {
 

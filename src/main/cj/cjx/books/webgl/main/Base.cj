@@ -1,12 +1,12 @@
 package cjx.books.webgl.main
 
-import cj.js.web.WebGLProgram
-import cj.js.web.WebGLShader
-import cj.js.web.HTMLCanvasElement
-import cj.js.web.Window
-import cj.js.web.HTMLScriptElement
-import cj.js.web.Document
-import cj.js.web.WebGL2RenderingContext
+import cjx.js.web.WebGLProgram
+import cjx.js.web.WebGLShader
+import cjx.js.web.HTMLCanvasElement
+import cjx.js.web.Window
+import cjx.js.web.HTMLScriptElement
+import cjx.js.web.Document
+import cjx.js.web.WebGL2RenderingContext
 
 trait Base {
 
