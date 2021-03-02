@@ -52,6 +52,7 @@ public final class CJJSTranslator2 {
                 return null;
             }
         }, null);
+        tr.out.append("(function(){\n\"use strict\";\n");
         tr.emitQueued();
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
             @Override
@@ -93,6 +94,7 @@ public final class CJJSTranslator2 {
                 return null;
             }
         }, null);
+        tr.out.append("})()");
         return tr.out;
     }
 
