@@ -45,7 +45,7 @@ public final class CJJSSink {
         return sb.toString();
     }
 
-    void append(String string) {
+    public void append(String string) {
         int ch;
         for (int i = 0; i < string.length(); i += Character.charCount(ch)) {
             ch = string.codePointAt(i);
@@ -61,7 +61,7 @@ public final class CJJSSink {
         }
     }
 
-    void addMark(CJMark mark) {
+    public void addMark(CJMark mark) {
         addMapping(mark.filename, mark.line > 0 ? mark.line - 1 : 0, mark.column > 0 ? mark.column - 1 : 0);
     }
 
