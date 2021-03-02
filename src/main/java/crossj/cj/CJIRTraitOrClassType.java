@@ -2,7 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 
-abstract class CJIRTraitOrClassType {
+public abstract class CJIRTraitOrClassType {
     private CJIRBinding binding = null;
     private final CJIRItem item;
     private final List<CJIRType> args;

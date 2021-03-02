@@ -77,7 +77,7 @@ final class CJJSExpressionTranslator2 {
                     } else {
                         last.emitDrop(out);
                     }
-                    out.append("}");
+                    out.append("};");
                 }, out -> {
                     out.append(tmpvar);
                 }, true);
@@ -95,133 +95,133 @@ final class CJJSExpressionTranslator2 {
                 }
 
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitVariableDeclaration(CJIRVariableDeclaration e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitVariableAccess(CJIRVariableAccess e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitAssignment(CJIRAssignment e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitAugmentedAssignment(CJIRAugmentedAssignment e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitLogicalNot(CJIRLogicalNot e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitLogicalBinop(CJIRLogicalBinop e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitIs(CJIRIs e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitNullWrap(CJIRNullWrap e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitListDisplay(CJIRListDisplay e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitTupleDisplay(CJIRTupleDisplay e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitIf(CJIRIf e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitIfNull(CJIRIfNull e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitWhile(CJIRWhile e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitFor(CJIRFor e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitWhen(CJIRWhen e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitSwitch(CJIRSwitch e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitLambda(CJIRLambda e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitReturn(CJIRReturn e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitAwait(CJIRAwait e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitThrow(CJIRThrow e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
 
             @Override
             public CJJSBlob2 visitTry(CJIRTry e, Void a) {
                 // TODO Auto-generated method stub
-                return null;
+                return CJJSBlob2.pure("TODO");
             }
         }, null);
     }

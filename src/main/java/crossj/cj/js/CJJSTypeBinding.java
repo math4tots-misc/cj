@@ -4,6 +4,7 @@ import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Str;
 import crossj.cj.CJIRClassType;
+import crossj.cj.CJIRReifiedMethodRef;
 import crossj.cj.CJIRSelfType;
 import crossj.cj.CJIRType;
 import crossj.cj.CJIRTypeVisitor;
@@ -18,6 +19,27 @@ final class CJJSTypeBinding {
 
     static CJJSTypeBinding empty() {
         return new CJJSTypeBinding(Map.of());
+    }
+
+    CJJSReifiedMethod translate(CJJSReifiedType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+        Map<String, CJJSReifiedType> map = Map.of();
+        map.put("Self", owner);
+        var methodRef = reifiedMethodRef.getMethodRef();
+        var methodOwner = methodRef.getOwner();
+        var itemTypeParameters = methodOwner.getItem().getTypeParameters();
+        for (int i = 0; i < itemTypeParameters.size(); i++) {
+            var typeParameter = itemTypeParameters.get(i);
+            var type = methodOwner.getArgs().get(i);
+            map.put(typeParameter.getName(), apply(type));
+        }
+        var methodTypeParameters = methodRef.getMethod().getTypeParameters();
+        for (int i = 0; i < methodTypeParameters.size(); i++) {
+            var typeParameter = methodTypeParameters.get(i);
+            var type = reifiedMethodRef.getTypeArgs().get(i);
+            map.put(typeParameter.getName(), apply(type));
+        }
+        var binding = new CJJSTypeBinding(map);
+        return new CJJSReifiedMethod(owner, methodRef.getMethod(), binding);
     }
 
     boolean isEmpty() {

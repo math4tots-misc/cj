@@ -32,4 +32,12 @@ public final class CJJSReifiedType {
         return args.isEmpty() ? item.getFullName()
                 : item.getFullName() + "[" + Str.join(",", args.map(a -> a.toString())) + "]";
     }
+
+    public CJIRItem getItem() {
+        return item;
+    }
+
+    public List<CJJSReifiedType> getArgs() {
+        return args;
+    }
 }
