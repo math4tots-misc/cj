@@ -6,7 +6,11 @@ public final class CJJSMethodNameRegistry {
     private final Map<String, Integer> bindingToId = Map.of();
 
     public String getName(String itemName, String methodName, CJJSTypeBinding binding) {
-        return itemName.replace(".", "$") + "$" + methodName + (binding.isEmpty() ? "" : "$" + getBindingId(binding));
+        return getNonGenericName(itemName, methodName) + (binding.isEmpty() ? "" : "$" + getBindingId(binding));
+    }
+
+    public String getNonGenericName(String itemName, String methodName) {
+        return itemName.replace(".", "$") + "$" + methodName;
     }
 
     public String nameForReifiedMethod(CJJSReifiedMethod reifiedMethod) {

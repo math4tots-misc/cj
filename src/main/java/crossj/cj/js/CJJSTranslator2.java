@@ -27,7 +27,7 @@ public final class CJJSTranslator2 {
 
             @Override
             public Void visitMain(CJIRRunModeMain m, Void a) {
-                // TODO Auto-generated method stub
+                tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
 
@@ -56,7 +56,8 @@ public final class CJJSTranslator2 {
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
             @Override
             public Void visitMain(CJIRRunModeMain m, Void a) {
-                // TODO Auto-generated method stub
+                var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
+                tr.out.append(mainMethodName + "();\n");
                 return null;
             }
 
@@ -164,7 +165,7 @@ public final class CJJSTranslator2 {
         if (FS.isFile(path)) {
             out.append(IO.readFile(path));
         } else {
-            throw CJError.of("File " + fileName + " not found", mark);
+            // throw CJError.of("File " + fileName + " not found", mark);
         }
     }
 

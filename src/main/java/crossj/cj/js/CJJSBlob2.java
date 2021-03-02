@@ -27,6 +27,10 @@ public final class CJJSBlob2 {
         return new CJJSBlob2(Optional.of(prep), body, pure);
     }
 
+    public static CJJSBlob2 unit(Consumer<CJJSSink> prep) {
+        return withPrep(prep, out -> out.append("undefined"), true);
+    }
+
     public CJJSBlob2(Optional<Consumer<CJJSSink>> prep, Consumer<CJJSSink> body, boolean pure) {
         this.prep = prep;
         this.body = body;

@@ -17,7 +17,9 @@ import crossj.cj.js.CJJSTranslator2;
 public final class JSMain {
     public static void main(String[] args) {
         var mode = Mode.Default;
-        var sourceRoots = List.of(FS.join("src", "main", "cj"));
+        var sourceRoots = List.of(
+            FS.join("src", "main", "cj2"), // for CJJSTranslator2
+            FS.join("src", "main", "cj"));
         var outPath = "";
         String appId = "";
         CJIRRunMode runMode = null;
