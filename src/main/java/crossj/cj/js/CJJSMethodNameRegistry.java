@@ -9,6 +9,11 @@ public final class CJJSMethodNameRegistry {
         return itemName.replace(".", "$") + "$" + methodName + (binding.isEmpty() ? "" : "$" + getBindingId(binding));
     }
 
+    public String nameForReifiedMethod(CJJSReifiedMethod reifiedMethod) {
+        return getName(reifiedMethod.getOwner().getItem().getFullName(), reifiedMethod.getMethod().getName(),
+                reifiedMethod.getBinding());
+    }
+
     private int getBindingId(CJJSTypeBinding binding) {
         return bindingToId.getOrInsert(binding.toString(), () -> bindingToId.size());
     }

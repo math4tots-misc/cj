@@ -1,5 +1,11 @@
 package crossj.cj.js;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+import crossj.base.Assert;
+import crossj.base.List;
+import crossj.base.Optional;
 import crossj.cj.CJError;
 import crossj.cj.CJIRAssignment;
 import crossj.cj.CJIRAugmentedAssignment;
@@ -27,15 +33,25 @@ import crossj.cj.CJIRVariableAccess;
 import crossj.cj.CJIRVariableDeclaration;
 import crossj.cj.CJIRWhen;
 import crossj.cj.CJIRWhile;
+import crossj.cj.CJJSSink;
+import crossj.cj.CJMark;
 import crossj.cj.CJToken;
 
 final class CJJSExpressionTranslator2 {
     private final CJJSTempVarFactory varFactory;
-    // private final CJJSTypeBinding binding;
+    private final CJJSMethodNameRegistry methodNameRegistry;
+    private final CJJSTypeBinding binding;
+    private final Consumer<CJJSReifiedMethod> requestMethod;
+    private final BiConsumer<String, CJMark> requestNative;
 
-    CJJSExpressionTranslator2(CJJSTempVarFactory varFactory, CJJSTypeBinding binding) {
+    CJJSExpressionTranslator2(CJJSTempVarFactory varFactory, CJJSMethodNameRegistry methodNameRegistry,
+            CJJSTypeBinding binding, Consumer<CJJSReifiedMethod> requestMethod,
+            BiConsumer<String, CJMark> requestNative) {
         this.varFactory = varFactory;
-        // this.binding = binding;
+        this.methodNameRegistry = methodNameRegistry;
+        this.binding = binding;
+        this.requestMethod = requestMethod;
+        this.requestNative = requestNative;
     }
 
     CJJSBlob2 translate(CJIRExpression expression) {
@@ -85,13 +101,62 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitMethodCall(CJIRMethodCall e, Void a) {
-
                 var args = e.getArgs().map(arg -> translate(arg));
+                var owner = binding.apply(e.getOwner());
+                var reifiedMethodRef = e.getReifiedMethodRef();
+                var reifiedMethod = binding.translate(owner, reifiedMethodRef);
 
+                var isNative = reifiedMethodRef.getOwner().isNative();
+
+                if (isNative) {
+                    var key = reifiedMethodRef.getOwner().getItem().getFullName() + "." + reifiedMethodRef.getName();
+                    switch (key) {
+                        case "cj.Assert.equal": {
+                            Assert.equals(args.size(), 2);
+                            Assert.equals(reifiedMethodRef.getTypeArgs().size(), 1);
+                            var argtype = binding.apply(reifiedMethodRef.getTypeArgs().get(0));
+                            switch (argtype.toString()) {
+                                case "cj.Bool":
+                                case "cj.Int":
+                                case "cj.Double":
+                                case "cj.String":
+                                    requestNative.accept("cj.Assert.eq0.js", e.getMark());
+                                    return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
+                                        out.append("asserteq0(");
+                                        args.get(0).emitBody(out);
+                                        out.append(",");
+                                        args.get(1).emitBody(out);
+                                        out.append(")");
+                                    }, false);
+                                default:
+                                    break;
+                                    // throw CJError.of("Unsupported Assert.equal type " + argtype.toString(),
+                                    //         e.getMark());
+                            }
+                            break;
+                        }
+                        case "cj.Int.__add": return translateBinop("+", args);
+                        case "cj.Int.__mul": return translateBinop("*", args);
+                    }
+                    // throw CJError.of("Unrecognized native method " + key, e.getMark());
+                }
+
+                requestMethod.accept(reifiedMethod);
+                var jsMethodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
 
                 // regular call
                 if (args.all(arg -> arg.isSimple())) {
-                    // var reifiedMethodRef = e.getReifiedMethodRef();
+                    return CJJSBlob2.simple(out -> {
+                        out.addMark(e.getMark());
+                        out.append(jsMethodName + "(");
+                        for (int i = 0; i < args.size(); i++) {
+                            if (i > 0) {
+                                out.append(",");
+                            }
+                            args.get(i).emitBody(out);
+                        }
+                        out.append(")");
+                    }, false);
                 }
 
                 // TODO Auto-generated method stub
@@ -224,5 +289,30 @@ final class CJJSExpressionTranslator2 {
                 return CJJSBlob2.pure("TODO");
             }
         }, null);
+    }
+
+    Optional<Consumer<CJJSSink>> joinPreps(List<Optional<Consumer<CJJSSink>>> prepList) {
+        if (prepList.all(p -> p.isEmpty())) {
+            return Optional.empty();
+        }
+        var preps = prepList.flatMap(p -> p);
+        return Optional.of(out -> {
+            for (var prep : preps) {
+                prep.accept(out);
+            }
+        });
+    }
+
+    CJJSBlob2 translateBinop(String op, List<CJJSBlob2> args) {
+        return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
+            out.append("(");
+            for (int i = 0; i < args.size(); i++) {
+                if (i > 0) {
+                    out.append(op);
+                }
+                args.get(i).emitBody(out);
+            }
+            out.append(")");
+        }, false);
     }
 }

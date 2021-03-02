@@ -1,6 +1,9 @@
 package crossj.cj.js;
 
 import crossj.base.Assert;
+import crossj.base.Deque;
+import crossj.base.FS;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Pair;
 import crossj.base.Set;
@@ -16,6 +19,8 @@ import crossj.cj.CJJSSink;
 import crossj.cj.CJMark;
 
 public final class CJJSTranslator2 {
+    private static final String jsroot = FS.join("src", "main", "resources", "js2");
+
     public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
         var tr = new CJJSTranslator2(irctx);
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
@@ -71,8 +76,9 @@ public final class CJJSTranslator2 {
                     for (var method : testMethods) {
                         testCount++;
                         out.append("console.log('    testing " + method.getName() + "');\n");
+                        var selfType = new CJJSReifiedType(item, List.of());
                         var jsMethodName = tr.methodNameRegistry.getName(item.getFullName(), method.getName(),
-                                CJJSTypeBinding.empty());
+                                CJJSTypeBinding.empty(selfType));
                         out.append(jsMethodName + "();\n");
                     }
                 }
@@ -93,10 +99,12 @@ public final class CJJSTranslator2 {
     private final CJJSSink out = new CJJSSink();
     private final CJJSMethodNameRegistry methodNameRegistry = new CJJSMethodNameRegistry();
     private final CJJSTempVarFactory varFactory = new CJJSTempVarFactory();
-    private final List<CJJSReifiedMethod> todoMethods = List.of();
+    private final Deque<CJJSReifiedMethod> todoMethods = Deque.of();
     private final Set<String> queuedMethods = Set.of();
-    private final List<Pair<CJJSReifiedType, CJIRField>> todoStaticFields = List.of();
+    private final Deque<Pair<CJJSReifiedType, CJIRField>> todoStaticFields = Deque.of();
     private final Set<String> queuedStaticFields = Set.of();
+    private final Deque<Pair<String, CJMark>> todoNatives = Deque.of();
+    private final Set<String> queuedNatives = Set.of();
 
     public CJJSTranslator2(CJIRContext ctx) {
         this.ctx = ctx;
@@ -118,6 +126,13 @@ public final class CJJSTranslator2 {
         }
     }
 
+    private void queueNative(String fileName, CJMark mark) {
+        if (!queuedNatives.contains(fileName)) {
+            queuedNatives.add(fileName);
+            todoNatives.add(Pair.of(fileName, mark));
+        }
+    }
+
     public void queueMethodByName(String itemName, String methodName) {
         var item = ctx.loadItem(itemName);
         var method = item.getMethodOrNull(methodName);
@@ -126,17 +141,30 @@ public final class CJJSTranslator2 {
             throw CJError.of("queueMethodByName cannot process generic items or methods");
         }
         var owner = new CJJSReifiedType(item, List.of());
-        queueMethod(new CJJSReifiedMethod(owner, method, CJJSTypeBinding.empty()));
+        queueMethod(new CJJSReifiedMethod(owner, method, CJJSTypeBinding.empty(owner)));
     }
 
     public void emitQueued() {
         while (todoMethods.size() > 0) {
-            var reifiedMethod = todoMethods.pop();
+            var reifiedMethod = todoMethods.popLeft();
             emitMethod(reifiedMethod);
         }
         while (todoStaticFields.size() > 0) {
-            var pair = todoStaticFields.pop();
+            var pair = todoStaticFields.popLeft();
             emitStaticField(pair.get1(), pair.get2());
+        }
+        while (todoNatives.size() > 0) {
+            var pair = todoNatives.popLeft();
+            emitNative(pair.get1(), pair.get2());
+        }
+    }
+
+    private void emitNative(String fileName, CJMark mark) {
+        var path = FS.join(jsroot, fileName);
+        if (FS.isFile(path)) {
+            out.append(IO.readFile(path));
+        } else {
+            throw CJError.of("File " + fileName + " not found", mark);
         }
     }
 
@@ -159,7 +187,9 @@ public final class CJJSTranslator2 {
             out.append("L$" + method.getParameters().get(i).getName());
         }
         out.append("){");
-        var expressionTranslator = new CJJSExpressionTranslator2(varFactory, binding);
+        varFactory.reset();
+        var expressionTranslator = new CJJSExpressionTranslator2(varFactory, methodNameRegistry, binding,
+                this::queueMethod, this::queueNative);
         var blob = expressionTranslator.translate(method.getBody().get());
         blob.emitSet(out, "return ");
         out.append("}\n");

@@ -11,19 +11,24 @@ import crossj.cj.CJIRTypeVisitor;
 import crossj.cj.CJIRVariableType;
 
 final class CJJSTypeBinding {
+    private final CJJSReifiedType selfType;
     private final Map<String, CJJSReifiedType> map;
 
-    CJJSTypeBinding(Map<String, CJJSReifiedType> map) {
+    CJJSTypeBinding(CJJSReifiedType selfType, Map<String, CJJSReifiedType> map) {
+        this.selfType = selfType;
         this.map = map;
     }
 
-    static CJJSTypeBinding empty() {
-        return new CJJSTypeBinding(Map.of());
+    public CJJSReifiedType getSelfType() {
+        return selfType;
+    }
+
+    static CJJSTypeBinding empty(CJJSReifiedType selfType) {
+        return new CJJSTypeBinding(selfType, Map.of());
     }
 
     CJJSReifiedMethod translate(CJJSReifiedType owner, CJIRReifiedMethodRef reifiedMethodRef) {
         Map<String, CJJSReifiedType> map = Map.of();
-        map.put("Self", owner);
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
         var itemTypeParameters = methodOwner.getItem().getTypeParameters();
@@ -38,7 +43,7 @@ final class CJJSTypeBinding {
             var type = reifiedMethodRef.getTypeArgs().get(i);
             map.put(typeParameter.getName(), apply(type));
         }
-        var binding = new CJJSTypeBinding(map);
+        var binding = new CJJSTypeBinding(owner, map);
         return new CJJSReifiedMethod(owner, methodRef.getMethod(), binding);
     }
 
@@ -71,7 +76,7 @@ final class CJJSTypeBinding {
 
             @Override
             public CJJSReifiedType visitSelf(CJIRSelfType t, Void a) {
-                return get("Self");
+                return selfType;
             }
         }, null);
     }

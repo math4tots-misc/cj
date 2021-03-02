@@ -91,6 +91,10 @@ public abstract class CJIRTraitOrClassType {
         return getItem().isTrait();
     }
 
+    public final boolean isNative() {
+        return getItem().isNative();
+    }
+
     public String getImplicitMethodNameForTypeOrNull(CJIRType type) {
         if (type instanceof CJIRClassType) {
             var methodName = getItem().getImplicitsTypeItemMap().getOrNull(((CJIRClassType) type).getItem());

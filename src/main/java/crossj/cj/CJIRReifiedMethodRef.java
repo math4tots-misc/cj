@@ -16,6 +16,10 @@ public final class CJIRReifiedMethodRef {
         this.binding = binding;
     }
 
+    public CJIRTraitOrClassType getOwner() {
+        return methodRef.getOwner();
+    }
+
     public CJIRMethodRef getMethodRef() {
         return methodRef;
     }
