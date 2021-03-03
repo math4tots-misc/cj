@@ -128,6 +128,14 @@ public abstract class JSON {
         return getArray().get(i);
     }
 
+    public boolean has(String key) {
+        return getObject().containsKey(key);
+    }
+
+    public List<String> keys() {
+        return List.fromIterable(getObject().keys());
+    }
+
     public int size() {
         return isArray() ? getArray().size() : getObject().size();
     }

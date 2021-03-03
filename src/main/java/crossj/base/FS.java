@@ -32,6 +32,10 @@ public final class FS {
         return FSImpl.isDir(path);
     }
 
+    public static boolean exists(String path) {
+        return FSImpl.exists(path);
+    }
+
     public static List<String> list(String dirpath) {
         return FSImpl.listdir(dirpath);
     }

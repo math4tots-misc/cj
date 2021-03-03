@@ -96,6 +96,22 @@ public final class IO {
         }
     }
 
+    public static void copy(String src, String dest) {
+        if (FS.exists(dest)) {
+            delete(dest);
+        }
+        try {
+            Files.createDirectories(Paths.get(dest).getParent());
+            if (FS.isFile(src)) {
+                Files.copy(Paths.get(src), Paths.get(dest));
+            } else {
+                copyFolder(src, dest);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void copyFolder(String src, String dest) {
         try {
             delete(dest);

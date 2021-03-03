@@ -114,9 +114,21 @@ public final class JSMain {
 
         var jsSink = CJJSTranslator.translate(ctx, runMode);
         if (runMode instanceof CJIRRunModeWWW) {
+            var config = ((CJIRRunModeWWW) runMode).getConfig();
             var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
             IO.delete(outPath);
-            IO.copyFolder(wwwdir, outPath);
+            if (FS.exists(wwwdir)) {
+                IO.copyFolder(wwwdir, outPath);
+            }
+            if (config.has("resources")) {
+                var keys = config.get("resources").keys();
+                for (var key : keys) {
+                    var src = findResourcePath(sourceRoots, key);
+                    var reldest = config.get("resources").get(key).getString();
+                    var dest = FS.join(outPath, reldest);
+                    IO.copy(src, dest);
+                }
+            }
             var filePath = FS.join(outPath, "main.js");
             var sourceMapPath = filePath + ".map";
             var js = jsSink.getSource(filePath);
@@ -142,14 +154,11 @@ public final class JSMain {
 
     private static CJIRRunMode loadAppConfig(List<String> sourceRoots, String appId) {
         var appdir = findAppDir(sourceRoots, appId);
-        var configData = IO.readFile(FS.join(appdir, "config.json"));
-        var config = JSON.parse(configData);
+        var config = JSON.parse(IO.readFile(FS.join(appdir, "config.json")));
         var type = config.get("type").getString();
         switch (type) {
             case "www": {
-                var wwwdir = FS.join(appdir, "www");
-                var mainClass = config.get("main").getString();
-                return new CJIRRunModeWWW(wwwdir, mainClass);
+                return new CJIRRunModeWWW(appdir, config);
             }
             default: {
                 throw new RuntimeException(appId + " has unsupported app type " + type);
@@ -165,5 +174,15 @@ public final class JSMain {
             }
         }
         throw new RuntimeException("App directory for " + appId + " not found");
+    }
+
+    private static String findResourcePath(List<String> sourceRoots, String relpath) {
+        for (var sourceRoot : sourceRoots) {
+            var candidate = FS.join(sourceRoot, "..", "resources", relpath);
+            if (FS.exists(candidate)) {
+                return candidate;
+            }
+        }
+        throw new RuntimeException("Resource " + relpath + " not found");
     }
 }

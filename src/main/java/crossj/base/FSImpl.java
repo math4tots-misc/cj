@@ -49,4 +49,8 @@ public final class FSImpl {
     static boolean isDir(String path) {
         return Files.isDirectory(Paths.get(path));
     }
+
+    static boolean exists(String path) {
+        return Files.exists(Paths.get(path));
+    }
 }
