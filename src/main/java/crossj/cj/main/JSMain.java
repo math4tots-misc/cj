@@ -1,7 +1,5 @@
 package crossj.cj.main;
 
-import java.util.regex.Pattern;
-
 import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
@@ -13,6 +11,7 @@ import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
 import crossj.cj.CJJSTranslator;
 // import crossj.cj.js.CJJSTranslator2;
+import crossj.json.JSON;
 
 public final class JSMain {
     public static void main(String[] args) {
@@ -141,17 +140,15 @@ public final class JSMain {
         Default, MainClass, SourceRoot, Out, App,
     }
 
-    private static final Pattern typePattern = Pattern.compile("\"type\"\\s*:\\s*\"([^\"]+)\"");
-    private static final Pattern mainPattern = Pattern.compile("\"main\"\\s*:\\s*\"([^\"]+)\"");
-
     private static CJIRRunMode loadAppConfig(List<String> sourceRoots, String appId) {
         var appdir = findAppDir(sourceRoots, appId);
         var configData = IO.readFile(FS.join(appdir, "config.json"));
-        var type = extractStringData(appId, "app type", typePattern, configData);
+        var config = JSON.parse(configData);
+        var type = config.get("type").getString();
         switch (type) {
             case "www": {
                 var wwwdir = FS.join(appdir, "www");
-                var mainClass = extractStringData(appId, "main class", mainPattern, configData);
+                var mainClass = config.get("main").getString();
                 return new CJIRRunModeWWW(wwwdir, mainClass);
             }
             default: {
@@ -168,17 +165,5 @@ public final class JSMain {
             }
         }
         throw new RuntimeException("App directory for " + appId + " not found");
-    }
-
-    private static String extractStringData(String appId, String kind, Pattern pattern, String configData) {
-        var matcher = pattern.matcher(configData);
-        String type = null;
-        if (matcher.find()) {
-            type = matcher.group(1);
-        }
-        if (type == null) {
-            throw new RuntimeException("Could not determine " + kind + " of " + appId);
-        }
-        return type;
     }
 }

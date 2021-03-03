@@ -120,6 +120,18 @@ public abstract class JSON {
         throw CJError.of(this + "is not a Object");
     }
 
+    public JSON get(String key) {
+        return getObject().get(key);
+    }
+
+    public JSON get(int i) {
+        return getArray().get(i);
+    }
+
+    public int size() {
+        return isArray() ? getArray().size() : getObject().size();
+    }
+
     @Override
     public abstract boolean equals(Object other);
 
