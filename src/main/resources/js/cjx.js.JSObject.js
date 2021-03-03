@@ -1,4 +1,7 @@
 class MC$cjx$js$JSObject {
+    M$new(self, args) {
+        return new self(...args);
+    }
     M$field(self, key) {
         return self[key];
     }

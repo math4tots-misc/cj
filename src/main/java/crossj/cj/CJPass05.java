@@ -168,8 +168,8 @@ final class CJPass05 extends CJPassBaseEx {
 
         @Override
         public String toString() {
-            return "(" + Str.join(",", Range.upto(typeArgc).map(i -> "$" + i)) + ";" + Str.join(",", parameterTypes)
-                    + ";" + returnType + ")";
+            return "(" + Str.join(",", Range.upto(typeArgc).map(i -> "$" + i)) + ";"
+                    + Str.join(",", parameterTypes.map(t -> t.repr())) + ";" + returnType.repr() + ")";
         }
     }
 

@@ -3,6 +3,7 @@ package cjx.js
 
 @implicit(Any, _fromAny)
 native class JSObject : Repr {
+    @variadic def new(self, args: List[JSObject]): JSObject
     def field(self: Self, key: String): JSObject
     @generic def setField[T](self: Self, key: String, value: T)
     @variadic def call(self: Self, methodName: String, args: List[JSObject]): JSObject
