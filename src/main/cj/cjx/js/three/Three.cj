@@ -1,8 +1,11 @@
 package cjx.js.three
 
+import cjx.js.JSWrapper
 import cjx.js.JSObject
 import cjx.js.web.Window
 
-class Three {
-    def get(): JSObject = Window.get().field("THREE")
+class Three: JSWrapper {
+    val _obj : JSObject
+    def cls(): JSObject = Window.get().field("Object")
+    def get(): Self = Window.get().field("THREE").unsafeCast()
 }

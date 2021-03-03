@@ -9,7 +9,7 @@ import cjx.js.three.Three
 class Demo1 {
     static val window: Window = Window.get()
     static val document: Document = Document.get()
-    static val three: JSObject = Three.get()
+    static val three: Three = Three.get()
     static var scene: JSObject = ?
     static var renderer: JSObject = ?
     static var camera: JSObject = ?
