@@ -6,7 +6,7 @@ import cjx.js.web.Document
 import cjx.js.web.Window
 import cjx.js.three.Three
 
-class Demo1 {
+class Demo01 {
     static val window: Window = Window.get()
     static val document: Document = Document.get()
     static val three: Three = Three.get()
