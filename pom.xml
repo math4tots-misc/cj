@@ -16,6 +16,21 @@
         <exec.mainClass>com.github.math4tots.crossj.Main</exec.mainClass>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <!-- This blob of configuration tells Maven to make the jar executable. You can run it with:
     mvn clean package
     java -jar target/javasymbolsolver-maven-sample-1.0-SNAPSHOT-shaded.jar
