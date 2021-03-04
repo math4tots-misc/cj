@@ -11,6 +11,7 @@ class C8Renderer {
     val scale: Double
     val ctx: CanvasRenderingContext2D
     val display: Uint8Array = Uint8Array.withSize(rows * cols)
+    # val dirty: Uint8Array = Uint8Array.withSize(rows * cols)
 
     def(scale: Double, ctx: CanvasRenderingContext2D): Self {
         val self = __malloc(scale, ctx)
@@ -31,12 +32,14 @@ class C8Renderer {
         if y >= rows { y -= rows } else if y < 0 { y += rows }
         val pos = x + y * cols
         display[pos] = display[pos] ^ 1
+        # dirty[pos] = 1
         not display[pos]
     }
 
     def clear(self) {
         for i = 0; i < rows * cols; i++ {
             display[i] = 0
+            # dirty[i] = 1
         }
     }
 
@@ -53,4 +56,21 @@ class C8Renderer {
             }
         }
     }
+
+    # def render(self) {
+    #     # ctx.clearRect(0, 0, canvas.width, canvas.height)
+    #     for i = 0; i < display.size(); i++ {
+    #         val x = ((i % cols).toDouble() * scale).toInt()
+    #         val y = ((i // cols).toDouble() * scale).toInt()
+    #         if dirty[i] {
+    #             if display[i] {
+    #                 ctx.fillStyle = "#000"
+    #                 ctx.fillRect(x, y, scale, scale)
+    #             } else {
+    #                 ctx.clearRect(x, y, scale, scale)
+    #             }
+    #             dirty[i] = 0
+    #         }
+    #     }
+    # }
 }
