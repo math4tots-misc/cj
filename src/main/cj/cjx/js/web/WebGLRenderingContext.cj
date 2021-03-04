@@ -1,5 +1,6 @@
 package cjx.js.web
 
+import cjx.js.web.CanvasRenderingContext
 import cjx.js.web.WebGLUniformLocation
 import cjx.js.web.WebGLProgram
 import cjx.js.web.WebGLShader
@@ -8,7 +9,7 @@ import cjx.js.web.WebGLBuffer
 import cj.Float32Array
 import cjx.js.JSWrapper
 
-trait WebGLRenderingContext : JSWrapper {
+trait WebGLRenderingContext : CanvasRenderingContext {
 
     # === constants ===
     # properties starting with 'c'

@@ -1,0 +1,56 @@
+package cjx.chip8.main
+
+import cjx.js.web.HTMLInputElement
+import cj.Time
+import cjx.chip8.C8CanvasRenderer
+import cjx.js.web.CanvasRenderingContext2D
+import cjx.js.web.HTMLCanvasElement
+import cjx.js.web.Window
+import cjx.js.web.Document
+
+class RendererDemo {
+    static val window: Window = Window.get()
+    static val document: Document = Document.get()
+    static val canvas: HTMLCanvasElement = document.createElement()
+    static val ctx: CanvasRenderingContext2D = canvas.getContext()
+    static val renderer: C8CanvasRenderer = C8CanvasRenderer(6, ctx)
+    static var lastToggleTime: Double = Time.now()
+    static var remainder = 0
+    static val moduloInputElement: HTMLInputElement = {
+        val el: HTMLInputElement = document.createElement()
+        el.value = "5"
+        el
+    }
+
+    def main() {
+        document.body.appendChild(canvas)
+        document.body.appendChild(moduloInputElement)
+        togglePixels(2, 0)
+        animate()
+    }
+
+    def togglePixels(modulo: Int, parity: Int) {
+        for y = 0; y < C8CanvasRenderer.rows; y++ {
+            for x = 0; x < C8CanvasRenderer.cols; x++ {
+                if (x + y) % modulo == parity {
+                    renderer.togglePixel(x, y)
+                }
+            }
+        }
+    }
+
+    def animate() {
+        window.requestAnimationFrame(ts -> animate())
+        val now = Time.now()
+        if now - lastToggleTime > 0.5 {
+            val modulo = Int(moduloInputElement.value)
+            togglePixels(modulo, remainder)
+            if modulo < 9 {
+                moduloInputElement.value = (modulo + 1).toString()
+            }
+            remainder = (remainder + 1) % modulo
+            lastToggleTime = now
+        }
+        renderer.render()
+    }
+}

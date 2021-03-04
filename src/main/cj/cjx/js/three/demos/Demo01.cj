@@ -32,8 +32,7 @@ class Demo01 {
     }
 
     def animate() {
-        val callback: Fn[Unit] = () -> animate()
-        window.call("requestAnimationFrame", callback)
+        # window.requestAnimationFrame(ts -> animate())
         val rotation = cube.field("rotation")
         rotation.setField("x", rotation.field("x").toDouble() + 0.02)
         rotation.setField("y", rotation.field("y").toDouble() + 0.09)

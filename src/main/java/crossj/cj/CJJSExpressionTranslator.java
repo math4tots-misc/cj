@@ -122,6 +122,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                         return joinOp("(", ")", "|", allArgs);
                     case "cj.Int.__and":
                         return joinOp("(", ")", "&", allArgs);
+                    case "cj.Int.__xor":
+                        return joinOp("(", ")", "^", allArgs);
                     case "cj.Int.__lshift":
                         return joinOp("(", ")", "<<", allArgs);
                     case "cj.Int.__rshift":

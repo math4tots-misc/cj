@@ -1,5 +1,6 @@
 package cjx.js.web
 
+import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.WebGLVertexArrayObject
 import cjx.js.web.WebGLRenderingContext
 import cjx.js.JSWrapper
@@ -7,6 +8,8 @@ import cjx.js.web.Window
 import cjx.js.JSObject
 
 class WebGL2RenderingContext : WebGLRenderingContext {
+    def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContextWebGL()
+
     val _obj : JSObject
     def cls() : JSObject = Window.get().field("WebGL2RenderingContext")
 

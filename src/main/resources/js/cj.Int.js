@@ -53,6 +53,9 @@ class MC$cj$Int {
     M$__and(self, other) {
         return self & other;
     }
+    M$__xor(self, other) {
+        return self ^ other;
+    }
     M$__lshift(self, n) {
         return self << n;
     }

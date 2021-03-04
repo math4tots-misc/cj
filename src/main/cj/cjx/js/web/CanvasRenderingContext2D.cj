@@ -1,12 +1,18 @@
 package cjx.js.web
 
+import cjx.js.web.CanvasRenderingContext
+import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Window
 import cjx.js.JSObject
 import cjx.js.JSWrapper
 
-class CanvasRenderingContext2D : JSWrapper {
+class CanvasRenderingContext2D : CanvasRenderingContext {
+    def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContext2D()
+
     val _obj :  JSObject
     def cls() : JSObject = Window.get().field("CanvasRenderingContext2D")
+
+    def __get_canvas(self): HTMLCanvasElement? = self.field("canvas").unsafeCast()
 
     def __get_lineWidth(self: Self): Double = self.field("lineWidth").unsafeCast()
     def __set_lineWidth(self: Self, value: Double) = self.setField("lineWidth", value)
@@ -19,6 +25,9 @@ class CanvasRenderingContext2D : JSWrapper {
 
     def strokeRect(self: Self, x: Double, y: Double, width: Double, height: Double) = (
         self.call("strokeRect", x, y, width, height))
+
+    def clearRect(self: Self, x: Double, y: Double, width: Double, height: Double) = (
+        self.call("clearRect", x, y, width, height))
 
     def beginPath(self: Self) = self.call("beginPath")
     def closePath(self: Self) = self.call("closePath")

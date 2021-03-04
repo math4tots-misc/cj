@@ -5,6 +5,7 @@ import cjx.js.JSObject
 import cjx.js.web.HTMLElement
 
 class HTMLScriptElement : HTMLElement {
+    static val tagName = "script"
     val _obj :  JSObject
     def cls() : JSObject = Window.get().field("HTMLScriptElement")
 
