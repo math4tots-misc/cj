@@ -1,5 +1,6 @@
 package cjx.chip8.main
 
+import cjx.js.web.HTMLStyleElement
 import cjx.js.web.HTMLInputElement
 import cj.Time
 import cjx.chip8.C8Renderer
@@ -25,6 +26,13 @@ class RendererDemo {
     def main() {
         document.body.appendChild(canvas)
         document.body.appendChild(moduloInputElement)
+
+        val style: HTMLStyleElement = document.createElement()
+        style.innerText = (
+            "canvas { border-style: solid; position: absolute; " +
+            "top: 50%; left: 50%; transform: translate(-50%, -50%); }")
+        document.body.appendChild(style)
+
         togglePixels(2, 0)
         animate()
     }

@@ -155,6 +155,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
 
     private void emitItem() {
         if (item.isNative()) {
+            out.addMark(item.getMark());
             out.append(IO.readFile(FS.join(jsroot, item.getFullName() + ".js")));
         } else {
             emitMetaClass();

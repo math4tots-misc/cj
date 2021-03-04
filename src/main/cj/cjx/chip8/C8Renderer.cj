@@ -36,9 +36,9 @@ class C8Renderer {
 
     def render(self) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
-        for i = 0; i < cols * rows; i++ {
+        for i = 0; i < display.size(); i++ {
             val x = ((i % cols).toDouble() * scale).toInt()
-            val y = ((i / cols).toDouble() * scale).toInt()
+            val y = ((i // cols).toDouble() * scale).toInt()
             if display[i] {
                 ctx.fillStyle = "#000"
                 ctx.fillRect(x, y, scale, scale)
