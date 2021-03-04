@@ -2,7 +2,7 @@ package cjx.chip8.main
 
 import cjx.js.web.HTMLInputElement
 import cj.Time
-import cjx.chip8.C8CanvasRenderer
+import cjx.chip8.C8Renderer
 import cjx.js.web.CanvasRenderingContext2D
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Window
@@ -13,7 +13,7 @@ class RendererDemo {
     static val document: Document = Document.get()
     static val canvas: HTMLCanvasElement = document.createElement()
     static val ctx: CanvasRenderingContext2D = canvas.getContext()
-    static val renderer: C8CanvasRenderer = C8CanvasRenderer(6, ctx)
+    static val renderer: C8Renderer = C8Renderer(6, ctx)
     static var lastToggleTime: Double = Time.now()
     static var remainder = 0
     static val moduloInputElement: HTMLInputElement = {
@@ -30,8 +30,8 @@ class RendererDemo {
     }
 
     def togglePixels(modulo: Int, parity: Int) {
-        for y = 0; y < C8CanvasRenderer.rows; y++ {
-            for x = 0; x < C8CanvasRenderer.cols; x++ {
+        for y = 0; y < C8Renderer.rows; y++ {
+            for x = 0; x < C8Renderer.cols; x++ {
                 if (x + y) % modulo == parity {
                     renderer.togglePixel(x, y)
                 }
