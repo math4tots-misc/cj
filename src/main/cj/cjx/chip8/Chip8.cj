@@ -1,5 +1,8 @@
 package cjx.chip8
 
+import cj.AIO
+import cj.Uint8Array
+import cj.net.HTTP
 import cjx.chip8.C8CPU
 import cjx.chip8.C8Speaker
 import cjx.chip8.C8Keyboard
@@ -16,8 +19,9 @@ class Chip8 {
     val speaker: C8Speaker
     val cpu: C8CPU
     var then: Double = 0
+    var running = false
 
-    def(canvas: HTMLCanvasElement): Self = {
+    def(canvas: HTMLCanvasElement): Self {
         val renderer = C8Renderer(10, canvas.getContext())
         val keyboard = C8Keyboard()
         val speaker = C8Speaker()
@@ -25,25 +29,41 @@ class Chip8 {
         __malloc(renderer, keyboard, speaker, cpu)
     }
 
-    def init(self) {
-        then = Time.now()
-
-        # Just to see something on the screen
-        # renderer.togglePixel(0, 0)
-        # renderer.togglePixel(5, 2)
-
-        cpu.loadSpritesIntoMemory()
-        cpu.loadRom("BLITZ").then(u ->
-            window.requestAnimationFrame(ts -> step())).done()
+    def runRom(self, romName: String): Promise[Unit] {
+        IO.println("loading rom " + romName)
+        running = false
+        HTTP.getUint8Array("roms/" + romName).map(program ->
+            runProgram(program))
     }
 
-    def step(self) {
+    def runProgram(self, program: Uint8Array): Bool {
+        if not running {
+            IO.println("starting program")
+            then = Time.now()
+            renderer.clear()
+            cpu.reset()
+            cpu.loadSpritesIntoMemory()
+            cpu.loadProgramIntoMemory(program)
+            running = true
+            step()
+            true
+        } else { false }
+    }
+
+    def stop(self) { running = false }
+
+    def stopAndRunNewProgram(self, program: Uint8Array) {
+        running = false
+        AIO.wait(0.01).then(u -> runProgram(program)).done()
+    }
+
+    private def step(self) {
         val now = Time.now()
         if now - then > fpsInterval {
             then = now
             cpu.cycle()
             renderer.render()
         }
-        window.requestAnimationFrame(ts -> step())
+        if running { window.requestAnimationFrame(ts -> step()) }
     }
 }

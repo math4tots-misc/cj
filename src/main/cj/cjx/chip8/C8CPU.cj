@@ -11,7 +11,6 @@ import cjx.chip8.C8Renderer
 
 class C8CPU {
     static var printed = false
-    static val allOpcodes: Set[Int] = Set()
     static val sprites = [
         0xF0, 0x90, 0x90, 0x90, 0xF0, # 0
         0x20, 0x60, 0x20, 0x20, 0x70, # 1
@@ -43,6 +42,20 @@ class C8CPU {
     var paused = false
     var speed = 10
 
+    def reset(self) {
+        for i = 0; i < memory.size(); i++ {
+            memory[i] = 0
+        }
+        for i = 0; i < v.size(); i++ {
+            v[i] = 0
+        }
+        delayTimer = 0
+        soundTimer = 0
+        pc = 0x200
+        while stack { stack.pop() }
+        paused = false
+    }
+
     def loadSpritesIntoMemory(self) {
         for i = 0; i < sprites.size(); i++ {
             memory[i] = sprites[i]
@@ -55,18 +68,10 @@ class C8CPU {
         }
     }
 
-    def loadRom(self, romName: String): Promise[Unit] = (
-        HTTP.getUint8Array("roms/" + romName).map(program -> loadProgramIntoMemory(program)))
-
     def cycle(self) {
         for i = 0; i < speed; i++ {
             if not paused {
                 val opcode = memory[pc] << 8 | memory[pc + 1]
-                allOpcodes.add(opcode)
-                if opcode == 0x12D7 and not printed {
-                    IO.println(allOpcodes.iter().sorted().map(op -> op.hex().lpad(4, "0")))
-                    printed = true
-                }
                 executeInstruction(opcode)
             }
         }

@@ -41,17 +41,24 @@ class Demo {
         })
 
         val speedDiv: HTMLDivElement = document.createElement()
-        val speedLabel: HTMLDivElement = document.createElement()
         val speedInput: HTMLInputElement = document.createElement()
+        val speedButton: HTMLButtonElement = document.createElement()
         speedInput.value = "10"
-        speedLabel.innerText = "speed"
+        speedButton.innerText = "update speed"
         document.body.appendChild(speedDiv)
-        speedDiv.appendChild(speedLabel)
         speedDiv.appendChild(speedInput)
-        speedInput.onchange(event -> {
-            chip8.cpu.speed = Int(speedInput.value)
-        })
+        speedDiv.appendChild(speedButton)
+        speedButton.onclick(event -> { chip8.cpu.speed = Int(speedInput.value) })
 
-        chip8.init()
+        val loaderDiv: HTMLDivElement = document.createElement()
+        val loaderInput: HTMLInputElement = document.createElement()
+        val loaderButton: HTMLButtonElement = document.createElement()
+        loaderButton.innerText = "load ROM"
+        document.body.appendChild(loaderDiv)
+        loaderDiv.appendChild(loaderInput)
+        loaderDiv.appendChild(loaderButton)
+        loaderButton.onclick(event -> { chip8.runRom(loaderInput.value).done() })
+
+        chip8.runRom("BLITZ").done()
     }
 }
