@@ -33,7 +33,7 @@ class Chip8 {
         # renderer.togglePixel(5, 2)
 
         cpu.loadSpritesIntoMemory()
-        cpu.loadRom("PONG").then(u ->
+        cpu.loadRom("BLITZ").then(u ->
             window.requestAnimationFrame(ts -> step())).done()
     }
 
