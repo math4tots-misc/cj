@@ -20,6 +20,13 @@ class C8Renderer {
     }
 
     def togglePixel(self, var x: Int, var y: Int): Bool {
+        # TODO: Figure out the proper wrapping rules
+        # It seems that the pixels at the edges might actually just
+        # be clipped instead of being wrapped
+        # (http://www.emulator101.com/chip-8-sprites.html)
+        if y == rows {
+            return false
+        }
         if x >= cols { x -= cols } else if x < 0 { x += cols }
         if y >= rows { y -= rows } else if y < 0 { y += rows }
         val pos = x + y * cols
