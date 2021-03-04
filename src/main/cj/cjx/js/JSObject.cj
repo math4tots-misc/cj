@@ -2,7 +2,7 @@ package cjx.js
 
 
 @implicit(Any, _fromAny)
-native class JSObject : Repr {
+native class JSObject : Repr, ToBool {
     @variadic def new(self, args: List[JSObject]): JSObject
     def new1(self, args: List[JSObject]): JSObject
     def field(self: Self, key: String): JSObject
@@ -39,4 +39,6 @@ native class JSObject : Repr {
 
     ## return self if self is a number. Throws otherwise
     def toDouble(self: Self): Double
+
+    def toBool(self): Bool
 }

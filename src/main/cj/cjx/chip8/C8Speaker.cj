@@ -41,10 +41,10 @@ class C8Speaker {
     }
 
     def stop(self) {
-        if _audioCtx.isEmpty() {
-            init()
-        }
         if val osc = oscillator {
+            if _audioCtx.isEmpty() {
+                init()
+            }
             IO.println("STOPPING SOUND")
             oscillator = null
             osc.call("stop")

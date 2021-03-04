@@ -72,4 +72,7 @@ class MC$cjx$js$JSObject {
             throw new Error("JSObject.toInt on non-number (" + self + ")");
         }
     }
+    M$toBool(self) {
+        return !!self;
+    }
 }

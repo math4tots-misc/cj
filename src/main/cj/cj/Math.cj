@@ -11,6 +11,9 @@ native class Math {
     ## (inclusive of 0, but not 1)
     def random(): Double
 
+    def floor(x: Double): Int
+    def ceil(x: Double): Int
+
     # -- trig functions (all in radians unless otherwise specified) --
     def sin(rad: Double): Double
     def cos(rad: Double): Double

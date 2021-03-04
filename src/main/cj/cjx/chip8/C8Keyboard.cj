@@ -25,7 +25,7 @@ class C8Keyboard {
         86: 0xF, # V
     )
 
-    var onNextKeyPress: Fn[Int, Unit]? = null
+    var _onNextKeyPress: Fn[Int, Unit]? = null
     val keysPressed: Uint8Array = Uint8Array.withSize(16)
 
     def(): Self {
@@ -35,7 +35,11 @@ class C8Keyboard {
         self
     }
 
-    def isKeyPressed(self, keyCode: Int) {
+    def __set_onNextKeyPress(self, f: Fn[Int, Unit]) {
+        self._onNextKeyPress = null(f)
+    }
+
+    def isKeyPressed(self, keyCode: Int): Bool {
         keyCode >= 0 and keyCode < keysPressed.size() and keysPressed[keyCode]
     }
 
@@ -45,9 +49,9 @@ class C8Keyboard {
             if not keysPressed[key] {
                 IO.println("keydown = " + key)
                 keysPressed[key] = 1
-                if val nkp = onNextKeyPress {
+                if val nkp = _onNextKeyPress {
                     nkp.call(key)
-                    onNextKeyPress = null
+                    _onNextKeyPress = null
                 }
             }
         }

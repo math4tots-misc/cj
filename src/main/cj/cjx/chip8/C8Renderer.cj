@@ -19,11 +19,12 @@ class C8Renderer {
         self
     }
 
-    def togglePixel(self, var x: Int, var y: Int) = {
+    def togglePixel(self, var x: Int, var y: Int): Bool {
         if x >= cols { x -= cols } else if x < 0 { x += cols }
         if y >= rows { y -= rows } else if y < 0 { y += rows }
         val pos = x + y * cols
         display[pos] = display[pos] ^ 1
+        not display[pos]
     }
 
     def clear(self) {

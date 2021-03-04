@@ -142,7 +142,7 @@ final class CJPass04 extends CJPassBaseEx {
             var methodRef = actualType.findMethod("toBool", expression.getMark());
             ir = synthesizeMethodCall(expression, actualType, methodRef, List.of(), List.of(ir));
         } else {
-            throw CJError.of("Expected a Bool convertible value but got " + actualType, expression.getMark());
+            throw CJError.of("Expected a Bool convertible value but got " + actualType.repr(), expression.getMark());
         }
         return ir;
     }

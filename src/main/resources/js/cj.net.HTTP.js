@@ -62,4 +62,28 @@ class MC$cj$net$HTTP {
             return promise;
         }
     }
+    M$getUint8Array(url) {
+        if (typeof XMLHttpRequest !== 'undefined') {
+            const request = new XMLHttpRequest();
+            const promise = new Promise((resolve, reject) => {
+                request.onreadystatechange = () => {
+                    if (request.readyState === XMLHttpRequest.DONE) {
+                        // local files, status is 0 upon success in Mozilla Firefox
+                        const status = request.status;
+                        if (status === 0 || (status >= 200 && status < 400)) {
+                            resolve(new Uint8Array(request.response));
+                        } else {
+                            reject(new Error("XMLHttpRequest error: " + status));
+                        }
+                    }
+                };
+            });
+            request.open("GET", url);
+            request.responseType = "arraybuffer";
+            request.send();
+            return promise;
+        } else {
+            throw new Error("TODO HTTP.getUint8Array (nodejs)")
+        }
+    }
 }

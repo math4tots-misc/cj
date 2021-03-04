@@ -14,6 +14,12 @@ class MC$cj$Math {
     M$random() {
         return Math.random();
     }
+    M$floor(x) {
+        return Math.floor(x);
+    }
+    M$ceil(x) {
+        return Math.ceil(x);
+    }
     M$sin(rad) {
         return Math.sin(rad);
     }
