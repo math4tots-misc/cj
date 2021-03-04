@@ -13,8 +13,7 @@ class RendererDemo {
     static val window: Window = Window.get()
     static val document: Document = Document.get()
     static val canvas: HTMLCanvasElement = document.createElement()
-    static val ctx: CanvasRenderingContext2D = canvas.getContext()
-    static val renderer: C8Renderer = C8Renderer(6, ctx)
+    static val renderer: C8Renderer = C8Renderer(6, canvas)
     static var lastToggleTime: Double = Time.now()
     static var remainder = 0
     static val moduloInputElement: HTMLInputElement = {

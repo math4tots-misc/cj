@@ -9,12 +9,13 @@ class C8Renderer {
     static val rows = 32
 
     val scale: Double
+    val canvas: HTMLCanvasElement
     val ctx: CanvasRenderingContext2D
     val display: Uint8Array = Uint8Array.withSize(rows * cols)
     # val dirty: Uint8Array = Uint8Array.withSize(rows * cols)
 
-    def(scale: Double, ctx: CanvasRenderingContext2D): Self {
-        val self = __malloc(scale, ctx)
+    def(scale: Double, canvas: HTMLCanvasElement): Self {
+        val self = __malloc(scale, canvas, canvas.getContext())
         canvas.width = (cols.toDouble() * scale).toInt()
         canvas.height = (rows.toDouble() * scale).toInt()
         self
@@ -42,8 +43,6 @@ class C8Renderer {
             # dirty[i] = 1
         }
     }
-
-    def __get_canvas(self): HTMLCanvasElement = ctx.canvas.get()
 
     def render(self) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)

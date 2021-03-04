@@ -22,7 +22,7 @@ class Chip8 {
     var running = false
 
     def(canvas: HTMLCanvasElement): Self {
-        val renderer = C8Renderer(10, canvas.getContext())
+        val renderer = C8Renderer(10, canvas)
         val keyboard = C8Keyboard()
         val speaker = C8Speaker()
         val cpu = C8CPU(renderer, keyboard, speaker)
