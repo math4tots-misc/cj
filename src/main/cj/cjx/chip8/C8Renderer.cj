@@ -2,7 +2,7 @@ package cjx.chip8
 
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.CanvasRenderingContext2D
-import cj.Int16Array
+import cj.Uint8Array
 
 class C8Renderer {
     static val cols = 64
@@ -10,7 +10,7 @@ class C8Renderer {
 
     val scale: Double
     val ctx: CanvasRenderingContext2D
-    val display: Int16Array = Int16Array.withSize(rows * cols)
+    val display: Uint8Array = Uint8Array.withSize(rows * cols)
 
     def(scale: Double, ctx: CanvasRenderingContext2D): Self {
         val self = __malloc(scale, ctx)

@@ -1,7 +1,7 @@
 package cjx.chip8
 
 import cjx.js.web.KeyboardEvent
-import cj.Int16Array
+import cj.Uint8Array
 import cjx.js.web.Window
 
 class C8Keyboard {
@@ -26,7 +26,7 @@ class C8Keyboard {
     )
 
     var onNextKeyPress: Fn[Int, Unit]? = null
-    val keysPressed: Int16Array = Int16Array.withSize(16)
+    val keysPressed: Uint8Array = Uint8Array.withSize(16)
 
     def(): Self {
         val self = __malloc()
