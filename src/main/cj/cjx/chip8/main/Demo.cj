@@ -1,5 +1,8 @@
 package cjx.chip8.main
 
+import cj.Uint8Array
+import cjx.js.JSObject
+import cjx.js.web.Window
 import cjx.js.web.HTMLInputElement
 import cjx.js.web.HTMLDivElement
 import cjx.js.web.HTMLButtonElement
@@ -43,7 +46,8 @@ class Demo {
         val speedDiv: HTMLDivElement = document.createElement()
         val speedInput: HTMLInputElement = document.createElement()
         val speedButton: HTMLButtonElement = document.createElement()
-        speedInput.value = "10"
+        chip8.cpu.speed = 40
+        speedInput.value = "" + chip8.cpu.speed
         speedButton.innerText = "update speed"
         document.body.appendChild(speedDiv)
         speedDiv.appendChild(speedInput)
@@ -58,6 +62,35 @@ class Demo {
         loaderDiv.appendChild(loaderInput)
         loaderDiv.appendChild(loaderButton)
         loaderButton.onclick(event -> { chip8.runRom(loaderInput.value).done() })
+
+        val dropDiv: HTMLDivElement = document.createElement()
+        dropDiv.innerText = "Drag and drop ROM files here"
+        dropDiv.style.width = "100px"
+        dropDiv.style.height = "60px"
+        dropDiv.style.padding = "20px 0"
+        dropDiv.style.borderStyle = "solid"
+        dropDiv.style.textAlign = "center"
+        dropDiv.style.fontWeight = "bold"
+        document.body.appendChild(dropDiv)
+
+        # NOTE: despite the drop div box,
+        # we allow dropping the file anywhere within the page
+        Window.get().ondrop(event -> {
+            event.preventDefault()
+            val dataTransfer = event.field("dataTransfer")
+            val files = dataTransfer.field("files")
+            if files.field("length").unsafeCast[Int]() > 0 {
+                val file = files.call("item", 0)
+                val callback: Fn[JSObject, Unit] = arraybuf -> {
+                    val program: Uint8Array = Window.get().field(
+                        "Uint8Array").new(arraybuf).unsafeCast()
+                    chip8.stopAndRunNewProgram(program)
+                }
+                file.call("arrayBuffer").call("then", callback)
+            }
+            IO.println("drop event~")
+        })
+        Window.get().ondragover(event -> event.preventDefault())
 
         chip8.runRom("BLITZ").done()
     }
