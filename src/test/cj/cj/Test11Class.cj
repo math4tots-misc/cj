@@ -204,4 +204,28 @@ class Test11Class {
     class InferredFieldType {
         static val s = "hello"
     }
+
+    class Incr {
+        static var si = 0
+        var i = 0
+
+        def incrStatic() {
+            si += 1
+        }
+
+        def incr(self) {
+            i += 1
+        }
+    }
+
+    @test
+    def classIncr() {
+        Assert.equal(Incr.si, 0)
+        Incr.si += 2
+        Assert.equal(Incr.si, 2)
+        val incr = Incr()
+        Assert.equal(incr.i, 0)
+        incr.i += 42
+        Assert.equal(incr.i, 42)
+    }
 }

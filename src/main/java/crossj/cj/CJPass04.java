@@ -467,14 +467,68 @@ final class CJPass04 extends CJPassBaseEx {
 
             @Override
             public CJIRExpression visitAugmentedAssignment(CJAstAugmentedAssignment e, Optional<CJIRType> a) {
-                var target = findLocal(e.getTarget(), e.getMark());
-                var targetType = target.getVariableType();
-                if (targetType.equals(ctx.getIntType()) || targetType.equals(ctx.getDoubleType())) {
-                    var expression = evalExpressionWithType(e.getExpression(), target.getVariableType());
-                    return new CJIRAugmentedAssignment(e, ctx.getUnitType(), target, e.getKind(), expression);
-                } else {
-                    throw CJError.of("Augmented assignments are only supported for int and double values", e.getMark());
+                var name = e.getTarget();
+                var target = findLocalOrNull(name);
+                if (target != null) {
+                    var targetType = target.getVariableType();
+                    if (targetType.equals(ctx.getIntType()) || targetType.equals(ctx.getDoubleType())) {
+                        var expression = evalExpressionWithType(e.getExpression(), target.getVariableType());
+                        return new CJIRAugmentedAssignment(e, ctx.getUnitType(), target, e.getKind(), expression);
+                    } else {
+                        throw CJError.of("Augmented assignments are only supported for int and double values",
+                                e.getMark());
+                    }
                 }
+                var selfType = lctx.getSelfType();
+                var methodRef = selfType.findMethodOrNull("__get_" + name);
+                if (methodRef != null) {
+                    var method = methodRef.getMethod();
+                    String augMethodName = "";
+                    switch (e.getKind()) {
+                        case Add:
+                            augMethodName = "__add";
+                            break;
+                        case Subtract:
+                            augMethodName = "__sub";
+                            break;
+                        case Multiply:
+                            augMethodName = "__mul";
+                            break;
+                        case Remainder:
+                            augMethodName = "__rem";
+                            break;
+                    }
+                    Assert.notEquals(augMethodName, "");
+                    if (method.getParameters().size() == 0) {
+                        var getExpr = new CJAstMethodCall(e.getMark(),
+                                Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())), "__get_" + name,
+                                List.of(), List.of());
+                        var augExpr = new CJAstMethodCall(e.getMark(), Optional.empty(), augMethodName, List.of(),
+                                List.of(getExpr, e.getExpression()));
+                        var setExpr = new CJAstMethodCall(e.getMark(),
+                                Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())), "__set_" + name,
+                                List.of(), List.of(augExpr));
+                        return evalUnitExpression(setExpr);
+                    } else if (method.getParameters().size() == 1) {
+                        var selfDecl = findLocalOrNull("self");
+                        if (selfDecl == null) {
+                            throw CJError.of(
+                                    "Non-static field " + name + " cannot be aug-assigned without a 'self' in scope",
+                                    e.getMark());
+                        }
+                        var selfExpr = new CJAstVariableAccess(e.getMark(), "self");
+                        var getExpr = new CJAstMethodCall(e.getMark(),
+                                Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())), "__get_" + name,
+                                List.of(), List.of(selfExpr));
+                        var augExpr = new CJAstMethodCall(e.getMark(), Optional.empty(), augMethodName, List.of(),
+                                List.of(getExpr, e.getExpression()));
+                        var setExpr = new CJAstMethodCall(e.getMark(),
+                                Optional.of(new CJAstTypeExpression(e.getMark(), "Self", List.of())), "__set_" + name,
+                                List.of(), List.of(selfExpr, augExpr));
+                        return evalUnitExpression(setExpr);
+                    }
+                }
+                throw CJError.of("Variable " + name + " not found", e.getMark());
             }
 
             @Override
