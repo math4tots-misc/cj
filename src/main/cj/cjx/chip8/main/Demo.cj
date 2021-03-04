@@ -1,5 +1,7 @@
 package cjx.chip8.main
 
+import cjx.js.web.HTMLInputElement
+import cjx.js.web.HTMLDivElement
 import cjx.js.web.HTMLButtonElement
 import cjx.js.web.HTMLStyleElement
 import cjx.chip8.Chip8
@@ -36,6 +38,18 @@ class Demo {
                 soundButton.innerText = "stop sound"
             }
             playing = not playing
+        })
+
+        val speedDiv: HTMLDivElement = document.createElement()
+        val speedLabel: HTMLDivElement = document.createElement()
+        val speedInput: HTMLInputElement = document.createElement()
+        speedInput.value = "10"
+        speedLabel.innerText = "speed"
+        document.body.appendChild(speedDiv)
+        speedDiv.appendChild(speedLabel)
+        speedDiv.appendChild(speedInput)
+        speedInput.onchange(event -> {
+            chip8.cpu.speed = Int(speedInput.value)
         })
 
         chip8.init()

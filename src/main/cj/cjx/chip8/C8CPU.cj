@@ -41,7 +41,7 @@ class C8CPU {
     var pc = 0x200
     val stack: List[Int] = []
     var paused = false
-    var speed = 50
+    var speed = 10
 
     def loadSpritesIntoMemory(self) {
         for i = 0; i < sprites.size(); i++ {
