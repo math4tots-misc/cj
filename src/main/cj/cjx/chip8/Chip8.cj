@@ -1,5 +1,6 @@
 package cjx.chip8
 
+import cjx.chip8.C8Speaker
 import cjx.chip8.C8Keyboard
 import cjx.js.web.HTMLCanvasElement
 import cj.Time
@@ -11,6 +12,7 @@ class Chip8 {
     static val fpsInterval: Double = 1.0 / 60.0
     val renderer: C8Renderer
     val keyboard: C8Keyboard = C8Keyboard()
+    val speaker: C8Speaker = C8Speaker()
     var then: Double = 0
 
     def(canvas: HTMLCanvasElement): Self = __malloc(
