@@ -12,7 +12,7 @@ public final class CJLexer {
         var b = Lexer.<CJToken>builder();
         b.add("(\\d+\\.\\d*|\\.\\d+)(e|E-?\\d+)?", m -> tok(CJToken.DOUBLE, m));
         b.add("\\d+(e|E)-?\\d+", m -> tok(CJToken.DOUBLE, m));
-        b.add("asdfasdf0x[0-9A-Fa-f]+", m -> tok(CJToken.BIGINT, m)); // hex literals
+        b.add("0x[0-9A-Fa-f]+n", m -> tok(CJToken.BIGINT, m)); // hex literals
         b.add("\\d+n", m -> tok(CJToken.BIGINT, m));
         b.add("0x[0-9A-Fa-f]+", m -> tok(CJToken.INT, m)); // hex literals
         b.add("\\d+", m -> tok(CJToken.INT, m));
@@ -21,6 +21,7 @@ public final class CJLexer {
         }
         b.add("[A-Z]\\w*", m -> tok(CJToken.TYPE_ID, m));
         b.add("[a-z_]\\w*", m -> tok(CJToken.ID, m));
+        b.add("[a-z_]\\w*!", m -> tok(CJToken.MACROID, m));
         b.add("'\\\\.'", m -> tok(CJToken.CHAR, m));
         b.add("'[^'\\\\]'", m -> tok(CJToken.CHAR, m));
         b.add("\"(\\\\.|[^\"\\\\])*\"", m -> tok(CJToken.STRING, m));

@@ -45,4 +45,11 @@ class LexerTest {
             "CJToken(kwIF, \"\", 1, 1)", "CJToken(tEOF, \"\", 1, 3)"
         ])
     }
+
+    @test
+    def macroNames() {
+        Assert.equal(lex("include_str!").map(t -> t.repr()), [
+            "CJToken(tMACROID, \"include_str!\", 1, 1)", "CJToken(tEOF, \"\", 1, 13)"
+        ])
+    }
 }

@@ -11,7 +11,7 @@ import crossj.base.Tuple;
 public final class CJToken {
     // various token types
 
-    // general categories (1-10)
+    // general categories (1-11)
     public static final int EOF = 1;
     public static final int DOUBLE = 2;
     public static final int INT = 3;
@@ -21,6 +21,8 @@ public final class CJToken {
     public static final int TYPE_ID = 7;
     public static final int COMMENT = 8;
     public static final int BIGINT = 9;
+    // '10' is reserved for '\n'/NEWLINE
+    public static final int MACROID = 11;
 
     // multi-character symbols (13-31)
     public static final int DOTDOT = 13;
@@ -156,6 +158,8 @@ public final class CJToken {
                 return "CJToken.COMMENT";
             case BIGINT:
                 return "CJToken.BIGINT";
+            case MACROID:
+                return "CJToken.MACROID";
             case DOTDOT:
                 return "CJToken.DOTDOT";
             case MINUSMINUS:

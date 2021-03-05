@@ -23,6 +23,7 @@ class CJLexer {
         }
         b.add("[A-Z]\\w*", m -> tok(CJToken.tTYPEID, m))
         b.add("[a-z_]\\w*", m -> tok(CJToken.tID, m))
+        b.add("[a-z_]\\w*!", m -> tok(CJToken.tMACROID, m))
         b.add("'\\\\.'", m -> tok(CJToken.tCHAR, m))
         b.add("'[^'\\\\]'", m -> tok(CJToken.tCHAR, m))
         b.add("\"(\\\\.|[^\"\\\\])*\"", m -> tok(CJToken.tSTRING, m))

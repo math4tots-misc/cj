@@ -1,7 +1,7 @@
 package compiler
 
 class CJToken : Repr {
-    # general categories (1-10)
+    # general categories (1-11)
     static val tEOF = 1
     static val tDOUBLE = 2
     static val tINT = 3
@@ -11,6 +11,8 @@ class CJToken : Repr {
     static val tTYPEID = 7
     static val tCOMMENT = 8
     static val tBIGINT = 9
+    # '10' is reserved for '\n'/NEWLINE
+    static val tMACROID = 11
 
     # multi-character symbols (13-31)
     static val tDOTDOT = 13
@@ -109,6 +111,7 @@ class CJToken : Repr {
         case tTYPEID = "tTYPEID"
         case tCOMMENT = "tCOMMENT"
         case tBIGINT = "tBIGINT"
+        case tMACROID = "tMACROID"
         case tDOTDOT = "tDOTDOT"
         case tMINUSMINUS = "tMINUSMINUS"
         case tPLUSPLUS = "tPLUSPLUS"

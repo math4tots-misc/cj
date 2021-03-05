@@ -230,7 +230,7 @@ public final class Map<K, V> {
             var k = triple.get2();
             var v = triple.get3();
             var otherTriple = map.getTripleOrNullWithHash(k, hash);
-            if (!Eq.of(otherTriple.get3(), v)) {
+            if (otherTriple == null || !Eq.of(otherTriple.get3(), v)) {
                 return false;
             }
         }
