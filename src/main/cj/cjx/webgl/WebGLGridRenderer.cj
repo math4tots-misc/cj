@@ -78,7 +78,6 @@ class WebGLGridRenderer {
     }
 
     private def updateVertexBuffer(self) {
-        IO.println("data = " + vertexData)
         gl.bindBuffer(gl.cARRAY_BUFFER, vertexBuffer)
         gl.bufferData(gl.cARRAY_BUFFER, vertexData, gl.cSTREAM_DRAW)
         gl.unbindBuffer(gl.cARRAY_BUFFER)
