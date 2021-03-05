@@ -43,4 +43,10 @@ class WebGL2RenderingContext : WebGLRenderingContext {
         self.call("bindVertexArray", vertexArray))
 
     def unbindVertexArray(self: Self) = self.call("bindVertexArray", null[WebGLVertexArrayObject])
+
+    def vertexAttribDivisor(self, index: Int, divisor: Int) = call(
+        "vertexAttribDivisor", index, divisor)
+
+    def drawArraysInstanced(self: Self, mode: Int, first: Int, count: Int, instanceCount: Int) = (
+        self.call("drawArraysInstanced", mode, first, count, instanceCount))
 }

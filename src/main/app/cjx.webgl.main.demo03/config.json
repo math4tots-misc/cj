@@ -1,5 +1,5 @@
 {
     "type": "www",
     "main": "cjx.webgl.main.Demo03",
-    "resources": { "www/webgl/grid.html": "index.html" }
+    "resources": { "www/webgl/gridi.html": "index.html" }
 }

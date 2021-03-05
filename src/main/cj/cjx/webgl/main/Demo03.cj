@@ -21,7 +21,7 @@ class Demo03 {
     static val canvas: HTMLCanvasElement = document.getElementBydId("canvas")
     static val glh: WebGLHelper = WebGLHelper(canvas)
     static val gl: WebGL2RenderingContext = glh.gl
-    static val vertexData: Float32Array = Float32Array.withSize(nrows * ncols * 6)
+    static val vertexData: Float32Array = Float32Array.withSize(nrows * ncols)
     static var vertexBuffer: WebGLBuffer = ?
     static var vao: WebGLVertexArrayObject = ?
     static var aVertexData: Int = ?
@@ -69,12 +69,10 @@ class Demo03 {
         tick.call(0)
     }
 
-    def getPixel(r: Int, c: Int): Double = vertexData[6 * (r * ncols + c)]
+    def getPixel(r: Int, c: Int): Double = vertexData[r * ncols + c]
 
     def setPixel(r: Int, c: Int, value: Double) {
-        for i = 0; i < 6; i++ {
-            vertexData[6 * (r * ncols + c) + i] = value
-        }
+        vertexData[r * ncols + c] = value
     }
 
     def togglePixel(r: Int, c: Int) {
@@ -105,6 +103,7 @@ class Demo03 {
         gl.bindBuffer(gl.cARRAY_BUFFER, vertexBuffer)
         gl.bufferData(gl.cARRAY_BUFFER, vertexData, gl.cSTREAM_DRAW)
         gl.vertexAttribPointer(aVertexData, 1, gl.cFLOAT, false, 0, 0)
+        gl.vertexAttribDivisor(aVertexData, 1)
         gl.enableVertexAttribArray(aVertexData)
 
         gl.unbindVertexArray()
@@ -117,7 +116,7 @@ class Demo03 {
         gl.bindVertexArray(vao)
         gl.uniform1f(uNRows, nrows)
         gl.uniform1f(uNCols, ncols)
-        gl.drawArrays(gl.cTRIANGLES, 0, vertexData.size())
+        gl.drawArraysInstanced(gl.cTRIANGLES, 0, 6, vertexData.size())
         gl.unbindVertexArray()
     }
 }
