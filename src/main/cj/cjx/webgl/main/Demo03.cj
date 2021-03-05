@@ -24,11 +24,7 @@ class Demo03 {
 
     def main() {
         # Don't make initial state pitch black -- set all colors to be grey
-        for r = 0; r < nrows; r++ {
-            for c = 0; c < ncols; c++ {
-                renderer.setPixel(r, c, 0.2)
-            }
-        }
+        renderer.setAllPixels(0.2)
 
         togglePixelGroup(3, 0)
         renderer.draw()

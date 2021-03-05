@@ -77,6 +77,12 @@ class WebGLGridRenderer {
         setPixel(r, c, 1.0 - getPixel(r, c))
     }
 
+    def setAllPixels(self, value: Double) {
+        for i = 0; i < vertexData.size(); i++ {
+            vertexData[i] = value
+        }
+    }
+
     private def updateVertexBuffer(self) {
         gl.bindBuffer(gl.cARRAY_BUFFER, vertexBuffer)
         gl.bufferData(gl.cARRAY_BUFFER, vertexData, gl.cSTREAM_DRAW)
