@@ -40,6 +40,7 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     def __get_cLINK_STATUS(self: Self): Int = self.field("LINK_STATUS").unsafeCast()
     def __get_cVALIDATE_STATUS(self: Self): Int = self.field("VALIDATE_STATUS").unsafeCast()
     def __get_cSHADER_TYPE(self: Self): Int = self.field("SHADER_TYPE").unsafeCast()
+    def __get_cACTIVE_UNIFORMS(self: Self): Int = self.field("ACTIVE_UNIFORMS").unsafeCast()
 
     # getBufferParameter constants
     def __get_cBUFFER_SIZE(self: Self): Int = self.field("BUFFER_SIZE").unsafeCast()
@@ -211,6 +212,9 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     def uniformMatrix4fv(self, location: WebGLUniformLocation, transpose: Bool, value: Float32Array) = (
         self.call("uniformMatrix4fv", location, transpose, value))
 
+    def uniform1f(self, location: WebGLUniformLocation, data: Double) = (
+        call("uniform1f", location, data))
+
     def uniform1fv(self, location: WebGLUniformLocation, data: Float32Array) = (
         call("uniform1fv", location, data))
     def uniform2fv(self, location: WebGLUniformLocation, data: Float32Array) = (
@@ -243,4 +247,8 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     ## getProgramParameter(program, VALIDATE_STATUS)
     def ppVALIDATE_STATUS(self: Self, program: WebGLProgram): Bool = (
         self.call("getProgramParameter", program, self.cVALIDATE_STATUS).unsafeCast())
+
+    ## getProgramParameter(program, ACTIVE_UNIFORMS)
+    def ppACTIVE_UNIFORMS(self: Self, program: WebGLProgram): Int = (
+        self.call("getProgramParameter", program, self.cACTIVE_UNIFORMS).unsafeCast())
 }
