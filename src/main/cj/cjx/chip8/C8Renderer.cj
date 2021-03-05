@@ -1,5 +1,6 @@
 package cjx.chip8
 
+import cjx.webgl.WebGLGridRenderer
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.CanvasRenderingContext2D
 import cj.Uint8Array
@@ -10,12 +11,10 @@ class C8Renderer {
 
     val scale: Double
     val canvas: HTMLCanvasElement
-    val ctx: CanvasRenderingContext2D
-    val display: Uint8Array = Uint8Array.withSize(rows * cols)
-    # val dirty: Uint8Array = Uint8Array.withSize(rows * cols)
+    val renderer: WebGLGridRenderer
 
     def(scale: Double, canvas: HTMLCanvasElement): Self {
-        val self = __malloc(scale, canvas, canvas.getContext())
+        val self = __malloc(scale, canvas, WebGLGridRenderer(canvas, rows, cols))
         canvas.width = (cols.toDouble() * scale).toInt()
         canvas.height = (rows.toDouble() * scale).toInt()
         self
@@ -31,45 +30,16 @@ class C8Renderer {
         }
         if x >= cols { x -= cols } else if x < 0 { x += cols }
         if y >= rows { y -= rows } else if y < 0 { y += rows }
-        val pos = x + y * cols
-        display[pos] = display[pos] ^ 1
-        # dirty[pos] = 1
-        not display[pos]
+        val pixel = renderer.getPixel(y, x)
+        renderer.togglePixel(y, x)
+        pixel > 0.5
     }
 
     def clear(self) {
-        for i = 0; i < rows * cols; i++ {
-            display[i] = 0
-            # dirty[i] = 1
-        }
+        renderer.setAllPixels(0.0)
     }
 
     def render(self) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        for i = 0; i < display.size(); i++ {
-            val x = ((i % cols).toDouble() * scale).toInt()
-            val y = ((i // cols).toDouble() * scale).toInt()
-            if display[i] {
-                ctx.fillStyle = "#000"
-                ctx.fillRect(x, y, scale, scale)
-            }
-        }
+        renderer.draw()
     }
-
-    # def render(self) {
-    #     # ctx.clearRect(0, 0, canvas.width, canvas.height)
-    #     for i = 0; i < display.size(); i++ {
-    #         val x = ((i % cols).toDouble() * scale).toInt()
-    #         val y = ((i // cols).toDouble() * scale).toInt()
-    #         if dirty[i] {
-    #             if display[i] {
-    #                 ctx.fillStyle = "#000"
-    #                 ctx.fillRect(x, y, scale, scale)
-    #             } else {
-    #                 ctx.clearRect(x, y, scale, scale)
-    #             }
-    #             dirty[i] = 0
-    #         }
-    #     }
-    # }
 }
