@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.Assert;
+import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
@@ -229,20 +230,20 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitLiteral(CJAstLiteral e, Optional<CJIRType> a) {
                 switch (e.getKind()) {
-                    case Unit:
-                        return new CJIRLiteral(e, ctx.getUnitType(), e.getKind(), e.getRawText());
-                    case Bool:
-                        return new CJIRLiteral(e, ctx.getBoolType(), e.getKind(), e.getRawText());
-                    case Char:
-                        return new CJIRLiteral(e, ctx.getCharType(), e.getKind(), e.getRawText());
-                    case Int:
-                        return new CJIRLiteral(e, ctx.getIntType(), e.getKind(), e.getRawText());
-                    case Double:
-                        return new CJIRLiteral(e, ctx.getDoubleType(), e.getKind(), e.getRawText());
-                    case String:
-                        return new CJIRLiteral(e, ctx.getStringType(), e.getKind(), e.getRawText());
-                    case BigInt:
-                        return new CJIRLiteral(e, ctx.getBigIntType(), e.getKind(), e.getRawText());
+                case Unit:
+                    return new CJIRLiteral(e, ctx.getUnitType(), e.getKind(), e.getRawText());
+                case Bool:
+                    return new CJIRLiteral(e, ctx.getBoolType(), e.getKind(), e.getRawText());
+                case Char:
+                    return new CJIRLiteral(e, ctx.getCharType(), e.getKind(), e.getRawText());
+                case Int:
+                    return new CJIRLiteral(e, ctx.getIntType(), e.getKind(), e.getRawText());
+                case Double:
+                    return new CJIRLiteral(e, ctx.getDoubleType(), e.getKind(), e.getRawText());
+                case String:
+                    return new CJIRLiteral(e, ctx.getStringType(), e.getKind(), e.getRawText());
+                case BigInt:
+                    return new CJIRLiteral(e, ctx.getBigIntType(), e.getKind(), e.getRawText());
                 }
                 throw CJError.of("TODO evalExpression-visitBlock", e.getMark());
             }
@@ -485,18 +486,18 @@ final class CJPass04 extends CJPassBaseEx {
                     var method = methodRef.getMethod();
                     String augMethodName = "";
                     switch (e.getKind()) {
-                        case Add:
-                            augMethodName = "__add";
-                            break;
-                        case Subtract:
-                            augMethodName = "__sub";
-                            break;
-                        case Multiply:
-                            augMethodName = "__mul";
-                            break;
-                        case Remainder:
-                            augMethodName = "__rem";
-                            break;
+                    case Add:
+                        augMethodName = "__add";
+                        break;
+                    case Subtract:
+                        augMethodName = "__sub";
+                        break;
+                    case Multiply:
+                        augMethodName = "__mul";
+                        break;
+                    case Remainder:
+                        augMethodName = "__rem";
+                        break;
                     }
                     Assert.notEquals(augMethodName, "");
                     if (method.getParameters().size() == 0) {
@@ -620,18 +621,18 @@ final class CJPass04 extends CJPassBaseEx {
                     if (!expectedType.isTupleType()) {
                         CJIRItem tupleItem;
                         switch (e.getExpressions().size()) {
-                            case 2:
-                                tupleItem = ctx.getTuple2Item();
-                                break;
-                            case 3:
-                                tupleItem = ctx.getTuple3Item();
-                                break;
-                            case 4:
-                                tupleItem = ctx.getTuple4Item();
-                                break;
-                            default:
-                                throw CJError.of("Tuple 2, 3, or 4 expected but got " + e.getExpressions().size(),
-                                        e.getMark());
+                        case 2:
+                            tupleItem = ctx.getTuple2Item();
+                            break;
+                        case 3:
+                            tupleItem = ctx.getTuple3Item();
+                            break;
+                        case 4:
+                            tupleItem = ctx.getTuple4Item();
+                            break;
+                        default:
+                            throw CJError.of("Tuple 2, 3, or 4 expected but got " + e.getExpressions().size(),
+                                    e.getMark());
                         }
                         var newExpectedType = getNewExpectedTypeBasedOnImplicits(e.getMark(), a.get(), tupleItem);
                         if (newExpectedType.isPresent()) {
@@ -1014,8 +1015,48 @@ final class CJPass04 extends CJPassBaseEx {
                 var fin = e.getFin().map(f -> evalExpressionEx(f, fa));
                 return new CJIRTry(e, a.get(), body, clauses, fin);
             }
+
+            @Override
+            public CJIRExpression visitMacroCall(CJAstMacroCall e, Optional<CJIRType> a) {
+                switch (e.getName()) {
+                case "include_str!":
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("include_str requires exactly 1 argument", e.getMark());
+                    }
+                    var relpath = getStringLiteralData(e.getArgs().get(0));
+                    var path = IO.join(IO.dirname(e.getMark().filename), relpath);
+                    if (!FS.isFile(path)) {
+                        throw CJError.of("File " + path + " not found", e.getMark());
+                    }
+                    var contents = IO.readFile(path);
+                    return evalExpression(new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(contents)));
+                default:
+                    throw CJError.of("Unrecognized macro " + Repr.of(e.getName()), e.getMark());
+                }
+            }
         }, a);
         return ir;
+    }
+
+    private static String getStringLiteralData(CJAstExpression expr) {
+        var optString = getStringLiteralDataOrEmpty(expr);
+        if (optString.isEmpty()) {
+            throw CJError.of("Expected string literal here", expr.getMark());
+        }
+        return optString.get();
+    }
+
+    private static Optional<String> getStringLiteralDataOrEmpty(CJAstExpression expr) {
+        if (expr instanceof CJAstLiteral) {
+            var literal = (CJAstLiteral) expr;
+            switch (literal.getKind()) {
+            case String:
+                return Optional.of(Repr.parse(literal.getRawText()));
+            default:
+                break;
+            }
+        }
+        return Optional.empty();
     }
 
     private CJIRAssignmentTarget evalDeclarableTarget(CJAstAssignmentTarget target, boolean mutable, CJIRType type) {

@@ -37,6 +37,15 @@ public final class IO {
         return String.join(File.separator, parts);
     }
 
+    public static String dirname(String path) {
+        var lastSepIndex = path.lastIndexOf(separator());
+        if (lastSepIndex == -1) {
+            return "";
+        } else {
+            return path.substring(0, lastSepIndex);
+        }
+    }
+
     public static String separator() {
         return File.separator;
     }

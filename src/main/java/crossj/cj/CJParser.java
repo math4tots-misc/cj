@@ -1124,6 +1124,12 @@ public final class CJParser {
                     }
                     return new CJAstVariableAccess(mark, name);
                 }
+            case CJToken.MACROID: {
+                var mark = getMark();
+                var name = next().text;
+                var args = parseArgs();
+                return new CJAstMacroCall(mark, name, args);
+            }
             case CJToken.KW_IF: {
                 var mark = getMark();
                 next();

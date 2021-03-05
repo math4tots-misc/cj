@@ -25,4 +25,5 @@ public abstract class CJAstExpressionVisitor<R, A> {
     public abstract R visitAwait(CJAstAwait e, A a);
     public abstract R visitThrow(CJAstThrow e, A a);
     public abstract R visitTry(CJAstTry e, A a);
+    public abstract R visitMacroCall(CJAstMacroCall e, A a);
 }

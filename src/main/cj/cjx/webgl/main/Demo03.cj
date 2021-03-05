@@ -35,7 +35,9 @@ class Demo03 {
             vertexData[i] = 0.2
         }
 
-        glh.initProgram()
+        glh.initProgramWithShaders(
+            include_str!("../shaders/grid.vert"),
+            include_str!("../shaders/grid.frag"))
         aVertexData = gl.getAttribLocation(program, "aVertexData")
         IO.println("Active uniforms = " + gl.ppACTIVE_UNIFORMS(program))
         uNRows = gl.getUniformLocation(program, "uNRows").get()

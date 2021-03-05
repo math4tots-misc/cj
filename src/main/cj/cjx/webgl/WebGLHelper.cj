@@ -1,5 +1,6 @@
 package cjx.webgl
 
+import cj.Error
 import cjx.js.web.WebGLProgram
 import cjx.js.web.HTMLScriptElement
 import cjx.js.web.WebGLShader
@@ -26,28 +27,41 @@ class WebGLHelper {
         val script : HTMLScriptElement = document.getElementBydId(id)
         val shaderString = script.text.trim()
 
-        val shader = if script.type == "x-shader/x-vertex" {
-            gl.createShader(gl.cVERTEX_SHADER)
+        val type = if script.type == "x-shader/x-vertex" {
+            gl.cVERTEX_SHADER
         } else {
             Assert.equal(script.type, "x-shader/x-fragment")
-            gl.createShader(gl.cFRAGMENT_SHADER)
+            gl.cFRAGMENT_SHADER
         }
 
-        # Compile the shader using the supplied shader code
-        gl.shaderSource(shader, shaderString)
+        compileShader(type, shaderString)
+    }
+
+    private def compileShader(self, type: Int, shaderSource: String): WebGLShader {
+        val shader = gl.createShader(type)
+        gl.shaderSource(shader, shaderSource)
         gl.compileShader(shader)
-
-        # Ensure the shader is valid
         if not gl.spCOMPILE_STATUS(shader) {
-            throw gl.getShaderInfoLog(shader)
+            throw Error(gl.getShaderInfoLog(shader))
         }
-
         shader
     }
 
     def initProgram(self: Self) = {
         val vertexShader = self.getShader("vertex-shader")
         val fragmentShader = self.getShader("fragment-shader")
+
+        initProgramWithCompiledShaders(vertexShader, fragmentShader)
+    }
+
+    def initProgramWithShaders(self, vertexShaderSource: String, fragmentShaderSource: String) {
+        initProgramWithCompiledShaders(
+            compileShader(gl.cVERTEX_SHADER, vertexShaderSource),
+            compileShader(gl.cFRAGMENT_SHADER, fragmentShaderSource))
+    }
+
+    private def initProgramWithCompiledShaders(
+            self, vertexShader: WebGLShader, fragmentShader: WebGLShader) {
 
         # Create a program
         val program = gl.createProgram()
