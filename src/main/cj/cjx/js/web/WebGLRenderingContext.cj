@@ -112,6 +112,9 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     def drawElements(self: Self, mode: Int, count: Int, type: Int, offset: Int) = (
         self.call("drawElements", mode, count, type, offset))
 
+    def drawArrays(self: Self, mode: Int, first: Int, count: Int) = (
+        self.call("drawArrays", mode, first, count))
+
     # ============================================================================================
     # =================================== BUFFERS ================================================
     # ============================================================================================
