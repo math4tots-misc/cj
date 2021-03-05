@@ -25,13 +25,10 @@
 
       // each cell has corners numbered
       //
-      // 0  -  2
-      //    \  |
-      //       1
+      // 0  -  3
+      // |  \  |
+      // 1  -  2
       //
-      // 3
-      // | \
-      // 4 - 5
 
       void main(void) {
         int nrows = int(uNRows);
@@ -47,11 +44,11 @@
         float x = -1.0 + pixelWidth * float(col);
         float y = 1.0 - pixelHeight * float(row);
 
-        if (corner == 1 || corner == 2 || corner == 5) {
+        if (corner == 2 || corner == 3) {
           x += pixelWidth;
         }
 
-        if (corner == 1 || corner == 4 || corner == 5) {
+        if (corner == 1 || corner == 2) {
           y -= pixelHeight;
         }
 

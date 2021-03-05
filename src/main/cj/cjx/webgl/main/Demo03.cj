@@ -116,7 +116,7 @@ class Demo03 {
         gl.bindVertexArray(vao)
         gl.uniform1f(uNRows, nrows)
         gl.uniform1f(uNCols, ncols)
-        gl.drawArraysInstanced(gl.cTRIANGLES, 0, 6, vertexData.size())
+        gl.drawArraysInstanced(gl.cTRIANGLE_FAN, 0, 4, vertexData.size())
         gl.unbindVertexArray()
     }
 }
