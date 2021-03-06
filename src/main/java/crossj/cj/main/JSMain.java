@@ -116,6 +116,7 @@ public final class JSMain {
         if (runMode instanceof CJIRRunModeWWW) {
             var config = ((CJIRRunModeWWW) runMode).getConfig();
             var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
+            var appdir = ((CJIRRunModeWWW) runMode).getAppdir();
             IO.delete(outPath);
             if (FS.exists(wwwdir)) {
                 IO.copyFolder(wwwdir, outPath);
@@ -125,6 +126,15 @@ public final class JSMain {
                 for (var key : keys) {
                     var src = findResourcePath(sourceRoots, key);
                     var reldest = config.get("resources").get(key).getString();
+                    var dest = FS.join(outPath, reldest);
+                    IO.copy(src, dest);
+                }
+            }
+            if (config.has("www")) {
+                var keys = config.get("www").keys();
+                for (var key : keys) {
+                    var src = findResourcePath2(sourceRoots, appdir, key);
+                    var reldest = config.get("www").get(key).getString();
                     var dest = FS.join(outPath, reldest);
                     IO.copy(src, dest);
                 }
@@ -153,6 +163,27 @@ public final class JSMain {
     }
 
     private static CJIRRunMode loadAppConfig(List<String> sourceRoots, String appId) {
+        var colonIndex = appId.indexOf(':');
+        if (colonIndex != -1) {
+            for (var sourceRoot : sourceRoots) {
+                var baseName = appId.substring(colonIndex + 1);
+                var packageName = appId.substring(0, colonIndex);
+                var appdir = FS.join(sourceRoot, packageName.replace("/", IO.separator()));
+                var cjpath = FS.join(appdir, "CJ.json");
+                if (FS.isFile(cjpath)) {
+                    var blob = JSON.parse(IO.readFile(cjpath));
+                    if (blob.has(baseName)) {
+                        var config = blob.get(baseName);
+                        var type = config.get("type").getString();
+                        switch (type) {
+                            case "www": {
+                                return new CJIRRunModeWWW(appdir, config);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         var appdir = findAppDir(sourceRoots, appId);
         var config = JSON.parse(IO.readFile(FS.join(appdir, "config.json")));
         var type = config.get("type").getString();
@@ -184,5 +215,23 @@ public final class JSMain {
             }
         }
         throw new RuntimeException("Resource " + relpath + " not found");
+    }
+
+    private static String findResourcePath2(List<String> sourceRoots, String appdir, String givenPath) {
+        if (givenPath.startsWith("/")) {
+            var relpath = givenPath.substring(1);
+            for (var sourceRoot : sourceRoots) {
+                var candidate = FS.join(sourceRoot, relpath);
+                if (FS.exists(candidate)) {
+                    return candidate;
+                }
+            }
+        } else {
+            var candidate = FS.join(appdir, givenPath);
+            if (FS.exists(candidate)) {
+                return candidate;
+            }
+        }
+        throw new RuntimeException("Resource " + givenPath + " not found");
     }
 }

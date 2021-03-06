@@ -1,0 +1,32 @@
+{
+    "ch01s03": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch01s03",
+        "www": { "www/ch01s03.html": "index.html" }
+    },
+    "ch02s01": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch02s01",
+        "www": { "www/ch02s01.html": "index.html" }
+    },
+    "ch02s03": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch02s03",
+        "www": { "www/ch02s03.html": "index.html" }
+    },
+    "ch02s04": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch02s04",
+        "www": { "www/ch02s04.html": "index.html" }
+    },
+    "ch02s05": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch02s05",
+        "www": { "www/ch02s05.html": "index.html" }
+    },
+    "ch02s07": {
+        "type": "www",
+        "main": "cjx.books.webgl.main.Ch02s07",
+        "www": { "www/ch02s07.html": "index.html", "www/cone1.json": "cone1.json" }
+    }
+}

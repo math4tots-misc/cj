@@ -28,4 +28,8 @@ public final class CJIRRunModeWWW extends CJIRRunMode {
     public String getWwwdir() {
         return FS.join(appdir, "www");
     }
+
+    public String getAppdir() {
+        return appdir;
+    }
 }
