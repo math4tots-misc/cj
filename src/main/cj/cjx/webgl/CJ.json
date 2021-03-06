@@ -1,0 +1,7 @@
+{
+    "demo03": {
+        "type": "www",
+        "main": "cjx.webgl.main.Demo03",
+        "www": { "/cjx/www/canvas.html": "index.html" }
+    }
+}

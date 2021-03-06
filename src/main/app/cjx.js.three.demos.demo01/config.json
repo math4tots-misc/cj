@@ -1,5 +1,0 @@
-{
-    "type": "www",
-    "main": "cjx.js.three.demos.Demo01",
-    "resources": { "threejs/default.html": "index.html" }
-}
