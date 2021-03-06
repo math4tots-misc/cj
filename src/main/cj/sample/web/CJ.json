@@ -1,0 +1,12 @@
+{
+    "sample1": {
+        "type": "www",
+        "main": "sample.web.Sample1",
+        "www": { "sample1.html": "index.html" }
+    },
+    "sample2": {
+        "type": "www",
+        "main": "sample.web.Sample2",
+        "www": { "sample2.html": "index.html" }
+    }
+}
