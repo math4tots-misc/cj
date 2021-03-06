@@ -83,7 +83,16 @@ class GameOfLife {
 
     def initWithGlider() {
         clear()
-        setGliderAt(5, 5)
+        val positions = [
+            (5, 5),
+            (20, 10),
+            (31, 7),
+            (20, 40),
+            (27, 50),
+        ]
+        for (r, c) in positions {
+            setGliderAt(r, c)
+        }
     }
 
     def setGliderAt(r: Int, c: Int) {
@@ -133,10 +142,6 @@ class GameOfLife {
                     case 2 = old[r * ncols + c]
                     case 3 = 1
                     else = 0
-                }
-                if neighborCount > 0 {
-                    IO.println(
-                        "(" + r + ", " + c + ") " + old[r * ncols + c] + " " + neighborCount + " -> " + new[r * ncols + c])
                 }
             }
         }
