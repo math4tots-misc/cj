@@ -1,5 +1,0 @@
-{
-    "type": "www",
-    "main": "cjx.webgl.main.Demo01",
-    "resources": { "www/webgl/demo01.html": "index.html" }
-}

@@ -1,4 +1,14 @@
 {
+    "demo01": {
+        "type": "www",
+        "main": "cjx.webgl.main.Demo01",
+        "www": { "main/demo01.html": "index.html" }
+    },
+    "demo02": {
+        "type": "www",
+        "main": "cjx.webgl.main.Demo02",
+        "www": { "/cjx/www/canvas.html": "index.html" }
+    },
     "demo03": {
         "type": "www",
         "main": "cjx.webgl.main.Demo03",
