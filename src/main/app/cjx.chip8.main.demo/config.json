@@ -1,5 +1,0 @@
-{
-    "type": "www",
-    "main": "cjx.chip8.main.Demo",
-    "resources": { "www/empty.html": "index.html" }
-}
