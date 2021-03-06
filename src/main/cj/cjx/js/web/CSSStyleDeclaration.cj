@@ -15,4 +15,5 @@ class CSSStyleDeclaration: JSWrapper {
     def __set_border(self, desc: String) = setField("border", desc)
     def __set_padding(self, desc: String) = setField("padding", desc)
     def __set_fontWeight(self, desc: String) = setField("font-weight", desc)
+    def __set_display(self, desc: String) = setField("display", desc)
 }

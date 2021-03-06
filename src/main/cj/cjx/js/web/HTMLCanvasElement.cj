@@ -1,5 +1,6 @@
 package cjx.js.web
 
+import cjx.js.web.MouseEvent
 import cjx.js.web.CanvasRenderingContext
 import cjx.js.web.WebGL2RenderingContext
 import cjx.js.web.CanvasRenderingContext2D
@@ -24,4 +25,14 @@ class HTMLCanvasElement : HTMLElement {
 
     def getContextWebGL(self: Self): WebGL2RenderingContext = (
         self.call("getContext", "webgl2").unsafeCast())
+
+    ## Given a mouse event, get the adjusted (x, y) coordinates into its content
+    def getCoordinatesFromMouseEvent(self, event: MouseEvent): Tuple[Double, Double] {
+        val borderWidth = (clientWidth - offsetWidth) / 2
+        val borderHeight = (clientWidth - offsetWidth) / 2
+        val rect = getBoundingClientRect()
+        val x = event.clientX + borderWidth - rect.left
+        val y = event.clientY + borderHeight - rect.top
+        (x, y)
+    }
 }
