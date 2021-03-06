@@ -38,8 +38,6 @@ class Demo03 {
             val elapsed = (tsMs - lastTimeStampMs) / 1000
             if elapsed > 0.5 {
                 lastTimeStampMs = tsMs
-                IO.println("elapsed = " + elapsed)
-
                 togglePixelGroup(modulo, remainder % modulo)
                 if modulo < 11 {
                     modulo++
