@@ -1,4 +1,4 @@
-package cjx.chip8.main
+package cjx.emu.chip8.main
 
 import cjx.js.web.HTMLOptionElement
 import cjx.js.web.HTMLSelectElement
@@ -9,7 +9,7 @@ import cjx.js.web.HTMLInputElement
 import cjx.js.web.HTMLDivElement
 import cjx.js.web.HTMLButtonElement
 import cjx.js.web.HTMLStyleElement
-import cjx.chip8.Chip8
+import cjx.emu.chip8.Chip8
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Document
 

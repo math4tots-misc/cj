@@ -1,4 +1,4 @@
-package cjx.chip8
+package cjx.emu.chip8
 
 import cjx.js.web.Window
 import cjx.js.JSObject

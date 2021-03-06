@@ -1,15 +1,15 @@
-package cjx.chip8
+package cjx.emu.chip8
 
 import cj.AIO
 import cj.Uint8Array
 import cj.net.HTTP
-import cjx.chip8.C8CPU
-import cjx.chip8.C8Speaker
-import cjx.chip8.C8Keyboard
+import cjx.emu.chip8.C8CPU
+import cjx.emu.chip8.C8Speaker
+import cjx.emu.chip8.C8Keyboard
 import cjx.js.web.HTMLCanvasElement
 import cj.Time
 import cjx.js.web.Window
-import cjx.chip8.C8Renderer
+import cjx.emu.chip8.C8Renderer
 
 class Chip8 {
     static val window: Window = Window.get()

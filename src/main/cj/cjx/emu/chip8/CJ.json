@@ -1,7 +1,7 @@
 {
     "demo": {
         "type": "www",
-        "main": "cjx.chip8.main.Demo",
+        "main": "cjx.emu.chip8.main.Demo",
         "www": {
             "/cjx/www/empty.html": "index.html",
             "roms": "roms"
@@ -9,7 +9,7 @@
     },
     "rendererdemo": {
         "type": "www",
-        "main": "cjx.chip8.main.RendererDemo",
+        "main": "cjx.emu.chip8.main.RendererDemo",
         "www": { "/cjx/www/empty.html": "index.html" }
     }
 }

@@ -1,9 +1,9 @@
-package cjx.chip8.main
+package cjx.emu.chip8.main
 
 import cjx.js.web.HTMLStyleElement
 import cjx.js.web.HTMLInputElement
 import cj.Time
-import cjx.chip8.C8Renderer
+import cjx.emu.chip8.C8Renderer
 import cjx.js.web.CanvasRenderingContext2D
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Window

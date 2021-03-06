@@ -1,4 +1,4 @@
-package cjx.chip8
+package cjx.emu.chip8
 
 import cjx.webgl.WebGLGridRenderer
 import cjx.js.web.HTMLCanvasElement
