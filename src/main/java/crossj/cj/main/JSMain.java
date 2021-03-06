@@ -115,25 +115,12 @@ public final class JSMain {
         var jsSink = CJJSTranslator.translate(ctx, runMode);
         if (runMode instanceof CJIRRunModeWWW) {
             var config = ((CJIRRunModeWWW) runMode).getConfig();
-            var wwwdir = ((CJIRRunModeWWW) runMode).getWwwdir();
             var appdir = ((CJIRRunModeWWW) runMode).getAppdir();
             IO.delete(outPath);
-            if (FS.exists(wwwdir)) {
-                IO.copyFolder(wwwdir, outPath);
-            }
-            if (config.has("resources")) {
-                var keys = config.get("resources").keys();
-                for (var key : keys) {
-                    var src = findResourcePath(sourceRoots, key);
-                    var reldest = config.get("resources").get(key).getString();
-                    var dest = FS.join(outPath, reldest);
-                    IO.copy(src, dest);
-                }
-            }
             if (config.has("www")) {
                 var keys = config.get("www").keys();
                 for (var key : keys) {
-                    var src = findResourcePath2(sourceRoots, appdir, key);
+                    var src = findResourcePath(sourceRoots, appdir, key);
                     var reldest = config.get("www").get(key).getString();
                     var dest = FS.join(outPath, reldest);
                     IO.copy(src, dest);
@@ -179,45 +166,17 @@ public final class JSMain {
                             case "www": {
                                 return new CJIRRunModeWWW(appdir, config);
                             }
+                            default:
+                                throw new RuntimeException(appId + " has unsupported app type " + type);
                         }
                     }
                 }
             }
         }
-        var appdir = findAppDir(sourceRoots, appId);
-        var config = JSON.parse(IO.readFile(FS.join(appdir, "config.json")));
-        var type = config.get("type").getString();
-        switch (type) {
-            case "www": {
-                return new CJIRRunModeWWW(appdir, config);
-            }
-            default: {
-                throw new RuntimeException(appId + " has unsupported app type " + type);
-            }
-        }
+        throw new RuntimeException("App target " + appId + " not found");
     }
 
-    private static String findAppDir(List<String> sourceRoots, String appId) {
-        for (var sourceRoot : sourceRoots) {
-            var candidate = FS.join(sourceRoot, "..", "app", appId);
-            if (FS.isDir(candidate)) {
-                return candidate;
-            }
-        }
-        throw new RuntimeException("App directory for " + appId + " not found");
-    }
-
-    private static String findResourcePath(List<String> sourceRoots, String relpath) {
-        for (var sourceRoot : sourceRoots) {
-            var candidate = FS.join(sourceRoot, "..", "resources", relpath);
-            if (FS.exists(candidate)) {
-                return candidate;
-            }
-        }
-        throw new RuntimeException("Resource " + relpath + " not found");
-    }
-
-    private static String findResourcePath2(List<String> sourceRoots, String appdir, String givenPath) {
+    private static String findResourcePath(List<String> sourceRoots, String appdir, String givenPath) {
         if (givenPath.startsWith("/")) {
             var relpath = givenPath.substring(1);
             for (var sourceRoot : sourceRoots) {

@@ -1,6 +1,5 @@
 package crossj.cj;
 
-import crossj.base.FS;
 import crossj.json.JSON;
 
 public final class CJIRRunModeWWW extends CJIRRunMode {
@@ -23,10 +22,6 @@ public final class CJIRRunModeWWW extends CJIRRunMode {
 
     public String getMainClass() {
         return config.get("main").getString();
-    }
-
-    public String getWwwdir() {
-        return FS.join(appdir, "www");
     }
 
     public String getAppdir() {
