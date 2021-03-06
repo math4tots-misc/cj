@@ -60,7 +60,7 @@ class Demo {
         val loaderSelect: HTMLSelectElement = document.createElement()
         val loaderButton: HTMLButtonElement = document.createElement()
         loaderButton.innerText = "load ROM"
-        for name in listdir!("../roms") {
+        for name in listdir!("../roms").sorted() {
             val optionElement: HTMLOptionElement = document.createElement()
             optionElement.value = name
             optionElement.innerText = name
