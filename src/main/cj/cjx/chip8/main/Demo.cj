@@ -1,5 +1,7 @@
 package cjx.chip8.main
 
+import cjx.js.web.HTMLOptionElement
+import cjx.js.web.HTMLSelectElement
 import cj.Uint8Array
 import cjx.js.JSObject
 import cjx.js.web.Window
@@ -55,13 +57,19 @@ class Demo {
         speedButton.onclick(event -> { chip8.cpu.speed = Int(speedInput.value) })
 
         val loaderDiv: HTMLDivElement = document.createElement()
-        val loaderInput: HTMLInputElement = document.createElement()
+        val loaderSelect: HTMLSelectElement = document.createElement()
         val loaderButton: HTMLButtonElement = document.createElement()
         loaderButton.innerText = "load ROM"
+        for name in listdir!("../roms") {
+            val optionElement: HTMLOptionElement = document.createElement()
+            optionElement.value = name
+            optionElement.innerText = name
+            loaderSelect.appendChild(optionElement)
+        }
         document.body.appendChild(loaderDiv)
-        loaderDiv.appendChild(loaderInput)
+        loaderDiv.appendChild(loaderSelect)
         loaderDiv.appendChild(loaderButton)
-        loaderButton.onclick(event -> { chip8.runRom(loaderInput.value).done() })
+        loaderButton.onclick(event -> { chip8.runRom(loaderSelect.value).done() })
 
         val dropDiv: HTMLDivElement = document.createElement()
         dropDiv.innerText = "Drag and drop ROM files here"

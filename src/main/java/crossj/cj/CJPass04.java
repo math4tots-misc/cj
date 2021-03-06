@@ -1030,6 +1030,18 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     var contents = IO.readFile(path);
                     return evalExpression(new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(contents)));
+                case "listdir!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("listdir requires exactly 1 argument", e.getMark());
+                    }
+                    var rawpath = getStringLiteralData(e.getArgs().get(0));
+                    var dirpath = IO.join(IO.dirname(e.getMark().filename), rawpath);
+                    var strexprs = FS.list(dirpath).map(
+                            s -> (CJAstExpression) new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(s)));
+                    var listexpr = new CJAstListDisplay(e.getMark(), strexprs);
+                    var expectedType = ctx.getListType(ctx.getStringType());
+                    return evalExpressionWithType(listexpr, expectedType);
+                }
                 default:
                     throw CJError.of("Unrecognized macro " + Repr.of(e.getName()), e.getMark());
                 }
