@@ -55,7 +55,7 @@
 			"patterns": [
 				{
 					"name": "storage.type.item.cj",
-					"match": "\\b(class|union|trait|enum)\\b"
+					"match": "\\b(class|union|trait|interface|enum)\\b"
 				},
 				{
 					"name": "storage.type.cj",

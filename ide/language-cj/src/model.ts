@@ -278,7 +278,7 @@ class RCSet<T> {
 }
 
 function parseItem(s: string): Item {
-    const re = /#[^\n]*|\\{|\\}|\b(def|val|var|class|union|trait|case)\s+\w+|\b(import|package)\s+[\.\w]+|\w+\s*:?|"([^"]|\\\")*"|[^\s\w"]+/g;
+    const re = /#[^\n]*|\\{|\\}|\b(def|val|var|class|union|interface|trait|case)\s+\w+|\b(import|package)\s+[\.\w]+|\w+\s*:?|"([^"]|\\\")*"|[^\s\w"]+/g;
     let depth = 0;
     let arr;
     let pkg = "";
@@ -302,7 +302,7 @@ function parseItem(s: string): Item {
                 depth--;
                 break;
             default: {
-                const parts = /^\b(def|val|var|class|union|trait|case|import|package|)\b\s*([\w\.]+)\s*:?/.exec(x);
+                const parts = /^\b(def|val|var|class|union|interface|trait|case|import|package|)\b\s*([\w\.]+)\s*:?/.exec(x);
                 if (parts !== null) {
                     const [, kind, name] = parts;
                     switch (kind) {
@@ -332,6 +332,7 @@ function parseItem(s: string): Item {
                             break;
                         case 'class':
                         case 'union':
+                        case 'interface':
                         case 'trait':
                             if (shortName === "") {
                                 shortName = name;
