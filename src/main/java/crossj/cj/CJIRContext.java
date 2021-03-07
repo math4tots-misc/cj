@@ -136,17 +136,23 @@ public final class CJIRContext extends CJIRContextBase {
         }
 
         var ast = outerItem.getAst();
-        for (var member : ast.getMembers()) {
-            if (member instanceof CJAstItemDefinition) {
-                var childItem = itemFromAst((CJAstItemDefinition) member);
-                itemMap.put(childItem.getFullName(), childItem);
-            }
-        }
+        fillItemMapWithDescendantItems(ast);
         item = itemMap.getOrNull(name);
         if (item == null) {
             throw CJError.of("Item " + name + " not found", marks);
         }
         return item;
+    }
+
+    private void fillItemMapWithDescendantItems(CJAstItemDefinition ast) {
+        for (var member : ast.getMembers()) {
+            if (member instanceof CJAstItemDefinition) {
+                var astItem = (CJAstItemDefinition) member;
+                var childItem = itemFromAst(astItem);
+                itemMap.put(childItem.getFullName(), childItem);
+                fillItemMapWithDescendantItems(astItem);
+            }
+        }
     }
 
     private static List<String> listClassNames(String sourceRoot) {

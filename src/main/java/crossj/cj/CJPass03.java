@@ -137,7 +137,7 @@ final class CJPass03 extends CJPassBaseEx {
             }
         }
 
-        if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
+        if ((item.getKind() == CJIRItemKind.Class || item.getKind() == CJIRItemKind.Interface) && !item.isNative()) {
             var mallocMethodAst = synthesizeMallocMethod(item);
             materializeMethod(item, mallocMethodAst, true, null);
         }
@@ -304,12 +304,12 @@ final class CJPass03 extends CJPassBaseEx {
 
     private CJAstMethodDefinition synthesizeReprMethod(CJIRItem item) {
         switch (item.getKind()) {
-            case Class:
-                return synthesizeClassReprMethod(item);
-            case Union:
-                return synthesizeUnionReprMethod(item);
-            default:
-                throw CJError.of("dreive(repr) not supported for item kind: " + item.getKind(), item.getMark());
+        case Class:
+            return synthesizeClassReprMethod(item);
+        case Union:
+            return synthesizeUnionReprMethod(item);
+        default:
+            throw CJError.of("dreive(repr) not supported for item kind: " + item.getKind(), item.getMark());
         }
     }
 
@@ -345,8 +345,7 @@ final class CJPass03 extends CJPassBaseEx {
                         newJoin(mark, ", ",
                                 Range.upto(c.getTypes().size()).map(i -> newRepr(newGetVar(mark, "a" + i))).list()),
                         newString(mark, ")"))))),
-                List.of(),
-                Optional.empty());
+                List.of(), Optional.empty());
         return synthesizeMethodWithBody(mark, "repr", parameters, stringType, body);
     }
 

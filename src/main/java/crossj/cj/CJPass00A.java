@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.base.Tuple3;
 
 /**
  * Interfaces
@@ -21,7 +22,12 @@ public final class CJPass00A {
     }
 
     private static CJAstItemDefinition handleInterface(CJAstItemDefinition oldItem) {
+        var itemMark = oldItem.getMark();
+        var imports = oldItem.getImports().clone();
         var annotations = oldItem.getAnnotations();
+        annotations.add(new CJAstAnnotationExpression(itemMark, "implicit",
+                List.of(new CJAstAnnotationExpression(itemMark, "Trait", List.of()),
+                        new CJAstAnnotationExpression(itemMark, "__fromTrait", List.of()))));
         var oldMembers = oldItem.getMembers();
         var newMembers = List.<CJAstItemMemberDefinition>of();
         var interfaceMethods = List.<CJAstMethodDefinition>of();
@@ -44,7 +50,12 @@ public final class CJPass00A {
                 newMembers.add(oldMember);
             }
         }
-        var newItem = new CJAstItemDefinition(oldItem.getMark(), oldItem.getPackageName(), oldItem.getImports(),
+        newMembers.add(createFromTrait(oldItem, interfaceMethods));
+        var synthTrait = createTrait(oldItem, interfaceMethods);
+        newMembers.add(synthTrait);
+        imports.add(new CJAstImport(itemMark,
+                synthTrait.getPackageName() + "." + synthTrait.getShortName(), Optional.empty()));
+        var newItem = new CJAstItemDefinition(itemMark, oldItem.getPackageName(), imports,
                 oldItem.getComment(), annotations, oldItem.getModifiers(), oldItem.getKind(), oldItem.getShortName(),
                 oldItem.getTypeParameters(), oldItem.getTraitDeclarations(), newMembers);
         return newItem;
@@ -57,14 +68,18 @@ public final class CJPass00A {
 
     private static CJAstFieldDefinition fieldFromInterfaceMethod(CJAstMethodDefinition interfaceMethod) {
         var fieldName = "__im_" + interfaceMethod.getName();
-        var fnTypeArgs = interfaceMethod.getParameters().sliceFrom(1).map(p -> p.getType());
-        fnTypeArgs.add(interfaceMethod.getReturnType()
-                .getOrElseDo(() -> new CJAstTypeExpression(interfaceMethod.getMark(), "Unit", List.of())));
-        var fnType = new CJAstTypeExpression(interfaceMethod.getMark(), "Fn", fnTypeArgs);
+        var fnType = getFnType(interfaceMethod);
         return new CJAstFieldDefinition(interfaceMethod.getMark(), Optional.empty(), // comment
                 List.of(), // annotations
                 List.of(), // modifiers
                 false, fieldName, fnType, Optional.empty());
+    }
+
+    private static CJAstTypeExpression getFnType(CJAstMethodDefinition method) {
+        var fnTypeArgs = method.getParameters().sliceFrom(1).map(p -> p.getType());
+        fnTypeArgs.add(
+                method.getReturnType().getOrElseDo(() -> new CJAstTypeExpression(method.getMark(), "Unit", List.of())));
+        return new CJAstTypeExpression(method.getMark(), "Fn", fnTypeArgs);
     }
 
     private static CJAstMethodDefinition implMethodFromInterfaceMethod(CJAstMethodDefinition interfaceMethod) {
@@ -82,6 +97,40 @@ public final class CJPass00A {
                 interfaceMethod.getAnnotations(), interfaceMethod.getConditions(), interfaceMethod.getModifiers(),
                 interfaceMethod.getName(), interfaceMethod.getTypeParameters(), interfaceMethod.getParameters(),
                 interfaceMethod.getReturnType(), Optional.of(body));
+    }
+
+    private static CJAstItemDefinition createTrait(CJAstItemDefinition oldItem,
+            List<CJAstMethodDefinition> interfaceMethods) {
+        var newPackageName = oldItem.getPackageName() + "." + oldItem.getName();
+        return new CJAstItemDefinition(oldItem.getMark(), newPackageName, oldItem.getImports(), Optional.empty(),
+                List.of(), List.of(), CJIRItemKind.Trait, "Trait", oldItem.getTypeParameters(), List.of(),
+                interfaceMethods.map(m -> m));
+    }
+
+    /**
+     * Synthesize a method "__fromTrait[T: Trait](t: T): Self" that will convert any
+     * value t that implements Self.Trait into an instance of Self
+     */
+    private static CJAstMethodDefinition createFromTrait(CJAstItemDefinition oldItem,
+            List<CJAstMethodDefinition> interfaceMethods) {
+        var mark = oldItem.getMark();
+        var selfType = new CJAstTypeExpression(mark, "Self", List.of());
+        var tExpr = new CJAstVariableAccess(mark, "t");
+        var body = new CJAstMethodCall(mark, Optional.of(selfType), "__malloc", List.of(), interfaceMethods.map(m -> {
+            var params = m.getParameters().sliceFrom(1);
+            var args = List.<CJAstExpression>of(tExpr);
+            args.addAll(params.map(p -> new CJAstVariableAccess(p.getMark(), p.getName())));
+            return new CJAstLambda(mark, false, params.map(p -> Tuple3.of(p.getMark(), false, p.getName())),
+                    new CJAstMethodCall(mark, Optional.empty(), m.getName(), List.of(), args));
+        }));
+        return new CJAstMethodDefinition(mark, Optional.empty(), // comment
+                List.of(), // annotations
+                List.of(), // conditions
+                List.of(), // modifiers
+                "__fromTrait", List.of(new CJAstTypeParameter(mark, false, List.of(), // annotations
+                        "T", List.of(new CJAstTraitExpression(mark, "Trait", List.of())))),
+                List.of(new CJAstParameter(mark, false, "t", new CJAstTypeExpression(mark, "T", List.of()))),
+                Optional.of(selfType), Optional.of(body));
     }
 
     private static void updateNestedMembersInPlace(CJAstItemDefinition item) {
