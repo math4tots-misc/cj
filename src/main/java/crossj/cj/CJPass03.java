@@ -84,7 +84,7 @@ final class CJPass03 extends CJPassBaseEx {
                         throw CJError.of("classes with type parameters cannot have static fields", fieldAst.getMark());
                     }
                 } else {
-                    if (item.getKind() != CJIRItemKind.Class) {
+                    if (item.getKind() != CJIRItemKind.Class && item.getKind() != CJIRItemKind.Interface) {
                         throw CJError.of("unions cannot have non-static fields", fieldAst.getMark());
                     }
                 }

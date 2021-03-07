@@ -86,7 +86,7 @@ public final class CJIRContext extends CJIRContextBase {
         var path = getItemPathOrNull(name);
         if (path != null) {
             var data = IO.readFile(path);
-            var item = itemFromAst(CJParser.parseString(path, data));
+            var item = itemFromAst(apply00Passes(CJParser.parseString(path, data)));
             if (!item.getFullName().equals(name)) {
                 throw CJError.of("Expected " + path + " to contain " + name + " but found " + item.getFullName(),
                         item.getMark());
@@ -94,6 +94,11 @@ public final class CJIRContext extends CJIRContextBase {
             return item;
         }
         throw CJError.of("Item " + Repr.of(name) + " not found", marks);
+    }
+
+    private static CJAstItemDefinition apply00Passes(CJAstItemDefinition itemDefn) {
+        itemDefn = CJPass00A.apply(itemDefn);
+        return itemDefn;
     }
 
     private static CJIRItem itemFromAst(CJAstItemDefinition ast) {

@@ -153,6 +153,9 @@ public final class CJParser {
             case CJToken.KW_TRAIT:
                 next();
                 return CJIRItemKind.Trait;
+            case CJToken.KW_INTERFACE:
+                next();
+                return CJIRItemKind.Interface;
         }
         throw ekind("class, union or trait");
     }

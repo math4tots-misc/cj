@@ -3,7 +3,8 @@ package crossj.cj;
 public enum CJIRItemKind {
     Class,
     Union,
-    Trait;
+    Trait,
+    Interface;
 
     public boolean isTraitKind() {
         return this == Trait;
@@ -15,5 +16,9 @@ public enum CJIRItemKind {
 
     public boolean isUnion() {
         return this == Union;
+    }
+
+    public boolean isInterface() {
+        return this == Interface;
     }
 }
