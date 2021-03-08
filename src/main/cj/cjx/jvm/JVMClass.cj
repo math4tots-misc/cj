@@ -412,6 +412,13 @@ class JVMClass {
                                 opcodeName + " " + index)
                         }
                     }
+                    case 0xc5 = {
+                        # multianewarray
+                        val index = reader.getU16()
+                        val typename = cp.getConst(index)
+                        val dim = reader.getU8()
+                        out.end("C5 multianewarray " + typename + " " + dim)
+                    }
                     else = {
                         val opcodeHex = opcode.hex().lpad(2, "0")
                         if opcode in Opcode.zeroArgOpcodes {
@@ -620,7 +627,11 @@ class JVMClass {
                     # TODO: Use the modified UTF-8 encoding as required by the JVM spec
                     val length = reader.getU16()
                     val string = reader.getUTF8(length)
-                    Assert.equal(length, string.size())
+                    # TODO: Do length validation
+                    # if length != string.size() {
+                    #     IO.println("string = " + string)
+                    # }
+                    # Assert.equal(length, string.size())
                     CpInfo.utf8(string)
                 }
                 case JVMClass.cInteger = CpInfo.integer(reader.getI32())

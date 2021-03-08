@@ -217,6 +217,7 @@ union Opcode {
     static val invokeinterface = 0xb9
     static val invokedynamic = 0xba
     static val newarray = 0xbc
+    static val multianewarray = 0xc5
 
     ## Gets the length of the instruction at the given index in the buffer
     ## For stepping over instructions
@@ -243,6 +244,7 @@ union Opcode {
                 val npairs = buffer.getI32(i + 1 + padding + 4)
                 1 + padding + 2 * 4 + npairs * 8
             }
+            case multianewarray = 4
             else = if opcode in zeroArgOpcodes {
                     1
                 } else if opcode in u8ArgOpcodes {
