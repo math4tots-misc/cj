@@ -6,6 +6,11 @@ import cj.Argv
 
 class ListDeps {
 
+    static val excludes: Set[String] = Set(
+        "java/lang/String",
+        "java/lang/Object",
+    )
+
     class Entry {
         val fields: Set[Tuple[String, String]] = Set()
         val methods: Set[Tuple[String, String]] = Set()
@@ -26,12 +31,12 @@ class ListDeps {
                     val icls0 = cls.lstripChar('[').rstripChar(';')
                     Assert.that(icls0.startsWith("L"))
                     val icls = icls0[1:]
-                    if icls in internals {
+                    if icls in internals or icls in excludes {
                         return ()
                     }
                 } else { return () }
             }
-            if cls not in internals {
+            if cls not in internals and cls not in excludes {
                 if cls not in externals {
                     externals[cls] = Entry()
                 }
@@ -56,6 +61,9 @@ class ListDeps {
                         addCls.call(cls.cp.getUtf8(utf8i))
                     }
                     case fieldref(clsi, nati) {
+                        val depcls = cls.cp.getClassref(clsi)
+                        val (name, type) = cls.cp.getNameAndType(nati)
+                        addField.call(depcls, name, type)
                     }
                     case methodref(clsi, nati)
                     case interfaceMethodref(clsi, nati) {
