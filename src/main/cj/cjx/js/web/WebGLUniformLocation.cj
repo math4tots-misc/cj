@@ -1,6 +1,6 @@
 package cjx.js.web
 
-import cjx.js.JSObject
+import www.JSObject
 import cjx.js.web.Window
 
 class WebGLUniformLocation {

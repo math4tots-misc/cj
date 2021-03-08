@@ -1,15 +1,15 @@
-package cjx.emu.chip8.main
+package www.emu.chip8.main
 
 import cjx.js.web.HTMLOptionElement
 import cjx.js.web.HTMLSelectElement
 import cj.Uint8Array
-import cjx.js.JSObject
+import www.JSObject
 import cjx.js.web.Window
 import cjx.js.web.HTMLInputElement
 import cjx.js.web.HTMLDivElement
 import cjx.js.web.HTMLButtonElement
 import cjx.js.web.HTMLStyleElement
-import cjx.emu.chip8.Chip8
+import www.emu.chip8.Chip8
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Document
 

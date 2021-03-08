@@ -5,7 +5,7 @@ import cjx.js.web.CanvasRenderingContext
 import cjx.js.web.WebGL2RenderingContext
 import cjx.js.web.CanvasRenderingContext2D
 import cjx.js.web.Window
-import cjx.js.JSObject
+import www.JSObject
 import cjx.js.web.HTMLElement
 
 class HTMLCanvasElement : HTMLElement {

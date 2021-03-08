@@ -1,6 +1,6 @@
-package cjx.js.sourcemap
+package www.sourcemap
 
-import cjx.js.sourcemap.JSB64VLQ
+import www.sourcemap.JSB64VLQ
 
 class JSB64VLQTest {
     @test

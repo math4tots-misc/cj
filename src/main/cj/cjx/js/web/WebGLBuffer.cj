@@ -1,7 +1,7 @@
 package cjx.js.web
 
 import cjx.js.web.Window
-import cjx.js.JSObject
+import www.JSObject
 
 class WebGLBuffer {
     val _obj :  JSObject

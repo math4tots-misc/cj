@@ -4,7 +4,7 @@ import cjx.js.web.DragEvent
 import cjx.js.web.Event
 import cjx.js.web.KeyboardEvent
 import cjx.js.web.MouseEvent
-import cjx.js.JSWrapper
+import www.JSWrapper
 
 trait GlobalEventHandlers : JSWrapper {
     def onclick(self: Self, f: Fn[MouseEvent, Unit]) = self.setField("onclick", f)

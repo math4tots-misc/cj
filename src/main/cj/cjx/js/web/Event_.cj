@@ -1,7 +1,7 @@
 package cjx.js.web
 
 import cjx.js.web.Window
-import cjx.js.JSObject
+import www.JSObject
 import cjx.js.web.Event
 
 class Event_: Event {

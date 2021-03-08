@@ -1,7 +1,7 @@
 package cjx.js.three
 
-import cjx.js.JSWrapper
-import cjx.js.JSObject
+import www.JSWrapper
+import www.JSObject
 import cjx.js.web.Window
 
 class Three: JSWrapper {

@@ -1,4 +1,4 @@
-package cjx.js.sourcemap
+package www.sourcemap
 
 import cj.Error
 import cj.StringBuilder

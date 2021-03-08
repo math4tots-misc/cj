@@ -1,4 +1,4 @@
-package cjx.js
+package www
 
 
 @implicit(Any, _fromAny)

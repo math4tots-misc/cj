@@ -1,6 +1,6 @@
-package cjx.js
+package www
 
-import cjx.js.JSObject
+import www.JSObject
 
 @implicit(JSObject, _fromAny)
 trait JSWrapper {

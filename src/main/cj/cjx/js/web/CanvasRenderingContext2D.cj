@@ -3,8 +3,8 @@ package cjx.js.web
 import cjx.js.web.CanvasRenderingContext
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.Window
-import cjx.js.JSObject
-import cjx.js.JSWrapper
+import www.JSObject
+import www.JSWrapper
 
 class CanvasRenderingContext2D : CanvasRenderingContext {
     def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContext2D()

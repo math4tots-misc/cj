@@ -4,8 +4,8 @@ import cjx.js.web.HTMLBodyElement
 import cjx.js.web.GlobalEventHandlers
 import cjx.js.web.Element
 import cjx.js.web.Web
-import cjx.js.JSObject
-import cjx.js.JSWrapper
+import www.JSObject
+import www.JSWrapper
 
 class Document : JSWrapper, GlobalEventHandlers {
     val _obj : JSObject

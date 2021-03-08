@@ -1,13 +1,13 @@
-package cjx.emu.chip8
+package www.emu.chip8
 
 import cj.net.HTTP
 import cj.Math
 import cj.Error
 import cjx.js.web.Window
 import cj.Uint8Array
-import cjx.emu.chip8.C8Speaker
-import cjx.emu.chip8.C8Keyboard
-import cjx.emu.chip8.C8Renderer
+import www.emu.chip8.C8Speaker
+import www.emu.chip8.C8Keyboard
+import www.emu.chip8.C8Renderer
 
 class C8CPU {
     static var printed = false

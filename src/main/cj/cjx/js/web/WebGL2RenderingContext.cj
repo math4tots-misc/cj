@@ -3,9 +3,9 @@ package cjx.js.web
 import cjx.js.web.HTMLCanvasElement
 import cjx.js.web.WebGLVertexArrayObject
 import cjx.js.web.WebGLRenderingContext
-import cjx.js.JSWrapper
+import www.JSWrapper
 import cjx.js.web.Window
-import cjx.js.JSObject
+import www.JSObject
 
 class WebGL2RenderingContext : WebGLRenderingContext {
     def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContextWebGL()

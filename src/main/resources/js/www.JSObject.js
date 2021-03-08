@@ -1,4 +1,4 @@
-class MC$cjx$js$JSObject {
+class MC$www$JSObject {
     M$new(self, args) {
         return new self(...args);
     }

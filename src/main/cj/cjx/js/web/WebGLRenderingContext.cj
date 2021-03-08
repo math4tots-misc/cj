@@ -7,7 +7,7 @@ import cjx.js.web.WebGLShader
 import cj.ToArrayBufferView
 import cjx.js.web.WebGLBuffer
 import cj.Float32Array
-import cjx.js.JSWrapper
+import www.JSWrapper
 
 trait WebGLRenderingContext : CanvasRenderingContext {
 

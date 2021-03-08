@@ -1,6 +1,6 @@
 package cjx.js.three.demos
 
-import cjx.js.JSObject
+import www.JSObject
 import cj.JSON
 import cjx.js.web.Document
 import cjx.js.web.Window

@@ -1,4 +1,4 @@
-package cjx.emu.chip8
+package www.emu.chip8
 
 import cjx.js.web.KeyboardEvent
 import cj.Uint8Array

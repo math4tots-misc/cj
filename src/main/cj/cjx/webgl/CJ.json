@@ -7,16 +7,16 @@
     "demo02": {
         "type": "www",
         "main": "cjx.webgl.main.Demo02",
-        "www": { "/cjx/www/canvas.html": "index.html" }
+        "www": { "/www/html/canvas.html": "index.html" }
     },
     "demo03": {
         "type": "www",
         "main": "cjx.webgl.main.Demo03",
-        "www": { "/cjx/www/canvas.html": "index.html" }
+        "www": { "/www/html/canvas.html": "index.html" }
     },
     "gameoflife": {
         "type": "www",
         "main": "cjx.webgl.main.GameOfLife",
-        "www": { "/cjx/www/canvas.html": "index.html" }
+        "www": { "/www/html/canvas.html": "index.html" }
     }
 }

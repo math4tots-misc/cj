@@ -1,7 +1,7 @@
-package cjx.emu.chip8
+package www.emu.chip8
 
 import cjx.js.web.Window
-import cjx.js.JSObject
+import www.JSObject
 
 class C8Speaker {
     var _audioCtx: JSObject? = null

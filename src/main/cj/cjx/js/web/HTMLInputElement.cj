@@ -2,7 +2,7 @@ package cjx.js.web
 
 import cjx.js.web.Window
 import cjx.js.web.HTMLElement
-import cjx.js.JSObject
+import www.JSObject
 
 class HTMLInputElement : HTMLElement {
     static val tagName = "input"

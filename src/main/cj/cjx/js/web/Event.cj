@@ -1,6 +1,6 @@
 package cjx.js.web
 
-import cjx.js.JSWrapper
+import www.JSWrapper
 
 trait Event : JSWrapper {
     def preventDefault(self) = call("preventDefault")

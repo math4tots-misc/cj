@@ -1,6 +1,6 @@
 package cjx.js.web
 
-import cjx.js.JSWrapper
+import www.JSWrapper
 
 trait EventTarget : JSWrapper {
 }

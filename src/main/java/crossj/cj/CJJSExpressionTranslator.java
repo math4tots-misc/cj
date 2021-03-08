@@ -178,8 +178,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     case "cj.List.default":
                         Assert.equals(allArgs.size(), 0);
                         return CJJSBlob.simplestr("[]");
-                    case "cjx.js.JSObject.field":
-                    case "cjx.js.JSWrapper.field":
+                    case "www.JSObject.field":
+                    case "www.JSWrapper.field":
                         Assert.equals(allArgs.size(), 2);
                         return CJJSBlob.simple(out -> {
                             allArgs.get(0).emitMain(out);
@@ -188,8 +188,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             out.append("]");
                             return null;
                         });
-                    case "cjx.js.JSObject.setField":
-                    case "cjx.js.JSWrapper.setField":
+                    case "www.JSObject.setField":
+                    case "www.JSWrapper.setField":
                         Assert.equals(allArgs.size(), 4);
                         return CJJSBlob.withPrep(out -> {
                             allArgs.get(1).emitMain(out);
@@ -203,9 +203,9 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                             out.append("undefined");
                             return null;
                         }, true);
-                    case "cjx.js.JSObject.call1":
-                    case "cjx.js.JSObject.call":
-                    case "cjx.js.JSWrapper.call": {
+                    case "www.JSObject.call1":
+                    case "www.JSObject.call":
+                    case "www.JSWrapper.call": {
                         Assert.equals(allArgs.size(), 3);
                         return CJJSBlob.simple(out -> {
                             allArgs.get(0).emitMain(out);
@@ -225,7 +225,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                         Assert.equals(allArgs.size(), 1);
                         return allArgs.get(0);
                     case "cjx.js.JSON._unsafeCast":
-                    case "cjx.js.JSObject.unsafeCast":
+                    case "www.JSObject.unsafeCast":
                         Assert.equals(allArgs.size(), 2);
                         return allArgs.get(1);
                     case "cj.Fn0":
