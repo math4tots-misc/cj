@@ -79,12 +79,14 @@ class CJToken : Repr {
     static val kwTRY = 238
     static val kwCATCH = 239
     static val kwFINALLY = 240
+    static val kwINTERFACE = 241
+    static val kwSTRUCT = 242
 
     static val keywordTypes: List[Int] = [
         kwDEF, kwCLASS, kwTRUE, kwFALSE, kwNULL, kwIF, kwELSE, kwIMPORT, kwWHILE, kwBREAK,
         kwCONTINUE, kwVAR, kwVAL, kwTRAIT, kwNATIVE, kwSTATIC, kwPRIVATE, kwPUBLIC, kwPACKAGE,
         kwRETURN, kwAND, kwOR, kwIS, kwNOT, kwIN, kwSWITCH, kwCASE, kwUNION, kwENUM, kwWHEN,
-        kwAS, kwFOR, kwASYNC, kwAWAIT, kwTHROW, kwTRY, kwCATCH, kwFINALLY,
+        kwAS, kwFOR, kwASYNC, kwAWAIT, kwTHROW, kwTRY, kwCATCH, kwFINALLY, kwINTERFACE, kwSTRUCT
     ]
 
     val type : Int
@@ -169,6 +171,8 @@ class CJToken : Repr {
         case kwTRY = "kwTRY"
         case kwCATCH = "kwCATCH"
         case kwFINALLY = "kwFINALLY"
+        case kwINTERFACE = "kwINTERFACE"
+        case kwSTRUCT = "kwSTRUCT"
         case '\n' = "'\\n'"
         else = if type >= 32 and type <= 127 { type.toChar().repr() } else {
             "Unknown(" + type + ")"

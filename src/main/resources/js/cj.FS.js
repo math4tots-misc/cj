@@ -5,6 +5,9 @@ class MC$cj$FS {
     M$join(parts) {
         return require('path').join(...parts);
     }
+    M$dirname(path) {
+        return require('fs').dirname(path);
+    }
     M$isfile(path) {
         return require('fs').lstatSync(path).isFile();
     }
