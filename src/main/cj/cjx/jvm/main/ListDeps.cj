@@ -9,7 +9,18 @@ class ListDeps {
     static val excludes: Set[String] = Set(
         "java/lang/String",
         "java/lang/Object",
+        "java/math/BigInteger",
     )
+
+    static val excludePkgs = [
+        "java/",
+        "javax/",
+        "com/sun/",
+        # "java/lang/",
+        # "java/io/",
+        # "java/awt/",
+        # "javax/swing/",
+    ]
 
     class Entry {
         val fields: Set[Tuple[String, String]] = Set()
@@ -25,18 +36,21 @@ class ListDeps {
         }
         val internals = Set.fromIterable(clss.map(cls -> cls.name))
         val externals = Map[String, Entry]()
+        val shouldExclude: Fn[String, Bool] = cls -> {
+            cls in internals or cls in excludes or excludePkgs.any(pkg -> cls.startsWith(pkg))
+        }
         val addCls: Fn[String, Unit] = cls -> {
             if cls.startsWith("[") {
                 if cls.endsWith(";") {
                     val icls0 = cls.lstripChar('[').rstripChar(';')
                     Assert.that(icls0.startsWith("L"))
                     val icls = icls0[1:]
-                    if icls in internals or icls in excludes {
+                    if shouldExclude.call(icls) {
                         return ()
                     }
                 } else { return () }
             }
-            if cls not in internals and cls not in excludes {
+            if not shouldExclude.call(cls) {
                 if cls not in externals {
                     externals[cls] = Entry()
                 }
