@@ -6,9 +6,9 @@ import cj.net.HTTP
 import www.emu.chip8.C8CPU
 import www.emu.chip8.C8Speaker
 import www.emu.chip8.C8Keyboard
-import cjx.js.web.HTMLCanvasElement
+import www.dom.HTMLCanvasElement
 import cj.Time
-import cjx.js.web.Window
+import www.dom.Window
 import www.emu.chip8.C8Renderer
 
 class Chip8 {

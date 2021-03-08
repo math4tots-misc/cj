@@ -169,6 +169,8 @@ public final class JSMain {
                             default:
                                 throw new RuntimeException(appId + " has unsupported app type " + type);
                         }
+                    } else {
+                        throw new RuntimeException("Traget " + baseName + " not found in " + packageName);
                     }
                 }
             }

@@ -1,17 +1,17 @@
 package www.emu.chip8.main
 
-import cjx.js.web.HTMLOptionElement
-import cjx.js.web.HTMLSelectElement
+import www.dom.HTMLOptionElement
+import www.dom.HTMLSelectElement
 import cj.Uint8Array
 import www.JSObject
-import cjx.js.web.Window
-import cjx.js.web.HTMLInputElement
-import cjx.js.web.HTMLDivElement
-import cjx.js.web.HTMLButtonElement
-import cjx.js.web.HTMLStyleElement
+import www.dom.Window
+import www.dom.HTMLInputElement
+import www.dom.HTMLDivElement
+import www.dom.HTMLButtonElement
+import www.dom.HTMLStyleElement
 import www.emu.chip8.Chip8
-import cjx.js.web.HTMLCanvasElement
-import cjx.js.web.Document
+import www.dom.HTMLCanvasElement
+import www.dom.Document
 
 class Demo {
     def main() {

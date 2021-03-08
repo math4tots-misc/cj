@@ -1,8 +1,8 @@
 package www.emu.chip8
 
-import cjx.webgl.WebGLGridRenderer
-import cjx.js.web.HTMLCanvasElement
-import cjx.js.web.CanvasRenderingContext2D
+import www.webgl.WebGLGridRenderer
+import www.dom.HTMLCanvasElement
+import www.dom.CanvasRenderingContext2D
 import cj.Uint8Array
 
 class C8Renderer {

@@ -2,8 +2,8 @@ package cjx.books.webgl.main
 
 import cj.Float32Array
 import cj.Int16Array
-import cjx.js.web.WebGLBuffer
-import cjx.js.web.WebGLVertexArrayObject
+import www.dom.WebGLBuffer
+import www.dom.WebGLVertexArrayObject
 import cjx.books.webgl.main.Base
 
 @derive(default)

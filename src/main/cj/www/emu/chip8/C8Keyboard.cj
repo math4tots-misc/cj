@@ -1,8 +1,8 @@
 package www.emu.chip8
 
-import cjx.js.web.KeyboardEvent
+import www.dom.KeyboardEvent
 import cj.Uint8Array
-import cjx.js.web.Window
+import www.dom.Window
 
 class C8Keyboard {
     static val window: Window = Window.get()

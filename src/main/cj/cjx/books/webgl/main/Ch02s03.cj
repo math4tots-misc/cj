@@ -1,7 +1,7 @@
 package cjx.books.webgl.main
 
-import cjx.js.web.WebGLVertexArrayObject
-import cjx.js.web.WebGLBuffer
+import www.dom.WebGLVertexArrayObject
+import www.dom.WebGLBuffer
 import cj.Int16Array
 import cj.Float32Array
 import cjx.books.webgl.main.Base

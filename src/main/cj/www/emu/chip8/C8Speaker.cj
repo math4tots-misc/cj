@@ -1,6 +1,6 @@
 package www.emu.chip8
 
-import cjx.js.web.Window
+import www.dom.Window
 import www.JSObject
 
 class C8Speaker {

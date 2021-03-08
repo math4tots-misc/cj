@@ -1,13 +1,13 @@
 package www.emu.chip8.main
 
-import cjx.js.web.HTMLStyleElement
-import cjx.js.web.HTMLInputElement
+import www.dom.HTMLStyleElement
+import www.dom.HTMLInputElement
 import cj.Time
 import www.emu.chip8.C8Renderer
-import cjx.js.web.CanvasRenderingContext2D
-import cjx.js.web.HTMLCanvasElement
-import cjx.js.web.Window
-import cjx.js.web.Document
+import www.dom.CanvasRenderingContext2D
+import www.dom.HTMLCanvasElement
+import www.dom.Window
+import www.dom.Document
 
 class RendererDemo {
     static val window: Window = Window.get()

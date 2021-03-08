@@ -3,7 +3,7 @@ package www.emu.chip8
 import cj.net.HTTP
 import cj.Math
 import cj.Error
-import cjx.js.web.Window
+import www.dom.Window
 import cj.Uint8Array
 import www.emu.chip8.C8Speaker
 import www.emu.chip8.C8Keyboard

@@ -1,0 +1,7 @@
+{
+    "demo01": {
+        "type": "www",
+        "main": "www.three.demos.Demo01",
+        "www": { "default.html": "index.html" }
+    }
+}

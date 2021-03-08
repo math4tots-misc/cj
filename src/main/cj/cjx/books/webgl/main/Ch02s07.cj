@@ -3,13 +3,13 @@ package cjx.books.webgl.main
 import cj.Int16Array
 import cj.Float32Array
 import cjx.math.mat.Mat4
-import cjx.js.web.WebGLUniformLocation
+import www.dom.WebGLUniformLocation
 import cj.net.HTTP
 import cj.JSON
 import cjx.books.webgl.main.Base
 import cjx.math.mat.Matx
-import cjx.js.web.WebGLBuffer
-import cjx.js.web.WebGLVertexArrayObject
+import www.dom.WebGLBuffer
+import www.dom.WebGLVertexArrayObject
 
 ## Load a cone with AJAX
 class Ch02s07 : Base {

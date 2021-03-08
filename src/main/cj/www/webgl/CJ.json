@@ -1,0 +1,22 @@
+{
+    "demo01": {
+        "type": "www",
+        "main": "www.webgl.main.Demo01",
+        "www": { "main/demo01.html": "index.html" }
+    },
+    "demo02": {
+        "type": "www",
+        "main": "www.webgl.main.Demo02",
+        "www": { "/www/html/canvas.html": "index.html" }
+    },
+    "demo03": {
+        "type": "www",
+        "main": "www.webgl.main.Demo03",
+        "www": { "/www/html/canvas.html": "index.html" }
+    },
+    "gameoflife": {
+        "type": "www",
+        "main": "www.webgl.main.GameOfLife",
+        "www": { "/www/html/canvas.html": "index.html" }
+    }
+}
