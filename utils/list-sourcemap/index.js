@@ -9,6 +9,8 @@ for (const path of paths) {
         // NOTE: the source-map library is one-based with line numbers,
         // and zero-based with column numbers.
         //
+        // https://github.com/mozilla/source-map/issues/118
+        //
         // Since the sourcemap-v3 spec itself always talks about
         // zero-based numbers, I'm adjusting the output here to
         // always be zero-based.
