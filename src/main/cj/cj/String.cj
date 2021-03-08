@@ -39,6 +39,9 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     ## final length is at least as long as length
     def rpad(self, length: Int, suffix: String): String
 
+    def lstripChar(self, ch: Char): String
+    def rstripChar(self, ch: Char): String
+
     def parseInt(self: Self): Nullable[Int]
     def parseDouble(self: Self): Nullable[Double]
 

@@ -7,4 +7,10 @@ class Set_ {
 
     @variadic
     def __new[T?: Hash](ts: List[T]): Set[T] = Self.of(ts)
+
+    def fromIterable[T?: Hash, I: Iterable[T]](ts: I): Set[T] {
+        val set = Set[T].empty()
+        set.addAll(ts)
+        set
+    }
 }

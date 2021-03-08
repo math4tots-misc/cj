@@ -94,6 +94,24 @@ class MC$cj$String {
         return self;
     }
 
+    M$lstripChar(self, ch) {
+        const c = String.fromCodePoint(ch);
+        let start = 0;
+        while (self.startsWith(c, start)) {
+            start += c.length;
+        }
+        return self.substring(start);
+    }
+
+    M$rstripChar(self, ch) {
+        const c = String.fromCodePoint(ch);
+        let end = self.length;
+        while (self.endsWith(c, end)) {
+            end -= c.length;
+        }
+        return self.substring(0, end);
+    }
+
     M$parseInt(string) {
         const i = parseInt(string, 10);
         return isNaN(i) ? null : i;

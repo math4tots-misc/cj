@@ -25,6 +25,14 @@ class MC$cj$Tuple4 {
             && this.TV$A3.M$__eq(self[3], other[3])
         );
     }
+    M$__lt(self, other) {
+        return (
+            this.TV$A0.M$__lt(self[0], other[0])
+            && this.TV$A1.M$__lt(self[1], other[1])
+            && this.TV$A2.M$__lt(self[2], other[2])
+            && this.TV$A3.M$__lt(self[3], other[3])
+        );
+    }
     M$hash(self) {
         return (
             combineHash(combineHash(combineHash(

@@ -48,6 +48,11 @@ final class CJPass04 extends CJPassBaseEx {
         lambdaStack.add(Pair.of(isAsync, ctx.getNoReturnType()));
     }
 
+    private void enterLambdaScopeWithType(boolean isAsync, CJIRType returnType) {
+        enterScope();
+        lambdaStack.add(Pair.of(isAsync, returnType));
+    }
+
     private void exitLambdaScope() {
         exitScope();
         lambdaStack.pop();
@@ -952,7 +957,11 @@ final class CJPass04 extends CJPassBaseEx {
                     var name = parameterAst.get3();
                     return new CJIRAdHocVariableDeclaration(paramMark, mutable, name, parameterType);
                 }).list();
-                enterLambdaScope(e.isAsync());
+                if (e.isAsync()) {
+                    enterLambdaScope(e.isAsync());
+                } else {
+                    enterLambdaScopeWithType(e.isAsync(), returnType);
+                }
                 parameters.forEach(p -> declareLocal(p));
                 var body = evalExpressionWithType(e.getBody(), returnType);
                 exitLambdaScope();
