@@ -14,6 +14,11 @@
         "main": "www.webgl.main.Demo03",
         "www": { "/www/html/canvas.html": "index.html" }
     },
+    "demo04": {
+        "type": "www",
+        "main": "www.webgl.main.Demo04",
+        "www": { "/www/html/canvas.html": "index.html" }
+    },
     "gameoflife": {
         "type": "www",
         "main": "www.webgl.main.GameOfLife",

@@ -9,6 +9,8 @@ class Color : Repr {
     val b : Double
     val a : Double
 
+    def invert(self): Self = (1.0 - r, 1.0 - g, 1.0 - b, a)
+
     private def _floatToIntChannel(x: Double): Int = {
         val i = (x * 256).toInt()
         if i < 0 { 0 } else if i > 255 { 255 } else { i }
