@@ -20,8 +20,8 @@ class MC$cj$Float32Array {
     M$__setitem(self, i, v) {
         self[i] = v;
     }
-    M$asArrayBufferView(self) {
-        return self;
+    M$__get_buffer(self) {
+        return self.buffer;
     }
     M$map(self, f) {
         const out = this.M$clone(self);

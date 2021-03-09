@@ -433,13 +433,10 @@ class MC$cj$DynamicBuffer {
         }
         return true;
     }
-    M$asArrayBufferView(self) {
-        return self[0];
-    }
     /**
      * @param {Buf} self
      */
-    M$getArrayBuffer(self) {
+    M$__get_buffer(self) {
         return self[0].buffer;
     }
 }

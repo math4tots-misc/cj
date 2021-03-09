@@ -23,8 +23,8 @@ class MC$cj$Int8Array {
     M$default() {
         return this.M$__new([]);
     }
-    M$asArrayBufferView(self) {
-        return self;
+    M$__get_buffer(self) {
+        return self.buffer;
     }
     M$repr(self) {
         return "Int8Array(" + Array.from(self).join(", ") + ")";

@@ -23,8 +23,8 @@ class MC$cj$Int16Array {
     M$default() {
         return this.M$__new([]);
     }
-    M$asArrayBufferView(self) {
-        return self;
+    M$__get_buffer(self) {
+        return self.buffer;
     }
     M$repr(self) {
         return "Int16Array(" + Array.from(self).join(", ") + ")";

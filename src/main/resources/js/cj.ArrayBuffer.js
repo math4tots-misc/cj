@@ -14,4 +14,7 @@ class MC$cj$ArrayBuffer {
     M$__sliceTo(self, end) {
         return self.slice(0, end);
     }
+    M$__get_buffer(self) {
+        return self;
+    }
 }

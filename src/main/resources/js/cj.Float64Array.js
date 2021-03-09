@@ -29,8 +29,8 @@ class MC$cj$Float64Array {
     M$__sliceTo(self, end) {
         return self.slice(0, end);
     }
-    M$asArrayBufferView(self) {
-        return self;
+    M$__get_buffer(self) {
+        return self.buffer;
     }
     M$map(self, f) {
         const out = this.M$clone(self);

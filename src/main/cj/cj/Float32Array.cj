@@ -1,13 +1,13 @@
 package cj
 
+import cj.ArrayBuffer
 import cj.Float64Array
 import cj.Approximate
 import cj.ArrayBufferView
-import cj.ToArrayBufferView
 import cj.Collection
 
 ## On Javascript targets, wraps Float32Array
-native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approximate, Repr, Default {
+native class Float32Array : Collection[Double], Hash, Approximate, Repr, Default, ArrayBufferView {
     @variadic def(list: List[Double]): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Double]](c: C): Self
@@ -16,7 +16,7 @@ native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approxi
     def __getitem(self: Self, i: Int): Double
     def __setitem(self: Self, i: Int, v: Double)
 
-    def asArrayBufferView(self: Self) : ArrayBufferView
+    def __get_buffer(self): ArrayBuffer
 
     def map(self: Self, f: Fn[Double, Double]): Self
 

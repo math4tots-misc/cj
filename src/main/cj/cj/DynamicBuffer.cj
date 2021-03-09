@@ -1,11 +1,10 @@
 package cj
 
+import cj.ArrayBufferWrapper
 import cj.ArrayBuffer
 import cj.BigInt
-import cj.ArrayBufferView
-import cj.ToArrayBufferView
 
-native class DynamicBuffer: Repr, Eq, ToArrayBufferView {
+native class DynamicBuffer: Repr, Eq, ArrayBufferWrapper {
 
     @implicit(ArrayBuffer, fromArrayBuffer)
     class Converter {
@@ -93,7 +92,5 @@ native class DynamicBuffer: Repr, Eq, ToArrayBufferView {
 
     def __eq(self: Self, other: Self): Bool
 
-    def asArrayBufferView(self: Self): ArrayBufferView
-
-    def getArrayBuffer(self): ArrayBuffer
+    def __get_buffer(self): ArrayBuffer
 }

@@ -43,7 +43,7 @@ class Test06DynamicBuffer {
             val abuf = ArrayBuffer(32)
             val dv1 = DataView(abuf, true)
             val dbuf = DynamicBuffer(abuf)
-            val dv2 = DataView(dbuf.getArrayBuffer(), true)
+            val dv2 = DataView(dbuf.buffer, true)
             dbuf.setU8(0, 14)
             Assert.equal(dbuf.getU16(0), 14)
             Assert.equal(dv1.getUint16(0), 0)
