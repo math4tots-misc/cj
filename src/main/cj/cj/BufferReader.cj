@@ -1,9 +1,9 @@
 package cj
 
-import cj.Buffer
+import cj.DynamicBuffer
 
 class BufferReader : ToBool {
-    val buffer: Buffer
+    val buffer: DynamicBuffer
     var i = 0
 
     def toBool(self): Bool = i < buffer.size()
@@ -19,7 +19,7 @@ class BufferReader : ToBool {
     }
 
     def peekUTF8(self, len: Int): String = buffer.getUTF8(i, i + len)
-    def peekBuffer(self, len: Int): Buffer = buffer.cut(i, i + len)
+    def peekBuffer(self, len: Int): DynamicBuffer = buffer.cut(i, i + len)
     def peekI8(self): Int = buffer.getI8(i)
     def peekU8(self): Int = buffer.getU8(i)
     def peekI16(self): Int = buffer.getI16(i)
@@ -36,7 +36,7 @@ class BufferReader : ToBool {
         i = i + len
         ret
     }
-    def getBuffer(self, len: Int): Buffer = {
+    def getBuffer(self, len: Int): DynamicBuffer = {
         val ret = buffer.cut(i, i + len)
         i = i + len
         ret

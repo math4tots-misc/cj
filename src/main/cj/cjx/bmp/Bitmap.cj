@@ -1,6 +1,6 @@
 package cjx.bmp
 
-import cj.Buffer
+import cj.DynamicBuffer
 import cjx.bmp.Color
 import cj.Int32Array
 
@@ -35,14 +35,14 @@ class Bitmap {
     ##
     ## Reference: https://en.wikipedia.org/wiki/BMP_file_format
     ##
-    def toBMPBuffer(self: Self): Buffer = {
+    def toBMPBuffer(self: Self): DynamicBuffer = {
         # 14 (file header)
         # 40 (dib header (Windows BITMAPINFOHEADER))
         # 4 * data.size() (pixel data)
         val bytesize = 14 + 40 + 4 * data.size()
         val width = self.width
         val height = self.height
-        val out = Buffer.withCapacity(bytesize)
+        val out = DynamicBuffer.withCapacity(bytesize)
 
         # -- file header --
         out.addUTF8("BM") # magic

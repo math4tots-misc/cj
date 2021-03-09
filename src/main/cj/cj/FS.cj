@@ -1,6 +1,6 @@
 package cj
 
-import cj.Buffer
+import cj.DynamicBuffer
 
 native class FS {
     def __get_sep(): String
@@ -9,7 +9,7 @@ native class FS {
     def isfile(path: String): Bool
     def isdir(path: String): Bool
     def readFile(path: String): String
-    def readFileBytes(path: String): Buffer
+    def readFileBytes(path: String): DynamicBuffer
     def writeFile(path: String, data: String)
-    def writeFileBytes(path: String, data: Buffer)
+    def writeFileBytes(path: String, data: DynamicBuffer)
 }

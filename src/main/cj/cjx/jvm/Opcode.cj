@@ -1,7 +1,7 @@
 package cjx.jvm
 
 import cj.Error
-import cj.Buffer
+import cj.DynamicBuffer
 
 
 ## Information about various opcodes
@@ -221,7 +221,7 @@ union Opcode {
 
     ## Gets the length of the instruction at the given index in the buffer
     ## For stepping over instructions
-    def instructionSize(buffer: Buffer, i: Int): Int {
+    def instructionSize(buffer: DynamicBuffer, i: Int): Int {
         val opcode = buffer.getU8(i)
         switch opcode {
             case wide = if buffer.getU8(i + 1) == iinc {

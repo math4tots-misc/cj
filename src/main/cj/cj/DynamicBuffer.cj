@@ -4,7 +4,7 @@ import cj.BigInt
 import cj.ArrayBufferView
 import cj.ToArrayBufferView
 
-native class Buffer: Repr, Eq, ToArrayBufferView {
+native class DynamicBuffer: Repr, Eq, ToArrayBufferView {
     ## Create a new buffer with the given size
     def withSize(n: Int): Self
 
@@ -14,7 +14,7 @@ native class Buffer: Repr, Eq, ToArrayBufferView {
     ## Create an empty new buffer
     def empty(): Self
 
-    ## Converts a string to a UTF-8 Buffer value
+    ## Converts a string to a UTF-8 DynamicBuffer value
     def fromUTF8(string: String): Self
 
     @variadic def ofU8s(u8s: List[Int]): Self

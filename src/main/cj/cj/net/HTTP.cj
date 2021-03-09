@@ -1,7 +1,7 @@
 package cj.net
 
 import cj.Uint8Array
-import cj.Buffer
+import cj.DynamicBuffer
 
 native class HTTP {
     ## Dead simple HTTP GET request (response body is processed as UTF-8)

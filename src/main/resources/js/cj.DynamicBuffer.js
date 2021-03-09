@@ -2,7 +2,7 @@
  * @typedef {[DataView, boolean, number]} Buf
  * [data, useLittleEndian, size]
  */
-class MC$cj$Buffer {
+class MC$cj$DynamicBuffer {
     /**
      * @param {ArrayBuffer} buffer
      * @returns {Buf}
@@ -406,7 +406,7 @@ class MC$cj$Buffer {
      */
     M$repr(self) {
         const out = Array.from(new Uint8Array(self[0].buffer, 0, self[2]));
-        return "Buffer.ofU8s(" + out.join(", ") + ")";
+        return "DynamicBuffer.ofU8s(" + out.join(", ") + ")";
     }
     /**
      * @param {Buf} self

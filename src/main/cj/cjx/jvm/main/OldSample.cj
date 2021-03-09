@@ -4,7 +4,7 @@ import cj.Math
 import cj.BigInt
 import cj.Argv
 import cj.FS
-import cj.Buffer
+import cj.DynamicBuffer
 
 ## Generate a sample JVM class file.
 ## References:
@@ -63,7 +63,7 @@ class OldSample {
             mainMethod.add(code)
         }
 
-        val b = Buffer.empty()
+        val b = DynamicBuffer.empty()
         b.useLittleEndian(false)
         b.addU32(0xCAFEBABE) # magic
         b.addU16(0x00) # minor version
@@ -93,7 +93,7 @@ class OldSample {
 
         def code(self): Code = Code(self)
 
-        def emitMethods(self, out: Buffer) {
+        def emitMethods(self, out: DynamicBuffer) {
             out.addU16(methods.size())
             for method in methods {
                 method.emit(out)
@@ -121,7 +121,7 @@ class OldSample {
             }).fold(0, (a, b) -> a + b)
         }
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU16(count()) # constantPoolCount
             for info in infos {
                 info.emit(out)
@@ -240,11 +240,11 @@ class OldSample {
             case nameAndType(ni, di) = OldSample.cNameAndType
         }
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU8(tag)
             when self {
                 case utf8(string) = {
-                    val utf8 = Buffer.fromUTF8(string)
+                    val utf8 = DynamicBuffer.fromUTF8(string)
                     out.addU16(utf8.size())
                     out.addBuffer(utf8)
                 }
@@ -284,7 +284,7 @@ class OldSample {
         val descriptorIndex: Int
         val attributes: List[AttributeInfo] = []
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU16(accessFlags)
             out.addU16(nameIndex)
             out.addU16(descriptorIndex)
@@ -307,7 +307,7 @@ class OldSample {
         val attributeNameIndex: Int
         val data: AttributeInfoData
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU16(attributeNameIndex)
             val updatePos = out.size()
             out.addU32(0)
@@ -320,7 +320,7 @@ class OldSample {
 
     union AttributeInfoData {
         case code(CodeAttribute)
-        def emit(self, out: Buffer) = when self {
+        def emit(self, out: DynamicBuffer) = when self {
             case code(code) = code.emit(out)
         }
     }
@@ -328,11 +328,11 @@ class OldSample {
     class CodeAttribute {
         val maxStack: Int
         val maxLocals: Int
-        val code: Buffer
+        val code: DynamicBuffer
         val exceptionTable: List[ExceptionTableEntry] = []
         val attributes: List[AttributeInfo] = []
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU16(maxStack)
             out.addU16(maxLocals)
             out.addU32(code.size())
@@ -361,7 +361,7 @@ class OldSample {
         val handlerPc: Int
         val catchType: Int
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             throw "TODO"
         }
     }
@@ -379,8 +379,8 @@ class OldSample {
         val ctx: Context
         var maxLocals = 0
         var maxStack = 0
-        val buffer: Buffer = {
-            val b = Buffer.empty()
+        val buffer: DynamicBuffer = {
+            val b = DynamicBuffer.empty()
             b.useLittleEndian(false)
             b
         }

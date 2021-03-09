@@ -4,7 +4,7 @@ import cjx.jl1.JLError
 import cj.Error
 import cj.BufferReader
 import cjx.jvm.JVMConstValue
-import cj.Buffer
+import cj.DynamicBuffer
 import cjx.jvm.Opcode
 import cjx.jvm.JVMClass
 import cjx.jvm.JVMClass.ExceptionTableEntry
@@ -17,8 +17,8 @@ import cjx.jvm.JVMClass.AttributeInfoData
 class JVMCodeBuilder {
     val methodBuilder: JVMClass.MethodBuilder
     var maxLocals: Int = 0
-    val code: Buffer = {
-        val b = Buffer.empty()
+    val code: DynamicBuffer = {
+        val b = DynamicBuffer.empty()
         b.useLittleEndian(false)
         b
     }

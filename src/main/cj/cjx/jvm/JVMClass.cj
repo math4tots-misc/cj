@@ -5,7 +5,7 @@ import cjx.jvm.Opcode
 import cj.StringBuilder
 import cj.BigInt
 import cj.Error
-import cj.Buffer
+import cj.DynamicBuffer
 import cj.BufferReader
 
 class JVMClass {
@@ -55,7 +55,7 @@ class JVMClass {
 
     def __get_name(self): String = cp.getClassref(thisClass)
 
-    def fromBuffer(buffer: Buffer): Self {
+    def fromBuffer(buffer: DynamicBuffer): Self {
         val parser = Parser(buffer)
         parser.parseJVMClass()
     }
@@ -287,7 +287,7 @@ class JVMClass {
         }
     }
 
-    def dumpCode(self, out: Writer, code: Buffer) {
+    def dumpCode(self, out: Writer, code: DynamicBuffer) {
         var encounteredUnrecognizedOpcode = false
         out.indent()
         val reader = BufferReader(code)
@@ -480,15 +480,15 @@ class JVMClass {
         else = "Unknown (" + version + ")"
     }
 
-    ## Write out the contents of this class file into a Buffer
-    def toBuffer(self): Buffer {
-        val out = Buffer.empty()
+    ## Write out the contents of this class file into a DynamicBuffer
+    def toBuffer(self): DynamicBuffer {
+        val out = DynamicBuffer.empty()
         out.useLittleEndian(false)
         emit(out)
         out
     }
 
-    def emit(self, out: Buffer) {
+    def emit(self, out: DynamicBuffer) {
         out.addU32(0xCAFEBABE)
         out.addU16(minorVersion)
         out.addU16(majorVersion)
@@ -511,28 +511,28 @@ class JVMClass {
         emitAttributeList(out, attributes)
     }
 
-    def emitField(self, out: Buffer, field: FieldInfo) {
+    def emitField(self, out: DynamicBuffer, field: FieldInfo) {
         out.addU16(field.accessFlags)
         out.addU16(field.nameIndex)
         out.addU16(field.descriptorIndex)
         emitAttributeList(out, field.attributes)
     }
 
-    def emitMethod(self, out: Buffer, method: MethodInfo) {
+    def emitMethod(self, out: DynamicBuffer, method: MethodInfo) {
         out.addU16(method.accessFlags)
         out.addU16(method.nameIndex)
         out.addU16(method.descriptorIndex)
         emitAttributeList(out, method.attributes)
     }
 
-    def emitAttributeList(self, out: Buffer, attributes: List[AttributeInfo]) {
+    def emitAttributeList(self, out: DynamicBuffer, attributes: List[AttributeInfo]) {
         out.addU16(attributes.size())
         for attribute in attributes {
             emitAttribute(out, attribute)
         }
     }
 
-    def emitAttribute(self, out: Buffer, attribute: AttributeInfo) {
+    def emitAttribute(self, out: DynamicBuffer, attribute: AttributeInfo) {
         out.addU16(attribute.attributeNameIndex)
         val attributeLengthPosition = out.size()
         out.addI32(0) # attributeLength
@@ -581,7 +581,7 @@ class JVMClass {
         val reader: BufferReader
         var cp: ConstantPool = ?
 
-        def(buffer: Buffer): Self {
+        def(buffer: DynamicBuffer): Self {
             buffer.useLittleEndian(false)
             __malloc(BufferReader(buffer))
         }
@@ -828,7 +828,7 @@ class JVMClass {
             }).fold(0, (a, b) -> a + b)
         }
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             out.addU16(count()) # constantPoolCount
             for info in infos {
                 info.emit(out)
@@ -1080,7 +1080,7 @@ class JVMClass {
             case invokeDynamic(bmai, nati) = JVMClass.cInvokeDynamic
         }
 
-        def emit(self, out: Buffer) {
+        def emit(self, out: DynamicBuffer) {
             when self {
                 case empty() = return ()
                 else = ()
@@ -1088,7 +1088,7 @@ class JVMClass {
             out.addU8(tag)
             when self {
                 case utf8(string) = {
-                    val utf8 = Buffer.fromUTF8(string)
+                    val utf8 = DynamicBuffer.fromUTF8(string)
                     out.addU16(utf8.size())
                     out.addBuffer(utf8)
                 }
@@ -1165,7 +1165,7 @@ class JVMClass {
         case code(CodeAttribute)
         case lineNumberTable(List[LineNumberTableEntry])
         case localVariableTable(List[LocalVariableTableEntry])
-        case unknown(Buffer)
+        case unknown(DynamicBuffer)
     }
 
     class ConstantValueAttribute {
@@ -1179,7 +1179,7 @@ class JVMClass {
     class CodeAttribute {
         val maxStack: Int
         val maxLocals: Int
-        val code: Buffer
+        val code: DynamicBuffer
         val exceptionTable: List[ExceptionTableEntry]
         val attributes: List[AttributeInfo]
     }

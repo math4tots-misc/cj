@@ -5,7 +5,7 @@ import cj.StringBuilder
 import cj.BigInt
 import cj.Argv
 import cj.BufferReader
-import cj.Buffer
+import cj.DynamicBuffer
 import cj.FS
 
 ## Load and dump the contents of a JVM class file
@@ -411,7 +411,7 @@ class OldDump {
         }
     }
 
-    def dumpCode(self, code: Buffer) {
+    def dumpCode(self, code: DynamicBuffer) {
         enter()
         val reader = BufferReader(code)
         while reader {
