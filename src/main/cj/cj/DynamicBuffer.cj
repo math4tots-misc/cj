@@ -1,10 +1,9 @@
 package cj
 
-import cj.ArrayBufferWrapper
 import cj.ArrayBuffer
 import cj.BigInt
 
-native class DynamicBuffer: Repr, Eq, ArrayBufferWrapper {
+native class DynamicBuffer: Repr, Eq {
 
     @implicit(ArrayBuffer, fromArrayBuffer)
     class Converter {

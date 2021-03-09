@@ -1,6 +1,6 @@
 package www.dom
 
-import cj.ArrayBufferWrapper
+import cj.ArrayBufferOrView
 import www.dom.CanvasRenderingContext
 import www.dom.WebGLUniformLocation
 import www.dom.WebGLProgram
@@ -129,8 +129,8 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     def unbindBuffer(self: Self, target: Int) = self.call("bindBuffer", target, null[WebGLBuffer])
 
     ## Initializes and creates the buffer object's data store.
-    def bufferData[D: ArrayBufferWrapper](self: Self, target: Int, srcData: D, usage: Int) = (
-        self.call("bufferData", target, srcData.buffer, usage))
+    def bufferData[D: ArrayBufferOrView](self: Self, target: Int, srcData: D, usage: Int) = (
+        self.call("bufferData", target, srcData, usage))
 
     def isBuffer(self, buffer: WebGLBuffer): Bool = call("isBuffer", buffer).unsafeCast()
 
