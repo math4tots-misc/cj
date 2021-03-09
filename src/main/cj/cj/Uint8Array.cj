@@ -14,6 +14,6 @@ native class Uint8Array : Collection[Int], Default, ToArrayBufferView, Repr, Def
     def __getitem(self: Self, i: Int): Int
     def __setitem(self: Self, i: Int, v: Int)
     def default(): Self
-    def toArrayBufferView(self: Self): ArrayBufferView
+    def asArrayBufferView(self: Self): ArrayBufferView
     def repr(self): String
 }

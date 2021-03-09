@@ -1,9 +1,11 @@
 class MC$cj$DataView {
-    M$__new(arrayBuffer) {
-        return new DataView(arrayBuffer);
+    M$__new(arrayBuffer, useLittleEndian) {
+        return this.M$fromParts(arrayBuffer, 0, arrayBuffer.byteLength, useLittleEndian);
     }
-    M$fromParts(abuf, begin, end) {
-        return new DataView(abuf, begin, end);
+    M$fromParts(abuf, begin, end, useLittleEndian) {
+        const dv = new DataView(abuf, begin, end);
+        dv._useLittleEndian = useLittleEndian;
+        return dv;
     }
     M$useLittleEndian(self, useLittleEndian) {
         self._useLittleEndian = useLittleEndian;

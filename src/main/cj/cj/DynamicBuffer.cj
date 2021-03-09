@@ -1,10 +1,23 @@
 package cj
 
+import cj.ArrayBuffer
 import cj.BigInt
 import cj.ArrayBufferView
 import cj.ToArrayBufferView
 
 native class DynamicBuffer: Repr, Eq, ToArrayBufferView {
+
+    @implicit(ArrayBuffer, fromArrayBuffer)
+    class Converter {
+        val buffer: DynamicBuffer
+
+        def fromArrayBuffer(abuf: ArrayBuffer): Self = Self(DynamicBuffer.fromArrayBuffer(abuf))
+    }
+
+    def(conv: Converter): Self
+
+    def fromArrayBuffer(abuf: ArrayBuffer): Self
+
     ## Create a new buffer with the given size
     def withSize(n: Int): Self
 
@@ -80,5 +93,7 @@ native class DynamicBuffer: Repr, Eq, ToArrayBufferView {
 
     def __eq(self: Self, other: Self): Bool
 
-    def toArrayBufferView(self: Self): ArrayBufferView
+    def asArrayBufferView(self: Self): ArrayBufferView
+
+    def getArrayBuffer(self): ArrayBuffer
 }

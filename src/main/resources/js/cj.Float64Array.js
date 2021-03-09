@@ -29,7 +29,7 @@ class MC$cj$Float64Array {
     M$__sliceTo(self, end) {
         return self.slice(0, end);
     }
-    M$toArrayBufferView(self) {
+    M$asArrayBufferView(self) {
         return self;
     }
     M$map(self, f) {

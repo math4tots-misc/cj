@@ -1,5 +1,7 @@
 package cj
 
+import cj.DataView
+import cj.ArrayBuffer
 import cj.DynamicBuffer
 
 class Test06DynamicBuffer {
@@ -33,5 +35,19 @@ class Test06DynamicBuffer {
             Assert.equal(buf.getU16(0), 72 + (256 * 'e'))
         }
         Assert.equal(DynamicBuffer.fromUTF8("asdf").repr(), "DynamicBuffer.ofU8s(97, 115, 100, 102)")
+    }
+
+    @test
+    def fromArrayBuffer() {
+        {
+            val abuf = ArrayBuffer(32)
+            val dv1 = DataView(abuf, true)
+            val dbuf = DynamicBuffer(abuf)
+            val dv2 = DataView(dbuf.getArrayBuffer(), true)
+            dbuf.setU8(0, 14)
+            Assert.equal(dbuf.getU16(0), 14)
+            Assert.equal(dv1.getUint16(0), 0)
+            Assert.equal(dv2.getUint16(0), 14)
+        }
     }
 }

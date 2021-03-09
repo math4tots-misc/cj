@@ -130,7 +130,7 @@ trait WebGLRenderingContext : CanvasRenderingContext {
 
     ## Initializes and creates the buffer object's data store.
     def bufferData[D: ToArrayBufferView](self: Self, target: Int, srcData: D, usage: Int) = (
-        self.call("bufferData", target, srcData.toArrayBufferView(), usage))
+        self.call("bufferData", target, srcData.asArrayBufferView(), usage))
 
     def isBuffer(self, buffer: WebGLBuffer): Bool = call("isBuffer", buffer).unsafeCast()
 

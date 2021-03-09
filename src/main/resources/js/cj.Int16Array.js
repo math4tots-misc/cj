@@ -23,7 +23,7 @@ class MC$cj$Int16Array {
     M$default() {
         return this.M$__new([]);
     }
-    M$toArrayBufferView(self) {
+    M$asArrayBufferView(self) {
         return self;
     }
     M$repr(self) {

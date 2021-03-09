@@ -3,6 +3,15 @@
  * [data, useLittleEndian, size]
  */
 class MC$cj$DynamicBuffer {
+
+    M$__new(conv) {
+        return conv;
+    }
+
+    M$fromArrayBuffer(abuf) {
+        return this.fromBuffer(abuf.slice(0));
+    }
+
     /**
      * @param {ArrayBuffer} buffer
      * @returns {Buf}
@@ -424,8 +433,14 @@ class MC$cj$DynamicBuffer {
         }
         return true;
     }
-    M$toArrayBufferView(self) {
+    M$asArrayBufferView(self) {
         return self[0];
+    }
+    /**
+     * @param {Buf} self
+     */
+    M$getArrayBuffer(self) {
+        return self[0].buffer;
     }
 }
 /**

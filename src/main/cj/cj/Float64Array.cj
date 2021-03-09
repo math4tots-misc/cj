@@ -19,7 +19,7 @@ native class Float64Array : Collection[Double], ToArrayBufferView, Hash, Approxi
     def __sliceFrom(self: Self, start: Int): Self
     def __sliceTo(self: Self, end: Int): Self
 
-    def toArrayBufferView(self: Self) : ArrayBufferView
+    def asArrayBufferView(self: Self) : ArrayBufferView
 
     def map(self: Self, f: Fn[Double, Double]): Self
 

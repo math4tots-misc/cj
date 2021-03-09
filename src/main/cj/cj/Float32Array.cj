@@ -16,7 +16,7 @@ native class Float32Array : Collection[Double], ToArrayBufferView, Hash, Approxi
     def __getitem(self: Self, i: Int): Double
     def __setitem(self: Self, i: Int, v: Double)
 
-    def toArrayBufferView(self: Self) : ArrayBufferView
+    def asArrayBufferView(self: Self) : ArrayBufferView
 
     def map(self: Self, f: Fn[Double, Double]): Self
 
