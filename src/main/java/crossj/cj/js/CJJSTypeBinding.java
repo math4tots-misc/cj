@@ -3,6 +3,7 @@ package crossj.cj.js;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Str;
+import crossj.cj.CJError;
 import crossj.cj.CJIRClassType;
 import crossj.cj.CJIRReifiedMethodRef;
 import crossj.cj.CJIRSelfType;
@@ -32,7 +33,17 @@ final class CJJSTypeBinding {
         return new CJJSTypeBinding(selfType, Map.of(), Map.of(), List.of());
     }
 
+    private CJIRReifiedMethodRef adjust(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+        // the actual CJIRMethodRef that reifiedMethodRef references might potentially
+        // point to just a trait method stub (this can happen if e.g. the methodref was
+        // originally found on a type variable). So we retrieve it again, this time, directly
+        // from the "resolved" owner type.
+        var methodRef = owner.findMethod(reifiedMethodRef.getName());
+        return methodRef.reify(owner, reifiedMethodRef.getTypeArgs());
+    }
+
     CJJSLLMethod translate(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+        reifiedMethodRef = adjust(owner, reifiedMethodRef);
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
         Map<String, CJIRClassType> itemLevelMap = Map.of();
@@ -67,6 +78,10 @@ final class CJJSTypeBinding {
 
     @Override
     public String toString() {
+        throw CJError.of("Don't use CJJSTypeBinding.toString");
+    }
+
+    public String getId() {
         return Str.join(",", selfType.getArgs().map(a -> a.repr())) + "+"
                 + Str.join(",", methodLevelArgs.map(a -> a.repr()));
     }

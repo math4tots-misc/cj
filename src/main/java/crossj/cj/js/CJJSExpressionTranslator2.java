@@ -110,13 +110,13 @@ final class CJJSExpressionTranslator2 {
                 var args = e.getArgs().map(arg -> translate(arg));
                 var owner = binding.apply(e.getOwner());
                 var reifiedMethodRef = e.getReifiedMethodRef();
-                var reifiedMethod = binding.translate(owner, reifiedMethodRef);
+                var llmethod = binding.translate(owner, reifiedMethodRef);
 
                 var key = owner.getItem().getFullName() + "." + reifiedMethodRef.getName();
 
                 var op = CJJSOps.OPS.getOrNull(key);
                 if (op != null) {
-                    var ctx = new CJJSOps.Context(key, binding, e, args, owner, reifiedMethodRef, reifiedMethod,
+                    var ctx = new CJJSOps.Context(key, binding, e, args, owner, reifiedMethodRef, llmethod,
                             requestMethod, requestNative);
                     var blob = op.apply(ctx);
                     if (blob != null) {
@@ -133,7 +133,7 @@ final class CJJSExpressionTranslator2 {
                     return translateCall(e.getMark(), key.replace(".", "$"), args);
                 }
 
-                var extra = reifiedMethod.getMethod().getExtra();
+                var extra = llmethod.getMethod().getExtra();
 
                 if (extra instanceof CJIRFieldMethodInfo) {
                     var fmi = (CJIRFieldMethodInfo) extra;
@@ -153,8 +153,8 @@ final class CJJSExpressionTranslator2 {
                     }
                 }
 
-                requestMethod.accept(reifiedMethod);
-                var jsMethodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                requestMethod.accept(llmethod);
+                var jsMethodName = methodNameRegistry.nameForReifiedMethod(llmethod);
 
                 // regular call
                 return translateCall(e.getMark(), jsMethodName, args);

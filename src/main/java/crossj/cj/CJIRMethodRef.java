@@ -43,6 +43,11 @@ public final class CJIRMethodRef {
         return getPartialBinding(selfType, args);
     }
 
+    public CJIRReifiedMethodRef reify(CJIRType selfType, List<CJIRType> args) {
+        var binding = getBinding(selfType, args);
+        return new CJIRReifiedMethodRef(this, args, binding);
+    }
+
     public CJIRBinding getPartialBinding(CJIRType selfType, List<CJIRType> args, CJMark... marks) {
         var typeParameters = method.getTypeParameters();
         if (args.size() > typeParameters.size()) {

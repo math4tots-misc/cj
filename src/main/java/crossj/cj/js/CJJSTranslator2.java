@@ -239,7 +239,7 @@ public final class CJJSTranslator2 {
     }
 
     private void emitMethod(CJJSLLMethod reifiedMethod) {
-        IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding());
+        IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getId());
         var method = reifiedMethod.getMethod();
         if (method.getBody().isEmpty()) {
             if (reifiedMethod.getMethod().getName().equals("__malloc")) {

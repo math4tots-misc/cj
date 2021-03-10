@@ -20,9 +20,9 @@ public final class CJJSMethodNameRegistry {
     }
 
     private int getBindingId(CJJSTypeBinding binding) {
-        return bindingToId.getOrInsert(binding.toString(), () -> {
+        return bindingToId.getOrInsert(binding.getId(), () -> {
             var id = bindingToId.size();
-            IO.println(id + " -> " + binding);
+            IO.println(id + " -> " + binding.getId());
             return id;
         });
     }

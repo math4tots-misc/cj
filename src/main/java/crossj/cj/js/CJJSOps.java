@@ -173,12 +173,12 @@ public final class CJJSOps {
         private final List<CJJSBlob2> args;
         private final CJIRClassType owner;
         private final CJIRReifiedMethodRef reifiedMethodRef;
-        // private final CJJSReifiedMethod reifiedMethod;
+        // private final CJJSReifiedMethod llmethod;
         // private final Consumer<CJJSReifiedMethod> requestMethod;
         private final BiConsumer<String, CJMark> requestNative;
 
         public Context(String key, CJJSTypeBinding binding, CJIRMethodCall e, List<CJJSBlob2> args,
-                CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSLLMethod reifiedMethod,
+                CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSLLMethod llmethod,
                 Consumer<CJJSLLMethod> requestMethod, BiConsumer<String, CJMark> requestNative) {
             // this.key = key;
             this.mark = e.getMark();
@@ -187,7 +187,7 @@ public final class CJJSOps {
             this.args = args;
             this.owner = owner;
             this.reifiedMethodRef = reifiedMethodRef;
-            // this.reifiedMethod = reifiedMethod;
+            // this.llmethod = llmethod;
             // this.requestMethod = requestMethod;
             this.requestNative = requestNative;
         }
