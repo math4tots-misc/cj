@@ -115,7 +115,7 @@ public final class CJJSTranslator2 {
     private final CJJSSink out = new CJJSSink();
     private final CJJSMethodNameRegistry methodNameRegistry = new CJJSMethodNameRegistry();
     private final CJJSTempVarFactory varFactory = new CJJSTempVarFactory();
-    private final Deque<CJJSReifiedMethod> todoMethods = Deque.of();
+    private final Deque<CJJSLLMethod> todoMethods = Deque.of();
     private final Set<String> queuedMethods = Set.of();
     private final Deque<Pair<CJIRClassType, CJIRField>> todoStaticFields = Deque.of();
     private final Set<String> queuedStaticFields = Set.of();
@@ -126,7 +126,7 @@ public final class CJJSTranslator2 {
         this.ctx = ctx;
     }
 
-    public void queueMethod(CJJSReifiedMethod reifiedMethod) {
+    public void queueMethod(CJJSLLMethod reifiedMethod) {
         var id = reifiedMethod.getId();
         if (!queuedMethods.contains(id)) {
             queuedMethods.add(id);
@@ -157,7 +157,7 @@ public final class CJJSTranslator2 {
             throw CJError.of("queueMethodByName cannot process generic items or methods");
         }
         var owner = new CJIRClassType(item, List.of());
-        queueMethod(new CJJSReifiedMethod(owner, method, CJJSTypeBinding.empty(owner)));
+        queueMethod(new CJJSLLMethod(owner, method, CJJSTypeBinding.empty(owner)));
     }
 
     public void emitQueued() {
@@ -194,7 +194,7 @@ public final class CJJSTranslator2 {
         }
     }
 
-    private void emitMallocMethod(CJJSReifiedMethod reifiedMethod) {
+    private void emitMallocMethod(CJJSLLMethod reifiedMethod) {
         var method = reifiedMethod.getMethod();
         var owner = reifiedMethod.getOwner();
         var methodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
@@ -238,7 +238,7 @@ public final class CJJSTranslator2 {
         out.append("]}");
     }
 
-    private void emitMethod(CJJSReifiedMethod reifiedMethod) {
+    private void emitMethod(CJJSLLMethod reifiedMethod) {
         IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding());
         var method = reifiedMethod.getMethod();
         if (method.getBody().isEmpty()) {

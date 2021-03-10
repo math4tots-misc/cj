@@ -14,7 +14,7 @@ public final class CJJSMethodNameRegistry {
         return itemName.replace(".", "$") + "$" + methodName;
     }
 
-    public String nameForReifiedMethod(CJJSReifiedMethod reifiedMethod) {
+    public String nameForReifiedMethod(CJJSLLMethod reifiedMethod) {
         return getName(reifiedMethod.getOwner().getItem().getFullName(), reifiedMethod.getMethod().getName(),
                 reifiedMethod.getBinding());
     }

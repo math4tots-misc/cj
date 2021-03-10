@@ -5,13 +5,15 @@ import crossj.cj.CJIRMethod;
 
 /**
  * A CJIRMethod together with a type-binding and its reified owner.
+ *
+ * 'low-level' CJIRReifiedMethodRef
  */
-public final class CJJSReifiedMethod {
+public final class CJJSLLMethod {
     private final CJIRClassType owner;
     private final CJIRMethod method;
     private final CJJSTypeBinding binding;
 
-    public CJJSReifiedMethod(CJIRClassType owner, CJIRMethod method, CJJSTypeBinding binding) {
+    public CJJSLLMethod(CJIRClassType owner, CJIRMethod method, CJJSTypeBinding binding) {
         this.owner = owner;
         this.method = method;
         this.binding = binding;

@@ -32,7 +32,7 @@ final class CJJSTypeBinding {
         return new CJJSTypeBinding(selfType, Map.of(), Map.of(), List.of());
     }
 
-    CJJSReifiedMethod translate(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+    CJJSLLMethod translate(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
         Map<String, CJIRClassType> itemLevelMap = Map.of();
@@ -53,7 +53,7 @@ final class CJJSTypeBinding {
             methodLevelArgs.add(atype);
         }
         var binding = new CJJSTypeBinding(owner, itemLevelMap, methodLevelMap, methodLevelArgs);
-        return new CJJSReifiedMethod(owner, methodRef.getMethod(), binding);
+        return new CJJSLLMethod(owner, methodRef.getMethod(), binding);
     }
 
     boolean isEmpty() {

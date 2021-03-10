@@ -47,11 +47,11 @@ final class CJJSExpressionTranslator2 {
     private final CJJSTempVarFactory varFactory;
     private final CJJSMethodNameRegistry methodNameRegistry;
     private final CJJSTypeBinding binding;
-    private final Consumer<CJJSReifiedMethod> requestMethod;
+    private final Consumer<CJJSLLMethod> requestMethod;
     private final BiConsumer<String, CJMark> requestNative;
 
     CJJSExpressionTranslator2(CJJSTempVarFactory varFactory, CJJSMethodNameRegistry methodNameRegistry,
-            CJJSTypeBinding binding, Consumer<CJJSReifiedMethod> requestMethod,
+            CJJSTypeBinding binding, Consumer<CJJSLLMethod> requestMethod,
             BiConsumer<String, CJMark> requestNative) {
         this.varFactory = varFactory;
         this.methodNameRegistry = methodNameRegistry;

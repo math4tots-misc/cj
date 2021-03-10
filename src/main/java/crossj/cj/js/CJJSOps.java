@@ -178,8 +178,8 @@ public final class CJJSOps {
         private final BiConsumer<String, CJMark> requestNative;
 
         public Context(String key, CJJSTypeBinding binding, CJIRMethodCall e, List<CJJSBlob2> args,
-                CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSReifiedMethod reifiedMethod,
-                Consumer<CJJSReifiedMethod> requestMethod, BiConsumer<String, CJMark> requestNative) {
+                CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSLLMethod reifiedMethod,
+                Consumer<CJJSLLMethod> requestMethod, BiConsumer<String, CJMark> requestNative) {
             // this.key = key;
             this.mark = e.getMark();
             this.binding = binding;
