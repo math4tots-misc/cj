@@ -3,7 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 
 public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRType {
-    CJIRClassType(CJIRItem item, List<CJIRType> args) {
+    public CJIRClassType(CJIRItem item, List<CJIRType> args) {
         super(item, args);
     }
 

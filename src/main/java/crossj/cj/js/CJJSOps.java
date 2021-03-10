@@ -7,6 +7,7 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
+import crossj.cj.CJIRClassType;
 import crossj.cj.CJIRMethodCall;
 import crossj.cj.CJIRReifiedMethodRef;
 import crossj.cj.CJMark;
@@ -40,7 +41,7 @@ public final class CJJSOps {
                 Assert.equals(ctx.args.size(), 2);
                 Assert.equals(ctx.reifiedMethodRef.getTypeArgs().size(), 1);
                 var argtype = ctx.binding.apply(ctx.reifiedMethodRef.getTypeArgs().get(0));
-                switch (argtype.toString()) {
+                switch (argtype.repr()) {
                 case "cj.Bool":
                 case "cj.Int":
                 case "cj.Double":
@@ -68,7 +69,7 @@ public final class CJJSOps {
                 var typeArgs = ctx.owner.getArgs();
                 Assert.equals(typeArgs.size(), 1);
                 var itemType = typeArgs.get(0);
-                switch (itemType.toString()) {
+                switch (itemType.repr()) {
                 case "cj.Bool":
                 case "cj.Int":
                 case "cj.Double":
@@ -170,14 +171,14 @@ public final class CJJSOps {
         private final CJJSTypeBinding binding;
         // private final CJIRMethodCall e;
         private final List<CJJSBlob2> args;
-        private final CJJSReifiedType owner;
+        private final CJIRClassType owner;
         private final CJIRReifiedMethodRef reifiedMethodRef;
         // private final CJJSReifiedMethod reifiedMethod;
         // private final Consumer<CJJSReifiedMethod> requestMethod;
         private final BiConsumer<String, CJMark> requestNative;
 
         public Context(String key, CJJSTypeBinding binding, CJIRMethodCall e, List<CJJSBlob2> args,
-                CJJSReifiedType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSReifiedMethod reifiedMethod,
+                CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef, CJJSReifiedMethod reifiedMethod,
                 Consumer<CJJSReifiedMethod> requestMethod, BiConsumer<String, CJMark> requestNative) {
             // this.key = key;
             this.mark = e.getMark();

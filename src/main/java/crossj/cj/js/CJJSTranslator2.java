@@ -9,6 +9,7 @@ import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.base.Set;
 import crossj.cj.CJError;
+import crossj.cj.CJIRClassType;
 import crossj.cj.CJIRContext;
 import crossj.cj.CJIRExpression;
 import crossj.cj.CJIRField;
@@ -116,7 +117,7 @@ public final class CJJSTranslator2 {
     private final CJJSTempVarFactory varFactory = new CJJSTempVarFactory();
     private final Deque<CJJSReifiedMethod> todoMethods = Deque.of();
     private final Set<String> queuedMethods = Set.of();
-    private final Deque<Pair<CJJSReifiedType, CJIRField>> todoStaticFields = Deque.of();
+    private final Deque<Pair<CJIRClassType, CJIRField>> todoStaticFields = Deque.of();
     private final Set<String> queuedStaticFields = Set.of();
     private final Deque<Pair<String, CJMark>> todoNatives = Deque.of();
     private final Set<String> queuedNatives = Set.of();
@@ -133,7 +134,7 @@ public final class CJJSTranslator2 {
         }
     }
 
-    public void queueStaticField(CJJSReifiedType owner, CJIRField field) {
+    public void queueStaticField(CJIRClassType owner, CJIRField field) {
         var id = owner.getItem().getFullName() + "." + field.getName();
         if (!queuedStaticFields.contains(id)) {
             queuedStaticFields.add(id);
@@ -155,7 +156,7 @@ public final class CJJSTranslator2 {
         if (item.getTypeParameters().size() > 0 || method.getTypeParameters().size() > 0) {
             throw CJError.of("queueMethodByName cannot process generic items or methods");
         }
-        var owner = new CJJSReifiedType(item, List.of());
+        var owner = new CJIRClassType(item, List.of());
         queueMethod(new CJJSReifiedMethod(owner, method, CJJSTypeBinding.empty(owner)));
     }
 
@@ -277,10 +278,10 @@ public final class CJJSTranslator2 {
         out.append("}\n");
     }
 
-    private void emitStaticField(CJJSReifiedType owner, CJIRField field) {
-        var rootName = owner.toString().replace(".", "$") + "$" + field.getName();
+    private void emitStaticField(CJIRClassType owner, CJIRField field) {
+        var rootName = owner.repr().replace(".", "$") + "$" + field.getName();
         var fieldVarName = "FV$" + rootName;
-        var getterName = owner.toString().replace(".", "$") + "$__get_" + field.getName();
+        var getterName = owner.repr().replace(".", "$") + "$__get_" + field.getName();
         out.addMark(field.getMark());
         var cinit = field.getExpression().isPresent() ? getConstOrNull(field.getExpression().get()) : null;
         if (cinit != null) {
@@ -308,11 +309,11 @@ public final class CJJSTranslator2 {
         }
 
         if (field.isMutable()) {
-            var setterName = owner.toString().replace(".", "$") + "$__set_" + field.getName();
+            var setterName = owner.repr().replace(".", "$") + "$__set_" + field.getName();
             out.append("function " + setterName + "(x){" + fieldVarName + "=x}\n");
 
             if (field.getType().repr().equals("cj.Int")) {
-                var augName = owner.toString().replace(".", "$") + "$__augadd_" + field.getName();
+                var augName = owner.repr().replace(".", "$") + "$__augadd_" + field.getName();
                 out.append("function " + augName + "(x){" + fieldVarName + "=" + getterName + "()+x}\n");
             }
         }

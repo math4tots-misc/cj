@@ -11,31 +11,31 @@ import crossj.cj.CJIRTypeVisitor;
 import crossj.cj.CJIRVariableType;
 
 final class CJJSTypeBinding {
-    private final CJJSReifiedType selfType;
-    private final Map<String, CJJSReifiedType> itemLevelMap;
-    private final Map<String, CJJSReifiedType> methodLevelMap;
-    private final List<CJJSReifiedType> methodLevelArgs;
+    private final CJIRClassType selfType;
+    private final Map<String, CJIRClassType> itemLevelMap;
+    private final Map<String, CJIRClassType> methodLevelMap;
+    private final List<CJIRClassType> methodLevelArgs;
 
-    CJJSTypeBinding(CJJSReifiedType selfType, Map<String, CJJSReifiedType> itemLevelMap,
-            Map<String, CJJSReifiedType> methodLevelMap, List<CJJSReifiedType> methodLevelArgs) {
+    CJJSTypeBinding(CJIRClassType selfType, Map<String, CJIRClassType> itemLevelMap,
+            Map<String, CJIRClassType> methodLevelMap, List<CJIRClassType> methodLevelArgs) {
         this.selfType = selfType;
         this.itemLevelMap = itemLevelMap;
         this.methodLevelMap = methodLevelMap;
         this.methodLevelArgs = methodLevelArgs;
     }
 
-    public CJJSReifiedType getSelfType() {
+    public CJIRClassType getSelfType() {
         return selfType;
     }
 
-    static CJJSTypeBinding empty(CJJSReifiedType selfType) {
+    static CJJSTypeBinding empty(CJIRClassType selfType) {
         return new CJJSTypeBinding(selfType, Map.of(), Map.of(), List.of());
     }
 
-    CJJSReifiedMethod translate(CJJSReifiedType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+    CJJSReifiedMethod translate(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
-        Map<String, CJJSReifiedType> itemLevelMap = Map.of();
+        Map<String, CJIRClassType> itemLevelMap = Map.of();
         var itemTypeParameters = methodOwner.getItem().getTypeParameters();
         for (int i = 0; i < itemTypeParameters.size(); i++) {
             var typeParameter = itemTypeParameters.get(i);
@@ -43,8 +43,8 @@ final class CJJSTypeBinding {
             itemLevelMap.put(typeParameter.getName(), apply(type));
         }
         var methodTypeParameters = methodRef.getMethod().getTypeParameters();
-        var methodLevelArgs = List.<CJJSReifiedType>of();
-        Map<String, CJJSReifiedType> methodLevelMap = Map.of();
+        var methodLevelArgs = List.<CJIRClassType>of();
+        Map<String, CJIRClassType> methodLevelMap = Map.of();
         for (int i = 0; i < methodTypeParameters.size(); i++) {
             var typeParameter = methodTypeParameters.get(i);
             var type = reifiedMethodRef.getTypeArgs().get(i);
@@ -60,31 +60,32 @@ final class CJJSTypeBinding {
         return methodLevelMap.size() == 0 && selfType.getArgs().isEmpty();
     }
 
-    CJJSReifiedType get(String variableName) {
+    CJIRClassType get(String variableName) {
         var ret = methodLevelMap.getOrNull(variableName);
         return ret != null ? ret : itemLevelMap.get(variableName);
     }
 
     @Override
     public String toString() {
-        return Str.join(",", selfType.getArgs()) + "+" + Str.join(",", methodLevelArgs);
+        return Str.join(",", selfType.getArgs().map(a -> a.repr())) + "+"
+                + Str.join(",", methodLevelArgs.map(a -> a.repr()));
     }
 
-    CJJSReifiedType apply(CJIRType type) {
-        return type.accept(new CJIRTypeVisitor<CJJSReifiedType, Void>() {
+    CJIRClassType apply(CJIRType type) {
+        return type.accept(new CJIRTypeVisitor<CJIRClassType, Void>() {
 
             @Override
-            public CJJSReifiedType visitClass(CJIRClassType t, Void a) {
-                return new CJJSReifiedType(t.getItem(), t.getArgs().map(arg -> apply(arg)));
+            public CJIRClassType visitClass(CJIRClassType t, Void a) {
+                return new CJIRClassType(t.getItem(), t.getArgs().map(arg -> apply(arg)));
             }
 
             @Override
-            public CJJSReifiedType visitVariable(CJIRVariableType t, Void a) {
+            public CJIRClassType visitVariable(CJIRVariableType t, Void a) {
                 return get(t.getName());
             }
 
             @Override
-            public CJJSReifiedType visitSelf(CJIRSelfType t, Void a) {
+            public CJIRClassType visitSelf(CJIRSelfType t, Void a) {
                 return selfType;
             }
         }, null);
