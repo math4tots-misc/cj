@@ -2,14 +2,19 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.base.Pair;
 
 public final class CJIRBinding {
     private final CJIRType selfType;
     private final Map<String, CJIRType> map;
 
-    CJIRBinding(CJIRType selfType, Map<String, CJIRType> map) {
+    public CJIRBinding(CJIRType selfType, Map<String, CJIRType> map) {
         this.selfType = selfType;
         this.map = map;
+    }
+
+    public static CJIRBinding empty(CJIRType selfType) {
+        return new CJIRBinding(selfType, Map.of());
     }
 
     void put(String key, CJIRType type) {
@@ -26,6 +31,10 @@ public final class CJIRBinding {
 
     public CJIRType getSelfType() {
         return selfType;
+    }
+
+    public boolean isEmpty() {
+        return map.size() == 0;
     }
 
     /**
@@ -103,5 +112,33 @@ public final class CJIRBinding {
 
     public int size() {
         return map.size();
+    }
+
+    @Override
+    public String toString() {
+        throw CJError.of("Don't use CJIRBinding.toString()");
+    }
+
+    public String getSummary() {
+        var sb = new StringBuilder();
+        sb.append(selfType.repr());
+        for (var key : List.sorted(map.keys())) {
+            sb.append("," + key + "=" + map.get(key).repr());
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CJIRBinding)) {
+            return false;
+        }
+        var other = (CJIRBinding) obj;
+        return selfType.equals(other.selfType) && map.equals(other.map);
+    }
+
+    @Override
+    public int hashCode() {
+        return Pair.of(selfType, map).hashCode();
     }
 }
