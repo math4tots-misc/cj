@@ -1,13 +1,16 @@
 package cj
 
+import cj.ArrayBufferView
 import cj.BigInt
 import cj.ArrayBuffer
 
-native class DataView {
+native class DataView: ArrayBufferView {
     def(abuf: ArrayBuffer, useLittleEndian: Bool): Self
     def fromParts(abuf: ArrayBuffer, byteOffset: Int, byteLength: Int): Self
     def useLittleEndian(self, useLittleEndian: Bool)
+    def __get_byteOffset(self): Int
     def __get_byteLength(self): Int
+    def __get_buffer(self): ArrayBuffer
     def getInt8(self, byteOffset: Int): Int
     def getUint8(self, byteOffset: Int): Int
     def getInt16(self, byteOffset: Int): Int

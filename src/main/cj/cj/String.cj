@@ -4,7 +4,8 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def toString(self: Self): Self
     def repr(self: Self): String
 
-    def __add[T?: ToString](self: Self, other: T): Self
+    def __add[T?: ToString](self: Self, other: T): Self = _addstr(other.toString())
+    def _addstr(self, other: String): Self
 
     ## Number of char codes in this string.
     ## NOTE: If the default encoding is UTF-16, this is neither the number of bytes

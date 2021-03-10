@@ -14,6 +14,8 @@ native class Int16Array : Collection[Int], Default, Repr, Default, ArrayBufferVi
     def __getitem(self: Self, i: Int): Int
     def __setitem(self: Self, i: Int, v: Int)
     def default(): Self
+    def __get_byteLength(self): Int
+    def __get_byteOffset(self): Int
     def __get_buffer(self: Self): ArrayBuffer
     def repr(self): String
 }

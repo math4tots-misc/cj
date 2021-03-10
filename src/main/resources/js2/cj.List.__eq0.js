@@ -1,4 +1,7 @@
 function listeq0(a, b) {
+    if (a === b) {
+        return true;
+    }
     if (a.length !== b.length) {
         return false;
     }

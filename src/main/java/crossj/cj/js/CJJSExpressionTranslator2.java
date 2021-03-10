@@ -283,8 +283,25 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitIfNull(CJIRIfNull e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_IF_NULL");
+                var inner = translate(e.getExpression()).toPure(varFactory::newName);
+                var target = translateTarget(e.getTarget());
+                var left = translate(e.getLeft());
+                var right = translate(e.getRight());
+                var tmpvar = varFactory.newName();
+                return CJJSBlob2.withPrep(out -> {
+                    out.append("let " + tmpvar + ";");
+                    inner.emitPrep(out);
+                    out.append("if((");
+                    inner.emitBody(out);
+                    out.append(")!==null){");
+                    out.append("let " + target + "=");
+                    inner.emitBody(out);
+                    out.append(";");
+                    left.emitSet(out, tmpvar + "=");
+                    out.append("}else{");
+                    right.emitSet(out, tmpvar + "=");
+                    out.append("}");
+                }, out -> out.append(tmpvar), true);
             }
 
             @Override
@@ -312,8 +329,19 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitFor(CJIRFor e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_For");
+                var iterator = translate(e.getIterator());
+                var target = translateTarget(e.getTarget());
+                var body = translate(e.getBody());
+                return CJJSBlob2.withPrep(out -> {
+                    iterator.emitPrep(out);
+                    out.append("for (const " + target + " of ");
+                    iterator.emitBody(out);
+                    out.append("){");
+                    body.emitDrop(out);
+                    out.append("}");
+                }, out -> {
+                    out.append("undefined");
+                }, true);
             }
 
             @Override
@@ -332,7 +360,11 @@ final class CJJSExpressionTranslator2 {
             public CJJSBlob2 visitLambda(CJIRLambda e, Void a) {
                 var body = translate(e.getBody());
                 return CJJSBlob2.simple(out -> {
-                    out.append("((");
+                    out.append("(");
+                    if (e.isAsync()) {
+                        out.append("async");
+                    }
+                    out.append("(");
                     for (int i = 0; i < e.getParameters().size(); i++) {
                         if (i > 0) {
                             out.append(",");
@@ -353,8 +385,10 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitReturn(CJIRReturn e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_Return");
+                var inner = translate(e.getExpression());
+                return CJJSBlob2.withPrep(out -> {
+                    inner.emitSet(out, "return ");
+                }, out -> out.append("NORETURN"), true);
             }
 
             @Override

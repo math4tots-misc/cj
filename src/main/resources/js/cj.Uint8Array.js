@@ -2,6 +2,9 @@ class MC$cj$Uint8Array {
     M$__new(list) {
         return new Uint8Array(list);
     }
+    M$fromParts(buffer, byteOffset, byteLength) {
+        return new Uint8Array(buffer, byteOffset, byteLength);
+    }
     M$withSize(n) {
         return new Uint8Array(n);
     }
@@ -22,6 +25,12 @@ class MC$cj$Uint8Array {
     }
     M$default() {
         return this.M$__new([]);
+    }
+    M$__get_byteLength(self) {
+        return self.byteLength;
+    }
+    M$__get_byteOffset(self) {
+        return self.byteOffset;
     }
     M$__get_buffer(self) {
         return self.buffer;

@@ -7,6 +7,7 @@ import cj.Collection
 ## In Javascript, wraps Uint8Array
 native class Uint8Array : Collection[Int], Default, Repr, Default, ArrayBufferView {
     @variadic def(list: List[Int]): Self
+    def fromParts(buffer: ArrayBuffer, byteOffset: Int, byteLength: Int): Self
     def withSize(n: Int): Self
     def fromIterable[C: Iterable[Int]](c: C): Self
     def iter(self: Self): Iterator[Int]
@@ -14,6 +15,8 @@ native class Uint8Array : Collection[Int], Default, Repr, Default, ArrayBufferVi
     def __getitem(self: Self, i: Int): Int
     def __setitem(self: Self, i: Int, v: Int)
     def default(): Self
+    def __get_byteLength(self): Int
+    def __get_byteOffset(self): Int
     def __get_buffer(self: Self): ArrayBuffer
     def repr(self): String
 }

@@ -20,6 +20,12 @@ class MC$cj$Float32Array {
     M$__setitem(self, i, v) {
         self[i] = v;
     }
+    M$__get_byteLength(self) {
+        return self.byteLength;
+    }
+    M$__get_byteOffset(self) {
+        return self.byteOffset;
+    }
     M$__get_buffer(self) {
         return self.buffer;
     }
