@@ -1,11 +1,12 @@
 package crossj.cj.js;
 
+import crossj.base.IO;
 import crossj.base.Map;
 
 public final class CJJSMethodNameRegistry {
     private final Map<String, Integer> bindingToId = Map.of();
 
-    public String getName(String itemName, String methodName, CJJSTypeBinding binding) {
+    private String getName(String itemName, String methodName, CJJSTypeBinding binding) {
         return getNonGenericName(itemName, methodName) + (binding.isEmpty() ? "" : "$" + getBindingId(binding));
     }
 
@@ -19,6 +20,10 @@ public final class CJJSMethodNameRegistry {
     }
 
     private int getBindingId(CJJSTypeBinding binding) {
-        return bindingToId.getOrInsert(binding.toString(), () -> bindingToId.size());
+        return bindingToId.getOrInsert(binding.toString(), () -> {
+            var id = bindingToId.size();
+            IO.println(id + " -> " + binding);
+            return id;
+        });
     }
 }

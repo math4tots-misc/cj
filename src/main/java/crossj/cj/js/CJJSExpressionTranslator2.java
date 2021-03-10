@@ -10,11 +10,13 @@ import crossj.cj.CJError;
 import crossj.cj.CJIRAssignment;
 import crossj.cj.CJIRAssignmentTarget;
 import crossj.cj.CJIRAssignmentTargetVisitor;
+import crossj.cj.CJIRAugAssignKind;
 import crossj.cj.CJIRAugmentedAssignment;
 import crossj.cj.CJIRAwait;
 import crossj.cj.CJIRBlock;
 import crossj.cj.CJIRExpression;
 import crossj.cj.CJIRExpressionVisitor;
+import crossj.cj.CJIRFieldMethodInfo;
 import crossj.cj.CJIRFor;
 import crossj.cj.CJIRIf;
 import crossj.cj.CJIRIfNull;
@@ -64,16 +66,16 @@ final class CJJSExpressionTranslator2 {
             @Override
             public CJJSBlob2 visitLiteral(CJIRLiteral e, Void a) {
                 switch (e.getKind()) {
-                    case Unit:
-                        return CJJSBlob2.pure("undefined");
-                    case Char:
-                        return CJJSBlob2.pure("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()));
-                    case Bool:
-                    case Int:
-                    case Double:
-                    case String:
-                    case BigInt:
-                        return CJJSBlob2.pure(e.getRawText());
+                case Unit:
+                    return CJJSBlob2.pure("undefined");
+                case Char:
+                    return CJJSBlob2.pure("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()));
+                case Bool:
+                case Int:
+                case Double:
+                case String:
+                case BigInt:
+                    return CJJSBlob2.pure(e.getRawText());
                 }
                 throw CJError.of("TODO: " + e.getKind(), e.getMark());
             }
@@ -111,65 +113,44 @@ final class CJJSExpressionTranslator2 {
                 var reifiedMethod = binding.translate(owner, reifiedMethodRef);
 
                 var key = owner.getItem().getFullName() + "." + reifiedMethodRef.getName();
-                switch (key) {
-                    case "cj.Int.__pos":
-                        return args.get(0);
-                    case "cj.Int.__neg":
-                        return translateOp("(-", ")", "", args);
-                    case "cj.Int.__invert":
-                        return translateOp("(~", ")", "", args);
-                    case "cj.Int.__add":
-                        return translateOp("(", ")", "+", args);
-                    case "cj.Int.__sub":
-                        return translateOp("(", ")", "-", args);
-                    case "cj.Int.__mul":
-                        return translateOp("(", ")", "*", args);
-                    case "cj.Int.__truncdiv":
-                        return translateOp("((", ")|0)", "/", args);
-                    case "cj.Int.__div":
-                        return translateOp("(", ")", "/", args);
-                    case "cj.Int.__rem":
-                        return translateOp("(", ")", "%", args);
-                    case "cj.Int.__eq":
-                        return translateOp("(", ")", "===", args);
-                    case "cj.Int.toBool":
-                        return args.get(0);
-                    case "cj.Double._fromInt":
-                        return translateOp("((", ")|0)", "", args);
-                    case "cj.String.__add":
-                        Assert.equals(args.size(), 2);
-                        Assert.equals(reifiedMethodRef.getTypeArgs().size(), 1);
-                        var argtype = binding.apply(reifiedMethodRef.getTypeArgs().get(0));
-                        switch (argtype.toString()) {
-                            case "cj.Bool":
-                            case "cj.Int":
-                            case "cj.Double":
-                            case "cj.String":
-                                return translateOp("(", ")", "+", args);
-                            default:
-                                break;
-                        }
-                        break;
-                    case "cj.String.__eq":
-                        return translateOp("(", ")", "===", args);
-                    case "cj.List.size":
-                        return translateOp("", ".length", "", args);
-                    case "cj.Fn0.call":
-                    case "cj.Fn1.call":
-                    case "cj.Fn2.call":
-                    case "cj.Fn3.call":
-                    case "cj.Fn4.call":
-                        return translateDynamicCall(e.getMark(), args);
-                    case "cj.IO.println":
-                        return translateCall(e.getMark(), "console.log", args);
-                    case "cj.IO.eprintln":
-                        return translateCall(e.getMark(), "console.error", args);
+
+                var op = CJJSOps.OPS.getOrNull(key);
+                if (op != null) {
+                    var ctx = new CJJSOps.Context(key, binding, e, args, owner, reifiedMethodRef, reifiedMethod,
+                            requestMethod, requestNative);
+                    var blob = op.apply(ctx);
+                    if (blob != null) {
+                        return blob;
+                    }
                 }
 
-                var isNative = reifiedMethodRef.getOwner().isNative();
+                var ownersMethod = owner.getItem().getMethodOrNull(e.getName());
+
+                var isNative = owner.isNative() && ownersMethod != null && ownersMethod.getBody().isEmpty();
+
                 if (isNative) {
                     requestNative.accept(key + ".js", e.getMark());
                     return translateCall(e.getMark(), key.replace(".", "$"), args);
+                }
+
+                var extra = reifiedMethod.getMethod().getExtra();
+
+                if (extra instanceof CJIRFieldMethodInfo) {
+                    var fmi = (CJIRFieldMethodInfo) extra;
+                    var field = fmi.getField();
+                    if (!field.isStatic()) {
+                        var fieldIndex = field.getIndex();
+                        switch (fmi.getKind()) {
+                        case "":
+                            return translateParts(args, "", "[" + fieldIndex + "]");
+                        case "=":
+                            return translateParts(args, "(", "[" + fieldIndex + "]=", ")");
+                        case "+=":
+                            return translateParts(args, "(", "[" + fieldIndex + "]+=", ")");
+                        default:
+                            throw new RuntimeException("Unrecognized kind " + fmi.getKind());
+                        }
+                    }
                 }
 
                 requestMethod.accept(reifiedMethod);
@@ -203,19 +184,51 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitAugmentedAssignment(CJIRAugmentedAssignment e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                var target = "L$" + e.getTarget().getName();
+                var augexpr = translate(e.getExpression());
+                String op;
+                switch (e.getKind()) {
+                case Add:
+                    op = "+=";
+                    break;
+                case Subtract:
+                    op = "-=";
+                    break;
+                case Multiply:
+                    op = "*=";
+                    break;
+                case Remainder:
+                    op = "%=";
+                    break;
+                default:
+                    throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
+                }
+
+                return CJJSBlob2.withPrep(out -> {
+                    if (e.getKind() == CJIRAugAssignKind.Add && isOne(e.getExpression())) {
+                        out.append(target + "++;");
+                    } else if (e.getKind() == CJIRAugAssignKind.Subtract && isOne(e.getExpression())) {
+                        out.append(target + "--;");
+                    } else {
+                        augexpr.emitPrep(out);
+                        out.append(target + op);
+                        augexpr.emitBody(out);
+                        out.append(";");
+                    }
+                }, out -> {
+                    out.append("undefined");
+                }, true);
             }
 
             @Override
             public CJJSBlob2 visitLogicalNot(CJIRLogicalNot e, Void a) {
-                return translateOp("(!", ")", "", List.of(translate(e.getInner())));
+                return translateParts(List.of(translate(e.getInner())), "(!", ")");
             }
 
             @Override
             public CJJSBlob2 visitLogicalBinop(CJIRLogicalBinop e, Void a) {
-                return translateOp("(", ")", e.isAnd() ? "&&" : "||",
-                        List.of(translate(e.getLeft()), translate(e.getRight())));
+                return translateParts(List.of(translate(e.getLeft()), translate(e.getRight())), "(",
+                        e.isAnd() ? "&&" : "||", ")");
             }
 
             @Override
@@ -271,66 +284,100 @@ final class CJJSExpressionTranslator2 {
             @Override
             public CJJSBlob2 visitIfNull(CJIRIfNull e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_IF_NULL");
             }
 
             @Override
             public CJJSBlob2 visitWhile(CJIRWhile e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                var cond = translate(e.getCondition());
+                var body = translate(e.getBody());
+                return CJJSBlob2.withPrep(out -> {
+                    if (cond.isSimple()) {
+                        out.append("while(");
+                        cond.emitBody(out);
+                        out.append("){");
+                        body.emitDrop(out);
+                        out.append("}");
+                    } else {
+                        out.append("while(true){");
+                        cond.emitPrep(out);
+                        out.append("if(!(");
+                        cond.emitBody(out);
+                        out.append("))break;");
+                        body.emitDrop(out);
+                        out.append("}");
+                    }
+                }, out -> out.append("undefined"), true);
             }
 
             @Override
             public CJJSBlob2 visitFor(CJIRFor e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_For");
             }
 
             @Override
             public CJJSBlob2 visitWhen(CJIRWhen e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_When");
             }
 
             @Override
             public CJJSBlob2 visitSwitch(CJIRSwitch e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_Switch");
             }
 
             @Override
             public CJJSBlob2 visitLambda(CJIRLambda e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                var body = translate(e.getBody());
+                return CJJSBlob2.simple(out -> {
+                    out.append("((");
+                    for (int i = 0; i < e.getParameters().size(); i++) {
+                        if (i > 0) {
+                            out.append(",");
+                        }
+                        out.append("L$" + e.getParameters().get(i).getName());
+                    }
+                    out.append(")=>");
+                    if (body.isSimple()) {
+                        body.emitBody(out);
+                    } else {
+                        out.append("{");
+                        body.emitSet(out, "return ");
+                        out.append("}");
+                    }
+                    out.append(")");
+                }, false);
             }
 
             @Override
             public CJJSBlob2 visitReturn(CJIRReturn e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_Return");
             }
 
             @Override
             public CJJSBlob2 visitAwait(CJIRAwait e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_Await");
             }
 
             @Override
             public CJJSBlob2 visitThrow(CJIRThrow e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_Throw");
             }
 
             @Override
             public CJJSBlob2 visitTry(CJIRTry e, Void a) {
                 // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO");
+                return CJJSBlob2.pure("TODO_Try");
             }
         }, null);
     }
 
-    Optional<Consumer<CJJSSink>> joinPreps(List<Optional<Consumer<CJJSSink>>> prepList) {
+    static Optional<Consumer<CJJSSink>> joinPreps(List<Optional<Consumer<CJJSSink>>> prepList) {
         if (prepList.all(p -> p.isEmpty())) {
             return Optional.empty();
         }
@@ -342,7 +389,18 @@ final class CJJSExpressionTranslator2 {
         });
     }
 
-    CJJSBlob2 translateOp(String prefix, String postfix, String op, List<CJJSBlob2> args) {
+    static CJJSBlob2 translateParts(List<CJJSBlob2> args, String... parts) {
+        Assert.equals(args.size() + 1, parts.length);
+        return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
+            for (int i = 0; i + 1 < parts.length; i++) {
+                out.append(parts[i]);
+                args.get(i).emitBody(out);
+            }
+            out.append(parts[parts.length - 1]);
+        }, false);
+    }
+
+    static CJJSBlob2 translateOp(String prefix, String postfix, String op, List<CJJSBlob2> args) {
         return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
             out.append(prefix);
             for (int i = 0; i < args.size(); i++) {
@@ -355,7 +413,7 @@ final class CJJSExpressionTranslator2 {
         }, false);
     }
 
-    CJJSBlob2 translateCall(CJMark mark, String funcName, List<CJJSBlob2> args) {
+    static CJJSBlob2 translateCall(CJMark mark, String funcName, List<CJJSBlob2> args) {
         return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
             out.addMark(mark);
             out.append(funcName + "(");
@@ -369,7 +427,7 @@ final class CJJSExpressionTranslator2 {
         }, false);
     }
 
-    CJJSBlob2 translateDynamicCall(CJMark mark, List<CJJSBlob2> args) {
+    static CJJSBlob2 translateDynamicCall(CJMark mark, List<CJJSBlob2> args) {
         return new CJJSBlob2(joinPreps(args.map(arg -> arg.getPrep())), out -> {
             out.addMark(mark);
             out.append("(");
@@ -408,5 +466,13 @@ final class CJJSExpressionTranslator2 {
                 return sb.toString();
             }
         }, null);
+    }
+
+    private static boolean isOne(CJIRExpression expr) {
+        if (expr instanceof CJIRLiteral) {
+            var lit = (CJIRLiteral) expr;
+            return lit.getRawText().equals("1");
+        }
+        return false;
     }
 }

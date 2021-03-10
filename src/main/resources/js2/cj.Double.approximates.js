@@ -1,3 +1,3 @@
-function cj$Double$apprixmates(a, b) {
+function cj$Double$approximates(a, b, tolerance) {
     return Math.abs(a - b) < tolerance
 }

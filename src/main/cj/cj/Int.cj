@@ -48,6 +48,6 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     def __get_zero(): Self
     def __get_one(): Self
     def edivrem(self, other: Self): Tuple[Self, Self]
-    def ediv(self, other: Self): Self
-    def erem(self, other: Self): Self
+    def ediv(self, other: Self): Self = edivrem(other).get0()
+    def erem(self, other: Self): Self = edivrem(other).get1()
 }

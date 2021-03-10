@@ -19,7 +19,10 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
 
     def __contains(self, other: Self): Bool
 
-    def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String
+    def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String = _join(
+        parts.iter().map(p -> p.toString()).toList())
+
+    def _join(self, parts: List[String]): String
 
     def charCodeAt(self: Self, i: Int): Int
     def charAt(self: Self, i: Int): Char

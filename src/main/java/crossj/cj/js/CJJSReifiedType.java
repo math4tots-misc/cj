@@ -37,6 +37,20 @@ public final class CJJSReifiedType {
         return item;
     }
 
+    public boolean isNative() {
+        return item.isNative();
+    }
+
+    boolean hasOwnDefinitionForMethod(String methodName) {
+        var method = item.getMethodOrNull(methodName);
+        return method != null && method.getBody().isPresent();
+    }
+
+    boolean hasOwnEmptyDefinitionForMethod(String methodName) {
+        var method = item.getMethodOrNull(methodName);
+        return method != null && method.getBody().isEmpty();
+    }
+
     public List<CJJSReifiedType> getArgs() {
         return args;
     }

@@ -14,6 +14,15 @@ native class Nullable[T]: Iterable[T], ToBool, Default, Eq if T: Eq, Repr if T: 
     @generic def iter(self: Self): Iterator[T]
     @generic def toBool(self: Self): Bool
     @generic def default(): Self
-    if T : Eq def __eq(self: Self, other: Self): Bool
-    if T : Repr def repr(self: Self): String
+    if T : Eq def __eq(self: Self, other: Self): Bool {
+        if val a = self {
+            if val b = other {
+                return a == b
+            }
+        }
+        false
+    }
+    if T : Repr def repr(self: Self): String {
+        if val x = self { "null(" + x.repr() + ")" } else { "null" }
+    }
 }

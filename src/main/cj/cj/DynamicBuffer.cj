@@ -85,7 +85,7 @@ native class DynamicBuffer: Repr, Eq {
     def addUTF8(self: Self, string: String)
 
     ## Interprets this buffer as a UTF-8 string.
-    def toString(self: Self): String
+    def toString(self: Self): String = getUTF8(0, size())
 
     def repr(self: Self): String
 

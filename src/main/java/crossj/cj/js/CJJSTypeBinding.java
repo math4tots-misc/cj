@@ -12,11 +12,16 @@ import crossj.cj.CJIRVariableType;
 
 final class CJJSTypeBinding {
     private final CJJSReifiedType selfType;
-    private final Map<String, CJJSReifiedType> map;
+    private final Map<String, CJJSReifiedType> itemLevelMap;
+    private final Map<String, CJJSReifiedType> methodLevelMap;
+    private final List<CJJSReifiedType> methodLevelArgs;
 
-    CJJSTypeBinding(CJJSReifiedType selfType, Map<String, CJJSReifiedType> map) {
+    CJJSTypeBinding(CJJSReifiedType selfType, Map<String, CJJSReifiedType> itemLevelMap,
+            Map<String, CJJSReifiedType> methodLevelMap, List<CJJSReifiedType> methodLevelArgs) {
         this.selfType = selfType;
-        this.map = map;
+        this.itemLevelMap = itemLevelMap;
+        this.methodLevelMap = methodLevelMap;
+        this.methodLevelArgs = methodLevelArgs;
     }
 
     public CJJSReifiedType getSelfType() {
@@ -24,41 +29,45 @@ final class CJJSTypeBinding {
     }
 
     static CJJSTypeBinding empty(CJJSReifiedType selfType) {
-        return new CJJSTypeBinding(selfType, Map.of());
+        return new CJJSTypeBinding(selfType, Map.of(), Map.of(), List.of());
     }
 
     CJJSReifiedMethod translate(CJJSReifiedType owner, CJIRReifiedMethodRef reifiedMethodRef) {
-        Map<String, CJJSReifiedType> map = Map.of();
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
+        Map<String, CJJSReifiedType> itemLevelMap = Map.of();
         var itemTypeParameters = methodOwner.getItem().getTypeParameters();
         for (int i = 0; i < itemTypeParameters.size(); i++) {
             var typeParameter = itemTypeParameters.get(i);
             var type = methodOwner.getArgs().get(i);
-            map.put(typeParameter.getName(), apply(type));
+            itemLevelMap.put(typeParameter.getName(), apply(type));
         }
         var methodTypeParameters = methodRef.getMethod().getTypeParameters();
+        var methodLevelArgs = List.<CJJSReifiedType>of();
+        Map<String, CJJSReifiedType> methodLevelMap = Map.of();
         for (int i = 0; i < methodTypeParameters.size(); i++) {
             var typeParameter = methodTypeParameters.get(i);
             var type = reifiedMethodRef.getTypeArgs().get(i);
-            map.put(typeParameter.getName(), apply(type));
+            var atype = apply(type);
+            methodLevelMap.put(typeParameter.getName(), atype);
+            methodLevelArgs.add(atype);
         }
-        var binding = new CJJSTypeBinding(owner, map);
+        var binding = new CJJSTypeBinding(owner, itemLevelMap, methodLevelMap, methodLevelArgs);
         return new CJJSReifiedMethod(owner, methodRef.getMethod(), binding);
     }
 
     boolean isEmpty() {
-        return map.size() == 0;
+        return methodLevelMap.size() == 0 && selfType.getArgs().isEmpty();
     }
 
     CJJSReifiedType get(String variableName) {
-        return map.get(variableName);
+        var ret = methodLevelMap.getOrNull(variableName);
+        return ret != null ? ret : itemLevelMap.get(variableName);
     }
 
     @Override
     public String toString() {
-        return Str.join(",", List.sortedBy(map.pairs(), (a, b) -> a.get1().compareTo(b.get1()))
-                .map(pair -> pair.get1() + ":" + pair.get2()));
+        return Str.join(",", selfType.getArgs()) + "+" + Str.join(",", methodLevelArgs);
     }
 
     CJJSReifiedType apply(CJIRType type) {

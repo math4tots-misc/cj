@@ -1,5 +1,6 @@
 package cj
 
+import cj.StringBuilder
 import cj.Approximate
 import cj.Collection
 
@@ -18,7 +19,7 @@ native class List[T?] :
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool
     @generic def add(self: Self, t: T)
-    @genericSelf def addAll[C: Iterable[T]](self: Self, ts: C)
+    @genericSelf def addAll[C: Iterable[T]](self: Self, ts: C) { for t in ts { add(t) } }
     @generic def pop(self): T
     @generic def __add(self: Self, other: Self): Self
     @generic def __getitem(self: Self, i: Int): T
@@ -50,11 +51,22 @@ native class List[T?] :
     def flatten[@generic R, C: Iterable[R]](self: List[C]): List[R]
 
     if T : Eq def __contains(self, t: T): Bool
-    if T : Ord def sort(self)
-    def sortBy[X: Ord](self, f: Fn[T, X])
+    if T : Ord def sort(self) = _sortByCmp((a, b) -> a.__cmp(b))
+    def sortBy[X: Ord](self, f: Fn[T, X]) = _sortByCmp((a, b) -> f.call(a).__cmp(f.call(b)))
+    def _sortByCmp(self, f: Fn[T, T, Int])
     @generic def reverse(self)
-    if T : Eq def __eq(self: Self,  other: Self): Bool
+    if T : Eq def __eq(self: Self,  other: Self): Bool {
+        if size() != other.size() {
+            return false
+        }
+        for i = 0; i < size(); i++ {
+            if self[i] != other[i] {
+                return false
+            }
+        }
+        true
+    }
     if T : Hash def hash(self: Self): Int
     if T : Approximate def approximates(self: Self, other: Self, tolerance: Double): Int
-    if T : Repr def repr(self: Self): String
+    if T : Repr def repr(self: Self): String = "[" + ", ".join(map(t -> t.repr())) + "]"
 }
