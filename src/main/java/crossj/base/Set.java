@@ -73,7 +73,11 @@ public final class Set<T> implements XIterable<T> {
 
     @Override
     public int hashCode() {
-        throw XError.withMessage("Sets are not hashable");
+        var hashCode = 0;
+        for (var t : this) {
+            hashCode += t.hashCode();
+        }
+        return hashCode;
     }
 
     @Override

@@ -208,7 +208,11 @@ public final class Map<K, V> {
 
     @Override
     public int hashCode() {
-        throw XError.withMessage("Maps are not hashable");
+        var hashCode = 0;
+        for (var pair : pairs()) {
+            hashCode += pair.hashCode();
+        }
+        return hashCode;
     }
 
     @Override
