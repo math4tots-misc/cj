@@ -4,7 +4,7 @@ native class Char: ToInt, ToChar, Hash, Repr, Default {
     def toInt(self: Self): Int
     def toChar(self: Self): Char
     def __eq(self: Self, other: Self): Bool
-    def hash(self: Self): Int
+    def hash(self: Self): Int = toInt()
     def toString(self: Self): String
     def repr(self: Self): String
 

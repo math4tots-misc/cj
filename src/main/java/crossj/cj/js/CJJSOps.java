@@ -36,21 +36,22 @@ public final class CJJSOps {
     /**
      * Types that can be converted toString in the same way it would in JS.
      */
-    private static List<String> nativeToStringTypes = List.of(
-        "cj.Bool", "cj.Int", "cj.Double", "cj.String", "cj.BigInt");
+    private static List<String> nativeToStringTypes = List.of("cj.Bool", "cj.Int", "cj.Double", "cj.String",
+            "cj.BigInt");
 
     /**
      * Types with JS supported arithmetic operations.
      *
-     * Division however is treated a bit specially, so those are not automatically included in this category.
+     * Division however is treated a bit specially, so those are not automatically
+     * included in this category.
      */
     private static List<String> arithmeticTypes = List.of("cj.Int", "cj.Double", "cj.BigInt");
 
     /**
      * Types that can be compared in JS with javascript's own comparison operators
      */
-    private static List<String> nativeComparables = List.of(
-        List.of("cj.Bool", "cj.Char", "cj.String"), arithmeticTypes).flatMap(x -> x);
+    private static List<String> nativeComparables = List.of(List.of("cj.Bool", "cj.Char", "cj.String"), arithmeticTypes)
+            .flatMap(x -> x);
 
     /**
      * Types that can be treated like arrays in JS.
@@ -60,7 +61,8 @@ public final class CJJSOps {
     /**
      * Types that can be iterated over natively in JS.
      */
-    private static List<String> nativeIterable = List.of(List.of("cj.List"), typedArrays).flatMap(x -> x);
+    private static List<String> nativeIterable = List.of(List.of("cj.List", "cj.Iterator"), typedArrays)
+            .flatMap(x -> x);
 
     public static final Map<String, Op> OPS = Map.of(
             mkpair("cj.Bool.repr", ctx -> translateParts(ctx.args, "(\"\"+", ")")),
@@ -92,20 +94,17 @@ public final class CJJSOps {
                 } else {
                     return null;
                 }
-            }),
-            mkpair("cj.String._addstr", ctx -> translateOp("(", ")", "+", ctx.args)),
+            }), mkpair("cj.String._addstr", ctx -> translateOp("(", ")", "+", ctx.args)),
             mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),
             mkpair("cj.String.charAt", ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".codePointAt(", ")"))),
             mkpair("cj.String.size", ctx -> translateParts(ctx.args, "", ".length")),
 
             mkpair("cj.List.__new", ctx -> translateParts(ctx.args, "", "")),
-            mkpair("cj.List.size", ctx -> translateOp("", ".length", "", ctx.args)),
             mkpair("cj.List.toBool", ctx -> translateOp("(", ".length!==0)", "", ctx.args)),
             mkpair("cj.List.empty", ctx -> CJJSBlob2.simplestr("[]", false)),
             mkpair("cj.List.add", ctx -> translateParts(ctx.args, "", ".push(", ")")),
             mkpair("cj.List.pop", ctx -> translateParts(ctx.args, "", ".pop()")),
-            mkpair("cj.List.iter", ctx -> translateParts(ctx.args, "", "[Symbol.iterator]()")),
             mkpair("cj.List.removeIndex", ctx -> translateParts(ctx.args, "", ".splice(", ", 1)[0]")),
             mkpair("cj.List.__add", ctx -> translateParts(ctx.args, "", ".concat(", ")")),
             mkpair("cj.List.map", ctx -> translateParts(ctx.args, "", ".map(", ")")),
@@ -123,11 +122,13 @@ public final class CJJSOps {
                 }
             }),
 
-            mkpair("cj.Iterator.toList", ctx -> translateCall(ctx.mark, "Array.from", ctx.args)),
             mkpair("cj.Iterator.iter", ctx -> ctx.args.get(0)),
 
             mkpair("cj.Nullable.isPresent", ctx -> translateParts(ctx.args, "(", "!==null)")),
             mkpair("cj.Nullable.isEmpty", ctx -> translateParts(ctx.args, "(", "===null)")),
+
+            mkpair("cj.Error.__new", ctx -> translateParts(ctx.args, "new Error(", ")")),
+            mkpair("cj.Error.message", ctx -> translateParts(ctx.args, "", ".message")),
 
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
 
@@ -136,6 +137,7 @@ public final class CJJSOps {
             mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
             mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
 
+            mkpair("cj.IO.jsdebug", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.printlnstr", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.eprintlnstr", ctx -> translateCall(ctx.mark, "console.error", ctx.args)),
 
@@ -184,6 +186,8 @@ public final class CJJSOps {
         }
 
         for (var type : nativeRandomAccess) {
+            OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
+            OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
             OPS.put(type + ".__getitem", ctx -> translateParts(ctx.args, "", "[", "]"));
             OPS.put(type + ".__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")"));
             OPS.put(type + ".__sliceTo", ctx -> translateParts(ctx.args, "", ".slice(0,", ")"));
@@ -193,6 +197,9 @@ public final class CJJSOps {
 
         for (var type : nativeIterable) {
             OPS.put(type + ".toList", ctx -> translateParts(ctx.args, "Array.from(", ")"));
+            if (!type.equals("cj.Iterator")) {
+                OPS.put(type + ".iter", ctx -> translateParts(ctx.args, "", "[Symbol.iterator]()"));
+            }
         }
 
         for (var typedArray : typedArrays) {
@@ -203,6 +210,7 @@ public final class CJJSOps {
                 ctx.requestJS("cj.List.__eq0.js");
                 return translateCall(ctx.mark, "listeq0", ctx.args);
             });
+            OPS.put(typedArray + ".withSize", ctx -> translateParts(ctx.args, "new " + name + "(", ")"));
         }
 
         for (var pair : grandfatheredNativeMethods) {

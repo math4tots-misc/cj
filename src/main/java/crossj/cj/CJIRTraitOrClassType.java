@@ -110,4 +110,18 @@ public abstract class CJIRTraitOrClassType {
         }
         return null;
     }
+
+    @Override
+    public int hashCode() {
+        return List.of(getClass(), getItem(), getArgs()).hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!obj.getClass().equals(getClass())) {
+            return false;
+        }
+        var other = (CJIRTraitOrClassType) obj;
+        return getItem() == other.getItem() && getArgs().equals(other.getArgs());
+    }
 }

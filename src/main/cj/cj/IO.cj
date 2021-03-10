@@ -6,6 +6,7 @@ native class IO {
     def eprintln[T?: ToString](t: T) = eprintlnstr(t.toString())
     def panic[T?: ToString](t: T): NoReturn
 
+    def jsdebug[T](t: T)
     def printlnstr(s: String)
     def eprintlnstr(s: String)
 

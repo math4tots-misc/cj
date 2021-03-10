@@ -1,5 +1,7 @@
 package cj
 
+import cj.Math
+
 native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def toString(self: Self): Self
     def repr(self: Self): String
@@ -15,7 +17,13 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def toBool(self: Self): Bool
 
     def __eq(self: Self, other: Self): Bool
-    def hash(self: Self): Int
+    def hash(self: Self): Int {
+        var h = 0;
+        for c in self {
+            h = Math.combineHash(h, c.hash())
+        }
+        h
+    }
     def __lt(self, other: Self): Bool
 
     def __contains(self, other: Self): Bool

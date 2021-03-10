@@ -14,6 +14,7 @@ import crossj.cj.CJIRContext;
 import crossj.cj.CJIRExpression;
 import crossj.cj.CJIRField;
 import crossj.cj.CJIRFieldMethodInfo;
+import crossj.cj.CJIRItem;
 import crossj.cj.CJIRLiteral;
 import crossj.cj.CJIRNullWrap;
 import crossj.cj.CJIRRunMode;
@@ -21,6 +22,7 @@ import crossj.cj.CJIRRunModeMain;
 import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
+import crossj.cj.CJIRType;
 import crossj.cj.CJJSSink;
 import crossj.cj.CJMark;
 import crossj.cj.CJToken;
@@ -121,6 +123,7 @@ public final class CJJSTranslator2 {
     private final Set<String> queuedStaticFields = Set.of();
     private final Deque<Pair<String, CJMark>> todoNatives = Deque.of();
     private final Set<String> queuedNatives = Set.of();
+    private final CJJSTypeIdRegistry typeIdRegistry = new CJJSTypeIdRegistry();
 
     public CJJSTranslator2(CJIRContext ctx) {
         this.ctx = ctx;
@@ -197,6 +200,7 @@ public final class CJJSTranslator2 {
     private void emitMallocMethod(CJJSLLMethod reifiedMethod) {
         var method = reifiedMethod.getMethod();
         var owner = reifiedMethod.getOwner();
+        var isWrapper = isWrapperType(owner);
         var methodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
         var fields = owner.getItem().getFields().filter(f -> !f.isStatic());
         out.append("function ");
@@ -216,13 +220,16 @@ public final class CJJSTranslator2 {
         out.append("){");
         for (var field : fields) {
             if (field.getExpression().isPresent()) {
-                var expressionTranslator = new CJJSExpressionTranslator2(varFactory, methodNameRegistry,
-                        CJJSTypeBinding.empty(owner), this::queueMethod, this::queueNative);
+                // TODO: Consider whether a fuller binding is needed here
+                var expressionTranslator = newExpressionTranslator(CJJSTypeBinding.empty(owner));
                 var init = expressionTranslator.translate(field.getExpression().get());
                 init.emitSet(out, "const L$" + field.getName() + "=");
             }
         }
-        out.append("return[");
+        out.append("return ");
+        if (!isWrapper) {
+            out.append("[");
+        }
         first = true;
         for (var field : fields) {
             if (!first) {
@@ -235,7 +242,10 @@ public final class CJJSTranslator2 {
             }
             first = false;
         }
-        out.append("]}");
+        if (!isWrapper) {
+            out.append("]");
+        }
+        out.append("}");
     }
 
     private void emitMethod(CJJSLLMethod reifiedMethod) {
@@ -252,6 +262,9 @@ public final class CJJSTranslator2 {
                     if (field.isStatic()) {
                         queueStaticField(reifiedMethod.getOwner(), field);
                     }
+                } else {
+                    // TODO: Considering throwing here
+                    IO.println("  (MISSING)");
                 }
             }
             return;
@@ -274,8 +287,7 @@ public final class CJJSTranslator2 {
         }
         out.append("){");
         varFactory.reset();
-        var expressionTranslator = new CJJSExpressionTranslator2(varFactory, methodNameRegistry, binding,
-                this::queueMethod, this::queueNative);
+        var expressionTranslator = newExpressionTranslator(binding);
         var blob = expressionTranslator.translate(method.getBody().get());
         blob.emitSet(out, "return ");
         out.append("}\n");
@@ -299,8 +311,7 @@ public final class CJJSTranslator2 {
             out.append("function " + getterName + "(){");
             out.append("if(" + fieldVarName + "===undefined){");
             if (field.getExpression().isPresent()) {
-                var expressionTranslator = new CJJSExpressionTranslator2(varFactory, methodNameRegistry,
-                        CJJSTypeBinding.empty(owner), this::queueMethod, this::queueNative);
+                var expressionTranslator = newExpressionTranslator(CJJSTypeBinding.empty(owner));
                 var init = expressionTranslator.translate(field.getExpression().get());
                 init.emitSet(out, fieldVarName + "=");
             } else {
@@ -344,5 +355,39 @@ public final class CJJSTranslator2 {
             }
         }
         return null;
+    }
+
+    private CJJSExpressionTranslator2 newExpressionTranslator(CJJSTypeBinding binding) {
+        return new CJJSExpressionTranslator2(typeIdRegistry, varFactory, methodNameRegistry, binding, this::queueMethod,
+                this::queueNative);
+    }
+
+    static boolean isWrapperType(CJIRType type) {
+        if (!(type instanceof CJIRClassType)) {
+            return false;
+        }
+        var item = ((CJIRClassType) type).getItem();
+        return isWrapperItem(item);
+    }
+
+    static boolean isWrapperItem(CJIRItem item) {
+        // check that there's exactly 1 non-static field
+        var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
+        if (nonStaticFields.size() != 1) {
+            return false;
+        }
+        var field = nonStaticFields.get(0);
+
+        // check that the field is immutable
+        if (field.isMutable()) {
+            return false;
+        }
+
+        // check that the field's type is not nullable
+        if (!field.getType().getTraits().any(t -> t.getItem().getFullName().equals("cj.NonNull"))) {
+            return false;
+        }
+
+        return true;
     }
 }

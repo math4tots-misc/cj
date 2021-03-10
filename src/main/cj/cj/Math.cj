@@ -7,6 +7,8 @@ native class Math {
     def __get_tau(): Double
     def __get_infinity(): Double
 
+    def combineHash(h1: Int, h2: Int): Int
+
     ## Returns a random number between 0 and 1
     ## (inclusive of 0, but not 1)
     def random(): Double

@@ -11,15 +11,6 @@ public final class CJIRTrait extends CJIRTraitOrClassType {
         return new CJIRTrait(getItem(), getArgs().map(arg -> binding.apply(arg, marks)));
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof CJIRTrait)) {
-            return false;
-        }
-        var other = (CJIRTrait) obj;
-        return getItem() == other.getItem() && getArgs().equals(other.getArgs());
-    }
-
     CJIRTrait getImplementingTraitByItemOrNull(CJIRItem item) {
         if (getItem() == item) {
             return this;

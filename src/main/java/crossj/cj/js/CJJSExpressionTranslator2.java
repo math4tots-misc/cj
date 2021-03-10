@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.base.Str;
 import crossj.cj.CJError;
 import crossj.cj.CJIRAssignment;
 import crossj.cj.CJIRAssignmentTarget;
@@ -14,6 +15,7 @@ import crossj.cj.CJIRAugAssignKind;
 import crossj.cj.CJIRAugmentedAssignment;
 import crossj.cj.CJIRAwait;
 import crossj.cj.CJIRBlock;
+import crossj.cj.CJIRCaseMethodInfo;
 import crossj.cj.CJIRExpression;
 import crossj.cj.CJIRExpressionVisitor;
 import crossj.cj.CJIRFieldMethodInfo;
@@ -49,10 +51,12 @@ final class CJJSExpressionTranslator2 {
     private final CJJSTypeBinding binding;
     private final Consumer<CJJSLLMethod> requestMethod;
     private final BiConsumer<String, CJMark> requestNative;
+    private final CJJSTypeIdRegistry typeIdRegistry;
 
-    CJJSExpressionTranslator2(CJJSTempVarFactory varFactory, CJJSMethodNameRegistry methodNameRegistry,
-            CJJSTypeBinding binding, Consumer<CJJSLLMethod> requestMethod,
+    CJJSExpressionTranslator2(CJJSTypeIdRegistry typeIdRegistry, CJJSTempVarFactory varFactory,
+            CJJSMethodNameRegistry methodNameRegistry, CJJSTypeBinding binding, Consumer<CJJSLLMethod> requestMethod,
             BiConsumer<String, CJMark> requestNative) {
+        this.typeIdRegistry = typeIdRegistry;
         this.varFactory = varFactory;
         this.methodNameRegistry = methodNameRegistry;
         this.binding = binding;
@@ -142,7 +146,8 @@ final class CJJSExpressionTranslator2 {
                         var fieldIndex = field.getIndex();
                         switch (fmi.getKind()) {
                         case "":
-                            return translateParts(args, "", "[" + fieldIndex + "]");
+                            return CJJSTranslator2.isWrapperType(owner) ? args.get(0)
+                                    : translateParts(args, "", "[" + fieldIndex + "]");
                         case "=":
                             return translateParts(args, "(", "[" + fieldIndex + "]=", ")");
                         case "+=":
@@ -151,6 +156,22 @@ final class CJJSExpressionTranslator2 {
                             throw new RuntimeException("Unrecognized kind " + fmi.getKind());
                         }
                     }
+                } else if (extra instanceof CJIRCaseMethodInfo) {
+                    var cmi = (CJIRCaseMethodInfo) extra;
+                    var case_ = cmi.getCase();
+                    return new CJJSBlob2(joinPreps(args.map(x -> x.getPrep())), out -> {
+                        if (owner.isSimpleUnion()) {
+                            Assert.equals(args.size(), 0);
+                            out.append("" + case_.getTag());
+                        } else {
+                            out.append("[" + case_.getTag());
+                            for (var arg : args) {
+                                out.append(",");
+                                arg.emitBody(out);
+                            }
+                            out.append("]");
+                        }
+                    }, false);
                 }
 
                 requestMethod.accept(llmethod);
@@ -346,14 +367,92 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitWhen(CJIRWhen e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_When");
+                var target = translate(e.getTarget()).toPure(varFactory::newName);
+                var tmpvar = varFactory.newName();
+                return CJJSBlob2.withPrep(out -> {
+                    target.emitPrep(out);
+                    out.append("let " + tmpvar + ";");
+                    if (e.getTarget().getType().isSimpleUnion()) {
+                        out.append("switch(");
+                        target.emitBody(out);
+                        out.append("){");
+                    } else {
+                        out.append("switch((");
+                        target.emitBody(out);
+                        out.append(")[0]){");
+                    }
+                    for (var entry : e.getCases()) {
+                        var caseDefn = entry.get2();
+                        var body = translate(entry.get5());
+                        var tag = caseDefn.getTag();
+                        var names = entry.get3().map(d -> "L$" + d.getName());
+                        var mutable = entry.get3().any(d -> d.isMutable());
+                        var prefix = mutable ? "let " : "const ";
+                        out.append("case " + tag + ":{");
+                        if (!e.getTarget().getType().isSimpleUnion()) {
+                            out.append(prefix + "[," + Str.join(",", names) + "]=");
+                            target.emitBody(out);
+                            out.append(";");
+                        }
+                        body.emitSet(out, tmpvar + "=");
+                        out.append("break;");
+                        out.append("}");
+                    }
+                    if (e.getFallback().isPresent()) {
+                        var fallback = translate(e.getFallback().get());
+                        out.append("default:{");
+                        fallback.emitSet(out, tmpvar + "=");
+                        out.append("}");
+                    } else {
+                        out.append("default:throw new Error(\"Invalid tag\");");
+                    }
+                    out.append("}");
+                }, out -> out.append(tmpvar), true);
             }
 
             @Override
             public CJJSBlob2 visitSwitch(CJIRSwitch e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_Switch");
+                var target = translate(e.getTarget());
+                var tmpvar = varFactory.newName();
+                return CJJSBlob2.withPrep(out -> {
+                    target.emitPrep(out);
+                    out.append("let " + tmpvar + ";");
+                    out.append("switch(");
+                    target.emitBody(out);
+                    out.append("){");
+                    for (var case_ : e.getCases()) {
+                        var values = case_.get1().map(c -> {
+                            var v = translate(c);
+                            // TODO: Reconsider this restriction
+                            // At the very least, a check like this should live in one of the JSPass*
+                            // classees and not in code generation.
+                            if (!v.isSimple()) {
+                                throw CJError.of("Only simple expressions are allowed here", c.getMark());
+                            }
+                            return v;
+                        });
+                        for (var value : values) {
+                            out.append("case ");
+                            value.emitBody(out);
+                            out.append(":");
+                        }
+                        out.append("{");
+                        var body = translate(case_.get2());
+                        body.emitSet(out, tmpvar + "=");
+                        out.append("break;");
+                        out.append("}");
+                    }
+                    out.append("default:");
+                    if (e.getFallback().isPresent()) {
+                        out.append("{");
+                        var fallback = translate(e.getFallback().get());
+                        fallback.emitSet(out, tmpvar + "=");
+                        out.append("}");
+                    } else {
+                        out.append("throw new Error('Unhandled switch case');");
+                    }
+                    out.append("}");
+                }, out -> out.append(tmpvar), true);
             }
 
             @Override
@@ -388,25 +487,90 @@ final class CJJSExpressionTranslator2 {
                 var inner = translate(e.getExpression());
                 return CJJSBlob2.withPrep(out -> {
                     inner.emitSet(out, "return ");
-                }, out -> out.append("NORETURN"), true);
+                }, out -> out.append("NORETURN()"), true);
             }
 
             @Override
             public CJJSBlob2 visitAwait(CJIRAwait e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_Await");
+                return CJJSBlob2.withPrep(out -> out.append("TODO_Await();"), out -> out.append("TODO_Await()"), true);
             }
 
             @Override
             public CJJSBlob2 visitThrow(CJIRThrow e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_Throw");
+                var inner = translate(e.getExpression());
+                var exctype = e.getExpression().getType();
+                if (exctype.repr().equals("cj.Error")) {
+                    return CJJSBlob2.withPrep(out -> inner.emitSet(out, "throw "), out -> out.append("undefined"),
+                            true);
+                } else {
+                    var typeId = typeIdRegistry.getId(exctype);
+                    requestNative.accept("wrapping-exception.js", e.getMark());
+                    return CJJSBlob2.withPrep(out -> {
+                        inner.emitPrep(out);
+                        out.append("throw new WrappingException(" + typeId + ",");
+                        inner.emitBody(out);
+                        out.append(");");
+                    }, out -> {
+                        out.append("undefined");
+                    }, true);
+                }
             }
 
             @Override
             public CJJSBlob2 visitTry(CJIRTry e, Void a) {
-                // TODO Auto-generated method stub
-                return CJJSBlob2.pure("TODO_Try");
+                var tmpvar = varFactory.newName();
+                var body = translate(e.getBody());
+                var xclauses = e.getClauses().filter(c -> !c.get2().repr().equals("cj.Error"));
+                var yclauses = e.getClauses().filter(c -> c.get2().repr().equals("cj.Error"));
+                if (xclauses.size() > 0) {
+                    requestNative.accept("wrapping-exception.js", e.getMark());
+                }
+                return CJJSBlob2.withPrep(out -> {
+                    out.append("let " + tmpvar + ";");
+                    out.append("try{");
+                    body.emitSet(out, tmpvar + "=");
+                    if (e.getClauses().size() > 0) {
+                        out.append("}catch(w){");
+                        // handle cj.Error clauses in the else branch
+                        if (xclauses.size() > 0) {
+                            out.append("if(w instanceof WrappingException){switch(w.typeId){");
+                            for (int i = 0; i < xclauses.size(); i++) {
+                                var clause = xclauses.get(i);
+                                var exctype = clause.get2();
+                                var typeId = typeIdRegistry.getId(exctype);
+                                out.append("case " + typeId + ":{");
+                                out.append("const " + translateTarget(clause.get1()) + "=w.data;");
+                                var clauseBody = translate(clause.get3());
+                                clauseBody.emitSet(out, tmpvar + "=");
+                                out.append("break;}");
+                            }
+                            out.append("default:throw w}");
+                            out.append("}else{");
+                        } else {
+                            out.append("{");
+                        }
+                        if (yclauses.isEmpty()) {
+                            out.append("throw w;");
+                        } else {
+                            Assert.equals(yclauses.size(), 1);
+                            var clause = yclauses.get(0);
+                            out.append("if(w instanceof Error){");
+                            out.append("const " + translateTarget(clause.get1()) + "=w;");
+                            var clauseBody = translate(clause.get3());
+                            clauseBody.emitSet(out, tmpvar + "=");
+                            out.append("}else{throw w;}");
+                        }
+                        out.append("}");
+                    }
+                    out.append("}");
+                    if (e.getFin().isPresent()) {
+                        out.append("finally{");
+                        translate(e.getFin().get()).emitDrop(out);
+                        out.append("}");
+                    }
+                }, out -> {
+                    out.append(tmpvar);
+                }, true);
             }
         }, null);
     }

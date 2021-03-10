@@ -1,5 +1,6 @@
 package cj
 
+import cj.Math
 import cj.StringBuilder
 import cj.Approximate
 import cj.Collection
@@ -66,7 +67,13 @@ native class List[T?] :
         }
         true
     }
-    if T : Hash def hash(self: Self): Int
+    if T : Hash def hash(self: Self): Int {
+        var h = 1
+        for item in self {
+            h = Math.combineHash(h, item.hash())
+        }
+        h
+    }
     if T : Approximate def approximates(self: Self, other: Self, tolerance: Double): Int
     if T : Repr def repr(self: Self): String = "[" + ", ".join(map(t -> t.repr())) + "]"
 }

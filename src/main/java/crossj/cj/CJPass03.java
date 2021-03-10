@@ -125,7 +125,7 @@ final class CJPass03 extends CJPassBaseEx {
                 var caseDefn = new CJIRCase(caseAst, tag, types);
                 item.getCases().add(caseDefn);
                 var methodAst = synthesizeCaseMethod(item, caseAst);
-                materializeMethod(item, methodAst, true, null);
+                materializeMethod(item, methodAst, true, new CJIRCaseMethodInfo(caseDefn));
                 if (caseAst.getTypes().isEmpty()) {
                     var caseMethodAst = synthesizeEmptyCaseMethod(item, caseAst);
                     materializeMethod(item, caseMethodAst, false, null);

@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.base.Pair;
 
 public final class CJIRVariableType implements CJIRType {
     private final CJIRTypeParameter declaration;
@@ -70,6 +71,11 @@ public final class CJIRVariableType implements CJIRType {
     @Override
     public <R, A> R accept(CJIRTypeVisitor<R, A> visitor, A a) {
         return visitor.visitVariable(this, a);
+    }
+
+    @Override
+    public int hashCode() {
+        return Pair.of(getClass(), declaration.getName()).hashCode();
     }
 
     @Override
