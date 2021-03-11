@@ -198,6 +198,8 @@ public final class CJJSOps {
 
             mkpair("cj.Math.min", ctx -> translateParts(ctx.args, "Math.min(", ",", ")")),
             mkpair("cj.Math.max", ctx -> translateParts(ctx.args, "Math.max(", ",", ")")),
+            mkpair("cj.Math.floor", ctx -> translateParts(ctx.args, "Math.floor(", ")")),
+            mkpair("cj.Math.ceil", ctx -> translateParts(ctx.args, "Math.ceil(", ")")),
             mkpair("cj.Math.random", ctx -> translateParts(ctx.args, "Math.random()")),
 
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
