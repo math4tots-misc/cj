@@ -42,14 +42,14 @@ class Ch02s04 : Base {
     }
 
     def initBuffers(self: Self) = {
-        val vertices = Float32Array(
+        val vertices = Float32Array([
             -0.5, -0.5, 0,
             -0.25, 0.5, 0,
             0.0, -0.5, 0,
             0.25, 0.5, 0,
             0.5, -0.5, 0
-        )
-        indices = Int16Array(0, 1, 2, 0, 2, 3, 2, 3, 4)
+        ])
+        indices = Int16Array([0, 1, 2, 0, 2, 3, 2, 3, 4])
 
         trapezoidVAO = gl.createVertexArray()
         gl.bindVertexArray(trapezoidVAO)
@@ -77,37 +77,37 @@ class Ch02s04 : Base {
 
         switch (renderingMode) {
             case "TRIANGLES" = {
-                indices = Int16Array(0, 1, 2, 2, 3, 4)
+                indices = Int16Array([0, 1, 2, 2, 3, 4])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cTRIANGLES, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "LINES" = {
-                indices = Int16Array(1, 3, 0, 4, 1, 2, 2, 3)
+                indices = Int16Array([1, 3, 0, 4, 1, 2, 2, 3])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cLINES, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "POINTS" = {
-                indices = Int16Array(1, 2, 3)
+                indices = Int16Array([1, 2, 3])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cPOINTS, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "LINE_LOOP" = {
-                indices = Int16Array(2, 3, 4, 1, 0)
+                indices = Int16Array([2, 3, 4, 1, 0])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cLINE_LOOP, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "LINE_STRIP" = {
-                indices = Int16Array(2, 3, 4, 1, 0)
+                indices = Int16Array([2, 3, 4, 1, 0])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cLINE_STRIP, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "TRIANGLE_STRIP" = {
-                indices = Int16Array(0, 1, 2, 3, 4)
+                indices = Int16Array([0, 1, 2, 3, 4])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cTRIANGLE_STRIP, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }
             case "TRIANGLE_FAN" = {
-                indices = Int16Array(0, 1, 2, 3, 4)
+                indices = Int16Array([0, 1, 2, 3, 4])
                 gl.bufferData(gl.cELEMENT_ARRAY_BUFFER, indices, gl.cSTATIC_DRAW)
                 gl.drawElements(gl.cTRIANGLE_FAN, indices.size(), gl.cUNSIGNED_SHORT, 0)
             }

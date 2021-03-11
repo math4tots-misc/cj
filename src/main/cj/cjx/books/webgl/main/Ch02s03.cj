@@ -32,13 +32,13 @@ class Ch02s03 : Base {
 
     def initBuffers(self: Self) = {
         val gl = self.gl
-        val vertices = Float32Array(
+        val vertices = Float32Array([
             -0.5, 0.5, 0,
             -0.5, -0.5, 0,
             0.5, -0.5, 0,
             0.5, 0.5, 0,
-        )
-        val indices = Int16Array(0, 1, 2, 0, 2, 3)
+        ])
+        val indices = Int16Array([0, 1, 2, 0, 2, 3])
         self.vertices = vertices
         self.indices = indices
 

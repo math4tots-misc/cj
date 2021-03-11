@@ -222,7 +222,7 @@ class Matx : Hash, Approximate, Repr {
 
         # Some optimized cases are from github.com/toji/gl-matrix
         switch c {
-            case 1 = if data[0] == 0 { null } else { null(__malloc(1, Float64Array(1.0 / data[0]))) }
+            case 1 = if data[0] == 0 { null } else { null(__malloc(1, Float64Array([1.0 / data[0]]))) }
             case 2 = {
                 val a0 = data[0]
                 val a1 = data[1]
@@ -233,11 +233,11 @@ class Matx : Hash, Approximate, Repr {
                     return null
                 }
                 val idet = 1.0 / det
-                null(__malloc(2, Float64Array(
+                null(__malloc(2, Float64Array([
                     a3 * idet,
                     -a1 * idet,
                     -a2 * idet,
-                    a0 * idet)))
+                    a0 * idet])))
             }
             case 3 = {
                 val a00 = data[0]
@@ -257,7 +257,7 @@ class Matx : Hash, Approximate, Repr {
                     return null
                 }
                 val idet = 1.0 / det
-                val out = Float64Array(
+                val out = Float64Array([
                     b01 * idet,
                     (-a22 * a01 + a02 * a21) * idet,
                     (a12 * a01 - a02 * a11) * idet,
@@ -266,7 +266,7 @@ class Matx : Hash, Approximate, Repr {
                     (-a12 * a00 + a02 * a10) * idet,
                     b21 * idet,
                     (-a21 * a00 + a01 * a20) * idet,
-                    (a11 * a00 - a01 * a10) * idet)
+                    (a11 * a00 - a01 * a10) * idet])
                 null(__malloc(3, out))
             }
             case 4 = {
@@ -305,7 +305,7 @@ class Matx : Hash, Approximate, Repr {
                     return null
                 }
                 val idet = 1.0 / det
-                val out = Float64Array(
+                val out = Float64Array([
                     (a11 * b11 - a12 * b10 + a13 * b09) * idet,
                     (a02 * b10 - a01 * b11 - a03 * b09) * idet,
                     (a31 * b05 - a32 * b04 + a33 * b03) * idet,
@@ -321,7 +321,7 @@ class Matx : Hash, Approximate, Repr {
                     (a11 * b07 - a10 * b09 - a12 * b06) * idet,
                     (a00 * b09 - a01 * b07 + a02 * b06) * idet,
                     (a31 * b01 - a30 * b03 - a32 * b00) * idet,
-                    (a20 * b03 - a21 * b01 + a22 * b00) * idet)
+                    (a20 * b03 - a21 * b01 + a22 * b00) * idet])
 
                 null(__malloc(4, out))
             }

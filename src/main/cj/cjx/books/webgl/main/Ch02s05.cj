@@ -48,7 +48,7 @@ class Ch02s05 : Base {
     }
 
     def initBuffers(self) {
-        val vertices = Float32Array(
+        val vertices = Float32Array([
             1.5, 0, 0,
             -1.5, 1, 0,
             -1.5, 0.809017, 0.587785,
@@ -60,8 +60,8 @@ class Ch02s05 : Base {
             -1.5, -0.309017, -0.951057,
             -1.5, 0.309017, -0.951057,
             -1.5, 0.809017, -0.587785
-        )
-        indices = Int16Array(
+        ])
+        indices = Int16Array([
             0, 1, 2,
             0, 2, 3,
             0, 3, 4,
@@ -72,7 +72,7 @@ class Ch02s05 : Base {
             0, 8, 9,
             0, 9, 10,
             0, 10, 1
-        )
+        ])
         coneVAO = gl.createVertexArray()
         gl.bindVertexArray(coneVAO)
 

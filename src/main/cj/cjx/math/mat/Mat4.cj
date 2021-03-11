@@ -18,11 +18,11 @@ class Mat4 {
     ##
     def perspective(fovy: Double, aspect: Double, near: Double, far: Double): Matx = {
         val f = 1.0 / Math.tan(fovy / 2)
-        val out = Float64Array(
+        val out = Float64Array([
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
             0, 0, 0, -1,
-            0, 0, 0, 0)
+            0, 0, 0, 0])
         if far != Math.infinity {
             val nf = 1.0 / (near - far)
             out[10] = (far + near) * nf
@@ -51,7 +51,7 @@ class Mat4 {
         val a22 = data[10]
         val a23 = data[11]
 
-        val out = Float64Array(
+        val out = Float64Array([
             a00,
             a01,
             a02,
@@ -67,7 +67,7 @@ class Mat4 {
             a00 * x + a10 * y + a20 * z + data[12],
             a01 * x + a11 * y + a21 * z + data[13],
             a02 * x + a12 * y + a22 * z + data[14],
-            a03 * x + a13 * y + a23 * z + data[15])
+            a03 * x + a13 * y + a23 * z + data[15]])
 
         Matx._fromParts(4, out)
     }

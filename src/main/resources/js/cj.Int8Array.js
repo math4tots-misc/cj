@@ -33,6 +33,6 @@ class MC$cj$Int8Array {
         return self.buffer;
     }
     M$repr(self) {
-        return "Int8Array(" + Array.from(self).join(", ") + ")";
+        return "Int8Array([" + Array.from(self).join(", ") + "])";
     }
 }

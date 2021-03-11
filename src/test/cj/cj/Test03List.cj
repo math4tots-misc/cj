@@ -109,10 +109,10 @@ class Test03List {
             Assert.equal(list[2:4], ["c", "d"])
         }
         {
-            val list = Float64Array(5.5, 6.6, 7.7, 8.8, 9.9, 1.1, 2.2, 3.3)
-            Assert.equal(list[:2], Float64Array(5.5, 6.6))
-            Assert.equal(list[2:], Float64Array(7.7, 8.8, 9.9, 1.1, 2.2, 3.3))
-            Assert.equal(list[2:4], Float64Array(7.7, 8.8))
+            val list = Float64Array([5.5, 6.6, 7.7, 8.8, 9.9, 1.1, 2.2, 3.3])
+            Assert.equal(list[:2], Float64Array([5.5, 6.6]))
+            Assert.equal(list[2:], Float64Array([7.7, 8.8, 9.9, 1.1, 2.2, 3.3]))
+            Assert.equal(list[2:4], Float64Array([7.7, 8.8]))
         }
     }
 

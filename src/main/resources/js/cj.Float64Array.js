@@ -86,7 +86,7 @@ class MC$cj$Float64Array {
         return true;
     }
     M$repr(self) {
-        return "Float64Array(" + Array.from(self).join(", ") + ")";
+        return "Float64Array([" + Array.from(self).join(", ") + "])";
     }
     M$scale(self, factor) {
         const len = self.length;

@@ -14,11 +14,11 @@ class Demo01 {
     static val canvas: HTMLCanvasElement = document.getElementBydId("canvas")
     static val glh: WebGLHelper = WebGLHelper(canvas)
     static val gl: WebGL2RenderingContext = glh.gl
-    static val vertexData: Float32Array = Float32Array(
+    static val vertexData: Float32Array = Float32Array([
         0,     0,  0,
         0.5,   0,  0,
         0.5, 0.5,  0,
-    )
+    ])
     static var vertexBuffer: WebGLBuffer = ?
     static var vao: WebGLVertexArrayObject = ?
     static var aVertexPosition: Int = ?
