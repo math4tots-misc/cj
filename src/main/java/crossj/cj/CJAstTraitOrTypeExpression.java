@@ -2,7 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 
-abstract class CJAstTraitOrTypeExpression extends CJAstNode {
+abstract class CJAstTraitOrTypeExpression extends CJAstExpression {
     private final String name;
     private final List<CJAstTypeExpression> args;
 

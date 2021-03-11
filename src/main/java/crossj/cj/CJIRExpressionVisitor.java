@@ -25,4 +25,5 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitAwait(CJIRAwait e, A a);
     public abstract R visitThrow(CJIRThrow e, A a);
     public abstract R visitTry(CJIRTry e, A a);
+    public abstract R visitJSBlob(CJIRJSBlob e, A a);
 }

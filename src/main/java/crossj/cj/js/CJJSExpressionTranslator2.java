@@ -23,6 +23,7 @@ import crossj.cj.CJIRFor;
 import crossj.cj.CJIRIf;
 import crossj.cj.CJIRIfNull;
 import crossj.cj.CJIRIs;
+import crossj.cj.CJIRJSBlob;
 import crossj.cj.CJIRLambda;
 import crossj.cj.CJIRListDisplay;
 import crossj.cj.CJIRLiteral;
@@ -582,6 +583,11 @@ final class CJJSExpressionTranslator2 {
                 }, out -> {
                     out.append(tmpvar);
                 }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitJSBlob(CJIRJSBlob e, Void a) {
+                return CJJSBlob2.simplestr(e.getText(), false);
             }
         }, null);
     }

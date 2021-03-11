@@ -1,12 +1,11 @@
 package www.dom
 
-import www.dom.Window
 import www.JSObject
 import www.JSWrapper
 
 class DOMRect: JSWrapper {
     val _obj :  JSObject
-    def cls() : JSObject = Window.get().field("DragEvent")
+    def cls() : JSObject = js!(JSObject, "DragEvent")
     def __get_x(self): Double = field("x").unsafeCast()
     def __get_y(self): Double = field("y").unsafeCast()
     def __get_width(self): Double = field("width").unsafeCast()

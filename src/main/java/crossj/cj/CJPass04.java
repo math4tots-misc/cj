@@ -1030,9 +1030,9 @@ final class CJPass04 extends CJPassBaseEx {
                 switch (e.getName()) {
                 case "include_str!":
                     if (e.getArgs().size() != 1) {
-                        throw CJError.of("include_str requires exactly 1 argument", e.getMark());
+                        throw CJError.of("include_str! requires exactly 1 argument (strlit)", e.getMark());
                     }
-                    var relpath = getStringLiteralData(e.getArgs().get(0));
+                    var relpath = solveExprForStringLiteral(e.getArgs().get(0));
                     var path = IO.join(IO.dirname(e.getMark().filename), relpath);
                     if (!FS.isFile(path)) {
                         throw CJError.of("File " + path + " not found", e.getMark());
@@ -1041,9 +1041,9 @@ final class CJPass04 extends CJPassBaseEx {
                     return evalExpression(new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(contents)));
                 case "listdir!": {
                     if (e.getArgs().size() != 1) {
-                        throw CJError.of("listdir requires exactly 1 argument", e.getMark());
+                        throw CJError.of("listdir! requires exactly 1 argument (strlit)", e.getMark());
                     }
-                    var rawpath = getStringLiteralData(e.getArgs().get(0));
+                    var rawpath = solveExprForStringLiteral(e.getArgs().get(0));
                     var dirpath = IO.join(IO.dirname(e.getMark().filename), rawpath);
                     var strexprs = FS.list(dirpath).map(
                             s -> (CJAstExpression) new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(s)));
@@ -1051,23 +1051,48 @@ final class CJPass04 extends CJPassBaseEx {
                     var expectedType = ctx.getListType(ctx.getStringType());
                     return evalExpressionWithType(listexpr, expectedType);
                 }
+                case "js!": {
+                    if (e.getArgs().size() != 2) {
+                        throw CJError.of("js! requires exactly 2 arguments (Type, strlit)", e.getMark());
+                    }
+                    var type = solveExprForType(e.getArgs().get(0));
+                    var text = solveExprForStringLiteral(e.getArgs().get(1));
+                    return new CJIRJSBlob(e, type, text);
+                }
                 default:
                     throw CJError.of("Unrecognized macro " + Repr.of(e.getName()), e.getMark());
                 }
+            }
+
+            @Override
+            public CJIRExpression visitType(CJAstTypeExpression e, Optional<CJIRType> a) {
+                throw CJError.of("Expected expression but got type", e.getMark());
+            }
+
+            @Override
+            public CJIRExpression visitTrait(CJAstTraitExpression e, Optional<CJIRType> a) {
+                throw CJError.of("Expected expression but got trait", e.getMark());
             }
         }, a);
         return ir;
     }
 
-    private static String getStringLiteralData(CJAstExpression expr) {
-        var optString = getStringLiteralDataOrEmpty(expr);
+    private CJIRType solveExprForType(CJAstExpression expr) {
+        if (!(expr instanceof CJAstTypeExpression)) {
+            throw CJError.of("Expected type expression here", expr.getMark());
+        }
+        return lctx.evalTypeExpression((CJAstTypeExpression) expr);
+    }
+
+    private static String solveExprForStringLiteral(CJAstExpression expr) {
+        var optString = solveExprForStringLiteralOrEmpty(expr);
         if (optString.isEmpty()) {
             throw CJError.of("Expected string literal here", expr.getMark());
         }
         return optString.get();
     }
 
-    private static Optional<String> getStringLiteralDataOrEmpty(CJAstExpression expr) {
+    private static Optional<String> solveExprForStringLiteralOrEmpty(CJAstExpression expr) {
         if (expr instanceof CJAstLiteral) {
             var literal = (CJAstLiteral) expr;
             switch (literal.getKind()) {

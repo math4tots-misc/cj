@@ -1057,42 +1057,51 @@ public final class CJParser {
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.String, next().text);
             case CJToken.BIGINT:
                 return new CJAstLiteral(getMark(), CJIRLiteralKind.BigInt, next().text);
+            case CJToken.KW_TRAIT: {
+                next();
+                expect('(');
+                var trait = parseTraitExpression();
+                expect(')');
+                return trait;
+            }
             case CJToken.TYPE_ID: {
                 var owner = parseTypeExpression();
                 if (at('(')) {
                     var mark = getMark();
                     var args = parseArgs();
                     return new CJAstMethodCall(mark, Optional.of(owner), "__new", List.of(), args);
-                }
-                expect('.');
-                var mark = getMark();
-                var name = parseId();
-                if (atMethodArgsStart(i)) {
-                    var typeArgs = parseTypeArgs();
-                    var args = parseArgs();
-                    return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
-                } else {
-                    switch (peek().type) {
-                        case CJToken.PLUS_EQ: {
-                            String prefix;
-                            switch (peek().type) {
-                                case CJToken.PLUS_EQ:
-                                    prefix = "__augadd_";
-                                    break;
-                                default:
-                                    throw CJError.of("UNRECOGNIZED AUG ASSIGN TOK " + CJToken.typeToString(peek().type),
-                                            getMark());
+                } else if (consume('.')) {
+                    var mark = getMark();
+                    var name = parseId();
+                    if (atMethodArgsStart(i)) {
+                        var typeArgs = parseTypeArgs();
+                        var args = parseArgs();
+                        return new CJAstMethodCall(mark, Optional.of(owner), name, typeArgs, args);
+                    } else {
+                        switch (peek().type) {
+                            case CJToken.PLUS_EQ: {
+                                String prefix;
+                                switch (peek().type) {
+                                    case CJToken.PLUS_EQ:
+                                        prefix = "__augadd_";
+                                        break;
+                                    default:
+                                        throw CJError.of("UNRECOGNIZED AUG ASSIGN TOK " + CJToken.typeToString(peek().type),
+                                                getMark());
+                                }
+                                next();
+                                var methodName = prefix + name;
+                                var args = List.of(parseExpression());
+                                return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), args);
                             }
-                            next();
-                            var methodName = prefix + name;
-                            var args = List.of(parseExpression());
-                            return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), args);
-                        }
-                        default: {
-                            var methodName = "__get_" + name;
-                            return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), List.of());
+                            default: {
+                                var methodName = "__get_" + name;
+                                return new CJAstMethodCall(mark, Optional.of(owner), methodName, List.of(), List.of());
+                            }
                         }
                     }
+                } else {
+                    return owner;
                 }
             }
             case CJToken.ID:

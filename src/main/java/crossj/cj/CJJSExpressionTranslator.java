@@ -855,6 +855,11 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     return null;
                 }, true);
             }
+
+            @Override
+            public CJJSBlob visitJSBlob(CJIRJSBlob e, Void a) {
+                return CJJSBlob.simplestr(e.getText());
+            }
         }, null);
     }
 }

@@ -4,14 +4,13 @@ import www.dom.HTMLCanvasElement
 import www.dom.WebGLVertexArrayObject
 import www.dom.WebGLRenderingContext
 import www.JSWrapper
-import www.dom.Window
 import www.JSObject
 
 class WebGL2RenderingContext : WebGLRenderingContext {
     def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContextWebGL()
 
     val _obj : JSObject
-    def cls() : JSObject = Window.get().field("WebGL2RenderingContext")
+    def cls() : JSObject = js!(JSObject, "WebGL2RenderingContext")
 
     # === constants ===
     # properties starting with 'c'

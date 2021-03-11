@@ -1,6 +1,5 @@
 package www.emu.chip8
 
-import www.dom.Window
 import www.JSObject
 
 class C8Speaker {
@@ -10,7 +9,7 @@ class C8Speaker {
     var oscillator: JSObject? = null
 
     private def init(self) {
-        val audioCtx: JSObject = Window.get().field("AudioContext").new()
+        val audioCtx: JSObject = js!(JSObject, "AudioContext").new()
         val gain: JSObject = audioCtx.call("createGain")
         val finish: JSObject = audioCtx.field("destination")
         gain.call("connect", finish)

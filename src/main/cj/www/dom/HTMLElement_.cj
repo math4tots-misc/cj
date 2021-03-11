@@ -1,6 +1,5 @@
 package www.dom
 
-import www.dom.Window
 import www.JSObject
 import www.dom.HTMLElement
 
@@ -8,7 +7,7 @@ import www.dom.HTMLElement
 class HTMLElement_ : HTMLElement {
     static val tagName = "unknown"
     val _obj :  JSObject
-    def cls() : JSObject = Window.get().field("HTMLElement")
+    def cls() : JSObject = js!(JSObject, "HTMLElement")
 
     def _cast[HTMLElement](t: HTMLElement): Self = __malloc(t)
 }

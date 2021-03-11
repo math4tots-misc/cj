@@ -1,12 +1,11 @@
 package www.dom
 
-import www.dom.Window
 import www.JSObject
 import www.JSWrapper
 
 class CSSStyleDeclaration: JSWrapper {
     val _obj :  JSObject
-    def cls() : JSObject = Window.get().field("CSSStyleDeclaration")
+    def cls() : JSObject = js!(JSObject, "CSSStyleDeclaration")
     def __set_width(self, desc: String) = setField("width", desc)
     def __set_height(self, desc: String) = setField("height", desc)
     def __set_borderStyle(self, desc: String) = setField("border-style", desc)

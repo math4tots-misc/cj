@@ -4,14 +4,13 @@ import www.dom.MouseEvent
 import www.dom.CanvasRenderingContext
 import www.dom.WebGL2RenderingContext
 import www.dom.CanvasRenderingContext2D
-import www.dom.Window
 import www.JSObject
 import www.dom.HTMLElement
 
 class HTMLCanvasElement : HTMLElement {
     static val tagName = "canvas"
     val _obj :  JSObject
-    def cls() : JSObject = Window.get().field("HTMLCanvasElement")
+    def cls() : JSObject = js!(JSObject, "HTMLCanvasElement")
 
     def __get_width(self: Self): Int = self.field("width").unsafeCast()
     def __set_width(self: Self, value: Int) = self.setField("width", value)

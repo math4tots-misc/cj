@@ -2,7 +2,6 @@ package www.dom
 
 import www.dom.CanvasRenderingContext
 import www.dom.HTMLCanvasElement
-import www.dom.Window
 import www.JSObject
 import www.JSWrapper
 
@@ -10,7 +9,7 @@ class CanvasRenderingContext2D : CanvasRenderingContext {
     def _getFromCanvas(canvas: HTMLCanvasElement): Self = canvas.getContext2D()
 
     val _obj :  JSObject
-    def cls() : JSObject = Window.get().field("CanvasRenderingContext2D")
+    def cls() : JSObject = js!(JSObject, "CanvasRenderingContext2D")
 
     def __get_canvas(self): HTMLCanvasElement? = self.field("canvas").unsafeCast()
 
