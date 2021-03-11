@@ -1,10 +1,23 @@
 package cj
 
+import cj.ArrayBufferView
 import cj.Uint8Array
 import cj.ArrayBufferOrView
 
 native class ArrayBuffer: ArrayBufferOrView, Eq, Repr {
-    def(byteLength: Int): Self = js!(Self, "new ArrayBuffer(", byteLength, ")")
+
+    @implicit(Int, _fromInt)
+    @implicit(List, _fromList)
+    @implicit(ArrayBufferView, _fromView)
+    class Converter {
+        val x: ArrayBuffer
+        def _fromInt(byteLength: Int): Self = Self(js!(ArrayBuffer, "new ArrayBuffer(", byteLength, ")"))
+        def _fromList(bytes: List[Int]): Self = Self(js!(ArrayBuffer, "new Uint8Array(", bytes, ").buffer"))
+        def _fromView[V: ArrayBufferView](view: V): Self = Self(
+            view.buffer[view.byteOffset:view.byteOffset + view.byteLength])
+    }
+
+    def(conv: Converter): Self = conv.x
     def __get_byteLength(self): Int = js!(Int, self, ".byteLength")
     def __slice(self, begin: Int, end: Int): Self = js!(Self, self, ".slice(", begin, ",", end, ")")
     def __sliceFrom(self, begin: Int): Self = js!(Self, self, ".slice(", begin, ")")
