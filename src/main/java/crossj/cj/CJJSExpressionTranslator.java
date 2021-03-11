@@ -17,16 +17,16 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             @Override
             public CJJSBlob visitLiteral(CJIRLiteral e, Void a) {
                 switch (e.getKind()) {
-                    case Unit:
-                        return CJJSBlob.pure("undefined");
-                    case Char:
-                        return CJJSBlob.pure("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()));
-                    case Bool:
-                    case Int:
-                    case Double:
-                    case String:
-                    case BigInt:
-                        return CJJSBlob.pure(e.getRawText());
+                case Unit:
+                    return CJJSBlob.pure("undefined");
+                case Char:
+                    return CJJSBlob.pure("" + CJToken.charLiteralToInt(e.getRawText(), e.getMark()));
+                case Bool:
+                case Int:
+                case Double:
+                case String:
+                case BigInt:
+                    return CJJSBlob.pure(e.getRawText());
                 }
                 throw CJError.of("TODO: " + e.getKind(), e.getMark());
             }
@@ -106,146 +106,146 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     CJIRMethodRef methodRef, List<CJIRExpression> args, List<CJJSBlob> allArgs) {
                 var fullMethodName = methodRef.getOwner().getItem().getFullName() + "." + methodRef.getName();
                 switch (fullMethodName) {
-                    case "cj.Int.__neg":
-                        return joinOp("(-", ")", "", allArgs);
-                    case "cj.Int.__add":
-                        return joinOp("((", ")|0)", "+", allArgs);
-                    case "cj.Int.__mul":
-                        return joinOp("((", ")|0)", "*", allArgs);
-                    case "cj.Int.__sub":
-                        return joinOp("((", ")|0)", "-", allArgs);
-                    case "cj.Int.__truncdiv":
-                        return joinOp("((", ")|0)", "/", allArgs);
-                    case "cj.Int.__div":
-                        return joinOp("(", ")", "/", allArgs);
-                    case "cj.Int.__or":
-                        return joinOp("(", ")", "|", allArgs);
-                    case "cj.Int.__and":
-                        return joinOp("(", ")", "&", allArgs);
-                    case "cj.Int.__xor":
-                        return joinOp("(", ")", "^", allArgs);
-                    case "cj.Int.__lshift":
-                        return joinOp("(", ")", "<<", allArgs);
-                    case "cj.Int.__rshift":
-                        return joinOp("(", ")", ">>", allArgs);
-                    case "cj.Int.__rshiftu":
-                        return joinOp("(", ")", ">>>", allArgs);
-                    case "cj.Double.__neg":
-                        return joinOp("(-", ")", "", allArgs);
-                    case "cj.Double.__add":
-                        return joinOp("(", ")", "+", allArgs);
-                    case "cj.Double.__mul":
-                        return joinOp("(", ")", "*", allArgs);
-                    case "cj.Double.__sub":
-                        return joinOp("(", ")", "-", allArgs);
-                    case "cj.Double.__truncdiv":
-                        return joinOp("((", ")|0)", "/", allArgs);
-                    case "cj.Double.__div":
-                        return joinOp("(", ")", "/", allArgs);
-                    case "cj.List.empty":
-                        return CJJSBlob.simplestr("[]");
-                    case "cj.List_.empty":
-                        return CJJSBlob.simplestr("[]");
-                    case "cj.List.__new":
-                        Assert.equals(allArgs.size(), 1);
-                        return allArgs.get(0).toPure(ctx);
-                    case "cj.List.size":
-                        Assert.equals(allArgs.size(), 1);
-                        return CJJSBlob.simple(out -> {
-                            allArgs.get(0).emitMain(out);
-                            out.append(".length");
-                            return null;
-                        });
-                    case "cj.String.__add":
-                        Assert.equals(allArgs.size(), 3);
-                        Assert.equals(args.size(), 2);
-                        switch (args.get(1).getType().toRawQualifiedName()) {
-                            case "cj.String":
-                            case "cj.Int":
-                            case "cj.Double":
-                            case "cj.Bool":
-                                return joinOp("(", ")", "+", allArgs.sliceFrom(1));
-                        }
-                        break;
-                    case "cj.Nullable.default":
-                        Assert.equals(allArgs.size(), 0);
-                        return CJJSBlob.pure("null");
-                    case "cj.Int.default":
-                    case "cj.Double.default":
-                    case "cj.Char.default":
-                        Assert.equals(allArgs.size(), 0);
-                        return CJJSBlob.pure("0");
-                    case "cj.List.default":
-                        Assert.equals(allArgs.size(), 0);
-                        return CJJSBlob.simplestr("[]");
-                    case "www.JSObject.field":
-                    case "www.JSWrapper.field":
-                        Assert.equals(allArgs.size(), 2);
-                        return CJJSBlob.simple(out -> {
-                            allArgs.get(0).emitMain(out);
-                            out.append("[");
-                            allArgs.get(1).emitMain(out);
-                            out.append("]");
-                            return null;
-                        });
-                    case "www.JSObject.setField":
-                    case "www.JSWrapper.setField":
-                        Assert.equals(allArgs.size(), 4);
-                        return CJJSBlob.withPrep(out -> {
-                            allArgs.get(1).emitMain(out);
-                            out.append("[");
-                            allArgs.get(2).emitMain(out);
-                            out.append("]=");
-                            allArgs.get(3).emitMain(out);
-                            out.append(";");
-                            return null;
-                        }, out -> {
-                            out.append("undefined");
-                            return null;
-                        }, true);
-                    case "www.JSObject.call1":
-                    case "www.JSObject.call":
-                    case "www.JSWrapper.call": {
-                        Assert.equals(allArgs.size(), 3);
-                        return CJJSBlob.simple(out -> {
-                            allArgs.get(0).emitMain(out);
-                            out.append("[");
-                            allArgs.get(1).emitMain(out);
-                            out.append("](...");
-                            allArgs.get(2).emitMain(out);
-                            out.append(")");
-                            return null;
-                        });
+                case "cj.Int.__neg":
+                    return joinOp("(-", ")", "", allArgs);
+                case "cj.Int.__add":
+                    return joinOp("((", ")|0)", "+", allArgs);
+                case "cj.Int.__mul":
+                    return joinOp("((", ")|0)", "*", allArgs);
+                case "cj.Int.__sub":
+                    return joinOp("((", ")|0)", "-", allArgs);
+                case "cj.Int.__truncdiv":
+                    return joinOp("((", ")|0)", "/", allArgs);
+                case "cj.Int.__div":
+                    return joinOp("(", ")", "/", allArgs);
+                case "cj.Int.__or":
+                    return joinOp("(", ")", "|", allArgs);
+                case "cj.Int.__and":
+                    return joinOp("(", ")", "&", allArgs);
+                case "cj.Int.__xor":
+                    return joinOp("(", ")", "^", allArgs);
+                case "cj.Int.__lshift":
+                    return joinOp("(", ")", "<<", allArgs);
+                case "cj.Int.__rshift":
+                    return joinOp("(", ")", ">>", allArgs);
+                case "cj.Int.__rshiftu":
+                    return joinOp("(", ")", ">>>", allArgs);
+                case "cj.Double.__neg":
+                    return joinOp("(-", ")", "", allArgs);
+                case "cj.Double.__add":
+                    return joinOp("(", ")", "+", allArgs);
+                case "cj.Double.__mul":
+                    return joinOp("(", ")", "*", allArgs);
+                case "cj.Double.__sub":
+                    return joinOp("(", ")", "-", allArgs);
+                case "cj.Double.__truncdiv":
+                    return joinOp("((", ")|0)", "/", allArgs);
+                case "cj.Double.__div":
+                    return joinOp("(", ")", "/", allArgs);
+                case "cj.List.empty":
+                    return CJJSBlob.simplestr("[]");
+                case "cj.List_.empty":
+                    return CJJSBlob.simplestr("[]");
+                case "cj.List.__new":
+                    Assert.equals(allArgs.size(), 1);
+                    return allArgs.get(0).toPure(ctx);
+                case "cj.List.size":
+                    Assert.equals(allArgs.size(), 1);
+                    return CJJSBlob.simple(out -> {
+                        allArgs.get(0).emitMain(out);
+                        out.append(".length");
+                        return null;
+                    });
+                case "cj.String.__add":
+                    Assert.equals(allArgs.size(), 3);
+                    Assert.equals(args.size(), 2);
+                    switch (args.get(1).getType().toRawQualifiedName()) {
+                    case "cj.String":
+                    case "cj.Int":
+                    case "cj.Double":
+                    case "cj.Bool":
+                        return joinOp("(", ")", "+", allArgs.sliceFrom(1));
                     }
-                    case "cjx.js.JSON.fromList":
-                    case "cj.Double._fromInt":
-                    case "cj.Double.toDouble":
-                    case "cj.Int.toDouble":
-                    case "cj.Int._fromChar":
-                        Assert.equals(allArgs.size(), 1);
-                        return allArgs.get(0);
-                    case "cjx.js.JSON._unsafeCast":
-                    case "www.JSObject.unsafeCast":
-                        Assert.equals(allArgs.size(), 2);
-                        return allArgs.get(1);
-                    case "cj.Fn0":
-                    case "cj.Fn1":
-                    case "cj.Fn2":
-                    case "cj.Fn3":
-                    case "cj.Fn4": {
-                        return CJJSBlob.simple(out -> {
-                            allArgs.get(0).emitMain(out);
-                            out.append("(");
-                            for (int i = 1; i < allArgs.size(); i++) {
-                                if (i > 1) {
-                                    out.append(",");
-                                }
-                                allArgs.get(i).emitMain(out);
+                    break;
+                case "cj.Nullable.default":
+                    Assert.equals(allArgs.size(), 0);
+                    return CJJSBlob.pure("null");
+                case "cj.Int.default":
+                case "cj.Double.default":
+                case "cj.Char.default":
+                    Assert.equals(allArgs.size(), 0);
+                    return CJJSBlob.pure("0");
+                case "cj.List.default":
+                    Assert.equals(allArgs.size(), 0);
+                    return CJJSBlob.simplestr("[]");
+                case "www.JSObject.field":
+                case "www.JSWrapper.field":
+                    Assert.equals(allArgs.size(), 2);
+                    return CJJSBlob.simple(out -> {
+                        allArgs.get(0).emitMain(out);
+                        out.append("[");
+                        allArgs.get(1).emitMain(out);
+                        out.append("]");
+                        return null;
+                    });
+                case "www.JSObject.setField":
+                case "www.JSWrapper.setField":
+                    Assert.equals(allArgs.size(), 4);
+                    return CJJSBlob.withPrep(out -> {
+                        allArgs.get(1).emitMain(out);
+                        out.append("[");
+                        allArgs.get(2).emitMain(out);
+                        out.append("]=");
+                        allArgs.get(3).emitMain(out);
+                        out.append(";");
+                        return null;
+                    }, out -> {
+                        out.append("undefined");
+                        return null;
+                    }, true);
+                case "www.JSObject.call1":
+                case "www.JSObject.call":
+                case "www.JSWrapper.call": {
+                    Assert.equals(allArgs.size(), 3);
+                    return CJJSBlob.simple(out -> {
+                        allArgs.get(0).emitMain(out);
+                        out.append("[");
+                        allArgs.get(1).emitMain(out);
+                        out.append("](...");
+                        allArgs.get(2).emitMain(out);
+                        out.append(")");
+                        return null;
+                    });
+                }
+                case "cjx.js.JSON.fromList":
+                case "cj.Double._fromInt":
+                case "cj.Double.toDouble":
+                case "cj.Int.toDouble":
+                case "cj.Int._fromChar":
+                    Assert.equals(allArgs.size(), 1);
+                    return allArgs.get(0);
+                case "cjx.js.JSON._unsafeCast":
+                case "www.JSObject.unsafeCast":
+                    Assert.equals(allArgs.size(), 2);
+                    return allArgs.get(1);
+                case "cj.Fn0":
+                case "cj.Fn1":
+                case "cj.Fn2":
+                case "cj.Fn3":
+                case "cj.Fn4": {
+                    return CJJSBlob.simple(out -> {
+                        allArgs.get(0).emitMain(out);
+                        out.append("(");
+                        for (int i = 1; i < allArgs.size(); i++) {
+                            if (i > 1) {
+                                out.append(",");
                             }
-                            out.append(")");
-                            return null;
-                        });
-                    }
+                            allArgs.get(i).emitMain(out);
+                        }
+                        out.append(")");
+                        return null;
+                    });
+                }
                 }
                 String ownerStr;
                 if (methodRef.getMethod().isGenericSelf() && owner instanceof CJIRClassType) {
@@ -262,58 +262,58 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     if (field.isStatic()) {
                         var target = ownerStr + "." + translateFieldName(field.getName());
                         switch (info.getKind()) {
-                            case "":
-                                if (!field.isMutable() && field.getExpression().isPresent()
-                                        && field.getExpression().get() instanceof CJIRLiteral) {
-                                    var literal = (CJIRLiteral) field.getExpression().get();
-                                    var result = visitLiteral(literal, null);
-                                    Assert.that(result.isSimpleAndPure());
-                                    return result;
-                                }
-                                break;
-                            case "=":
-                                Assert.equals(allArgs.size(), 1);
-                                return CJJSBlob.simple(out -> {
-                                    out.append(target + info.getKind());
-                                    allArgs.last().emitMain(out);
-                                    return null;
-                                });
-                            case "+=":
-                                Assert.equals(allArgs.size(), 1);
-                                return CJJSBlob.simple(out -> {
-                                    out.append(target + "=(" + ownerStr + "."
-                                            + translateMethodName(field.getGetterName()) + "())+");
-                                    allArgs.last().emitMain(out);
-                                    return null;
-                                });
+                        case "":
+                            if (!field.isMutable() && field.getExpression().isPresent()
+                                    && field.getExpression().get() instanceof CJIRLiteral) {
+                                var literal = (CJIRLiteral) field.getExpression().get();
+                                var result = visitLiteral(literal, null);
+                                Assert.that(result.isSimpleAndPure());
+                                return result;
+                            }
+                            break;
+                        case "=":
+                            Assert.equals(allArgs.size(), 1);
+                            return CJJSBlob.simple(out -> {
+                                out.append(target + info.getKind());
+                                allArgs.last().emitMain(out);
+                                return null;
+                            });
+                        case "+=":
+                            Assert.equals(allArgs.size(), 1);
+                            return CJJSBlob.simple(out -> {
+                                out.append(target + "=(" + ownerStr + "." + translateMethodName(field.getGetterName())
+                                        + "())+");
+                                allArgs.last().emitMain(out);
+                                return null;
+                            });
                         }
                     } else if (!field.isStatic()) {
                         switch (info.getKind()) {
-                            case "":
-                                Assert.equals(allArgs.size(), 1);
-                                if (field.isLateinit()) {
-                                    break;
-                                }
-                                return CJJSBlob.simple(out -> {
-                                    if (isWrapperType(owner)) {
-                                        allArgs.get(0).emitMain(out);
-                                    } else {
-                                        allArgs.get(0).emitMain(out);
-                                        out.append("[" + field.getIndex() + "]");
-                                    }
-                                    return null;
-                                });
-                            case "=":
-                            case "+=":
-                                Assert.equals(allArgs.size(), 2);
-                                Assert.that(field.isMutable());
-                                Assert.that(!isWrapperType(owner));
-                                return CJJSBlob.simple(out -> {
+                        case "":
+                            Assert.equals(allArgs.size(), 1);
+                            if (field.isLateinit()) {
+                                break;
+                            }
+                            return CJJSBlob.simple(out -> {
+                                if (isWrapperType(owner)) {
                                     allArgs.get(0).emitMain(out);
-                                    out.append("[" + field.getIndex() + "]" + info.getKind());
-                                    allArgs.last().emitMain(out);
-                                    return null;
-                                });
+                                } else {
+                                    allArgs.get(0).emitMain(out);
+                                    out.append("[" + field.getIndex() + "]");
+                                }
+                                return null;
+                            });
+                        case "=":
+                        case "+=":
+                            Assert.equals(allArgs.size(), 2);
+                            Assert.that(field.isMutable());
+                            Assert.that(!isWrapperType(owner));
+                            return CJJSBlob.simple(out -> {
+                                allArgs.get(0).emitMain(out);
+                                out.append("[" + field.getIndex() + "]" + info.getKind());
+                                allArgs.last().emitMain(out);
+                                return null;
+                            });
                         }
                     }
                 }
@@ -390,20 +390,20 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var augexpr = translateExpression(e.getExpression());
                 String op;
                 switch (e.getKind()) {
-                    case Add:
-                        op = "+=";
-                        break;
-                    case Subtract:
-                        op = "-=";
-                        break;
-                    case Multiply:
-                        op = "*=";
-                        break;
-                    case Remainder:
-                        op = "%=";
-                        break;
-                    default:
-                        throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
+                case Add:
+                    op = "+=";
+                    break;
+                case Subtract:
+                    op = "-=";
+                    break;
+                case Multiply:
+                    op = "*=";
+                    break;
+                case Remainder:
+                    op = "%=";
+                    break;
+                default:
+                    throw CJError.of("Unexpected aug op: " + e.getKind(), e.getMark());
                 }
 
                 return CJJSBlob.withPrep(out -> {
@@ -834,8 +834,8 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                         out.append("}catch(w){if(!(w instanceof WrappingException))throw w;const t=w.typeId;");
                         for (int i = 0; i < e.getClauses().size(); i++) {
                             var clause = e.getClauses().get(i);
-                            out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2())
-                                    + ")){");
+                            out.append(
+                                    (i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){");
                             out.append("const " + translateTarget(clause.get1()) + "=w.data;");
                             var clauseBody = translateExpression(clause.get3());
                             clauseBody.emitSet(out, tmpvar + "=");
@@ -858,8 +858,36 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
 
             @Override
             public CJJSBlob visitJSBlob(CJIRJSBlob e, Void a) {
-                return CJJSBlob.simplestr(e.getText());
+                var parts = e.getParts().map(p -> (p instanceof String) ? p : translateExpression((CJIRExpression) p));
+                var blobs0 = parts.filter(p -> p instanceof CJJSBlob).map(p -> (CJJSBlob) p);
+                var blobs = blobs0.all(b -> b.isSimple()) ? blobs0 : blobs0.map(b -> b.toPure(ctx));
+                var prep = joinPreps(blobs.map(b -> b.getPrep()));
+                return new CJJSBlob(prep, out -> {
+                    out.append("(");
+                    for (var part : parts) {
+                        if (part instanceof String) {
+                            out.append((String) part);
+                        } else {
+                            ((CJJSBlob) part).emitMain(out);
+                        }
+                    }
+                    out.append(")");
+                    return null;
+                }, false);
             }
         }, null);
+    }
+
+    static Optional<Func1<Void, CJJSSink>> joinPreps(List<Optional<Func1<Void, CJJSSink>>> prepList) {
+        if (prepList.all(p -> p.isEmpty())) {
+            return Optional.empty();
+        }
+        var preps = prepList.flatMap(p -> p);
+        return Optional.of(out -> {
+            for (var prep : preps) {
+                prep.apply(out);
+            }
+            return null;
+        });
     }
 }

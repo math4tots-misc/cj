@@ -1,5 +1,6 @@
 package cj
 
+import cj.Uint8Array
 import cj.DataView
 import cj.ArrayBuffer
 
@@ -18,6 +19,19 @@ class Test19DataView {
             Assert.equal(dv0.getUint16(4), 5)
             dv0.useLittleEndian(true)
             Assert.equal(dv0.getUint32(4), 1280)
+        }
+    }
+
+    @test
+    def slice() {
+        {
+            val abuf = ArrayBuffer(5)
+            val dv = DataView(abuf, false)
+            for i = 0; i < dv.byteLength; i++ {
+                dv.setUint8(i, i * 3)
+            }
+            Assert.equal(abuf, Uint8Array(0, 3, 6, 9, 12).buffer)
+            Assert.equal(abuf[2:], Uint8Array(6, 9, 12).buffer)
         }
     }
 }

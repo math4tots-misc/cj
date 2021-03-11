@@ -1,15 +1,19 @@
 package crossj.cj;
 
-public final class CJIRJSBlob extends CJIRExpression {
-    private final String text;
+import crossj.base.Assert;
+import crossj.base.List;
 
-    public CJIRJSBlob(CJAstExpression ast, CJIRType type, String text) {
+public final class CJIRJSBlob extends CJIRExpression {
+    private final List<Object> parts;
+
+    public CJIRJSBlob(CJAstExpression ast, CJIRType type, List<Object> parts) {
         super(ast, type);
-        this.text = text;
+        this.parts = parts;
+        Assert.that(parts.all(p -> p instanceof String || p instanceof CJIRExpression));
     }
 
-    public String getText() {
-        return text;
+    public List<Object> getParts() {
+        return parts;
     }
 
     @Override

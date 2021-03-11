@@ -1052,12 +1052,21 @@ final class CJPass04 extends CJPassBaseEx {
                     return evalExpressionWithType(listexpr, expectedType);
                 }
                 case "js!": {
-                    if (e.getArgs().size() != 2) {
-                        throw CJError.of("js! requires exactly 2 arguments (Type, strlit)", e.getMark());
+                    if (e.getArgs().size() < 2) {
+                        throw CJError.of("js! requires at least 2 arguments (Type, strlit|Expr...)", e.getMark());
                     }
                     var type = solveExprForType(e.getArgs().get(0));
-                    var text = solveExprForStringLiteral(e.getArgs().get(1));
-                    return new CJIRJSBlob(e, type, text);
+                    var parts = List.<Object>of();
+                    for (int i = 1; i < e.getArgs().size(); i++) {
+                        var expr = e.getArgs().get(i);
+                        var optstrlit = solveExprForStringLiteralOrEmpty(expr);
+                        if (optstrlit.isPresent()) {
+                            parts.add(optstrlit.get());
+                        } else {
+                            parts.add(evalExpression(expr));
+                        }
+                    }
+                    return new CJIRJSBlob(e, type, parts);
                 }
                 default:
                     throw CJError.of("Unrecognized macro " + Repr.of(e.getName()), e.getMark());

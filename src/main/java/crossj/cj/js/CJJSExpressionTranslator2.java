@@ -587,7 +587,19 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitJSBlob(CJIRJSBlob e, Void a) {
-                return CJJSBlob2.simplestr(e.getText(), false);
+                var parts = e.getParts().map(p -> (p instanceof String) ? p : translate((CJIRExpression) p));
+                var prep = joinPreps(parts.filter(p -> p instanceof CJJSBlob2).map(p -> ((CJJSBlob2) p).getPrep()));
+                return new CJJSBlob2(prep, out -> {
+                    out.append("(");
+                    for (var part : parts) {
+                        if (part instanceof String) {
+                            out.append((String) part);
+                        } else {
+                            ((CJJSBlob2) part).emitBody(out);
+                        }
+                    }
+                    out.append(")");
+                }, false);
             }
         }, null);
     }
