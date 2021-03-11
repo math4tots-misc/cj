@@ -64,8 +64,8 @@ public final class CJJSOps {
     /**
      * Types that can be treated like arrays in JS.
      */
-    private static List<String> nativeSliceableTypes = List.of(List.of("cj.String"), nativeRandomAccess)
-            .flatMap(x -> x);
+    private static List<String> nativeSliceableTypes = List
+            .of(List.of("cj.String", "cj.ArrayBuffer"), nativeRandomAccess).flatMap(x -> x);
 
     /**
      * Types that can be iterated over natively in JS.
@@ -81,10 +81,8 @@ public final class CJJSOps {
             mkpair("cj.Char.size", ctx -> translateParts(ctx.args, "((", ")<0x10000?1:2)")),
             mkpair("cj.Char.toString", ctx -> translateParts(ctx.args, "String.fromCodePoint(", ")")),
 
-            mkpair("cj.Int.__new", ctx -> ctx.args.get(0)),
-            mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)),
-            mkpair("cj.Int.toInt", ctx -> ctx.args.get(0)),
-            mkpair("cj.Int.toDouble", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.__new", ctx -> ctx.args.get(0)), mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.toInt", ctx -> ctx.args.get(0)), mkpair("cj.Int.toDouble", ctx -> ctx.args.get(0)),
             mkpair("cj.Int.default", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Int.__get_zero", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Int.__get_one", ctx -> CJJSBlob2.pure("1")),
@@ -122,6 +120,7 @@ public final class CJJSOps {
                 }
             }), mkpair("cj.String._addstr", ctx -> translateOp("(", ")", "+", ctx.args)),
             mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
+            mkpair("cj.String.default", ctx -> CJJSBlob2.simplestr("''", true)),
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),
             mkpair("cj.String.charAt", ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".codePointAt(", ")"))),
             mkpair("cj.String.startsWith",
@@ -199,6 +198,7 @@ public final class CJJSOps {
 
             mkpair("cj.Math.min", ctx -> translateParts(ctx.args, "Math.min(", ",", ")")),
             mkpair("cj.Math.max", ctx -> translateParts(ctx.args, "Math.max(", ",", ")")),
+            mkpair("cj.Math.random", ctx -> translateParts(ctx.args, "Math.random()")),
 
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
 
@@ -212,8 +212,14 @@ public final class CJJSOps {
             mkpair("cj.IO.eprintlnstr", ctx -> translateCall(ctx.mark, "console.error", ctx.args)),
             mkpair("cj.IO.panicstr", ctx -> translateCall(ctx.mark, "new Error", ctx.args)),
 
-            mkpair("cj.FS.__get_sep",
-                    ctx -> CJJSBlob2.simplestr("(typeof require===undefined?'/':require('path').sep)", false)),
+            mkpair("cj.Argv.__new",
+                    ctx -> CJJSBlob2.simplestr("(typeof process===undefined?[]:process.argv)", false)),
+
+            mkpair("cj.FS.__get_sep", ctx -> CJJSBlob2.simplestr("require('path').sep", false)),
+            mkpair("cj.FS.join", ctx -> translateParts(ctx.args, "require('path').join(...", ")")),
+            mkpair("cj.FS.isfile", ctx -> translateParts(ctx.args, "require('fs').lstatSync(", ").isFile()")),
+            mkpair("cj.FS.isdir", ctx -> translateParts(ctx.args, "require('fs').lstatSync(", ").isDirectory()")),
+            mkpair("cj.FS.readFile", ctx -> translateParts(ctx.args, "require('fs').readFileSync(", ",'utf-8')")),
 
             mkpair("cj.Time.now", ctx -> CJJSBlob2.simplestr("(Date.now()/1000)", false)),
 
@@ -315,6 +321,16 @@ public final class CJJSOps {
             if (!type.equals("cj.Iterator")) {
                 OPS.put(type + ".iter", ctx -> translateParts(ctx.args, "", "[Symbol.iterator]()"));
             }
+            OPS.put(type + ".toFloat32Array", ctx -> translateParts(ctx.args, "new Float32Array(", ")"));
+            OPS.put(type + ".toFloat64Array", ctx -> translateParts(ctx.args, "new Float64Array(", ")"));
+            OPS.put(type + ".toUint8Array", ctx -> translateParts(ctx.args, "new Uint8Array(", ")"));
+            OPS.put(type + ".toInt8Array", ctx -> translateParts(ctx.args, "new Int8Array(", ")"));
+            OPS.put(type + ".toUint16Array", ctx -> translateParts(ctx.args, "new Uint16Array(", ")"));
+            OPS.put(type + ".toInt16Array", ctx -> translateParts(ctx.args, "new Int16Array(", ")"));
+            OPS.put(type + ".toUint32Array", ctx -> translateParts(ctx.args, "new Uint32Array(", ")"));
+            OPS.put(type + ".toInt32Array", ctx -> translateParts(ctx.args, "new Int32Array(", ")"));
+            OPS.put(type + ".toUint64Array", ctx -> translateParts(ctx.args, "new Uint64Array(", ")"));
+            OPS.put(type + ".toInt64Array", ctx -> translateParts(ctx.args, "new Int64Array(", ")"));
         }
 
         for (var typedArray : typedArrays) {
@@ -326,7 +342,6 @@ public final class CJJSOps {
                 return translateCall(ctx.mark, "listeq0", ctx.args);
             });
             OPS.put(typedArray + ".withSize", ctx -> translateParts(ctx.args, "new " + name + "(", ")"));
-
             OPS.put(typedArray + ".repr", ctx -> translateParts(ctx.args, "'" + name + "('+(", ").join(', ')+')'"));
         }
 

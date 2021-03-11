@@ -66,7 +66,7 @@ public final class CJJSTranslator2 {
 
             @Override
             public Void visitWWW(CJIRRunModeWWW m, Void a) {
-                // TODO Auto-generated method stub
+                tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
         }, null);
@@ -108,7 +108,8 @@ public final class CJJSTranslator2 {
 
             @Override
             public Void visitWWW(CJIRRunModeWWW m, Void a) {
-                // TODO Auto-generated method stub
+                var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
+                tr.out.append("window.onload=" + mainMethodName + ";\n");
                 return null;
             }
         }, null);
