@@ -143,6 +143,9 @@ class MC$cj$List {
     M$sortBy(TV$X, self, f) {
         self.sort((a, b) => TV$X.M$__cmp(f(a), f(b)));
     }
+    M$_sortByCmp(self, f) {
+        self.sort(f);
+    }
     M$reverse(self) {
         self.reverse();
     }

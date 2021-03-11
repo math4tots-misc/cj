@@ -157,6 +157,9 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         if (item.isNative()) {
             out.addMark(item.getMark());
             out.append(IO.readFile(FS.join(jsroot, item.getFullName() + ".js")));
+
+            // we still want to use the methods that have a body
+            emitMethods(item, false);
         } else {
             emitMetaClass();
         }
@@ -285,37 +288,50 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 }
             }
         }
+        emitMethods(item, true);
+        out.append("}\n");
+    }
 
+    private void emitMethods(CJIRItem item, boolean inline) {
         for (var method : item.getMethods()) {
             var optionalBody = method.getBody();
             if (optionalBody.isPresent()) {
-                var methodName = translateMethodName(method.getName());
-                var typeArgNames = method.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
-                var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
-                var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
-                var prefix = method.isAsync() ? "async " : "";
-                out.append(prefix);
-                out.addMark(method.getMark());
-                out.append(methodName);
-                out.append("(" + Str.join(",", allArgNames) + "){");
-                // inAsyncContext = method.isAsync();
-                var body = translateExpression(optionalBody.get());
-                body.emitPrep(out);
-                if (method.getReturnType().isUnitType()) {
-                    if (!body.isPure()) {
-                        body.emitMain(out);
-                        out.append(";");
-                    }
-                } else {
-                    out.append("return ");
-                    body.emitMain(out);
-                    out.append(";");
-                }
-                out.append("}\n");
-                // inAsyncContext = false;
+                emitMethod(item, method, inline);
             }
         }
+    }
+
+    private void emitMethod(CJIRItem item, CJIRMethod method, boolean inline) {
+        var methodName = translateMethodName(method.getName());
+        var typeArgNames = method.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
+        var argNames = method.getParameters().map(p -> translateLocalVariableName(p.getName()));
+        var allArgNames = List.of(typeArgNames, argNames).flatMap(x -> x);
+        var prefix = method.isAsync() ? "async " : "";
+        if (inline) {
+            out.append(prefix);
+            out.addMark(method.getMark());
+            out.append(methodName);
+        } else {
+            var metaClassName = translateItemMetaClassName(item.getFullName());
+            out.addMark(method.getMark());
+            out.append(metaClassName + ".prototype." + methodName  + "=" + prefix + "function");
+        }
+        out.append("(" + Str.join(",", allArgNames) + "){");
+        // inAsyncContext = method.isAsync();
+        var body = translateExpression(method.getBody().get());
+        body.emitPrep(out);
+        if (method.getReturnType().isUnitType()) {
+            if (!body.isPure()) {
+                body.emitMain(out);
+                out.append(";");
+            }
+        } else {
+            out.append("return ");
+            body.emitMain(out);
+            out.append(";");
+        }
         out.append("}\n");
+        // inAsyncContext = false;
     }
 
     private CJJSBlob translateExpression(CJIRExpression expression) {

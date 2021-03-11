@@ -35,7 +35,7 @@ class Test08Tuple {
     }
 
     @test
-    def eq() {
+    def cmp() {
         {
             val t2 = (1, "hello")
             Assert.that(t2 < (2, "hello"))

@@ -22,8 +22,8 @@ class MC$cj$String {
             }
         }) + '"';
     }
-    M$__add(TV$T, a, b) {
-        return a + TV$T.M$toString(b);
+    M$_addstr(a, b) {
+        return a + b;
     }
     M$size(s) {
         return s.length;
@@ -49,6 +49,9 @@ class MC$cj$String {
     }
     M$join(TV$T, TV$C, self, parts) {
         return Array.from(TV$C.M$iter(parts)).map(t => TV$T.M$toString(t)).join(self);
+    }
+    M$_join(self, parts) {
+        return parts.join(self);
     }
 
     M$charCodeAt(self, i) {

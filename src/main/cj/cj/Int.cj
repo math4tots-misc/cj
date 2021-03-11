@@ -1,5 +1,6 @@
 package cj
 
+import cj.Math
 import cj.math.EuclideanDomain
 
 @implicit(Char, _fromChar)
@@ -47,7 +48,7 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     # For EuclideanDomain
     def __get_zero(): Self
     def __get_one(): Self
-    def edivrem(self, other: Self): Tuple[Self, Self]
-    def ediv(self, other: Self): Self = edivrem(other).get0()
-    def erem(self, other: Self): Self = edivrem(other).get1()
+    def edivrem(self, n: Self): Tuple[Self, Self] = (ediv(n), erem(n))
+    def ediv(self, n: Self): Self = if n < 0 { -1 } else { 1 } * Math.floor(self / n.abs())
+    def erem(self, n: Self): Self = self - n.abs() * Math.floor(self / n.abs())
 }

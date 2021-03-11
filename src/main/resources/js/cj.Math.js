@@ -11,6 +11,9 @@ class MC$cj$Math {
     M$__get_infinity() {
         return Infinity;
     }
+    M$combineHash(a, b) {
+        return combineHash(a, b);
+    }
     M$random() {
         return Math.random();
     }
