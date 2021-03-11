@@ -32,6 +32,6 @@ public final class CJJSLLMethod {
     }
 
     public String getId() {
-        return owner.repr() + "." + method.getName() + (binding.isEmpty() ? "" : "<" + binding.getId());
+        return owner.repr() + "." + method.getName() + (binding.isEmpty() ? "" : "<" + binding.getIdStr());
     }
 }

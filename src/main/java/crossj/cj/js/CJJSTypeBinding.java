@@ -81,7 +81,7 @@ final class CJJSTypeBinding {
         throw CJError.of("Don't use CJJSTypeBinding.toString");
     }
 
-    public String getId() {
+    public String getIdStr() {
         return Str.join(",", selfType.getArgs().map(a -> a.repr())) + "+"
                 + Str.join(",", methodLevelArgs.map(a -> a.repr()));
     }

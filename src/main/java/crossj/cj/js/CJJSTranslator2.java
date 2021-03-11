@@ -9,6 +9,7 @@ import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.base.Set;
 import crossj.cj.CJError;
+import crossj.cj.CJIRCaseMethodInfo;
 import crossj.cj.CJIRClassType;
 import crossj.cj.CJIRContext;
 import crossj.cj.CJIRExpression;
@@ -35,6 +36,7 @@ public final class CJJSTranslator2 {
             Pair.of("cj.BigInt.erem.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
             Pair.of("cj.BigInt.ediv.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
             Pair.of("cj.BigInt.edivrem.js", Set.of("cj.BigInt.erem.js", "cj.BigInt.ediv.js")),
+            Pair.of("cj.String.hash.js", Set.of("cj.Math.combineHash.js")),
             Pair.of("cj.Iterator.reduce.js", Set.of("cj.Iterator.fold.js")),
             Pair.of("cj.DynamicBuffer.addUTF8.js",
                     Set.of("cj.DynamicBuffer.fromUTF8.js", "cj.DynamicBuffer.addBuffer.js")),
@@ -61,6 +63,15 @@ public final class CJJSTranslator2 {
                     }
                     for (var method : testMethods) {
                         tr.queueMethodByName(item.getFullName(), method.getName());
+                    }
+                }
+                for (var item : items) {
+                    if (!item.isTrait() && item.getTypeParameters().isEmpty()) {
+                        for (var method : item.getMethods()) {
+                            if (method.getTypeParameters().isEmpty()) {
+                                tr.queueMethodByName(item.getFullName(), method.getName());
+                            }
+                        }
                     }
                 }
                 return null;
@@ -164,6 +175,13 @@ public final class CJJSTranslator2 {
         if (item.getTypeParameters().size() > 0 || method.getTypeParameters().size() > 0) {
             throw CJError.of("queueMethodByName cannot process generic items or methods");
         }
+
+        var key = itemName + "." + methodName;
+        if (CJJSOps.OPS.containsKey(key)) {
+            // this is a method that's handled inline by CJJSOps.
+            return;
+        }
+
         var owner = new CJIRClassType(item, List.of());
         queueMethod(new CJJSLLMethod(owner, method, CJJSTypeBinding.empty(owner)));
     }
@@ -256,7 +274,7 @@ public final class CJJSTranslator2 {
     }
 
     private void emitMethod(CJJSLLMethod reifiedMethod) {
-        IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getId());
+        IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getIdStr());
         var method = reifiedMethod.getMethod();
         if (method.getBody().isEmpty()) {
             if (reifiedMethod.getMethod().getName().equals("__malloc")) {
@@ -269,9 +287,24 @@ public final class CJJSTranslator2 {
                     if (field.isStatic()) {
                         queueStaticField(reifiedMethod.getOwner(), field);
                     }
+                } else if (extra instanceof CJIRCaseMethodInfo) {
+                    // it's ok to omit here -- should be always implemented
+                    // directly in CJJSOps
+                } else if (reifiedMethod.getOwner().isNative()) {
+                    var key = reifiedMethod.getOwner().getItem().getFullName() + "."
+                            + reifiedMethod.getMethod().getName() + ".js";
+                    emitNative(key, method.getMark());
+                    var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                    IO.println("  (NATIVE " + name + ")");
                 } else {
-                    // TODO: Considering throwing here
-                    IO.println("  (MISSING)");
+                    var key = reifiedMethod.getOwner().getItem().getFullName() + "." + method.getName();
+                    if (CJJSOps.OPS.containsKey(key)) {
+                        // probably ok
+                    } else {
+                        // TODO: Considering throwing here
+                        var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                        IO.println("  (MISSING " + name + ")");
+                    }
                 }
             }
             return;
