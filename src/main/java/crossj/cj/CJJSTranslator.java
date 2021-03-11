@@ -156,7 +156,14 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
     private void emitItem() {
         if (item.isNative()) {
             out.addMark(item.getMark());
-            out.append(IO.readFile(FS.join(jsroot, item.getFullName() + ".js")));
+            var path = FS.join(jsroot, item.getFullName() + ".js");
+            if (!FS.exists(path) && item.getTypeParameters().isEmpty()) {
+                // If the file doesn't exist, and it's non-generic, create a dummy
+                var metaClassName = translateItemMetaClassName(item.getFullName());
+                out.append("class " + metaClassName + "{}\n");
+            } else {
+                out.append(IO.readFile(path));
+            }
 
             // we still want to use the methods that have a body
             emitMethods(item, false);
