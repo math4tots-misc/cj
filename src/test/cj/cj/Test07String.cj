@@ -43,4 +43,12 @@ class Test07String {
             Assert.equal(chars, s.iter().toList())
         }
     }
+
+    @test
+    def pad() {
+        Assert.equal("hi".lpad(5, " "), "   hi")
+        Assert.equal("hi".rpad(5, "0"), "hi000")
+        Assert.equal("hi".rpad(1, "0"), "hi")
+        Assert.equal("hi".lpad(1, "0"), "hi")
+    }
 }

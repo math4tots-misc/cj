@@ -4,7 +4,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import crossj.base.Assert;
-import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
@@ -96,6 +95,7 @@ public final class CJJSOps {
             mkpair("cj.Int.repr", ctx -> translateOp("(\"\"+", ")", "", ctx.args)),
             mkpair("cj.Int._fromChar", ctx -> ctx.args.get(0)),
             mkpair("cj.Int.abs", ctx -> translateParts(ctx.args, "Math.abs(", ")")),
+            mkpair("cj.Int.hex", ctx -> translateParts(ctx.args, "", ".toString(16).toUpperCase()")),
 
             mkpair("cj.Double.__new", ctx -> ctx.args.get(0)), mkpair("cj.Double.toDouble", ctx -> ctx.args.get(0)),
             mkpair("cj.Double.default", ctx -> CJJSBlob2.pure("0")),
@@ -218,6 +218,9 @@ public final class CJJSOps {
             mkpair("cj.Time.now", ctx -> CJJSBlob2.simplestr("(Date.now()/1000)", false)),
 
             mkpair("cj.JSON.parse", ctx -> translateParts(ctx.args, "JSON.parse(", ")")),
+            mkpair("cj.JSON.toInt16Array", ctx -> translateParts(ctx.args, "new Int16Array(", ")")),
+            mkpair("cj.JSON.toFloat32Array", ctx -> translateParts(ctx.args, "new Float32Array(", ")")),
+            mkpair("cj.JSON.toFloat64Array", ctx -> translateParts(ctx.args, "new Float64Array(", ")")),
             mkpair("cj.JSON._fromList", ctx -> ctx.args.get(0)), mkpair("cj.JSON._unsafeCast", ctx -> ctx.args.get(0)),
             mkpair("cj.JSON.__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")")),
             mkpair("cj.JSON.__getitem", ctx -> translateParts(ctx.args, "", "[", "]")),

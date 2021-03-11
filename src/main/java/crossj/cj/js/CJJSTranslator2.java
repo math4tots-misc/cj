@@ -5,7 +5,6 @@ import crossj.base.Deque;
 import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
-import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.base.Set;
 import crossj.cj.CJError;
