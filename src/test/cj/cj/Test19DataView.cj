@@ -32,6 +32,7 @@ class Test19DataView {
             }
             Assert.equal(abuf, Uint8Array(0, 3, 6, 9, 12).buffer)
             Assert.equal(abuf[2:], Uint8Array(6, 9, 12).buffer)
+            Assert.equal(abuf[:2], Uint8Array(0, 3).buffer)
         }
     }
 }
