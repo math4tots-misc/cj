@@ -31,18 +31,6 @@ import crossj.cj.CJToken;
 public final class CJJSTranslator2 {
     private static final String jsroot = FS.join("src", "main", "resources", "js2");
 
-    private static final Map<String, Set<String>> nativeDepMap = Map.of(
-            Pair.of("cj.BigInt.hash.js", Set.of("cj.String.hash.js", "cj.BigInt.abs.js")),
-            Pair.of("cj.BigInt.erem.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
-            Pair.of("cj.BigInt.ediv.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
-            Pair.of("cj.BigInt.edivrem.js", Set.of("cj.BigInt.erem.js", "cj.BigInt.ediv.js")),
-            Pair.of("cj.String.hash.js", Set.of("cj.Math.combineHash.js")),
-            Pair.of("cj.Iterator.reduce.js", Set.of("cj.Iterator.fold.js")),
-            Pair.of("cj.DynamicBuffer.addUTF8.js",
-                    Set.of("cj.DynamicBuffer.fromUTF8.js", "cj.DynamicBuffer.addBuffer.js")),
-            Pair.of("cj.DynamicBuffer.fromUTF8.js", Set.of("cj.DynamicBuffer.fromArrayBuffer.js")),
-            Pair.of("cj.DynamicBuffer.ofU8s.js", Set.of("cj.DynamicBuffer.fromArrayBuffer.js")));
-
     public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
         var tr = new CJJSTranslator2(irctx);
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
@@ -206,19 +194,22 @@ public final class CJJSTranslator2 {
     private void emitNative(String fileName, CJMark mark) {
         var path = FS.join(jsroot, fileName);
         if (FS.isFile(path)) {
+            var contents = IO.readFile(path);
+            var deps = List.<String>of();
+            for (var line : contents.split("\n")) {
+                if (line.startsWith("//!!")) {
+                    deps.add(line.substring(4).trim());
+                }
+            }
             out.addMark(CJMark.of(path, 1, 1));
-            out.append(IO.readFile(path));
+            out.append(contents);
+            for (var dep : deps) {
+                queueNative(dep, mark);
+            }
         } else {
             // TODO: uncomment this later
             // throw CJError.of("File " + fileName + " not found", mark);
             IO.println("MISSED " + fileName);
-        }
-
-        var deps = nativeDepMap.getOrNull(fileName);
-        if (deps != null) {
-            for (var dep : deps) {
-                queueNative(dep, mark);
-            }
         }
     }
 
@@ -292,10 +283,21 @@ public final class CJJSTranslator2 {
                     // directly in CJJSOps
                 } else if (reifiedMethod.getOwner().isNative()) {
                     var key = reifiedMethod.getOwner().getItem().getFullName() + "."
-                            + reifiedMethod.getMethod().getName() + ".js";
-                    emitNative(key, method.getMark());
-                    var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
-                    IO.println("  (NATIVE " + name + ")");
+                            + reifiedMethod.getMethod().getName();
+                    var path = FS.join(jsroot, key + ".js");
+                    if (FS.exists(path)) {
+                        emitNative(key + ".js", method.getMark());
+                        var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                        IO.println("  (NATIVE " + name + ")");
+                    } else {
+                        if (CJJSOps.OPS.containsKey(key)) {
+                            // probably ok
+                        } else {
+                            // TODO: Considering throwing here
+                            var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                            IO.println("  (MISSING-NATIVE " + name + ")");
+                        }
+                    }
                 } else {
                     var key = reifiedMethod.getOwner().getItem().getFullName() + "." + method.getName();
                     if (CJJSOps.OPS.containsKey(key)) {

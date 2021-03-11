@@ -1,3 +1,4 @@
+//!! cj.Math.combineHash.js
 function cj$String$hash(self) {
     let h = 0;
     for (const c of self) {

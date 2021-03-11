@@ -4,6 +4,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import crossj.base.Assert;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Str;

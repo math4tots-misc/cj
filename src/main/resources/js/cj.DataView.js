@@ -50,33 +50,33 @@ class MC$cj$DataView {
         return self.getBigUint64(byteOffset, self._useLittleEndian);
     }
     M$setInt8(self, byteOffset, value) {
-        return self.setInt8(byteOffset, value);
+        return self.setInt8(byteOffset, value, self._useLittleEndian);
     }
     M$setUint8(self, byteOffset, value) {
-        return self.setUint8(byteOffset, value);
+        return self.setUint8(byteOffset, value, self._useLittleEndian);
     }
     M$setInt16(self, byteOffset, value) {
-        return self.setInt16(byteOffset, value);
+        return self.setInt16(byteOffset, value, self._useLittleEndian);
     }
     M$setUint16(self, byteOffset, value) {
-        return self.setUint16(byteOffset, value);
+        return self.setUint16(byteOffset, value, self._useLittleEndian);
     }
     M$setInt32(self, byteOffset, value) {
-        return self.setInt32(byteOffset, value);
+        return self.setInt32(byteOffset, value, self._useLittleEndian);
     }
     M$setUint32(self, byteOffset, value) {
-        return self.setUint32(byteOffset, value);
+        return self.setUint32(byteOffset, value, self._useLittleEndian);
     }
     M$setFloat32(self, byteOffset, value) {
-        return self.setFloat32(byteOffset, value);
+        return self.setFloat32(byteOffset, value, self._useLittleEndian);
     }
     M$setFloat64(self, byteOffset, value) {
-        return self.setFloat64(byteOffset, value);
+        return self.setFloat64(byteOffset, value, self._useLittleEndian);
     }
     M$setBigInt64(self, byteOffset, value) {
-        return self.setBigInt64(byteOffset, value);
+        return self.setBigInt64(byteOffset, value, self._useLittleEndian);
     }
     M$setBigUint64(self, byteOffset, value) {
-        return self.setBigUint64(byteOffset, value);
+        return self.setBigUint64(byteOffset, value, self._useLittleEndian);
     }
 }

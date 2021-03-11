@@ -4,6 +4,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import crossj.base.Assert;
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
@@ -81,8 +82,11 @@ public final class CJJSOps {
             mkpair("cj.Char.size", ctx -> translateParts(ctx.args, "((", ")<0x10000?1:2)")),
             mkpair("cj.Char.toString", ctx -> translateParts(ctx.args, "String.fromCodePoint(", ")")),
 
-            mkpair("cj.Int.__new", ctx -> ctx.args.get(0)), mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)),
-            mkpair("cj.Int.toInt", ctx -> ctx.args.get(0)), mkpair("cj.Int.default", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Int.__new", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.toInt", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.toDouble", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.default", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Int.__get_zero", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Int.__get_one", ctx -> CJJSBlob2.pure("1")),
             mkpair("cj.Int.__div", ctx -> translateOp("(", ")", "/", ctx.args)),
@@ -93,11 +97,16 @@ public final class CJJSOps {
             mkpair("cj.Int._fromChar", ctx -> ctx.args.get(0)),
             mkpair("cj.Int.abs", ctx -> translateParts(ctx.args, "Math.abs(", ")")),
 
-            mkpair("cj.Double.__new", ctx -> ctx.args.get(0)), mkpair("cj.Double.default", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Double.__new", ctx -> ctx.args.get(0)), mkpair("cj.Double.toDouble", ctx -> ctx.args.get(0)),
+            mkpair("cj.Double.default", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Double.__get_zero", ctx -> CJJSBlob2.pure("0")),
             mkpair("cj.Double.__get_one", ctx -> CJJSBlob2.pure("1")),
             mkpair("cj.Double._fromInt", ctx -> translateOp("(", "|0)", "", ctx.args)),
             mkpair("cj.Double.abs", ctx -> translateParts(ctx.args, "Math.abs(", ")")),
+            mkpair("cj.Double.hash", ctx -> translateParts(ctx.args, "(10000*", ")|0")),
+            mkpair("cj.Double.toInt", ctx -> translateParts(ctx.args, "((", ")|0)")),
+            mkpair("cj.Double.__pow", ctx -> translateParts(ctx.args, "(", "**", ")")),
+            mkpair("cj.Double.toFixed", ctx -> translateParts(ctx.args, "", ".toFixed(", ")")),
             mkpair("cj.Double.repr", ctx -> translateOp("(\"\"+", ")", "", ctx.args)),
             mkpair("cj.Double.__div", ctx -> translateOp("(", ")", "/", ctx.args)),
             mkpair("cj.Double.__truncdiv", ctx -> translateParts(ctx.args, "((", "/", ")|0)")),
@@ -134,12 +143,16 @@ public final class CJJSOps {
             mkpair("cj.StringBuilder.default", ctx -> CJJSBlob2.simplestr("[]", false)),
 
             mkpair("cj.BigInt.__new", ctx -> ctx.args.get(0)),
+            mkpair("cj.BigInt.default", ctx -> CJJSBlob2.simplestr("0n", true)),
             mkpair("cj.BigInt.__get_zero", ctx -> CJJSBlob2.simplestr("0n", true)),
             mkpair("cj.BigInt.__get_one", ctx -> CJJSBlob2.simplestr("1n", true)),
             mkpair("cj.BigInt.fromInt", ctx -> translateParts(ctx.args, "BigInt(", ")")),
             mkpair("cj.BigInt.fromDouble", ctx -> translateParts(ctx.args, "BigInt(", ")")),
             mkpair("cj.BigInt.fromString", ctx -> translateParts(ctx.args, "BigInt(", ")")),
+            mkpair("cj.BigInt.toInt", ctx -> translateParts(ctx.args, "Number(", ")")),
+            mkpair("cj.BigInt.toDouble", ctx -> translateParts(ctx.args, "Number(", ")")),
             mkpair("cj.BigInt.repr", ctx -> translateParts(ctx.args, "(", "+'n')")),
+            mkpair("cj.BigInt.hex", ctx -> translateParts(ctx.args, "", ".toString(16).toUpperCase()")),
             mkpair("cj.BigInt.isNegative", ctx -> translateParts(ctx.args, "(", "<0)")),
             mkpair("cj.BigInt.ipow", ctx -> translateParts(ctx.args, "(", "**BigInt(", "))")),
             mkpair("cj.BigInt.__truncdiv", ctx -> translateParts(ctx.args, "(", "/", ")")),
@@ -199,6 +212,9 @@ public final class CJJSOps {
             mkpair("cj.IO.eprintlnstr", ctx -> translateCall(ctx.mark, "console.error", ctx.args)),
             mkpair("cj.IO.panicstr", ctx -> translateCall(ctx.mark, "new Error", ctx.args)),
 
+            mkpair("cj.FS.__get_sep",
+                    ctx -> CJJSBlob2.simplestr("(typeof require===undefined?'/':require('path').sep)", false)),
+
             mkpair("cj.Time.now", ctx -> CJJSBlob2.simplestr("(Date.now()/1000)", false)),
 
             mkpair("cj.JSON.parse", ctx -> translateParts(ctx.args, "JSON.parse(", ")")),
@@ -248,6 +264,23 @@ public final class CJJSOps {
             OPS.put(type + ".__rem", ctx -> translateParts(ctx.args, "(", "%", ")"));
         }
 
+        for (var type : List.of("cj.Int")) {
+            for (var pair : List.of(Pair.of("__rshift", ">>"), Pair.of("__rshiftu", ">>>"),
+                    Pair.of("__lshift", "<<"))) {
+                var opName = pair.get1();
+                var op = pair.get2();
+                OPS.put(type + "." + opName, ctx -> translateParts(ctx.args, "(", op, ")"));
+            }
+        }
+
+        for (var type : List.of("cj.Int", "cj.BigInt")) {
+            for (var pair : List.of(Pair.of("__and", "&"), Pair.of("__or", "|"), Pair.of("__xor", "^"))) {
+                var opName = pair.get1();
+                var op = pair.get2();
+                OPS.put(type + "." + opName, ctx -> translateParts(ctx.args, "(", op, ")"));
+            }
+        }
+
         for (var type : nativeComparables) {
             OPS.put(type + ".__eq", ctx -> translateParts(ctx.args, "(", "===", ")"));
             OPS.put(type + ".__ne", ctx -> translateParts(ctx.args, "(", "!==", ")"));
@@ -292,6 +325,15 @@ public final class CJJSOps {
             OPS.put(typedArray + ".withSize", ctx -> translateParts(ctx.args, "new " + name + "(", ")"));
 
             OPS.put(typedArray + ".repr", ctx -> translateParts(ctx.args, "'" + name + "('+(", ").join(', ')+')'"));
+        }
+
+        for (var type : List.of(List.of("cj.DataView"), typedArrays).flatMap(x -> x)) {
+            OPS.put(type + ".__get_buffer", ctx -> translateParts(ctx.args, "", ".buffer"));
+            OPS.put(type + ".__get_byteOffset", ctx -> translateParts(ctx.args, "", ".byteOffset"));
+        }
+
+        for (var type : List.of(List.of("cj.ArrayBuffer", "cj.DataView"), typedArrays).flatMap(x -> x)) {
+            OPS.put(type + ".__get_byteLength", ctx -> translateParts(ctx.args, "", ".byteLength"));
         }
 
         for (var pair : grandfatheredNativeMethods) {
