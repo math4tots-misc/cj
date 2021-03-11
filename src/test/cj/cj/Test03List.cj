@@ -83,11 +83,11 @@ class Test03List {
     def toSetAndToMap() = {
         {
             val set = [1, 2, 3].toSet()
-            Assert.equal(set, Set(2, 3, 1))
+            Assert.equal(set, Set([2, 3, 1]))
         }
         {
             val map = [1: "a", 2: "b"].toMap()
-            Assert.equal(map, Map(2: "b", 1: "a"))
+            Assert.equal(map, Map([2: "b", 1: "a"]))
         }
     }
 
@@ -143,9 +143,9 @@ class Test03List {
             Assert.equal(list, ["1", "11", "111", "12", "2", "22", "3", "4", "444"])
         }
         {
-            val set = Set(1, 3, 5, 7, 6, 4, 2)
+            val set = Set([1, 3, 5, 7, 6, 4, 2])
             Assert.equal(set.sorted(), [1, 2, 3, 4, 5, 6, 7])
-            Assert.equal(set, Set(1, 2, 3, 4, 5, 6, 7))
+            Assert.equal(set, Set([1, 2, 3, 4, 5, 6, 7]))
         }
     }
 

@@ -41,26 +41,26 @@ class OldDump {
     val reader: BufferReader
 
     ## Maps utf8 ids to their utf8 values
-    val utf8Map: Map[Int, String] = Map()
+    val utf8Map: Map[Int, String] = Map([])
 
     ## Maps classref ids to utf8 ids
-    val classrefMap: Map[Int, Int] = Map()
+    val classrefMap: Map[Int, Int] = Map([])
 
     ## Maps fieldref, methodref, interfacemethodref ids to (class-ids, name-and-type-ids)
-    val memberrefMap: Map[Int, Tuple[Int, Int]] = Map()
+    val memberrefMap: Map[Int, Tuple[Int, Int]] = Map([])
 
     ## Maps nameAndType ids to (name-utf8-ids, descriptor-utf8-ids)
-    val nameAndTypeMap: Map[Int, Tuple[Int, Int]] = Map()
+    val nameAndTypeMap: Map[Int, Tuple[Int, Int]] = Map([])
 
     ## Maps string constant ids to utf8 ids
-    val stringMap: Map[Int, Int] = Map()
+    val stringMap: Map[Int, Int] = Map([])
 
     ## Maps int, float, long, double literal values to a string representation
     ## of their values
-    val primitiveMap: Map[Int, String] = Map()
+    val primitiveMap: Map[Int, String] = Map([])
 
     ## Caches the entries into the constant pool when requested as a value
-    val constCache: Map[Int, String] = Map()
+    val constCache: Map[Int, String] = Map([])
 
     var depth = 0
 

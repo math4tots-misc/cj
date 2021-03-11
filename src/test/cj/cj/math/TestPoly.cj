@@ -18,7 +18,7 @@ class TestPoly {
     def apply() {
         {
             # x + x2
-            val f = Poly1(0, 1, 1)
+            val f = Poly1([0, 1, 1])
             Assert.equal(f.apply(1), 2)
             Assert.equal(f.apply(2), 6)
             Assert.equal(f.apply(3), 12)

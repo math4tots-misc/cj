@@ -5,7 +5,7 @@ import cj.Deque
 class Test17Deque {
     @test
     def sample() {
-        val d = Deque(1, 2, 3)
+        val d = Deque([1, 2, 3])
         Assert.equal(d.toList(), [1, 2, 3])
         Assert.equal(d.size(), 3)
         d.popleft()

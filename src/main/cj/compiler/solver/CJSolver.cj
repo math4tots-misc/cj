@@ -44,7 +44,7 @@ class CJSolver:
 
     val sourceRoots: List[String]
     val todos: List[Deque[Task]] = []
-    val itemMap: Map[String, CJIR.ItemDef] = Map()
+    val itemMap: Map[String, CJIR.ItemDef] = Map([])
     var verbose = false
 
     var _noreturnType: Type? = null
@@ -58,7 +58,7 @@ class CJSolver:
 
     def todo(self, level: Int, name: String, detail: String, f: Fn[Unit]) {
         while level >= todos.size() {
-            todos.add(Deque())
+            todos.add(Deque([]))
         }
         todos[level].add(Task(name, detail, f))
     }

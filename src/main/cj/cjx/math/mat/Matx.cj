@@ -18,7 +18,7 @@ class Matx : Hash, Approximate, Repr {
     ## Number of rows in this matrix
     def __get_r(self: Self): Int = data.size() // c
 
-    @variadic def(rows: List[List[Double]]): Self = fromRows(rows)
+    def(rows: List[List[Double]]): Self = fromRows(rows)
 
     def _fromParts(c: Int, data: Float64Array): Self = __malloc(c, data)
 
@@ -344,7 +344,7 @@ class Matx : Hash, Approximate, Repr {
     def approximates(self: Self, other: Self, tolerance: Double): Bool = (
         c == other.c and data.approximates(other.data, tolerance))
 
-    def repr(self: Self): String = "Matx(" + ", ".join(rows().map(row -> row.toList())) + ")"
+    def repr(self: Self): String = "MatxOf(" + ", ".join(rows().map(row -> row.toList())) + ")"
 
     def toFloat32Array(self): Float32Array = data.toFloat32Array()
 }

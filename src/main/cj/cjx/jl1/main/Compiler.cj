@@ -76,7 +76,7 @@ class Compiler {
     }
 
     def getTestMap(ctx: JLContext): Map[String, List[String]] {
-        val map: Map[String, List[String]] = Map()
+        val map: Map[String, List[String]] = Map([])
         for cls in ctx.classMap.values() {
             for method in cls.methods {
                 if "test" in method.modifiers {
@@ -97,7 +97,7 @@ class Compiler {
 
         val testMap = getTestMap(ctx)
         val classNames = testMap.keys().sorted()
-        val classToShortNameMap: Map[String, String] = Map()
+        val classToShortNameMap: Map[String, String] = Map([])
         for i = 0; i < classNames.size(); i++ {
             classToShortNameMap[classNames[i]] = "C" + i
         }

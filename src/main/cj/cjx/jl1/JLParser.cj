@@ -21,7 +21,7 @@ import cjx.jl1.JLToken
 
 class JLParser {
 
-    static val combineOperators: Set[JLAstExpr.Operator] = Set(
+    static val combineOperators: Set[JLAstExpr.Operator] = SetOf(
         JLAstExpr.Operator.add(),
         JLAstExpr.Operator.sub(),
         JLAstExpr.Operator.mul(),
@@ -34,7 +34,7 @@ class JLParser {
     )
 
     ## Maps token -> (is-right-associative, ast-operator)
-    static val binopTable: Map[Int, Tuple[Bool, JLAstExpr.Operator]] = Map(
+    static val binopTable: Map[Int, Tuple[Bool, JLAstExpr.Operator]] = MapOf(
         '+': (false, JLAstExpr.Operator.add()),
         '-': (false, JLAstExpr.Operator.sub()),
         '*': (false, JLAstExpr.Operator.mul()),
@@ -57,7 +57,7 @@ class JLParser {
         JLToken.kwOR: (false, JLAstExpr.Operator.logicalOr()),
     )
 
-    static val unopTable: Map[Int, Tuple[Int, JLAstExpr.Operator]] = Map(
+    static val unopTable: Map[Int, Tuple[Int, JLAstExpr.Operator]] = MapOf(
         '-': (getTokenPrecedence('*') + 5, JLAstExpr.Operator.neg()),
         JLToken.kwNOT: (
             getTokenPrecedence(JLToken.kwAND) - 5,

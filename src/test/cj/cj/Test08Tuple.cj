@@ -65,7 +65,7 @@ class Test08Tuple {
     @test
     def hash() {
         {
-            val map = Map((1, 2): "first")
+            val map = Map([(1, 2): "first"])
             Assert.equal(map.size(), 1)
             Assert.equal(map[(1, 2)], "first")
             Assert.that((2, 1) not in map)
@@ -78,7 +78,7 @@ class Test08Tuple {
             Assert.equal(map.size(), 2)
         }
         {
-            val map = Map((1, 2, 3): "first")
+            val map = Map([(1, 2, 3): "first"])
             Assert.equal(map.size(), 1)
             Assert.equal(map[(1, 2, 3)], "first")
             Assert.that((3, 2, 1) not in map)
@@ -91,7 +91,7 @@ class Test08Tuple {
             Assert.equal(map.size(), 2)
         }
         {
-            val map = Map((1, 2, 3, 4): "first")
+            val map = Map([(1, 2, 3, 4): "first"])
             Assert.equal(map.size(), 1)
             Assert.equal(map[(1, 2, 3, 4)], "first")
             Assert.that((4, 3, 2, 1) not in map)

@@ -25,7 +25,7 @@ import cjx.jl1.JLType
 import cjx.jl1.JLIRClass
 
 class JLContext {
-    static val builtinTypeMap: Map[String, String] = Map(
+    static val builtinTypeMap: Map[String, String] = Map([
         "Object": "java.lang.Object",
         "String": "java.lang.String",
         "Fn0": "jl1.Fn0",
@@ -33,7 +33,7 @@ class JLContext {
         "Fn2": "jl1.Fn2",
         "Fn3": "jl1.Fn3",
         "Fn4": "jl1.Fn4",
-    )
+    ])
 
     ## Maps class id to AstClasses
     val astClassMap: List[JLAstClass] = []
@@ -42,18 +42,18 @@ class JLContext {
     ## names)
     val typeMapMap: List[Map[String, String]] = []
 
-    val classMap: Map[String, JLIRClass] = Map()
-    val classTemplateMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map()
-    val traitMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map()
+    val classMap: Map[String, JLIRClass] = Map([])
+    val classTemplateMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map([])
+    val traitMap: Map[String, Tuple[Map[String, String], JLAstClass]] = Map([])
 
     private val pass1Todo: List[JLIRClass] = []
-    private val pass1Seen: Set[Int] = Set()
+    private val pass1Seen: Set[Int] = Set([])
     private val pass2Todo: List[JLIRClass] = []
-    private val pass2Seen: Set[Int] = Set()
+    private val pass2Seen: Set[Int] = Set([])
     private val pass3Todo: List[JLIRClass] = []
-    private val pass3Seen: Set[Int] = Set()
+    private val pass3Seen: Set[Int] = Set([])
 
-    private val lctxMap: Map[Int, JLIRLocalContext] = Map()
+    private val lctxMap: Map[Int, JLIRLocalContext] = Map([])
 
     def getLctxForClass(self, ircls: JLIRClass): JLIRLocalContext = lctxMap[ircls.id]
 

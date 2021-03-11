@@ -1,5 +1,6 @@
 package cj
 
+import cj.MapOf
 import cj.JSON
 
 class Test13JSON {
@@ -13,8 +14,8 @@ class Test13JSON {
         }
         {
             val json = JSON.parse("{\"a\": 3, \"b\": [\"hello\"]}")
-            Assert.that(json != Map("a": 3, "b": ["hezllo"]))
-            Assert.that(json == Map("a": 3, "b": ["hello"]))
+            Assert.that(json != MapOf("a": 3, "b": ["hezllo"]))
+            Assert.that(json == MapOf("a": 3, "b": ["hello"]))
         }
     }
 }

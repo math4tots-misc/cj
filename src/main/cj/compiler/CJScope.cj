@@ -15,7 +15,7 @@ class CJScope {
     static val root: Self = newRoot()
 
     val parent: Self?
-    val map: Map[String, CJData] = Map()
+    val map: Map[String, CJData] = Map([])
     def(parent: Self): Self = __malloc(null(parent))
     private def newRoot(): Self = {
         val self = __malloc(null)

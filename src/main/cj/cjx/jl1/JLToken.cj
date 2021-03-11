@@ -124,9 +124,9 @@ class JLToken: Repr {
         kwAWAIT, kwBOOL, kwTRUE, kwFALSE, kwNULL, kwYIELD, kwAND, kwOR, kwIS, kwNOT, kwIN,
         kwNORETURN]
 
-    static val modifierKeywordTypes: Set[Int] = Set(
+    static val modifierKeywordTypes: Set[Int] = Set([
         kwABSTRACT, kwSYNCHRONIZED, kwPRIVATE, kwPROTECTED, kwPUBLIC, kwSTATIC, kwNATIVE,
-        kwASYNC)
+        kwASYNC])
 
     val type: Int
     val text: String

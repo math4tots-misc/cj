@@ -140,8 +140,8 @@ class Regex {
         var _start: Int? = null
 
         def(nfa: NFA): Self = {
-            val self = Self.__malloc(nfa, [], Map(), [], [])
-            Assert.equal(self.getId(Set()), 0)
+            val self = Self.__malloc(nfa, [], Map([]), [], [])
+            Assert.equal(self.getId(Set([])), 0)
             self
         }
 
@@ -223,12 +223,12 @@ class Regex {
         def fromPatterns(patterns: List[String]): Self = (
             Self.fromTrees(patterns.map(pattern -> PatternParser(pattern).parsePattern())))
 
-        def newStart(self: Self): Set[Int] = self.closure(Set(self.patternCount))
+        def newStart(self: Self): Set[Int] = self.closure(SetOf(self.patternCount))
 
         def transition(self: Self, states: Set[Int], var ch: Int): Set[Int] = {
             if ch > 127 { ch = NFA.nonAscii }
             val map = self.transitionMap
-            self.closure(states.flatMap(state -> map[state].getOrElse(ch, () -> Set())))
+            self.closure(states.flatMap(state -> map[state].getOrElse(ch, () -> Set([]))))
         }
 
         def closure(self: Self, set: Set[Int]): Set[Int] = {
@@ -325,13 +325,13 @@ class Regex {
 
         def newNode(self: Self): Int = {
             val node = self.transitionMap.size()
-            self.transitionMap.add(Map())
+            self.transitionMap.add(Map([]))
             node
         }
 
         def connect(self: Self, a: Int, var ch: Int, b: Int) = {
             if ch > 127 { ch = NFA.nonAscii }
-            self.transitionMap[a].getOrInsert(ch, () -> Set()).add(b)
+            self.transitionMap[a].getOrInsert(ch, () -> Set([])).add(b)
         }
 
         def buildBlock(self: Self, tree: Tree, var start: Int, var end: Int): Block = {
@@ -428,11 +428,11 @@ class Regex {
         private static val allLetters: Set[Int] = Range.upto(129).toSet()
         private static val allDigits: Set[Int] = Range.inclusive('0', '9').toSet()
         private static val allNonDigits: Set[Int] = Self.allLetters.filter(x -> x not in Self.allDigits)
-        private static val allSpace: Set[Int] = Set(' ', '\n', '\t', '\f', '\r')
+        private static val allSpace: Set[Int] = SetOf(' ', '\n', '\t', '\f', '\r')
         private static val allNonSpace: Set[Int] = Self.allLetters.filter(x -> x not in Self.allSpace)
         private static val allWord: Set[Int] = (
             Range.inclusive('a', 'z').toSet() + Range.inclusive('A', 'Z').toSet() +
-            allDigits + Set('_'))
+            allDigits + SetOf('_'))
         private static val allNonWord: Set[Int] = Self.allLetters.filter(x -> x not in Self.allWord)
 
         private val pattern: String
@@ -547,7 +547,7 @@ class Regex {
                 }
                 case '[' = {
                     self.next()
-                    val set = Set[Int]()
+                    val set = Set[Int]([])
                     val negate = consume('^')
                     while not self.consume(']') {
                         val ch = self.next()

@@ -21,7 +21,6 @@ class Set[T?: Hash] :
         ret
     }
 
-    @variadic
     def(ts: List[T]): Self = Set.of(ts)
 
     def size(self: Self): Int = self._map.size()
@@ -47,7 +46,7 @@ class Set[T?: Hash] :
     def hash(self: Self): Int = self.iter().fold(0, (h, t) -> h + t.hash())
 
     if T : Repr def repr(self: Self): String = {
-        "Set(" + ", ".join(self.iter().map(t -> t.repr())) + ")"
+        "SetOf(" + ", ".join(self.iter().map(t -> t.repr())) + ")"
     }
 
     def __contains(self: Self, t: T): Bool = t in self._map

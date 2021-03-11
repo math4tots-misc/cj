@@ -77,5 +77,5 @@ class Deque[T?] :
     }
     if T : Eq def __eq(self, other: Self): Bool = list[start:] == other.list[other.start:]
     if T : Hash def hash(self): Int = list[start:].hash()
-    if T : Repr def repr(self): String = "Deque(" + ", ".join(self.map(t -> t.repr())) + ")"
+    if T : Repr def repr(self): String = "Deque([" + ", ".join(self.map(t -> t.repr())) + "])"
 }

@@ -25,7 +25,7 @@ import cjx.jl1.JLIRClass
 import cjx.jl1.JLAstFile
 
 class JLIRExpressionSolver {
-    static val homogeneousIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+    static val homogeneousIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = MapOf(
         JLAstExpr.Operator.add(): JLIRExpr.Operator.iadd(),
         JLAstExpr.Operator.sub(): JLIRExpr.Operator.isub(),
         JLAstExpr.Operator.mul(): JLIRExpr.Operator.imul(),
@@ -39,7 +39,7 @@ class JLIRExpressionSolver {
         JLAstExpr.Operator.shru(): JLIRExpr.Operator.ishru(),
     )
 
-    static val comparisonIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+    static val comparisonIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = MapOf(
         JLAstExpr.Operator.eq(): JLIRExpr.Operator.ieq(),
         JLAstExpr.Operator.ne(): JLIRExpr.Operator.ine(),
         JLAstExpr.Operator.le(): JLIRExpr.Operator.ile(),
@@ -48,11 +48,11 @@ class JLIRExpressionSolver {
         JLAstExpr.Operator.gt(): JLIRExpr.Operator.igt(),
     )
 
-    static val homogeneousUnaryIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+    static val homogeneousUnaryIntOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = MapOf(
         JLAstExpr.Operator.neg(): JLIRExpr.Operator.ineg(),
     )
 
-    static val homogeneousDoubleOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = Map(
+    static val homogeneousDoubleOps: Map[JLAstExpr.Operator, JLIRExpr.Operator] = MapOf(
         JLAstExpr.Operator.add(): JLIRExpr.Operator.dadd(),
     )
 

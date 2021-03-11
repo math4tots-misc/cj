@@ -21,17 +21,17 @@ class JLIRClass: Repr {
     var _superClass: Nullable[JLIRClass] = null
     val interfaces: List[JLIRClass] = []
     val fields: List[JLIRField] = []
-    val fieldMap: Map[String, JLIRField] = Map()
+    val fieldMap: Map[String, JLIRField] = Map([])
     val methods: List[JLIRMethod] = []
-    val methodMap: Map[String, JLIRMethod] = Map()
+    val methodMap: Map[String, JLIRMethod] = Map([])
     val methodTemplates: List[JLAstMethod] = []
-    val methodTemplateMap: Map[String, JLAstMethod] = Map()
+    val methodTemplateMap: Map[String, JLAstMethod] = Map([])
     var unreifiedName: String = ""
-    val templateArgumentsMap: Map[String, JLIRTemplateArgument] = Map()
+    val templateArgumentsMap: Map[String, JLIRTemplateArgument] = Map([])
     val templateArgumentsList: List[JLIRTemplateArgument] = []
     val _nonStaticFields: Nullable[List[JLIRField]] = null
     var _nextLambdaId = 0
-    val caseMap: Map[String, Tuple[Int, String, List[JLType]]] = Map()
+    val caseMap: Map[String, Tuple[Int, String, List[JLType]]] = Map([])
 
     def isNative(self): Bool = "native" in modifiers
     def toJVMName(self): String = name.replace(".", "/")

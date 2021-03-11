@@ -805,18 +805,18 @@ class JVMClass {
 
     class ConstantPool {
         val infos: List[CpInfo] = []
-        val classrefMap: Map[String, Int] = Map()
-        val utf8Map: Map[String, Int] = Map()
-        val stringMap: Map[String, Int] = Map()
-        val nameAndTypeMap: Map[Tuple[String, String], Int] = Map()
-        val methodrefMap: Map[Tuple[String, String, String], Int] = Map()
-        val fieldrefMap: Map[Tuple[String, String, String], Int] = Map()
-        val interfaceMethodrefMap: Map[Tuple[String, String, String], Int] = Map()
-        val constMap: Map[Int, String] = Map()
-        val integerMap: Map[Int, Int] = Map()
-        val longMap: Map[BigInt, Int] = Map()
-        val floatMap: Map[Double, Int] = Map()
-        val doubleMap: Map[Double, Int] = Map()
+        val classrefMap: Map[String, Int] = Map([])
+        val utf8Map: Map[String, Int] = Map([])
+        val stringMap: Map[String, Int] = Map([])
+        val nameAndTypeMap: Map[Tuple[String, String], Int] = Map([])
+        val methodrefMap: Map[Tuple[String, String, String], Int] = Map([])
+        val fieldrefMap: Map[Tuple[String, String, String], Int] = Map([])
+        val interfaceMethodrefMap: Map[Tuple[String, String, String], Int] = Map([])
+        val constMap: Map[Int, String] = Map([])
+        val integerMap: Map[Int, Int] = Map([])
+        val longMap: Map[BigInt, Int] = Map([])
+        val floatMap: Map[Double, Int] = Map([])
+        val doubleMap: Map[Double, Int] = Map([])
 
         ## Gets the constantPoolCount value as required by the class file spec
         def count(self): Int = {

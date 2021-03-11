@@ -38,9 +38,9 @@ class JLIRLocalContext {
     var _thisClass: Nullable[JLIRClass] = null
     var _thisMethod: Nullable[JLIRMethod] = null
 
-    val additionalTemplateArgsMap: Map[String, JLIRTemplateArgument] = Map()
+    val additionalTemplateArgsMap: Map[String, JLIRTemplateArgument] = Map([])
 
-    val localStack: List[Map[String, JLIRLocal]] = [Map()]
+    val localStack: List[Map[String, JLIRLocal]] = [Map([])]
 
     var _allLocals: List[JLIRLocal] = ?
 
@@ -159,7 +159,7 @@ class JLIRLocalContext {
     }
 
     def pushScope(self) {
-        localStack.add(Map())
+        localStack.add(Map([]))
     }
 
     def popScope(self) {
@@ -246,7 +246,7 @@ class JLIRLocalContext {
         val limit = Math.min(methodTemplate.parameters.size(), astArgs.size())
         val variableNames = methodTemplate.templateParameters.map(tp -> (tp.name, tp)).toMap()
         val target = variableNames.size()
-        val map: Map[String, JLIRTemplateArgument] = Map()
+        val map: Map[String, JLIRTemplateArgument] = Map([])
         if val returnType = expectedReturnType {
             stack.add((
                 outerMark,

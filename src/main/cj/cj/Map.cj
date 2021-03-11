@@ -23,7 +23,6 @@ class Map[K?: Hash, V?] :
         ret
     }
 
-    @variadic
     def(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
 
     def clone(self): Self = of(pairs().toList())
@@ -191,7 +190,7 @@ class Map[K?: Hash, V?] :
         self.pairs().fold(0, (h, pair) -> h + pair.hash()))
 
     if K: Repr and V: Repr def repr(self: Self): String = (
-        "Map(" +
+        "MapOf(" +
         ", ".join(self.pairs().map(kv -> kv.get0().repr() + ": " + kv.get1().repr())) +
         ")")
 }

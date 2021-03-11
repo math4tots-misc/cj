@@ -6,7 +6,7 @@ import www.dom.Window
 
 class C8Keyboard {
     static val window: Window = Window.get()
-    static val keymap: Map[Int, Int] = Map(
+    static val keymap: Map[Int, Int] = MapOf(
         49: 0x1, # 1
         50: 0x2, # 2
         51: 0x3, # 3

@@ -268,7 +268,7 @@ union Opcode {
     }
 
     ## Opcodes with one 8-bit local variable argument
-    static val oneU8LocalArgOpcode: Map[Int, String] = Map(
+    static val oneU8LocalArgOpcode: Map[Int, String] = Map([
         0x15: "iload",
         0x16: "lload",
         0x17: "fload",
@@ -280,10 +280,10 @@ union Opcode {
         0x39: "dstore",
         0x3a: "astore",
         0xa9: "ret",
-    )
+    ])
 
     ## Opcodes with one 16-bit index argument to entry in the constant pool
-    static val oneU16ConstArgOpcode: Map[Int, String] = Map(
+    static val oneU16ConstArgOpcode: Map[Int, String] = Map([
         0x13: "ldc_w",
         0x14: "ldc2_w",
         0xb2: "getstatic",
@@ -297,10 +297,10 @@ union Opcode {
         0xbd: "anewarray",
         0xc0: "checkcast",
         0xc1: "instanceof",
-    )
+    ])
 
     ## Opcodes with one 16-bit branch offset argument
-    static val oneU16BranchArgOpcode: Map[Int, String] = Map(
+    static val oneU16BranchArgOpcode: Map[Int, String] = Map([
         0x99: "ifeq",
         0x9a: "ifne",
         0x9b: "iflt",
@@ -319,10 +319,10 @@ union Opcode {
         0xa8: "jsr",
         0xc6: "ifnull",
         0xc7: "ifnonnull",
-    )
+    ])
 
     ## Opcodes with no arguments
-    static val zeroArgOpcodes: Map[Int, String] = Map(
+    static val zeroArgOpcodes: Map[Int, String] = Map([
         0x00: "nop",
         0x01: "aconst_null",
         0x02: "iconst_m1",
@@ -473,7 +473,7 @@ union Opcode {
         0xca: "breakpoint",
         0xfe: "impdep1",
         0xff: "impdep2",
-    )
+    ])
 
     static val u8ArgOpcodes: Set[Int] = [
         oneU8LocalArgOpcode.keys().toList(),
@@ -486,13 +486,13 @@ union Opcode {
         [sipush, iinc],
     ].flatten().toSet()
 
-    static val u32ArgOpcodes: Set[Int] = Set(invokeinterface, invokedynamic)
+    static val u32ArgOpcodes: Set[Int] = Set([invokeinterface, invokedynamic])
 
     # stack info
 
     ## These are the simplest opcodes that never branches
     ## and always changes the stack by a fixed amount
-    static val simpleStackChangeOpcodes: Map[Int, Int] = Map(
+    static val simpleStackChangeOpcodes: Map[Int, Int] = MapOf(
         nop: 0,
         pop: -1,
         pop2: -2,
@@ -606,7 +606,7 @@ union Opcode {
 
     ## These are opcodes that halts the method, so the stack
     ## size doesn't matter after this anymore.
-    static val terminalStackChangeOpcodes: Set[Int] = Set(
+    static val terminalStackChangeOpcodes: Set[Int] = Set([
         ireturn,
         lreturn,
         freturn,
@@ -614,21 +614,21 @@ union Opcode {
         areturn,
         return_,
         athrow,
-    )
+    ])
 
     ## Opcodes that branch conditionally after comparing TOS int with zero
-    static val ifZeroCmp: Set[Int] = Set(
+    static val ifZeroCmp: Set[Int] = Set([
         ifeq,
         ifne,
         iflt,
         ifge,
         ifgt,
         ifle,
-    )
+    ])
 
     ## Opcodes that branch conditionally after compareing top two ints
     ## on the stack
-    static val ifICmp: Set[Int] = Set(
+    static val ifICmp: Set[Int] = Set([
         if_icmpeq,
         if_icmpne,
         if_icmplt,
@@ -637,14 +637,14 @@ union Opcode {
         if_icmple,
         if_acmpeq,
         if_acmpne,
-    )
+    ])
 
-    static val returnFamily: Set[Int] = Set(
+    static val returnFamily: Set[Int] = Set([
         ireturn,
         lreturn,
         freturn,
         dreturn,
         areturn,
         return_,
-    )
+    ])
 }

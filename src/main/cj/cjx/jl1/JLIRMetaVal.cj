@@ -47,7 +47,7 @@ union JLIRMetaVal: Repr, Eq, Default {
     @derive(repr)
     class Scope {
         val parent: Nullable[Scope]
-        val locals: Map[String, JLIRMetaVal] = Map()
+        val locals: Map[String, JLIRMetaVal] = Map([])
 
         def getOrNull(self, name: String): Nullable[JLIRMetaVal] {
             if val v = locals.getOrNull(name) {

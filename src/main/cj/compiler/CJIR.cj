@@ -273,7 +273,7 @@ class CJIR {
             ReifiedType(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
         def _getBinding(self): Binding {
-            val map: Map[String, Type] = Map()
+            val map: Map[String, Type] = Map([])
             for i = 0; i < args.size(); i++ {
                 map[defn.typeParameters[i].name] = args[i]
             }
@@ -298,7 +298,7 @@ class CJIR {
             Trait(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
         def _getBinding(self): Binding {
-            val map: Map[String, Type] = Map()
+            val map: Map[String, Type] = Map([])
             for i = 0; i < args.size(); i++ {
                 map[defn.typeParameters[i].name] = args[i]
             }

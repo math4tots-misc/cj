@@ -6,7 +6,7 @@ import cj.Argv
 
 class ListDeps {
 
-    static val excludes: Set[String] = Set(
+    static val excludes: Set[String] = SetOf(
         "java/lang/String",
         "java/lang/Object",
         "java/math/BigInteger",
@@ -23,8 +23,8 @@ class ListDeps {
     ]
 
     class Entry {
-        val fields: Set[Tuple[String, String]] = Set()
-        val methods: Set[Tuple[String, String]] = Set()
+        val fields: Set[Tuple[String, String]] = Set([])
+        val methods: Set[Tuple[String, String]] = Set([])
     }
 
     def main() {
@@ -35,7 +35,7 @@ class ListDeps {
             clss.add(cls)
         }
         val internals = Set.fromIterable(clss.map(cls -> cls.name))
-        val externals = Map[String, Entry]()
+        val externals = Map[String, Entry]([])
         val shouldExclude: Fn[String, Bool] = cls -> {
             cls in internals or cls in excludes or excludePkgs.any(pkg -> cls.startsWith(pkg))
         }

@@ -1,5 +1,6 @@
 package cjx.jl1
 
+import cj.MapOf
 import cjx.jl1.JLType
 import cjx.jl1.JLError
 import cj.FS
@@ -116,7 +117,7 @@ class JLCodegen {
         var finallyJumpRegistry: Nullable[FinallyJumpRegistry] = null
 
         ## Maps local variable ids to their JVM local variable slot
-        val localMap: Map[Int, Int] = Map()
+        val localMap: Map[Int, Int] = MapOf()
         var localSize: Int = 0
         val localSizeStack: List[Int] = []
         val localStack: List[List[JLIRLocal]] = [[]]

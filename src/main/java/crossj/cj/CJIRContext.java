@@ -13,9 +13,10 @@ public final class CJIRContext extends CJIRContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
             "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.BigInt", "cj.Repr", "cj.ToBool",
-            "cj.ToChar", "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.Set",
-            "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord", "cj.Hash", "cj.Fn0",
-            "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4", "cj.Default");
+            "cj.ToChar", "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.MapOf",
+            "cj.Set", "cj.SetOf", "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord",
+            "cj.Hash", "cj.Fn0", "cj.Fn1", "cj.Fn2", "cj.Fn3", "cj.Fn4", "cj.Tuple2", "cj.Tuple3", "cj.Tuple4",
+            "cj.Default");
 
     /**
      * These are the names that can only be used in special contexts.
@@ -26,10 +27,11 @@ public final class CJIRContext extends CJIRContextBase {
     static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Any", List.of("cj.Any")),
             Pair.of("Unit", List.of("cj.Unit")), Pair.of("Nullable", List.of("cj.Nullable")),
             Pair.of("NonNull", List.of("cj.NonNull")), Pair.of("List", List.of("cj.List")),
-            Pair.of("Map", List.of("cj.Map")), Pair.of("Set", List.of("cj.Set")),
-            Pair.of("NoReturn", List.of("cj.NoReturn")), Pair.of("Fn", List.of()), Pair.of("Fn0", List.of("cj.Fn0")),
-            Pair.of("Fn1", List.of("cj.Fn1")), Pair.of("Fn2", List.of("cj.Fn2")), Pair.of("Fn3", List.of("cj.Fn3")),
-            Pair.of("Fn4", List.of("cj.Fn4")), Pair.of("Tuple", List.of()), Pair.of("Tuple2", List.of("cj.Tuple2")),
+            Pair.of("Map", List.of("cj.Map")), Pair.of("MapOf", List.of("cj.MapOf")), Pair.of("Set", List.of("cj.Set")),
+            Pair.of("SetOf", List.of("cj.SetOf")), Pair.of("NoReturn", List.of("cj.NoReturn")),
+            Pair.of("Fn", List.of()), Pair.of("Fn0", List.of("cj.Fn0")), Pair.of("Fn1", List.of("cj.Fn1")),
+            Pair.of("Fn2", List.of("cj.Fn2")), Pair.of("Fn3", List.of("cj.Fn3")), Pair.of("Fn4", List.of("cj.Fn4")),
+            Pair.of("Tuple", List.of()), Pair.of("Tuple2", List.of("cj.Tuple2")),
             Pair.of("Tuple3", List.of("cj.Tuple3")), Pair.of("Tuple4", List.of("cj.Tuple4")),
             Pair.of("Iterator", List.of("cj.Iterator")), Pair.of("Promise", List.of("cj.Promise")),
             Pair.of("Default", List.of("cj.Default")), Pair.of("Self", List.of()));
@@ -265,17 +267,17 @@ public final class CJIRContext extends CJIRContextBase {
     CJIRType getTupleType(List<CJIRType> args, CJMark... marks) {
         CJIRItem item;
         switch (args.size()) {
-            case 2:
-                item = getTuple2Item();
-                break;
-            case 3:
-                item = getTuple3Item();
-                break;
-            case 4:
-                item = getTuple4Item();
-                break;
-            default:
-                throw CJError.of("Tuple" + args.size() + " is not supported", marks);
+        case 2:
+            item = getTuple2Item();
+            break;
+        case 3:
+            item = getTuple3Item();
+            break;
+        case 4:
+            item = getTuple4Item();
+            break;
+        default:
+            throw CJError.of("Tuple" + args.size() + " is not supported", marks);
         }
         checkItemArgs(item, args);
         return new CJIRClassType(item, args);

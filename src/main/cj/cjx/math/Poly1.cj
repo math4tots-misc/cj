@@ -15,7 +15,7 @@ class Poly1[R : CommutativeRing] :
 
     val coefs : List[R]
 
-    @variadic def(coefs: List[R]): Self = fromCoefficients(coefs)
+    def(coefs: List[R]): Self = fromCoefficients(coefs)
 
     def fromCoefficients(coefs: List[R]): Self = {
         while coefs and coefs.last() == R.zero {
@@ -24,9 +24,9 @@ class Poly1[R : CommutativeRing] :
         __malloc(coefs)
     }
 
-    def __get_zero(): Self = Self()
-    def __get_one(): Self = Self(R.one)
-    def __get_x(): Self = Self(R.zero, R.one)
+    def __get_zero(): Self = Self([])
+    def __get_one(): Self = Self([R.one])
+    def __get_x(): Self = Self([R.zero, R.one])
 
     def apply(self, x: R): R = {
         var result = R.zero

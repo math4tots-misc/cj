@@ -60,7 +60,7 @@ class Test11Class {
         a.mutableField = [5, 6, 7]
         Assert.equal(a.mutableField, [5, 6, 7])
 
-        val map = Map(a: 3, DerivePod([], "xx"): 7)
+        val map = Map([a: 3, DerivePod([], "xx"): 7])
         Assert.equal(map[a], 3)
     }
 

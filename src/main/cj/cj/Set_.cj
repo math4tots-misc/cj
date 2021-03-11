@@ -5,7 +5,6 @@ class Set_ {
 
     def of[T?: Hash](ts: List[T]): Set[T] = Set[T].of(ts)
 
-    @variadic
     def __new[T?: Hash](ts: List[T]): Set[T] = Self.of(ts)
 
     def fromIterable[T?: Hash, I: Iterable[T]](ts: I): Set[T] {
