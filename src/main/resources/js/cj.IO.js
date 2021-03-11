@@ -1,19 +1,22 @@
 class MC$cj$IO {
-    M$println(TV$T, t) {
-        console.log(TV$T.M$toString(t));
+    M$debug(TV$T, t) {
+        console.log(t);
     }
-    M$print(TV$T, t) {
+    M$printstr(s) {
         if (typeof process !== 'undefined') {
-            process.stdout.write(TV$T.M$toString(t));
+            process.stdout.write(s);
         } else {
-            console.log(TV$T.M$toString(t));
+            console.log(s);
         }
     }
-    M$eprintln(TV$T, t) {
-        console.error(TV$T.M$toString(t));
+    M$printlnstr(s) {
+        console.log(s);
     }
-    M$panic(TV$T, t) {
-        throw new Error(TV$T.M$toString(t));
+    M$eprintlnstr(s) {
+        console.error(s);
+    }
+    M$panicstr(s) {
+        throw new Error(s);
     }
     M$input() {
         const fs = require('fs');

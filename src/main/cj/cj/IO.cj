@@ -7,6 +7,7 @@ native class IO {
     def panic[T?: ToString](t: T): NoReturn = panicstr(t.toString())
 
     def debug[T](t: T)
+    def printstr(s: String)
     def printlnstr(s: String)
     def eprintlnstr(s: String)
     def panicstr(s: String): NoReturn
