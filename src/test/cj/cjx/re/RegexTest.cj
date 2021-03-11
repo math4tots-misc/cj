@@ -130,7 +130,7 @@ class RegexTest {
     @test
     def matcher() {
         {
-            val re = Regex("a+", "b+", "ab+", "[c-z]+", "\n")
+            val re = Regex(["a+", "b+", "ab+", "[c-z]+", "\n"])
             val m = re.matcher("aaaxabbbazz\nasdf")
             val results : List[String] = []
             while not m.eof() {

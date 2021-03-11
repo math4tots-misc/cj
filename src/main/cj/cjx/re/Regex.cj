@@ -10,12 +10,19 @@ import cj.Error
 ##
 class Regex {
 
+    @implicit(String, _fromString)
+    @implicit(List, _fromList)
+    class Converter {
+        val x: Regex
+        def _fromString(s: String): Self = Self(Regex.fromPatterns([s]))
+        def _fromList(pats: List[String]): Self = Self(Regex.fromPatterns(pats))
+    }
+
     static val defaultFilename = "<string>"
 
     val nfa: CachingNFA
 
-    @variadic
-    def(patterns: List[String]): Self = Self.fromPatterns(patterns)
+    def(conv: Converter): Self = conv.x
 
     def fromPatterns(patterns: List[String]): Self = (
         Self.__malloc(CachingNFA(NFA.fromPatterns(patterns))))
