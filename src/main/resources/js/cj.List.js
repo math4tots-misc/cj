@@ -2,15 +2,6 @@ class MC$cj$List {
     constructor(TV$T) {
         this.TV$T = TV$T;
     }
-    M$empty() {
-        return [];
-    }
-    M$__new(self) {
-        return self;
-    }
-    M$iter(self) {
-        return self[Symbol.iterator]();
-    }
     *M$iterFrom(self, start) {
         for (let i = start; i < self.length; i++) {
             yield self[i];

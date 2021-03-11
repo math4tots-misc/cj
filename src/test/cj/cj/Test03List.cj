@@ -151,8 +151,8 @@ class Test03List {
 
     @test
     def allAny() {
-        Assert(List[Int]().all(x -> x))
-        Assert(not List[String]().any(x -> x))
+        Assert(List[Int].empty().all(x -> x))
+        Assert(not List[String].empty().any(x -> x))
         Assert([1, 2, 3].all(x -> x))
         Assert(not [1, 0, 3].all(x -> x))
         Assert(not [0, 0, 0].all(x -> x))
@@ -163,7 +163,7 @@ class Test03List {
 
     @test
     def reverse() {
-        Assert.equal(List[Int]().reversed(), [])
+        Assert.equal(List[Int].empty().reversed(), [])
         Assert.equal([1, 2, 3].reversed(), [3, 2, 1])
     }
 }

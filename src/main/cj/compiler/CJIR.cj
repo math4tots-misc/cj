@@ -314,7 +314,7 @@ class CJIR {
     }
 
     def _getTraits(mark: CJMark, binding: Binding, decls: List[TraitDeclaration]): List[Trait] {
-        val traits = List[Trait]()
+        val traits = List[Trait].empty()
         for traitDecl in decls {
             if traitDecl.conditions.all(c -> c.isSatisfied(mark, binding)) {
                 traits.add(traitDecl.trait_.applyBinding(mark, binding))

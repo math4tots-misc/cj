@@ -13,9 +13,9 @@ native class List[T?] :
         Hash if T : Hash,
         Approximate if T : Approximate,
         Repr if T : Repr {
-    @generic def empty(): Self
-    @variadic @generic def(list: Self): Self
-    @generic def iter(self: Self): Iterator[T]
+    @generic def empty(): Self = []
+    @variadic @generic def of(self): Self = self
+    @generic def iter(self: Self): Iterator[T] = js!(Iterator[T], self, "[Symbol.iterator]()")
     @generic def iterFrom(self: Self, start: Int): Iterator[T]
     @generic def size(self: Self): Int
     @generic def isEmpty(self: Self): Bool

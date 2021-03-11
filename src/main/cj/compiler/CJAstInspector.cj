@@ -128,7 +128,7 @@ class CJAstInspector {
             case string(x) = x.repr()
             case bigint(x) = x.repr()
             case call(nt, methodName, typeArgs, args) {
-                val argstrs = List[String]()
+                val argstrs = List[String].empty()
                 for arg in args {
                     if val argstr = _expr0(arg) { argstrs.add(argstr) } else { return null }
                 }
@@ -137,7 +137,7 @@ class CJAstInspector {
                 "call(" + owner + ", " + typestrs + ", [" + ", ".join(argstrs) + "])"
             }
             case callname(methodName, typeArgs, args) {
-                val argstrs = List[String]()
+                val argstrs = List[String].empty()
                 for arg in args {
                     if val argstr = _expr0(arg) { argstrs.add(argstr) } else { return null }
                 }

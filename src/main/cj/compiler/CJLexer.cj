@@ -85,8 +85,8 @@ class CJLexer {
 
     def lex(filename: String, string: String): List[CJToken] = {
         val oldTokens = lexer.lex(filename, string)
-        val newTokens = List[CJToken]()
-        val stack = List[Int]()
+        val newTokens = List[CJToken].empty()
+        val stack = List[Int].empty()
         for token in oldTokens {
             switch token.type {
                 case '('

@@ -288,7 +288,7 @@ class CJSolver:
         val methodScope = CJScope(itemScope)
 
         # update type variables with the conditions of the method
-        val conditions = List[CJIR.TypeCondition]()
+        val conditions = List[CJIR.TypeCondition].empty()
         for astCondition in astMethod.conditions {
             val condition = solveTypeCondition(itemScope, astCondition)
             val itemTypeVar = when itemScope.get(astCondition.mark, condition.variableName) {
@@ -306,7 +306,7 @@ class CJSolver:
         }
 
         # method level type parameters
-        val typeParameters = List[CJIR.TypeParameter]()
+        val typeParameters = List[CJIR.TypeParameter].empty()
         for astTypeParam in astMethod.typeParameters {
             val typeParam = CJIR.TypeParameter(
                 astTypeParam.mark,
@@ -327,7 +327,7 @@ class CJSolver:
         }
 
         # parameters
-        val parameters = List[CJIR.Local]()
+        val parameters = List[CJIR.Local].empty()
         for astParam in astMethod.parameters {
             val paramType = solveType(methodScope, astParam.type.get())
             val param = CJIR.Local(astParam.mark, astParam.mutable, astParam.name, paramType)
@@ -356,7 +356,7 @@ class CJSolver:
 
     private def createClassMallocMethod(self, scope: CJScope, cls: CJIR.ClassDef) {
         todo(tlMalloc, "malloc", cls.name, () -> {
-            val parameters = List[CJIR.Local]()
+            val parameters = List[CJIR.Local].empty()
             for field in cls.fields {
                 if not field.static_ and field.init.isEmpty() and not field.lateinit {
                     parameters.add(CJIR.Local(
@@ -477,7 +477,7 @@ class CJSolver:
             types)
         uni.cases.add(case_)
 
-        val params = List[CJIR.Local]()
+        val params = List[CJIR.Local].empty()
         for i = 0; i < types.size(); i++ {
             params.add(CJIR.Local(astCase.types[i].mark, false, "a" + i, types[i]))
         }

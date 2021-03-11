@@ -82,7 +82,7 @@ class CJParser {
         sb.toString()
     }
     private def parseOptSeq[T](self, start: Int, sep: Int, el: Fn[T]): List[T] {
-        val list = List[T]()
+        val list = List[T].empty()
         if consume(start) {
             list.add(el.call())
             while consume(sep) {
@@ -174,7 +174,7 @@ class CJParser {
         expect(CJToken.kwPACKAGE)
         val packageName = parsePackageName()
         expectDelimiters()
-        val imports = List[CJAst.Import]()
+        val imports = List[CJAst.Import].empty()
         while at(CJToken.kwIMPORT) {
             imports.add(parseImport())
         }
@@ -200,7 +200,7 @@ class CJParser {
         skipDelimiters()
         expect('{')
         skipDelimiters()
-        val members = List[CJAst.Member]()
+        val members = List[CJAst.Member].empty()
         while not consume('}') {
             members.add(parseMember())
         }
@@ -275,7 +275,7 @@ class CJParser {
             comment: String?,
             annotations: List[CJAst.Annotation],
             modifiers: List[CJModifier]): CJAst.Method {
-        val conditions = List[CJAst.TypeCondition]()
+        val conditions = List[CJAst.TypeCondition].empty()
         if consume(CJToken.kwIF) {
             conditions.add(parseTypeCondition())
             while consume(CJToken.kwAND) {
@@ -838,14 +838,14 @@ class CJParser {
                 val target = parseExpr()
                 expect('{')
                 skipDelimiters()
-                val cases = List[CJAst.WhenCase]()
+                val cases = List[CJAst.WhenCase].empty()
                 while not at('}') and not at(CJToken.kwELSE) {
-                    val patterns = List[Tuple[CJMark, String, List[CJAst.Local], Bool]]()
+                    val patterns = List[Tuple[CJMark, String, List[CJAst.Local], Bool]].empty()
                     while at(CJToken.kwCASE) {
                         val caseMark = self.mark
                         expect(CJToken.kwCASE)
                         val caseName = parseId()
-                        val decls = List[Local]()
+                        val decls = List[Local].empty()
                         var trailingArgs = false
                         if consume('(') {
                             while not consume(')') {
@@ -873,11 +873,11 @@ class CJParser {
                 # TODO: actually save the parsed else-cases
                 while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
                     while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
-                        val patterns = List[Tuple[CJMark, String?, List[CJAst.Local], Bool]]()
+                        val patterns = List[Tuple[CJMark, String?, List[CJAst.Local], Bool]].of()
                         val caseMark = self.mark
                         expect(CJToken.kwELSE)
                         val caseNameVar = if at(CJToken.tID) { null(parseId()) } else { null }
-                        val decls = List[Local]()
+                        val decls = List[Local].empty()
                         var trailingArgs = false
                         if consume('(') {
                             while not consume(')') {
@@ -914,7 +914,7 @@ class CJParser {
                 val target = parseExpr()
                 expect('{')
                 skipDelimiters()
-                val cases = List[CJAst.SwitchCase]()
+                val cases = List[CJAst.SwitchCase].empty()
                 while not at('}') and not at(CJToken.kwELSE) {
                     expect(CJToken.kwCASE)
                     val valexprs = [parseExpr()]
@@ -938,7 +938,7 @@ class CJParser {
             case CJToken.kwTRY {
                 next()
                 val body = parseBlock()
-                val clauses = List[CJAst.Catch]()
+                val clauses = List[CJAst.Catch].empty()
                 while consume(CJToken.kwCATCH) {
                     val target = parseTarget(false)
                     expect(':')
@@ -1012,7 +1012,7 @@ class CJParser {
     private def parseBlockExprs(self): List[Expr] {
         expect('{')
         skipDelimiters()
-        val exprs = List[Expr]()
+        val exprs = List[Expr].empty()
         while not consume('}') {
             exprs.add(parseExprPr(0))
             expectDelimiters()

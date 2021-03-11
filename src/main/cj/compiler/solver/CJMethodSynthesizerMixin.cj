@@ -21,8 +21,8 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
                 else = ()
             }
         }
-        val parameters = List[CJAst.Local]()
-        val args = List[Expr]()
+        val parameters = List[CJAst.Local].empty()
+        val args = List[Expr].empty()
         for member in cls.members {
             when member {
                 case field(field) {
@@ -193,9 +193,9 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
 
     def _synthesizeReprForUnion(self, item: CJAst.Item) {
         val mark = item.mark
-        val cases = List[CJAst.WhenCase]()
+        val cases = List[CJAst.WhenCase].empty()
         for case_ in item.cases {
-            val decls = List[CJAst.Local]()
+            val decls = List[CJAst.Local].empty()
             for i = 0; i < case_.types.size(); i++ {
                 decls.add(CJAst.Local(mark, false, "a" + i, null))
             }

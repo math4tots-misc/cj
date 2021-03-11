@@ -32,7 +32,7 @@ class CJAst {
         val members: List[Member]
         def __get_native_(self): Bool = CJModifier.native_ in modifiers
         def __get_nonStaticFields(self): List[Field] {
-            val fields = List[Field]()
+            val fields = List[Field].empty()
             for member in members {
                 when member {
                     case field(field) = fields.add(field)
@@ -42,7 +42,7 @@ class CJAst {
             fields
         }
         def __get_cases(self): List[Case] {
-            val cases = List[Case]()
+            val cases = List[Case].empty()
             for member in members {
                 when member {
                     case case_(case_) = cases.add(case_)
