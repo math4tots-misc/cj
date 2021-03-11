@@ -13,33 +13,4 @@ class MC$cj$Tuple3 {
     M$get2(self) {
         return self[2];
     }
-    M$__eq(self, other) {
-        return (
-            this.TV$A0.M$__eq(self[0], other[0])
-            && this.TV$A1.M$__eq(self[1], other[1])
-            && this.TV$A2.M$__eq(self[2], other[2])
-        );
-    }
-    M$__lt(self, other) {
-        return (
-            this.TV$A0.M$__lt(self[0], other[0])
-            && this.TV$A1.M$__lt(self[1], other[1])
-            && this.TV$A2.M$__lt(self[2], other[2])
-        );
-    }
-    M$hash(self) {
-        return (
-            combineHash(combineHash(
-                this.TV$A0.M$hash(self[0]),
-                this.TV$A1.M$hash(self[1])),
-                this.TV$A2.M$hash(self[2])));
-    }
-    M$repr(self) {
-        return (
-            "(" + this.TV$A0.M$repr(self[0]) +
-            ", " + this.TV$A1.M$repr(self[1]) +
-            ", " + this.TV$A2.M$repr(self[2]) +
-            ")"
-        );
-    }
 }
