@@ -61,3 +61,11 @@ function typeEq(a, b) {
 function appx(a, b, tolerance) {
     return Math.abs(a - b) < tolerance
 }
+
+class WrappingException extends Error {
+    constructor(typeId, data) {
+        super(data);
+        this.typeId = typeId;
+        this.data = data;
+    }
+}

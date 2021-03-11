@@ -810,9 +810,10 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var type = translateType(e.getExpression().getType());
                 return CJJSBlob.withPrep(out -> {
                     inner.emitPrep(out);
-                    out.append("throw [");
+                    out.append("throw new WrappingException(");
+                    out.append(type + ",");
                     inner.emitMain(out);
-                    out.append("," + type + "];");
+                    out.append(");");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -830,17 +831,17 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     out.append("try{");
                     body.emitSet(out, tmpvar + "=");
                     if (e.getClauses().size() > 0) {
-                        out.append("}catch(p){if(!Array.isArray(p))throw p;const [e,t]=p;");
+                        out.append("}catch(w){if(!(w instanceof WrappingException))throw w;const t=w.typeId;");
                         for (int i = 0; i < e.getClauses().size(); i++) {
                             var clause = e.getClauses().get(i);
                             out.append((i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2())
                                     + ")){");
-                            out.append("const " + translateTarget(clause.get1()) + "=e;");
+                            out.append("const " + translateTarget(clause.get1()) + "=w.data;");
                             var clauseBody = translateExpression(clause.get3());
                             clauseBody.emitSet(out, tmpvar + "=");
                             out.append("}");
                         }
-                        out.append("else{throw p;}");
+                        out.append("else{throw w;}");
                     }
                     out.append("}");
                     if (e.getFin().isPresent()) {
