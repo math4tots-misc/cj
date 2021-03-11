@@ -30,8 +30,11 @@ public final class CJJSOps {
             "getBigInt64", "getBigUint64", "setInt8", "setUint8", "setInt16", "setUint16", "setInt32", "setUint32",
             "setFloat32", "setFloat64", "setBigInt64", "setBigUint64");
 
-    private static List<Pair<String, List<String>>> grandfatheredNativeMethods = List
-            .of(Pair.of("cj.DataView", dataViewMethods), Pair.of("cj.DynamicBuffer", dynamicBufferMethods));
+    private static List<Pair<String, List<String>>> grandfatheredNativeMethods = List.of(
+            Pair.of("cj.DataView", dataViewMethods), Pair.of("cj.DynamicBuffer", dynamicBufferMethods),
+            Pair.of("cj.Range", List.of("of", "inclusive", "upto", "withStep", "iter")));
+
+    private static List<String> nativeTruthyTypes = List.of("cj.Bool", "cj.Int", "cj.Double", "cj.String", "cj.BigInt");
 
     /**
      * Types that can be converted toString in the same way it would in JS.
@@ -59,6 +62,12 @@ public final class CJJSOps {
     private static List<String> nativeRandomAccess = List.of(List.of("cj.List"), typedArrays).flatMap(x -> x);
 
     /**
+     * Types that can be treated like arrays in JS.
+     */
+    private static List<String> nativeSliceableTypes = List.of(List.of("cj.String"), nativeRandomAccess)
+            .flatMap(x -> x);
+
+    /**
      * Types that can be iterated over natively in JS.
      */
     private static List<String> nativeIterable = List.of(List.of("cj.List", "cj.Iterator"), typedArrays)
@@ -66,24 +75,32 @@ public final class CJJSOps {
 
     public static final Map<String, Op> OPS = Map.of(
             mkpair("cj.Bool.repr", ctx -> translateParts(ctx.args, "(\"\"+", ")")),
+            mkpair("cj.Bool.toBool", ctx -> ctx.args.get(0)),
 
             mkpair("cj.Char.toInt", ctx -> ctx.args.get(0)),
             mkpair("cj.Char.size", ctx -> translateParts(ctx.args, "((", ")<0x10000?1:2)")),
+            mkpair("cj.Char.toString", ctx -> translateParts(ctx.args, "String.fromCodePoint(", ")")),
 
-            mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)), mkpair("cj.Int.__get_zero", ctx -> CJJSBlob2.pure("0")),
-            mkpair("cj.Int.__get_one", ctx -> CJJSBlob2.pure("1")), mkpair("cj.Int.__pos", ctx -> ctx.args.get(0)),
-            mkpair("cj.Int.__neg", ctx -> translateParts(ctx.args, "(-", ")")),
-            mkpair("cj.Int.__invert", ctx -> translateParts(ctx.args, "(~", ")")),
-            mkpair("cj.Int.__truncdiv", ctx -> translateOp("(", "|0)", "/", ctx.args)),
+            mkpair("cj.Int.__new", ctx -> ctx.args.get(0)), mkpair("cj.Int.toChar", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.toInt", ctx -> ctx.args.get(0)), mkpair("cj.Int.default", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Int.__get_zero", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Int.__get_one", ctx -> CJJSBlob2.pure("1")),
             mkpair("cj.Int.__div", ctx -> translateOp("(", ")", "/", ctx.args)),
+            mkpair("cj.Int.__truncdiv", ctx -> translateParts(ctx.args, "((", "/", ")|0)")),
             mkpair("cj.Int.hash", ctx -> ctx.args.get(0)),
             mkpair("cj.Int.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),
             mkpair("cj.Int.repr", ctx -> translateOp("(\"\"+", ")", "", ctx.args)),
             mkpair("cj.Int._fromChar", ctx -> ctx.args.get(0)),
+            mkpair("cj.Int.abs", ctx -> translateParts(ctx.args, "Math.abs(", ")")),
 
+            mkpair("cj.Double.__new", ctx -> ctx.args.get(0)), mkpair("cj.Double.default", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Double.__get_zero", ctx -> CJJSBlob2.pure("0")),
+            mkpair("cj.Double.__get_one", ctx -> CJJSBlob2.pure("1")),
             mkpair("cj.Double._fromInt", ctx -> translateOp("(", "|0)", "", ctx.args)),
+            mkpair("cj.Double.abs", ctx -> translateParts(ctx.args, "Math.abs(", ")")),
             mkpair("cj.Double.repr", ctx -> translateOp("(\"\"+", ")", "", ctx.args)),
             mkpair("cj.Double.__div", ctx -> translateOp("(", ")", "/", ctx.args)),
+            mkpair("cj.Double.__truncdiv", ctx -> translateParts(ctx.args, "((", "/", ")|0)")),
 
             mkpair("cj.String.__add", ctx -> {
                 Assert.equals(ctx.args.size(), 2);
@@ -98,11 +115,47 @@ public final class CJJSOps {
             mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),
             mkpair("cj.String.charAt", ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".codePointAt(", ")"))),
+            mkpair("cj.String.startsWith",
+                    ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".startsWith(", ")"))),
+            mkpair("cj.String.endsWith", ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".endsWith(", ")"))),
             mkpair("cj.String.size", ctx -> translateParts(ctx.args, "", ".length")),
+            mkpair("cj.String.__mul", ctx -> translateParts(ctx.args, "", ".repeat(", ")")),
+            mkpair("cj.String.replace", ctx -> translateParts(ctx.args, "", ".split(", ").join(", ")")),
+            mkpair("cj.String.lower", ctx -> translateParts(ctx.args, "", ".toLowerCase()")),
+            mkpair("cj.String.upper", ctx -> translateParts(ctx.args, "", ".toUpperCase()")),
+            mkpair("cj.String.parseInt", ctx -> nanToNull(ctx, translateParts(ctx.args, "parseInt(", ",10)"))),
+            mkpair("cj.String.parseDouble", ctx -> nanToNull(ctx, translateParts(ctx.args, "parseFloat(", ")"))),
+
+            mkpair("cj.StringBuilder.__new", ctx -> CJJSBlob2.simplestr("[]", false)),
+            mkpair("cj.StringBuilder.add", ctx -> translateParts(ctx.args, "", ".push(", ")")),
+            mkpair("cj.StringBuilder.str", ctx -> translateParts(ctx.args, "", ".push(", ")")),
+            mkpair("cj.StringBuilder.char", ctx -> translateParts(ctx.args, "", ".push(String.fromCodePoint(", "))")),
+            mkpair("cj.StringBuilder.toString", ctx -> translateParts(ctx.args, "", ".join('')")),
+            mkpair("cj.StringBuilder.default", ctx -> CJJSBlob2.simplestr("[]", false)),
+
+            mkpair("cj.BigInt.__new", ctx -> ctx.args.get(0)),
+            mkpair("cj.BigInt.__get_zero", ctx -> CJJSBlob2.simplestr("0n", true)),
+            mkpair("cj.BigInt.__get_one", ctx -> CJJSBlob2.simplestr("1n", true)),
+            mkpair("cj.BigInt.fromInt", ctx -> translateParts(ctx.args, "BigInt(", ")")),
+            mkpair("cj.BigInt.fromDouble", ctx -> translateParts(ctx.args, "BigInt(", ")")),
+            mkpair("cj.BigInt.fromString", ctx -> translateParts(ctx.args, "BigInt(", ")")),
+            mkpair("cj.BigInt.repr", ctx -> translateParts(ctx.args, "(", "+'n')")),
+            mkpair("cj.BigInt.isNegative", ctx -> translateParts(ctx.args, "(", "<0)")),
+            mkpair("cj.BigInt.ipow", ctx -> translateParts(ctx.args, "(", "**BigInt(", "))")),
+            mkpair("cj.BigInt.__truncdiv", ctx -> translateParts(ctx.args, "(", "/", ")")),
+            mkpair("cj.BigInt.__div", ctx -> {
+                var rationalType = (CJIRClassType) ctx.e.getType();
+                var method = rationalType.findMethod("__new").getMethod();
+                var llmethod = new CJJSLLMethod(rationalType, method, CJJSTypeBinding.empty(rationalType));
+                ctx.requestMethod.accept(llmethod);
+                return translateCall(ctx.mark, "cj$math$Rational$__new", ctx.args);
+            }),
 
             mkpair("cj.List.__new", ctx -> translateParts(ctx.args, "", "")),
+            mkpair("cj.List._clearListWithSize", ctx -> translateParts(ctx.args, "Array(", ")")),
             mkpair("cj.List.toBool", ctx -> translateOp("(", ".length!==0)", "", ctx.args)),
             mkpair("cj.List.empty", ctx -> CJJSBlob2.simplestr("[]", false)),
+            mkpair("cj.List.default", ctx -> CJJSBlob2.simplestr("[]", false)),
             mkpair("cj.List.add", ctx -> translateParts(ctx.args, "", ".push(", ")")),
             mkpair("cj.List.pop", ctx -> translateParts(ctx.args, "", ".pop()")),
             mkpair("cj.List.removeIndex", ctx -> translateParts(ctx.args, "", ".splice(", ", 1)[0]")),
@@ -111,6 +164,7 @@ public final class CJJSOps {
             mkpair("cj.List.isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)")),
             mkpair("cj.List._sortByCmp", ctx -> translateParts(ctx.args, "", ".sort(", ")")),
             mkpair("cj.List.reverse", ctx -> translateParts(ctx.args, "", ".reverse()")),
+            mkpair("cj.List._clearItem", ctx -> translateParts(ctx.args, "(", "[", "]=undefined)")),
             mkpair("cj.List.__eq", ctx -> {
                 var typeArgs = ctx.owner.getArgs();
                 Assert.equals(typeArgs.size(), 1);
@@ -130,6 +184,9 @@ public final class CJJSOps {
             mkpair("cj.Error.__new", ctx -> translateParts(ctx.args, "new Error(", ")")),
             mkpair("cj.Error.message", ctx -> translateParts(ctx.args, "", ".message")),
 
+            mkpair("cj.Math.min", ctx -> translateParts(ctx.args, "Math.min(", ",", ")")),
+            mkpair("cj.Math.max", ctx -> translateParts(ctx.args, "Math.max(", ",", ")")),
+
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
 
             mkpair("cj.ArrayBuffer.__new", ctx -> translateParts(ctx.args, "new ArrayBuffer(", ")")),
@@ -137,11 +194,19 @@ public final class CJJSOps {
             mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
             mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
 
-            mkpair("cj.IO.jsdebug", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
+            mkpair("cj.IO.debug", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.printlnstr", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.eprintlnstr", ctx -> translateCall(ctx.mark, "console.error", ctx.args)),
+            mkpair("cj.IO.panicstr", ctx -> translateCall(ctx.mark, "new Error", ctx.args)),
 
             mkpair("cj.Time.now", ctx -> CJJSBlob2.simplestr("(Date.now()/1000)", false)),
+
+            mkpair("cj.JSON.parse", ctx -> translateParts(ctx.args, "JSON.parse(", ")")),
+            mkpair("cj.JSON._fromList", ctx -> ctx.args.get(0)), mkpair("cj.JSON._unsafeCast", ctx -> ctx.args.get(0)),
+            mkpair("cj.JSON.__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")")),
+            mkpair("cj.JSON.__getitem", ctx -> translateParts(ctx.args, "", "[", "]")),
+            mkpair("cj.JSON._fromUnit",
+                    ctx -> new CJJSBlob2(ctx.args.get(0).getPrep(), out -> out.append("null"), true)),
 
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)));
 
@@ -157,6 +222,13 @@ public final class CJJSOps {
         for (int i = 0; i <= 4; i++) {
             var type = "cj.Fn" + i;
             OPS.put(type + ".call", ctx -> translateDynamicCall(ctx.mark, ctx.args));
+        }
+
+        for (var type : nativeTruthyTypes) {
+            if (!type.equals("cj.Bool")) {
+                var key = type + ".toBool";
+                OPS.put(key, ctx -> translateParts(ctx.args, "(!!", ")"));
+            }
         }
 
         for (var type : nativeToStringTypes) {
@@ -182,10 +254,17 @@ public final class CJJSOps {
             OPS.put(type + ".__lt", ctx -> translateParts(ctx.args, "(", "<", ")"));
             OPS.put(type + ".__le", ctx -> translateParts(ctx.args, "(", "<=", ")"));
             OPS.put(type + ".__gt", ctx -> translateParts(ctx.args, "(", ">", ")"));
-            OPS.put(type + ".__ge", ctx -> translateParts(ctx.args, "(", ">", ")"));
+            OPS.put(type + ".__ge", ctx -> translateParts(ctx.args, "(", ">=", ")"));
         }
 
         for (var type : nativeRandomAccess) {
+            OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
+            OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
+            OPS.put(type + ".__getitem", ctx -> translateParts(ctx.args, "", "[", "]"));
+            OPS.put(type + ".__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")"));
+        }
+
+        for (var type : nativeSliceableTypes) {
             OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
             OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
             OPS.put(type + ".__getitem", ctx -> translateParts(ctx.args, "", "[", "]"));
@@ -211,6 +290,8 @@ public final class CJJSOps {
                 return translateCall(ctx.mark, "listeq0", ctx.args);
             });
             OPS.put(typedArray + ".withSize", ctx -> translateParts(ctx.args, "new " + name + "(", ")"));
+
+            OPS.put(typedArray + ".repr", ctx -> translateParts(ctx.args, "'" + name + "('+(", ").join(', ')+')'"));
         }
 
         for (var pair : grandfatheredNativeMethods) {
@@ -237,12 +318,12 @@ public final class CJJSOps {
         // private final String key;
         private final CJMark mark;
         private final CJJSTypeBinding binding;
-        // private final CJIRMethodCall e;
+        private final CJIRMethodCall e;
         private final List<CJJSBlob2> args;
         private final CJIRClassType owner;
         private final CJIRReifiedMethodRef reifiedMethodRef;
         // private final CJJSReifiedMethod llmethod;
-        // private final Consumer<CJJSReifiedMethod> requestMethod;
+        private final Consumer<CJJSLLMethod> requestMethod;
         private final BiConsumer<String, CJMark> requestNative;
 
         public Context(String key, CJJSTypeBinding binding, CJIRMethodCall e, List<CJJSBlob2> args, CJIRClassType owner,
@@ -251,12 +332,12 @@ public final class CJJSOps {
             // this.key = key;
             this.mark = e.getMark();
             this.binding = binding;
-            // this.e = e;
+            this.e = e;
             this.args = args;
             this.owner = owner;
             this.reifiedMethodRef = reifiedMethodRef;
             // this.llmethod = llmethod;
-            // this.requestMethod = requestMethod;
+            this.requestMethod = requestMethod;
             this.requestNative = requestNative;
         }
 
@@ -294,6 +375,15 @@ public final class CJJSOps {
         ctx.requestJS("defined.js");
         return new CJJSBlob2(inner.getPrep(), out -> {
             out.append("defined(");
+            inner.emitBody(out);
+            out.append(")");
+        }, false);
+    }
+
+    static CJJSBlob2 nanToNull(Context ctx, CJJSBlob2 inner) {
+        ctx.requestJS("nan-to-null.js");
+        return new CJJSBlob2(inner.getPrep(), out -> {
+            out.append("nanToNull(");
             inner.emitBody(out);
             out.append(")");
         }, false);

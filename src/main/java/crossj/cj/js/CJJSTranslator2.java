@@ -31,6 +31,11 @@ public final class CJJSTranslator2 {
     private static final String jsroot = FS.join("src", "main", "resources", "js2");
 
     private static final Map<String, Set<String>> nativeDepMap = Map.of(
+            Pair.of("cj.BigInt.hash.js", Set.of("cj.String.hash.js", "cj.BigInt.abs.js")),
+            Pair.of("cj.BigInt.erem.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
+            Pair.of("cj.BigInt.ediv.js", Set.of("cj.BigInt.floordiv.js", "cj.BigInt.abs.js")),
+            Pair.of("cj.BigInt.edivrem.js", Set.of("cj.BigInt.erem.js", "cj.BigInt.ediv.js")),
+            Pair.of("cj.Iterator.reduce.js", Set.of("cj.Iterator.fold.js")),
             Pair.of("cj.DynamicBuffer.addUTF8.js",
                     Set.of("cj.DynamicBuffer.fromUTF8.js", "cj.DynamicBuffer.addBuffer.js")),
             Pair.of("cj.DynamicBuffer.fromUTF8.js", Set.of("cj.DynamicBuffer.fromArrayBuffer.js")),
@@ -164,17 +169,19 @@ public final class CJJSTranslator2 {
     }
 
     public void emitQueued() {
-        while (todoMethods.size() > 0) {
-            var reifiedMethod = todoMethods.popLeft();
-            emitMethod(reifiedMethod);
-        }
-        while (todoStaticFields.size() > 0) {
-            var pair = todoStaticFields.popLeft();
-            emitStaticField(pair.get1(), pair.get2());
-        }
-        while (todoNatives.size() > 0) {
-            var pair = todoNatives.popLeft();
-            emitNative(pair.get1(), pair.get2());
+        while (todoMethods.size() > 0 || todoStaticFields.size() > 0 || todoNatives.size() > 0) {
+            if (todoMethods.size() > 0) {
+                var reifiedMethod = todoMethods.popLeft();
+                emitMethod(reifiedMethod);
+            } else if (todoStaticFields.size() > 0) {
+                var pair = todoStaticFields.popLeft();
+                emitStaticField(pair.get1(), pair.get2());
+            } else if (todoNatives.size() > 0) {
+                var pair = todoNatives.popLeft();
+                emitNative(pair.get1(), pair.get2());
+            } else {
+                Assert.that(false);
+            }
         }
     }
 

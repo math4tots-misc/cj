@@ -30,7 +30,13 @@ native class JSON : Repr, Eq {
     @generic def _unsafeCast[T](x: T): JSON
     def _fromUnit(unit: Unit): JSON
     def _fromList(list: List[JSON]): JSON
-    def _fromMap(map: Map[String, JSON]): JSON
+    def _fromMap(map: Map[String, JSON]): JSON {
+        val obj = object()
+        for (k, v) in map.pairs() {
+            obj[k] = v
+        }
+        obj
+    }
 
     @variadic def object(pairs: List[Tuple[String, JSON]]): JSON
 

@@ -146,8 +146,12 @@ final class CJJSExpressionTranslator2 {
                         var fieldIndex = field.getIndex();
                         switch (fmi.getKind()) {
                         case "":
-                            return CJJSTranslator2.isWrapperType(owner) ? args.get(0)
-                                    : translateParts(args, "", "[" + fieldIndex + "]");
+                            if (field.isLateinit()) {
+                                return translateParts(args, "defined(", "[" + fieldIndex + "])");
+                            } else {
+                                return CJJSTranslator2.isWrapperType(owner) ? args.get(0)
+                                        : translateParts(args, "", "[" + fieldIndex + "]");
+                            }
                         case "=":
                             return translateParts(args, "(", "[" + fieldIndex + "]=", ")");
                         case "+=":
@@ -492,7 +496,14 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitAwait(CJIRAwait e, Void a) {
-                return CJJSBlob2.withPrep(out -> out.append("TODO_Await();"), out -> out.append("TODO_Await()"), true);
+                var inner = translate(e.getInner());
+                return new CJJSBlob2(inner.getPrep(), out -> {
+                    out.append("(");
+                    out.addMark(e.getMark());
+                    out.append("await ");
+                    inner.emitBody(out);
+                    out.append(")");
+                }, false);
             }
 
             @Override
