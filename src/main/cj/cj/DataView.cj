@@ -5,8 +5,9 @@ import cj.BigInt
 import cj.ArrayBuffer
 
 native class DataView: ArrayBufferView {
-    def(abuf: ArrayBuffer, useLittleEndian: Bool): Self
-    def fromParts(abuf: ArrayBuffer, byteOffset: Int, byteLength: Int): Self
+    def(abuf: ArrayBuffer): Self = fromParts(abuf, 0, abuf.byteLength, false)
+    def usingLittleEndian(abuf: ArrayBuffer): Self = fromParts(abuf, 0, abuf.byteLength, true)
+    def fromParts(abuf: ArrayBuffer, byteOffset: Int, byteLength: Int, useLittleEndian: Bool): Self
     def useLittleEndian(self, useLittleEndian: Bool)
     def __get_byteOffset(self): Int
     def __get_byteLength(self): Int
