@@ -1,1 +1,0 @@
-class MC$cj$ArrayBuffer {}
