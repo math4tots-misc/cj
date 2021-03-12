@@ -160,13 +160,13 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             if (!FS.exists(path) && item.getTypeParameters().isEmpty()) {
                 // If the file doesn't exist, and it's non-generic, create a dummy
                 var metaClassName = translateItemMetaClassName(item.getFullName());
-                out.append("class " + metaClassName + "{}\n");
+                out.append("class " + metaClassName + "{\n");
+                emitMethods(item, true);
+                out.append("}\n");
             } else {
                 out.append(IO.readFile(path));
+                emitMethods(item, false); // we still want to use the methods that have a body
             }
-
-            // we still want to use the methods that have a body
-            emitMethods(item, false);
         } else {
             emitMetaClass();
         }
