@@ -3,7 +3,7 @@ package www.wa
 import cj.ArrayBufferOrView
 import www.JSObject
 
-class WebAssembly {
+native class WebAssembly {
     native class ResultObject {
         def __get_module(self): Module = js!(Module, self, ".module")
         def __get_instance(self): Instance = js!(Instance, self, ".instance")
