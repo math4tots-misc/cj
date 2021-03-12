@@ -327,7 +327,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         // inAsyncContext = method.isAsync();
         var body = translateExpression(method.getBody().get());
         body.emitPrep(out);
-        if (method.getReturnType().isUnitType()) {
+        if (method.getReturnType().isUnitType() || method.getReturnType().isNoReturnType()) {
             if (!body.isPure()) {
                 body.emitMain(out);
                 out.append(";");
