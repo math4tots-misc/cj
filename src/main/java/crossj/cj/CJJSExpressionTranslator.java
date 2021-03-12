@@ -810,10 +810,16 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var type = translateType(e.getExpression().getType());
                 return CJJSBlob.withPrep(out -> {
                     inner.emitPrep(out);
-                    out.append("throw new WrappingException(");
-                    out.append(type + ",");
-                    inner.emitMain(out);
-                    out.append(");");
+                    out.append("throw ");
+                    if (e.getExpression().getType().repr().equals("cj.Error")) {
+                        inner.emitMain(out);
+                    } else {
+                        out.append("new WrappingException(");
+                        out.append(type + ",");
+                        inner.emitMain(out);
+                        out.append(")");
+                    }
+                    out.append(";");
                     return null;
                 }, out -> {
                     out.append("undefined");
@@ -825,23 +831,46 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             public CJJSBlob visitTry(CJIRTry e, Void a) {
                 var tmpvar = ctx.newTempVarName();
                 var body = translateExpression(e.getBody());
+                var xclauses = e.getClauses().filter(c -> !c.get2().repr().equals("cj.Error"));
+                var yclauses = e.getClauses().filter(c -> c.get2().repr().equals("cj.Error"));
 
                 return CJJSBlob.withPrep(out -> {
                     out.append("let " + tmpvar + ";");
                     out.append("try{");
                     body.emitSet(out, tmpvar + "=");
                     if (e.getClauses().size() > 0) {
-                        out.append("}catch(w){if(!(w instanceof WrappingException))throw w;const t=w.typeId;");
-                        for (int i = 0; i < e.getClauses().size(); i++) {
-                            var clause = e.getClauses().get(i);
-                            out.append(
-                                    (i == 0 ? "if" : "else if") + "(typeEq(t," + translateType(clause.get2()) + ")){");
-                            out.append("const " + translateTarget(clause.get1()) + "=w.data;");
+                        out.append("}catch(w){");
+
+                        if (xclauses.size() > 0) {
+                            out.append("if(w instanceof WrappingException){const t=w.typeId;");
+                            for (int i = 0; i < xclauses.size(); i++) {
+                                var clause = xclauses.get(i);
+                                out.append(i == 0 ? "if" : "else if");
+                                out.append("(typeEq(t," + translateType(clause.get2()) + ")){");
+                                out.append("const " + translateTarget(clause.get1()) + "=w.data;");
+                                var clauseBody = translateExpression(clause.get3());
+                                clauseBody.emitSet(out, tmpvar + "=");
+                                out.append("}");
+                            }
+                            out.append("else{throw w;}");
+                            out.append("}else{");
+                        } else {
+                            out.append("{");
+                        }
+                        if (yclauses.size() > 0) {
+                            if (yclauses.size() != 1) {
+                                throw CJError.of("More than one clause catching cj.Error", e.getMark());
+                            }
+                            var clause = yclauses.get(0);
+                            out.append("if(w instanceof Error){");
+                            out.append("const " + translateTarget(clause.get1()) + "=w;");
                             var clauseBody = translateExpression(clause.get3());
                             clauseBody.emitSet(out, tmpvar + "=");
-                            out.append("}");
+                            out.append("}else{throw w;}");
+                        } else {
+                            out.append("throw w;");
                         }
-                        out.append("else{throw w;}");
+                        out.append("}");
                     }
                     out.append("}");
                     if (e.getFin().isPresent()) {
