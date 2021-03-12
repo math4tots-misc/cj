@@ -1068,6 +1068,23 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     return new CJIRJSBlob(e, type, parts);
                 }
+                case "jsobj!": {
+                    var jsobjtype = ctx.getTypeWithArgs("www.JSObject", List.of(), e.getMark());
+                    var parts = List.<Object>of();
+                    parts.add("{");
+                    for (int i = 0; i < e.getArgs().size(); i++) {
+                        if (i > 0) {
+                            parts.add(",");
+                        }
+                        var pair = solveExprForPair(e.getArgs().get(i));
+                        var key = solveExprForNameOrStringLiteral(pair.get1());
+                        var value = evalExpressionWithType(pair.get2(), jsobjtype);
+                        parts.add(key + ":");
+                        parts.add(value);
+                    }
+                    parts.add("}");
+                    return new CJIRJSBlob(e, jsobjtype, parts);
+                }
                 default:
                     throw CJError.of("Unrecognized macro " + Repr.of(e.getName()), e.getMark());
                 }
@@ -1086,11 +1103,50 @@ final class CJPass04 extends CJPassBaseEx {
         return ir;
     }
 
+    private Pair<CJAstExpression, CJAstExpression> solveExprForPair(CJAstExpression expr) {
+        var pair = solveExprForPairOrNull(expr);
+        if (pair == null) {
+            throw CJError.of("Expected pair here", expr.getMark());
+        }
+        return pair;
+    }
+
+    private Pair<CJAstExpression, CJAstExpression> solveExprForPairOrNull(CJAstExpression expr) {
+        if (!(expr instanceof CJAstTupleDisplay)) {
+            return null;
+        }
+        var tuple = (CJAstTupleDisplay) expr;
+        if (tuple.getExpressions().size() != 2) {
+            return null;
+        }
+        return Pair.of(tuple.getExpressions().get(0), tuple.getExpressions().get(1));
+    }
+
     private CJIRType solveExprForType(CJAstExpression expr) {
         if (!(expr instanceof CJAstTypeExpression)) {
             throw CJError.of("Expected type expression here", expr.getMark());
         }
         return lctx.evalTypeExpression((CJAstTypeExpression) expr);
+    }
+
+    private static String solveExprForNameOrStringLiteral(CJAstExpression expr) {
+        var name = solveExprForNameOrNull(expr);
+        if (name != null) {
+            return name;
+        }
+        var optlit = solveExprForStringLiteralOrEmpty(expr);
+        if (optlit.isPresent()) {
+            return optlit.get();
+        }
+        throw CJError.of("Expected name or string literal here", expr.getMark());
+    }
+
+    private static String solveExprForNameOrNull(CJAstExpression expr) {
+        if (expr instanceof CJAstVariableAccess) {
+            return ((CJAstVariableAccess) expr).getName();
+        } else {
+            return null;
+        }
     }
 
     private static String solveExprForStringLiteral(CJAstExpression expr) {

@@ -18,4 +18,10 @@ class Test13JSON {
             Assert.that(json == MapOf("a": 3, "b": ["hello"]))
         }
     }
+
+    @test
+    def jsobj() {
+        val json: JSON = jsobj!(foo: 12, bar: "hi").unsafeCast()
+        Assert.equal(json, MapOf("bar": "hi", "foo": 12))
+    }
 }
