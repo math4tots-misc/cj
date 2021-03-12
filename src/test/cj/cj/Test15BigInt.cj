@@ -51,4 +51,10 @@ class Test15BigInt {
             Assert.equal(BigInt.gcd(624129n, 2061517n), 18913n)
         }
     }
+
+    @test
+    def hash() {
+        val set = SetOf(12n, 1n, 2n, -5n)
+        Assert.equal(set.sorted(), [-5n, 1n, 2n, 12n])
+    }
 }
