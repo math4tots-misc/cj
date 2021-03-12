@@ -10,15 +10,6 @@ class MC$cj$DataView {
     M$useLittleEndian(self, useLittleEndian) {
         self._useLittleEndian = useLittleEndian;
     }
-    M$__get_byteOffset(self) {
-        return self.byteOffset;
-    }
-    M$__get_byteLength(self) {
-        return self.byteLength;
-    }
-    M$__get_buffer(self) {
-        return self.buffer;
-    }
     M$getInt8(self, byteOffset) {
         return self.getInt8(byteOffset);
     }

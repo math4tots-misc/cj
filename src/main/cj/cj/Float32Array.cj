@@ -16,10 +16,6 @@ native class Float32Array : Collection[Double], Hash, Approximate, Repr, Default
     def __getitem(self: Self, i: Int): Double
     def __setitem(self: Self, i: Int, v: Double)
 
-    def __get_byteLength(self): Int
-    def __get_byteOffset(self): Int
-    def __get_buffer(self): ArrayBuffer
-
     def map(self: Self, f: Fn[Double, Double]): Self
 
     def clone(self: Self): Self

@@ -10,7 +10,7 @@ native class Assert {
         if not b { throw Error("Assertion failed: " + message) }
     }
     def equal[T?: Eq & Repr](a: T, b: T) {
-        if a == b {
+        if a != b {
             throw Error("Expected " + a.repr() + " to equal " + b.repr())
         }
     }

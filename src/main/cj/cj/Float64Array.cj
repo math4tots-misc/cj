@@ -19,10 +19,6 @@ native class Float64Array : Collection[Double], Hash, Approximate, Repr, Default
     def __sliceFrom(self: Self, start: Int): Self
     def __sliceTo(self: Self, end: Int): Self
 
-    def __get_byteLength(self): Int
-    def __get_byteOffset(self): Int
-    def __get_buffer(self: Self) : ArrayBuffer
-
     def map(self: Self, f: Fn[Double, Double]): Self
 
     def clone(self: Self): Self

@@ -23,15 +23,6 @@ class MC$cj$Int16Array {
     M$default() {
         return this.M$__new([]);
     }
-    M$__get_byteLength(self) {
-        return self.byteLength;
-    }
-    M$__get_byteOffset(self) {
-        return self.byteOffset;
-    }
-    M$__get_buffer(self) {
-        return self.buffer;
-    }
     M$repr(self) {
         return "Int16Array([" + Array.from(self).join(", ") + "])";
     }

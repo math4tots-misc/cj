@@ -29,15 +29,6 @@ class MC$cj$Float64Array {
     M$__sliceTo(self, end) {
         return self.slice(0, end);
     }
-    M$__get_byteLength(self) {
-        return self.byteLength;
-    }
-    M$__get_byteOffset(self) {
-        return self.byteOffset;
-    }
-    M$__get_buffer(self) {
-        return self.buffer;
-    }
     M$map(self, f) {
         const out = this.M$clone(self);
         for (let i = 0; i < out.length; i++) {

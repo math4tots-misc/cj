@@ -9,9 +9,6 @@ native class DataView: ArrayBufferView {
     def usingLittleEndian(abuf: ArrayBuffer): Self = fromParts(abuf, 0, abuf.byteLength, true)
     def fromParts(abuf: ArrayBuffer, byteOffset: Int, byteLength: Int, useLittleEndian: Bool): Self
     def useLittleEndian(self, useLittleEndian: Bool)
-    def __get_byteOffset(self): Int
-    def __get_byteLength(self): Int
-    def __get_buffer(self): ArrayBuffer
     def getInt8(self, byteOffset: Int): Int
     def getUint8(self, byteOffset: Int): Int
     def getInt16(self, byteOffset: Int): Int

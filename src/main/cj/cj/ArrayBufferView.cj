@@ -7,9 +7,9 @@ import cj.ArrayBufferOrView
 ## Marker trait for web API's "ArrayBufferView"
 ## https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView
 trait ArrayBufferView: ArrayBufferOrView, Eq {
-    def __get_byteLength(self): Int
-    def __get_byteOffset(self): Int
-    def __get_buffer(self): ArrayBuffer
+    def __get_byteLength(self): Int = js!(Int, self, ".byteLength")
+    def __get_byteOffset(self): Int = js!(Int, self, ".byteOffset")
+    def __get_buffer(self): ArrayBuffer = js!(ArrayBuffer, self, ".buffer")
 
     def __eq(self, other: Self): Bool {
         if self is other {
