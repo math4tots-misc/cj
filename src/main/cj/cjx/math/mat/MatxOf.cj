@@ -1,4 +1,4 @@
-package cjx.math
+package cjx.math.mat
 
 import cjx.math.mat.Matx
 

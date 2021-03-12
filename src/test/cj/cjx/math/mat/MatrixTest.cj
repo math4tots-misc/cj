@@ -1,6 +1,6 @@
 package cjx.math.mat
 
-import cjx.math.MatxOf
+import cjx.math.mat.MatxOf
 import cjx.math.mat.InverseMatrixSolver
 import cj.Approximate
 import cjx.math.mat.DeterminantSolver
