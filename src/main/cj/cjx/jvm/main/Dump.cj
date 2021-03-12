@@ -1,5 +1,6 @@
 package cjx.jvm.main
 
+import cj.DynamicBuffer
 import cj.Error
 import cj.FS
 import cjx.jvm.JVMClass
@@ -14,7 +15,7 @@ class Dump {
             val writer = JVMClass.Writer()
             writer.includeConstantPool = includeConstantPool
             val buffer = FS.readFileBytes(path)
-            val cls = JVMClass.fromBuffer(buffer)
+            val cls = JVMClass.fromBuffer(DynamicBuffer(buffer))
             cls.dumpstr(writer)
             IO.println(writer.sb.toString())
         }

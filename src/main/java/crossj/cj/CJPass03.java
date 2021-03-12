@@ -137,6 +137,11 @@ final class CJPass03 extends CJPassBaseEx {
             }
         }
 
+        if (item.getKind() == CJIRItemKind.Union && !item.isNative()) {
+            var tagMethodAst = synthesizeUnionTagMethod(item);
+            materializeMethod(item, tagMethodAst, true, null);
+        }
+
         if ((item.getKind() == CJIRItemKind.Class || item.getKind() == CJIRItemKind.Interface) && !item.isNative()) {
             var mallocMethodAst = synthesizeMallocMethod(item);
             materializeMethod(item, mallocMethodAst, true, null);
@@ -242,6 +247,12 @@ final class CJPass03 extends CJPassBaseEx {
                 i -> new CJAstParameter(caseAst.getTypes().get(i).getMark(), false, "a" + i, caseAst.getTypes().get(i)))
                 .list();
         return synthesizeGenericMethod(mark, caseAst.getName(), parameters, newSelfTypeExpression(mark));
+    }
+
+    private CJAstMethodDefinition synthesizeUnionTagMethod(CJIRItem item) {
+        var mark = item.getMark();
+        var parameters = List.of(new CJAstParameter(mark, false, "self", newSelfTypeExpression(mark)));
+        return synthesizeGenericMethod(mark, "__tag", parameters, new CJAstTypeExpression(mark, "Int", List.of()));
     }
 
     private CJAstMethodDefinition synthesizeEmptyCaseMethod(CJIRItem item, CJAstCaseDefinition caseAst) {

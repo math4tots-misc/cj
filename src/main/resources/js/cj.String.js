@@ -1,7 +1,4 @@
 class MC$cj$String {
-    M$toString(s) {
-        return s;
-    }
     M$repr(x) {
         return '"' + x.replace(/\n|\r|\t|[\x00-\x1E]|"/g, m => {
             switch (m) {
@@ -21,12 +18,6 @@ class MC$cj$String {
                     }
             }
         }) + '"';
-    }
-    M$_addstr(a, b) {
-        return a + b;
-    }
-    M$size(s) {
-        return s.length;
     }
     M$toBool(self) {
         return self.length !== 0;

@@ -1,5 +1,6 @@
 package cjx.jvm
 
+import cj.Endian
 import cjx.jl1.JLError
 import cj.Error
 import cj.BufferReader
@@ -19,7 +20,7 @@ class JVMCodeBuilder {
     var maxLocals: Int = 0
     val code: DynamicBuffer = {
         val b = DynamicBuffer.empty()
-        b.useLittleEndian(false)
+        b.endian = Endian.big
         b
     }
     val exceptionTable: List[ExceptionTableEntry] = []
@@ -57,7 +58,7 @@ class JVMCodeBuilder {
             if stackSize < 0 {
                 throw Error("stack underflow")
             }
-            val opcode = code.getU8(pc)
+            val opcode = code.getUint8(pc)
             val instructionSize = Opcode.instructionSize(code, pc)
             val nextPc = pc + instructionSize
             # IO.println("  pc=0x" + pc.hex() + "  opcode=0x" +
@@ -76,42 +77,42 @@ class JVMCodeBuilder {
                     # and potentially branches
                     val newStackSize = stackSize - 1
                     todo.add((nextPc, newStackSize))
-                    todo.add((pc + code.getI16(pc + 1), newStackSize))
+                    todo.add((pc + code.getInt16(pc + 1), newStackSize))
                 } else if opcode in Opcode.ifICmp {
                     # these pop two ints from the stack, does a comparison
                     # and potentially branches
                     val newStackSize = stackSize - 2
                     todo.add((nextPc, newStackSize))
-                    todo.add((pc + code.getI16(pc + 1), newStackSize))
+                    todo.add((pc + code.getInt16(pc + 1), newStackSize))
                 } else {
                     switch opcode {
                         case Opcode.goto = {
                             # 0xa7
                             # unconditional branching
-                            todo.add((pc + code.getI16(pc + 1), stackSize))
+                            todo.add((pc + code.getInt16(pc + 1), stackSize))
                         }
                         case Opcode.getstatic = {
                             # 0xb2
                             val newStackSize = stackSize + slotSizeForType(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
                         case Opcode.putstatic = {
                             # 0xb3
                             val newStackSize = stackSize - slotSizeForType(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
                         case Opcode.getfield = {
                             # 0xb4
                             val newStackSize = stackSize - 1 + slotSizeForType(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
                         case Opcode.putfield = {
                             # 0xb5
                             val newStackSize = stackSize - 1 - slotSizeForType(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, stackSize))
                         }
                         case Opcode.invokevirtual
@@ -121,13 +122,13 @@ class JVMCodeBuilder {
                             # 0xb7 invokespecial
                             # 0xb9 invokeinterface
                             val newStackSize = stackSize - 1 + slotChangeForFunction(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
                         case Opcode.invokestatic = {
                             # 0xb8
                             val newStackSize = stackSize + slotChangeForFunction(
-                                cp.getMemberDescriptor(code.getU16(pc + 1)))
+                                cp.getMemberDescriptor(code.getUint16(pc + 1)))
                             todo.add((nextPc, newStackSize))
                         }
                         else = {
@@ -215,29 +216,29 @@ class JVMCodeBuilder {
     ## Load a constant onto the stack given its index in the constant pool
     def _ldc(self, index: Int) {
         if index < 128 {
-            code.addU8(Opcode.ldc)
-            code.addU8(index)
+            code.addUint8(Opcode.ldc)
+            code.addUint8(index)
         } else {
-            code.addU8(Opcode.ldc_w)
-            code.addU16(index)
+            code.addUint8(Opcode.ldc_w)
+            code.addUint16(index)
         }
     }
 
     def _ldc2_w(self, index: Int) {
-        code.addU8(Opcode.ldc2_w)
-        code.addU16(index)
+        code.addUint8(Opcode.ldc2_w)
+        code.addUint16(index)
     }
 
     def new_(self, className: String) {
         val index = cp.classref(className)
-        code.addU8(Opcode.new_)
-        code.addU16(index)
+        code.addUint8(Opcode.new_)
+        code.addUint16(index)
     }
 
     def anewarray(self, className: String) {
         val index = cp.classref(className)
-        code.addU8(Opcode.anewarray)
-        code.addU16(index)
+        code.addUint8(Opcode.anewarray)
+        code.addUint16(index)
     }
 
     def newarray(self, typeName: String) {
@@ -252,92 +253,92 @@ class JVMCodeBuilder {
             case "long" = 11
             else = throw Error("Invalid newarray type name: " + typeName)
         }
-        code.addU8(Opcode.newarray)
-        code.addU8(typeCode)
+        code.addUint8(Opcode.newarray)
+        code.addUint8(typeCode)
     }
 
     def getstatic(self, className: String, fieldName: String, type: String) {
         val index = cls.cp.fieldref(className, fieldName, type)
-        code.addU8(Opcode.getstatic)
-        code.addU16(index)
+        code.addUint8(Opcode.getstatic)
+        code.addUint16(index)
     }
 
     def putstatic(self, className: String, fieldName: String, type: String) {
         val index = cls.cp.fieldref(className, fieldName, type)
-        code.addU8(Opcode.putstatic)
-        code.addU16(index)
+        code.addUint8(Opcode.putstatic)
+        code.addUint16(index)
     }
 
     def getfield(self, className: String, fieldName: String, type: String) {
         val index = cls.cp.fieldref(className, fieldName, type)
-        code.addU8(Opcode.getfield)
-        code.addU16(index)
+        code.addUint8(Opcode.getfield)
+        code.addUint16(index)
     }
 
     def putfield(self, className: String, fieldName: String, type: String) {
         val index = cls.cp.fieldref(className, fieldName, type)
-        code.addU8(Opcode.putfield)
-        code.addU16(index)
+        code.addUint8(Opcode.putfield)
+        code.addUint16(index)
     }
 
     def invokevirtual(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
-        code.addU8(Opcode.invokevirtual)
-        code.addU16(index)
+        code.addUint8(Opcode.invokevirtual)
+        code.addUint16(index)
     }
 
     def invokespecial(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
-        code.addU8(Opcode.invokespecial)
-        code.addU16(index)
+        code.addUint8(Opcode.invokespecial)
+        code.addUint16(index)
     }
 
     def invokeinterface(self, interfaceName: String, methodName: String, type: String) {
         val index = cls.cp.interfaceMethodref(interfaceName, methodName, type)
         val argc = 1 + computeArgumentSlotCount(type)
-        code.addU8(Opcode.invokeinterface)
-        code.addU16(index)
-        code.addU8(argc)
-        code.addU8(0)
+        code.addUint8(Opcode.invokeinterface)
+        code.addUint16(index)
+        code.addUint8(argc)
+        code.addUint8(0)
     }
 
     def invokestatic(self, className: String, methodName: String, type: String) {
         val index = cls.cp.methodref(className, methodName, type)
-        code.addU8(Opcode.invokestatic)
-        code.addU16(index)
+        code.addUint8(Opcode.invokestatic)
+        code.addUint16(index)
     }
 
     ## Load an immediate constant value onto the stack
     def ldc(self, cv: JVMConstValue) {
         when cv {
             case int(i) = switch i {
-                case -1 = code.addU8(Opcode.iconst_m1)
-                case 0 = code.addU8(Opcode.iconst_0)
-                case 1 = code.addU8(Opcode.iconst_1)
-                case 2 = code.addU8(Opcode.iconst_2)
-                case 3 = code.addU8(Opcode.iconst_3)
-                case 4 = code.addU8(Opcode.iconst_4)
-                case 5 = code.addU8(Opcode.iconst_5)
+                case -1 = code.addUint8(Opcode.iconst_m1)
+                case 0 = code.addUint8(Opcode.iconst_0)
+                case 1 = code.addUint8(Opcode.iconst_1)
+                case 2 = code.addUint8(Opcode.iconst_2)
+                case 3 = code.addUint8(Opcode.iconst_3)
+                case 4 = code.addUint8(Opcode.iconst_4)
+                case 5 = code.addUint8(Opcode.iconst_5)
                 else = _ldc(cls.cp.integer(i))
             }
             case long(i) = switch i.toInt() {
-                case 0 = code.addU8(Opcode.lconst_0)
-                case 1 = code.addU8(Opcode.lconst_1)
+                case 0 = code.addUint8(Opcode.lconst_0)
+                case 1 = code.addUint8(Opcode.lconst_1)
                 else = _ldc2_w(cls.cp.long(i))
             }
             case float(f) = if f == 0 {
-                    code.addU8(Opcode.fconst_0)
+                    code.addUint8(Opcode.fconst_0)
                 } else if f == 1 {
-                    code.addU8(Opcode.fconst_1)
+                    code.addUint8(Opcode.fconst_1)
                 } else if f == 2 {
-                    code.addU8(Opcode.fconst_2)
+                    code.addUint8(Opcode.fconst_2)
                 } else {
                     _ldc(cls.cp.float(f))
                 }
             case double(f) = if f == 0 {
-                    code.addU8(Opcode.dconst_0)
+                    code.addUint8(Opcode.dconst_0)
                 } else if f == 1 {
-                    code.addU8(Opcode.dconst_1)
+                    code.addUint8(Opcode.dconst_1)
                 } else {
                     _ldc2_w(cls.cp.double(f))
                 }
@@ -346,19 +347,19 @@ class JVMCodeBuilder {
     }
 
     def bipush(self, byte: Int) {
-        code.addU8(Opcode.bipush)
-        code.addI8(byte)
+        code.addUint8(Opcode.bipush)
+        code.addInt8(byte)
     }
 
     def sipush(self, value: Int) {
-        code.addU8(Opcode.sipush)
-        code.addI16(value)
+        code.addUint8(Opcode.sipush)
+        code.addInt16(value)
     }
 
     def checkcast(self, className: String) {
         val index = cp.classref(className)
-        code.addU8(Opcode.checkcast)
-        code.addU16(index)
+        code.addUint8(Opcode.checkcast)
+        code.addUint16(index)
     }
 
     # ======================================================
@@ -368,9 +369,9 @@ class JVMCodeBuilder {
     def iinc(self, index: Int, incr: Int) {
         Assert.that(index < 128)
         Assert.that(incr >= -128 and incr < 128)
-        code.addU8(Opcode.iinc)
-        code.addU8(index)
-        code.addI8(incr)
+        code.addUint8(Opcode.iinc)
+        code.addUint8(index)
+        code.addInt8(incr)
     }
 
     ## load int from a local variable
@@ -415,17 +416,17 @@ class JVMCodeBuilder {
 
     private def _localvarOp(self, index: Int, op0: Int, op1: Int, op2: Int, op3: Int, op: Int) {
         switch index {
-            case 0 = code.addU8(op0)
-            case 1 = code.addU8(op1)
-            case 2 = code.addU8(op2)
-            case 3 = code.addU8(op3)
+            case 0 = code.addUint8(op0)
+            case 1 = code.addUint8(op1)
+            case 2 = code.addUint8(op2)
+            case 3 = code.addUint8(op3)
             else = if index < 128 {
-                code.addU8(op)
-                code.addU8(index)
+                code.addUint8(op)
+                code.addUint8(index)
             } else {
-                code.addU8(Opcode.wide)
-                code.addU8(op)
-                code.addU16(index)
+                code.addUint8(Opcode.wide)
+                code.addUint8(op)
+                code.addUint16(index)
             }
         }
     }
@@ -435,93 +436,93 @@ class JVMCodeBuilder {
     # ======================================================
 
     def ifeq(self, offset: Int) {
-        code.addU8(Opcode.ifeq)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifeq)
+        code.addUint16(offset)
     }
 
     def ifne(self, offset: Int) {
-        code.addU8(Opcode.ifne)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifne)
+        code.addUint16(offset)
     }
 
     def iflt(self, offset: Int) {
-        code.addU8(Opcode.iflt)
-        code.addU16(offset)
+        code.addUint8(Opcode.iflt)
+        code.addUint16(offset)
     }
 
     def ifge(self, offset: Int) {
-        code.addU8(Opcode.ifge)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifge)
+        code.addUint16(offset)
     }
 
     def ifgt(self, offset: Int) {
-        code.addU8(Opcode.ifgt)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifgt)
+        code.addUint16(offset)
     }
 
     def ifle(self, offset: Int) {
-        code.addU8(Opcode.ifle)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifle)
+        code.addUint16(offset)
     }
 
     def if_icmpeq(self, offset: Int) {
-        code.addU8(Opcode.if_icmpeq)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmpeq)
+        code.addUint16(offset)
     }
 
     def if_icmpne(self, offset: Int) {
-        code.addU8(Opcode.if_icmpne)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmpne)
+        code.addUint16(offset)
     }
 
     def if_icmplt(self, offset: Int) {
-        code.addU8(Opcode.if_icmplt)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmplt)
+        code.addUint16(offset)
     }
 
     def if_icmpge(self, offset: Int) {
-        code.addU8(Opcode.if_icmpge)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmpge)
+        code.addUint16(offset)
     }
 
     def if_icmpgt(self, offset: Int) {
-        code.addU8(Opcode.if_icmpgt)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmpgt)
+        code.addUint16(offset)
     }
 
     def if_icmple(self, offset: Int) {
-        code.addU8(Opcode.if_icmple)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_icmple)
+        code.addUint16(offset)
     }
 
     def if_acmpeq(self, offset: Int) {
-        code.addU8(Opcode.if_acmpeq)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_acmpeq)
+        code.addUint16(offset)
     }
 
     def if_acmpne(self, offset: Int) {
-        code.addU8(Opcode.if_acmpne)
-        code.addU16(offset)
+        code.addUint8(Opcode.if_acmpne)
+        code.addUint16(offset)
     }
 
     def goto(self, offset: Int) {
-        code.addU8(Opcode.goto)
-        code.addU16(offset)
+        code.addUint8(Opcode.goto)
+        code.addUint16(offset)
     }
 
     def jsr(self, offset: Int) {
-        code.addU8(Opcode.jsr)
-        code.addU16(offset)
+        code.addUint8(Opcode.jsr)
+        code.addUint16(offset)
     }
 
     def ifnull(self, offset: Int) {
-        code.addU8(Opcode.ifnull)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifnull)
+        code.addUint16(offset)
     }
 
     def ifnonnull(self, offset: Int) {
-        code.addU8(Opcode.ifnonnull)
-        code.addU16(offset)
+        code.addUint8(Opcode.ifnonnull)
+        code.addUint16(offset)
     }
 
     # ======================================================
@@ -529,406 +530,406 @@ class JVMCodeBuilder {
     # ======================================================
 
     def nop(self) {
-        code.addU8(Opcode.nop)
+        code.addUint8(Opcode.nop)
     }
 
     def iconst_0(self) {
-        code.addU8(Opcode.iconst_0)
+        code.addUint8(Opcode.iconst_0)
     }
 
     def iconst_1(self) {
-        code.addU8(Opcode.iconst_1)
+        code.addUint8(Opcode.iconst_1)
     }
 
     def lconst_0(self) {
-        code.addU8(Opcode.lconst_0)
+        code.addUint8(Opcode.lconst_0)
     }
 
     def fconst_0(self) {
-        code.addU8(Opcode.fconst_0)
+        code.addUint8(Opcode.fconst_0)
     }
 
     def dconst_0(self) {
-        code.addU8(Opcode.dconst_0)
+        code.addUint8(Opcode.dconst_0)
     }
 
     def aconst_null(self) {
-        code.addU8(Opcode.aconst_null)
+        code.addUint8(Opcode.aconst_null)
     }
 
     def iaload(self) {
-        code.addU8(Opcode.iaload)
+        code.addUint8(Opcode.iaload)
     }
 
     def laload(self) {
-        code.addU8(Opcode.laload)
+        code.addUint8(Opcode.laload)
     }
 
     def faload(self) {
-        code.addU8(Opcode.faload)
+        code.addUint8(Opcode.faload)
     }
 
     def daload(self) {
-        code.addU8(Opcode.daload)
+        code.addUint8(Opcode.daload)
     }
 
     def aaload(self) {
-        code.addU8(Opcode.aaload)
+        code.addUint8(Opcode.aaload)
     }
 
     def baload(self) {
-        code.addU8(Opcode.baload)
+        code.addUint8(Opcode.baload)
     }
 
     def caload(self) {
-        code.addU8(Opcode.caload)
+        code.addUint8(Opcode.caload)
     }
 
     def saload(self) {
-        code.addU8(Opcode.saload)
+        code.addUint8(Opcode.saload)
     }
 
     def iastore(self) {
-        code.addU8(Opcode.iastore)
+        code.addUint8(Opcode.iastore)
     }
 
     def lastore(self) {
-        code.addU8(Opcode.lastore)
+        code.addUint8(Opcode.lastore)
     }
 
     def fastore(self) {
-        code.addU8(Opcode.fastore)
+        code.addUint8(Opcode.fastore)
     }
 
     def dastore(self) {
-        code.addU8(Opcode.dastore)
+        code.addUint8(Opcode.dastore)
     }
 
     def aastore(self) {
-        code.addU8(Opcode.aastore)
+        code.addUint8(Opcode.aastore)
     }
 
     def bastore(self) {
-        code.addU8(Opcode.bastore)
+        code.addUint8(Opcode.bastore)
     }
 
     def castore(self) {
-        code.addU8(Opcode.castore)
+        code.addUint8(Opcode.castore)
     }
 
     def sastore(self) {
-        code.addU8(Opcode.sastore)
+        code.addUint8(Opcode.sastore)
     }
 
     def pop(self) {
-        code.addU8(Opcode.pop)
+        code.addUint8(Opcode.pop)
     }
 
     def pop2(self) {
-        code.addU8(Opcode.pop2)
+        code.addUint8(Opcode.pop2)
     }
 
     def dup(self) {
-        code.addU8(Opcode.dup)
+        code.addUint8(Opcode.dup)
     }
 
     def dup_x1(self) {
-        code.addU8(Opcode.dup_x1)
+        code.addUint8(Opcode.dup_x1)
     }
 
     def dup_x2(self) {
-        code.addU8(Opcode.dup_x2)
+        code.addUint8(Opcode.dup_x2)
     }
 
     def dup2(self) {
-        code.addU8(Opcode.dup2)
+        code.addUint8(Opcode.dup2)
     }
 
     def dup2_x1(self) {
-        code.addU8(Opcode.dup2_x1)
+        code.addUint8(Opcode.dup2_x1)
     }
 
     def dup2_x2(self) {
-        code.addU8(Opcode.dup2_x2)
+        code.addUint8(Opcode.dup2_x2)
     }
 
     def swap(self) {
-        code.addU8(Opcode.swap)
+        code.addUint8(Opcode.swap)
     }
 
     def iadd(self) {
-        code.addU8(Opcode.iadd)
+        code.addUint8(Opcode.iadd)
     }
 
     def ladd(self) {
-        code.addU8(Opcode.ladd)
+        code.addUint8(Opcode.ladd)
     }
 
     def fadd(self) {
-        code.addU8(Opcode.fadd)
+        code.addUint8(Opcode.fadd)
     }
 
     def dadd(self) {
-        code.addU8(Opcode.dadd)
+        code.addUint8(Opcode.dadd)
     }
 
     def isub(self) {
-        code.addU8(Opcode.isub)
+        code.addUint8(Opcode.isub)
     }
 
     def lsub(self) {
-        code.addU8(Opcode.lsub)
+        code.addUint8(Opcode.lsub)
     }
 
     def fsub(self) {
-        code.addU8(Opcode.fsub)
+        code.addUint8(Opcode.fsub)
     }
 
     def dsub(self) {
-        code.addU8(Opcode.dsub)
+        code.addUint8(Opcode.dsub)
     }
 
     def imul(self) {
-        code.addU8(Opcode.imul)
+        code.addUint8(Opcode.imul)
     }
 
     def lmul(self) {
-        code.addU8(Opcode.lmul)
+        code.addUint8(Opcode.lmul)
     }
 
     def fmul(self) {
-        code.addU8(Opcode.fmul)
+        code.addUint8(Opcode.fmul)
     }
 
     def dmul(self) {
-        code.addU8(Opcode.dmul)
+        code.addUint8(Opcode.dmul)
     }
 
     def idiv(self) {
-        code.addU8(Opcode.idiv)
+        code.addUint8(Opcode.idiv)
     }
 
     def ldiv(self) {
-        code.addU8(Opcode.ldiv)
+        code.addUint8(Opcode.ldiv)
     }
 
     def fdiv(self) {
-        code.addU8(Opcode.fdiv)
+        code.addUint8(Opcode.fdiv)
     }
 
     def ddiv(self) {
-        code.addU8(Opcode.ddiv)
+        code.addUint8(Opcode.ddiv)
     }
 
     def irem(self) {
-        code.addU8(Opcode.irem)
+        code.addUint8(Opcode.irem)
     }
 
     def lrem(self) {
-        code.addU8(Opcode.lrem)
+        code.addUint8(Opcode.lrem)
     }
 
     def frem(self) {
-        code.addU8(Opcode.frem)
+        code.addUint8(Opcode.frem)
     }
 
     def drem(self) {
-        code.addU8(Opcode.drem)
+        code.addUint8(Opcode.drem)
     }
 
     def ineg(self) {
-        code.addU8(Opcode.ineg)
+        code.addUint8(Opcode.ineg)
     }
 
     def lneg(self) {
-        code.addU8(Opcode.lneg)
+        code.addUint8(Opcode.lneg)
     }
 
     def fneg(self) {
-        code.addU8(Opcode.fneg)
+        code.addUint8(Opcode.fneg)
     }
 
     def dneg(self) {
-        code.addU8(Opcode.dneg)
+        code.addUint8(Opcode.dneg)
     }
 
     def ishl(self) {
-        code.addU8(Opcode.ishl)
+        code.addUint8(Opcode.ishl)
     }
 
     def lshl(self) {
-        code.addU8(Opcode.lshl)
+        code.addUint8(Opcode.lshl)
     }
 
     def ishr(self) {
-        code.addU8(Opcode.ishr)
+        code.addUint8(Opcode.ishr)
     }
 
     def lshr(self) {
-        code.addU8(Opcode.lshr)
+        code.addUint8(Opcode.lshr)
     }
 
     def iushr(self) {
-        code.addU8(Opcode.iushr)
+        code.addUint8(Opcode.iushr)
     }
 
     def lushr(self) {
-        code.addU8(Opcode.lushr)
+        code.addUint8(Opcode.lushr)
     }
 
     def iand(self) {
-        code.addU8(Opcode.iand)
+        code.addUint8(Opcode.iand)
     }
 
     def land(self) {
-        code.addU8(Opcode.land)
+        code.addUint8(Opcode.land)
     }
 
     def ior(self) {
-        code.addU8(Opcode.ior)
+        code.addUint8(Opcode.ior)
     }
 
     def lor(self) {
-        code.addU8(Opcode.lor)
+        code.addUint8(Opcode.lor)
     }
 
     def ixor(self) {
-        code.addU8(Opcode.ixor)
+        code.addUint8(Opcode.ixor)
     }
 
     def lxor(self) {
-        code.addU8(Opcode.lxor)
+        code.addUint8(Opcode.lxor)
     }
 
     def i2l(self) {
-        code.addU8(Opcode.i2l)
+        code.addUint8(Opcode.i2l)
     }
 
     def i2f(self) {
-        code.addU8(Opcode.i2f)
+        code.addUint8(Opcode.i2f)
     }
 
     def i2d(self) {
-        code.addU8(Opcode.i2d)
+        code.addUint8(Opcode.i2d)
     }
 
     def l2i(self) {
-        code.addU8(Opcode.l2i)
+        code.addUint8(Opcode.l2i)
     }
 
     def l2f(self) {
-        code.addU8(Opcode.l2f)
+        code.addUint8(Opcode.l2f)
     }
 
     def l2d(self) {
-        code.addU8(Opcode.l2d)
+        code.addUint8(Opcode.l2d)
     }
 
     def f2i(self) {
-        code.addU8(Opcode.f2i)
+        code.addUint8(Opcode.f2i)
     }
 
     def f2l(self) {
-        code.addU8(Opcode.f2l)
+        code.addUint8(Opcode.f2l)
     }
 
     def f2d(self) {
-        code.addU8(Opcode.f2d)
+        code.addUint8(Opcode.f2d)
     }
 
     def d2i(self) {
-        code.addU8(Opcode.d2i)
+        code.addUint8(Opcode.d2i)
     }
 
     def d2l(self) {
-        code.addU8(Opcode.d2l)
+        code.addUint8(Opcode.d2l)
     }
 
     def d2f(self) {
-        code.addU8(Opcode.d2f)
+        code.addUint8(Opcode.d2f)
     }
 
     def i2b(self) {
-        code.addU8(Opcode.i2b)
+        code.addUint8(Opcode.i2b)
     }
 
     def i2c(self) {
-        code.addU8(Opcode.i2c)
+        code.addUint8(Opcode.i2c)
     }
 
     def i2s(self) {
-        code.addU8(Opcode.i2s)
+        code.addUint8(Opcode.i2s)
     }
 
     def lcmp(self) {
-        code.addU8(Opcode.lcmp)
+        code.addUint8(Opcode.lcmp)
     }
 
     def fcmpl(self) {
-        code.addU8(Opcode.fcmpl)
+        code.addUint8(Opcode.fcmpl)
     }
 
     def fcmpg(self) {
-        code.addU8(Opcode.fcmpg)
+        code.addUint8(Opcode.fcmpg)
     }
 
     def dcmpl(self) {
-        code.addU8(Opcode.dcmpl)
+        code.addUint8(Opcode.dcmpl)
     }
 
     def dcmpg(self) {
-        code.addU8(Opcode.dcmpg)
+        code.addUint8(Opcode.dcmpg)
     }
 
     def ireturn(self) {
-        code.addU8(Opcode.ireturn)
+        code.addUint8(Opcode.ireturn)
     }
 
     def lreturn(self) {
-        code.addU8(Opcode.lreturn)
+        code.addUint8(Opcode.lreturn)
     }
 
     def freturn(self) {
-        code.addU8(Opcode.freturn)
+        code.addUint8(Opcode.freturn)
     }
 
     def dreturn(self) {
-        code.addU8(Opcode.dreturn)
+        code.addUint8(Opcode.dreturn)
     }
 
     def areturn(self) {
-        code.addU8(Opcode.areturn)
+        code.addUint8(Opcode.areturn)
     }
 
     def return_(self) {
-        code.addU8(Opcode.return_)
+        code.addUint8(Opcode.return_)
     }
 
     def arraylength(self) {
-        code.addU8(Opcode.arraylength)
+        code.addUint8(Opcode.arraylength)
     }
 
     def athrow(self) {
-        code.addU8(Opcode.athrow)
+        code.addUint8(Opcode.athrow)
     }
 
     def monitorenter(self) {
-        code.addU8(Opcode.monitorenter)
+        code.addUint8(Opcode.monitorenter)
     }
 
     def monitorexit(self) {
-        code.addU8(Opcode.monitorexit)
+        code.addUint8(Opcode.monitorexit)
     }
 
     def breakpoint(self) {
-        code.addU8(Opcode.breakpoint)
+        code.addUint8(Opcode.breakpoint)
     }
 
     def impdep1(self) {
-        code.addU8(Opcode.impdep1)
+        code.addUint8(Opcode.impdep1)
     }
 
     def impdep2(self) {
-        code.addU8(Opcode.impdep2)
+        code.addUint8(Opcode.impdep2)
     }
 }

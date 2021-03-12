@@ -1,5 +1,6 @@
 package cjx.jvm.main
 
+import cj.Endian
 import cj.Math
 import cj.BigInt
 import cj.Argv
@@ -64,18 +65,18 @@ class OldSample {
         }
 
         val b = DynamicBuffer.empty()
-        b.useLittleEndian(false)
-        b.addU32(0xCAFEBABE) # magic
-        b.addU16(0x00) # minor version
-        b.addU16(0x33) # major version (Java SE 7)
+        b.endian = Endian.little
+        b.addUint32(0xCAFEBABE) # magic
+        b.addUint16(0x00) # minor version
+        b.addUint16(0x33) # major version (Java SE 7)
         ctx.cp.emit(b) # constantPoolCount and constantPool[]
-        b.addU16(cACC_PUBLIC | cACC_SUPER) # access flags
-        b.addU16(thisClass)
-        b.addU16(superClass)
-        b.addU16(0) # interfacesCount (none for now)
-        b.addU16(0) # fieldsCount (none for now)
+        b.addUint16(cACC_PUBLIC | cACC_SUPER) # access flags
+        b.addUint16(thisClass)
+        b.addUint16(superClass)
+        b.addUint16(0) # interfacesCount (none for now)
+        b.addUint16(0) # fieldsCount (none for now)
         ctx.emitMethods(b)
-        b.addU16(0) # attribuesCount (none for now)
+        b.addUint16(0) # attribuesCount (none for now)
         FS.writeFileBytes(path, b)
     }
 
@@ -94,7 +95,7 @@ class OldSample {
         def code(self): Code = Code(self)
 
         def emitMethods(self, out: DynamicBuffer) {
-            out.addU16(methods.size())
+            out.addUint16(methods.size())
             for method in methods {
                 method.emit(out)
             }
@@ -122,7 +123,7 @@ class OldSample {
         }
 
         def emit(self, out: DynamicBuffer) {
-            out.addU16(count()) # constantPoolCount
+            out.addUint16(count()) # constantPoolCount
             for info in infos {
                 info.emit(out)
             }
@@ -241,38 +242,38 @@ class OldSample {
         }
 
         def emit(self, out: DynamicBuffer) {
-            out.addU8(tag)
+            out.addUint8(tag)
             when self {
                 case utf8(string) = {
                     val utf8 = DynamicBuffer.fromUTF8(string)
-                    out.addU16(utf8.size())
+                    out.addUint16(utf8.size())
                     out.addBuffer(utf8)
                 }
-                case integer(i) = out.addI32(i)
-                case float(f) = out.addF32(f)
-                case long(i) = out.addI64(i)
-                case double(f) = out.addF64(f)
+                case integer(i) = out.addInt32(i)
+                case float(f) = out.addFloat32(f)
+                case long(i) = out.addBigInt64(i)
+                case double(f) = out.addFloat64(f)
                 case classref(nameIndex) = {
-                    out.addU16(nameIndex)
+                    out.addUint16(nameIndex)
                 }
                 case string(utf8Index) = {
-                    out.addU16(utf8Index)
+                    out.addUint16(utf8Index)
                 }
                 case fieldref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case methodref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case interfaceMethodref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case nameAndType(nameIndex, descriptorIndex) = {
-                    out.addU16(nameIndex)
-                    out.addU16(descriptorIndex)
+                    out.addUint16(nameIndex)
+                    out.addUint16(descriptorIndex)
                 }
             }
         }
@@ -285,10 +286,10 @@ class OldSample {
         val attributes: List[AttributeInfo] = []
 
         def emit(self, out: DynamicBuffer) {
-            out.addU16(accessFlags)
-            out.addU16(nameIndex)
-            out.addU16(descriptorIndex)
-            out.addU16(attributes.size())
+            out.addUint16(accessFlags)
+            out.addUint16(nameIndex)
+            out.addUint16(descriptorIndex)
+            out.addUint16(attributes.size())
             for attribute in attributes {
                 attribute.emit(out)
             }
@@ -308,13 +309,13 @@ class OldSample {
         val data: AttributeInfoData
 
         def emit(self, out: DynamicBuffer) {
-            out.addU16(attributeNameIndex)
+            out.addUint16(attributeNameIndex)
             val updatePos = out.size()
-            out.addU32(0)
+            out.addUint32(0)
             val startPos = out.size()
             data.emit(out)
             val endPos = out.size()
-            out.setU32(updatePos, endPos - startPos)
+            out.setUint32(updatePos, endPos - startPos)
         }
     }
 
@@ -333,9 +334,9 @@ class OldSample {
         val attributes: List[AttributeInfo] = []
 
         def emit(self, out: DynamicBuffer) {
-            out.addU16(maxStack)
-            out.addU16(maxLocals)
-            out.addU32(code.size())
+            out.addUint16(maxStack)
+            out.addUint16(maxLocals)
+            out.addUint32(code.size())
             {
                 val start = out.size()
                 out.addBuffer(code)
@@ -343,12 +344,12 @@ class OldSample {
                 Assert.equal(code.size(), end - start)
             }
             Assert.equal(exceptionTable.size(), 0) # TODO
-            out.addU16(exceptionTable.size())
+            out.addUint16(exceptionTable.size())
             for entry in exceptionTable {
                 entry.emit(out)
             }
             Assert.equal(attributes.size(), 0) # TODO
-            out.addU16(attributes.size())
+            out.addUint16(attributes.size())
             for attribute in attributes {
                 attribute.emit(out)
             }
@@ -381,14 +382,14 @@ class OldSample {
         var maxStack = 0
         val buffer: DynamicBuffer = {
             val b = DynamicBuffer.empty()
-            b.useLittleEndian(false)
+            b.endian = Endian.big
             b
         }
 
         ## Return void
         def vreturn(self) {
             # return opcode
-            buffer.addU8(0xb1)
+            buffer.addUint8(0xb1)
         }
 
         ## Load a constant string onto the stack
@@ -399,24 +400,24 @@ class OldSample {
         ## Load a constant onto the stack given its index in the constant pool
         def ldc(self, index: Int) {
             if index < 128 {
-                buffer.addU8(Opcode.ldc)
-                buffer.addU8(index)
+                buffer.addUint8(Opcode.ldc)
+                buffer.addUint8(index)
             } else {
-                buffer.addU8(Opcode.ldc_w)
-                buffer.addU16(index)
+                buffer.addUint8(Opcode.ldc_w)
+                buffer.addUint16(index)
             }
         }
 
         def getstatic(self, className: String, fieldName: String, type: String) {
             val index = ctx.cp.fieldref(className, fieldName, type)
-            buffer.addU8(Opcode.getstatic)
-            buffer.addU16(index)
+            buffer.addUint8(Opcode.getstatic)
+            buffer.addUint16(index)
         }
 
         def invokevirtual(self, className: String, methodName: String, type: String) {
             val index = ctx.cp.methodref(className, methodName, type)
-            buffer.addU8(Opcode.invokevirtual)
-            buffer.addU16(index)
+            buffer.addUint8(Opcode.invokevirtual)
+            buffer.addUint16(index)
         }
 
         def toCodeAttribute(self): CodeAttribute = {

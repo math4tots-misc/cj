@@ -1,5 +1,6 @@
 package cjx.bmp
 
+import cj.Endian
 import cj.DynamicBuffer
 import cjx.bmp.Color
 import cj.Int32Array
@@ -43,33 +44,34 @@ class Bitmap {
         val width = self.width
         val height = self.height
         val out = DynamicBuffer.withCapacity(bytesize)
+        out.endian = Endian.little
 
         # -- file header --
         out.addUTF8("BM") # magic
-        out.addI32(bytesize) # size of BMP file in bytes
-        out.addU16(0) # reserved
-        out.addU16(0) # reserved
-        out.addI32(14 + 40) # offset to start of pixel data
+        out.addInt32(bytesize) # size of BMP file in bytes
+        out.addUint16(0) # reserved
+        out.addUint16(0) # reserved
+        out.addInt32(14 + 40) # offset to start of pixel data
         Assert.equal(out.size(), 14)
 
         # -- dib header (Windows BITMAPINFOHEADER) --
-        out.addI32(40) # size of this header in bytes
-        out.addI32(width) # width in pixels
-        out.addI32(height) # height in pixels
-        out.addU16(1) # # color planes (must be 1?)
-        out.addU16(32) # bits per pixel
-        out.addI32(0) # compression (none)
-        out.addI32(0) # uncompressed image size (if compressed)
-        out.addI32(2835) # horizontal resolution (2835 used in wiki example)
-        out.addI32(2835) # vertical resolution (2835 used in wiki example)
-        out.addI32(0) # # colors in palette (palette is not used here)
-        out.addI32(0) # # important colors (generally ignored)
+        out.addInt32(40) # size of this header in bytes
+        out.addInt32(width) # width in pixels
+        out.addInt32(height) # height in pixels
+        out.addUint16(1) # # color planes (must be 1?)
+        out.addUint16(32) # bits per pixel
+        out.addInt32(0) # compression (none)
+        out.addInt32(0) # uncompressed image size (if compressed)
+        out.addInt32(2835) # horizontal resolution (2835 used in wiki example)
+        out.addInt32(2835) # vertical resolution (2835 used in wiki example)
+        out.addInt32(0) # # colors in palette (palette is not used here)
+        out.addInt32(0) # # important colors (generally ignored)
         Assert.equal(out.size(), 14 + 40)
 
         # -- pixel data --
         for y = 0; y < height; y++ {
             for x = 0; x < width; x++ {
-                out.addI32(self[x, y].toI32ARGB())
+                out.addInt32(self[x, y].toI32ARGB())
             }
         }
         Assert.equal(out.size(), bytesize)

@@ -1,5 +1,7 @@
 package cjx.jvm
 
+import cj.BufferLike
+import cj.Endian
 import cjx.jvm.JVMCodeBuilder
 import cjx.jvm.Opcode
 import cj.StringBuilder
@@ -55,8 +57,8 @@ class JVMClass {
 
     def __get_name(self): String = cp.getClassref(thisClass)
 
-    def fromBuffer(buffer: DynamicBuffer): Self {
-        val parser = Parser(buffer)
+    def fromBuffer[B: BufferLike](buffer: B): Self {
+        val parser = Parser(DynamicBuffer(buffer))
         parser.parseJVMClass()
     }
 
@@ -295,7 +297,7 @@ class JVMClass {
             val pos = reader.i
             out.start(pos.hex().rpad(6, " ") + ": ")
             val instructionStart = reader.i
-            val opcode = reader.getU8()
+            val opcode = reader.getUint8()
             if encounteredUnrecognizedOpcode {
                 # It's not safe to assume the rest of the code is properly interpreted
                 # Just dump the bytes from here on out
@@ -305,39 +307,39 @@ class JVMClass {
                     case 0x10 = {
                         # Push byte as integer value
                         # This is the only opcode that has a direct i8 argument
-                        val value = reader.getI8()
+                        val value = reader.getInt8()
                         out.end("10 bipush " + value)
                     }
                     case 0x11 = {
                         # Push short as integer value
                         # This is the only opcode that has a direct i16 value
-                        val value = reader.getI16()
+                        val value = reader.getInt16()
                         out.end("11 sipush " + value)
                     }
                     case 0x12 = {
                         # Load a constant
                         # This is the only opcode that has an 8-bit cp-index argument
-                        val index = reader.getU8()
+                        val index = reader.getUint8()
                         out.end("12 ldc " + cp.getConst(index))
                     }
                     case 0x84 = {
                         # iinc - increment
                         # this is the only opcode that has this signature
-                        val index = reader.getU8()
-                        val value = reader.getI8()
+                        val index = reader.getUint8()
+                        val value = reader.getInt8()
                         out.end("84 iinc " + index + " " + value)
                     }
                     case 0xAA = {
                         # tableswitch
                         reader.skipToMultipleOf(4) # padding
-                        val default = reader.getI32()
-                        val low = reader.getI32()
-                        val high = reader.getI32()
+                        val default = reader.getInt32()
+                        val low = reader.getInt32()
+                        val high = reader.getInt32()
                         out.end("AA tableswitch " + " " + low + " - " + high)
                         out.indent()
                         out.line("default = " + default + " -> 0x" + (pos + default).hex())
                         for i = low; i <= high; i++ {
-                            val offset = reader.getI32()
+                            val offset = reader.getInt32()
                             val target = pos + offset
                             out.line(
                                 "" + i.repr().lpad(8, " ") +
@@ -349,14 +351,14 @@ class JVMClass {
                     case 0xAB = {
                         # lookupswitch
                         reader.skipToMultipleOf(4) # padding
-                        val default = reader.getI32()
-                        val npairs = reader.getI32()
+                        val default = reader.getInt32()
+                        val npairs = reader.getInt32()
                         out.end("AB lookupswitch npairs=" + npairs)
                         out.indent()
                         out.line("default = " + default + " -> 0x" + (pos + default).hex())
                         for i = 0; i < npairs; i++ {
-                            val match = reader.getI32()
-                            val offset = reader.getI32()
+                            val match = reader.getInt32()
+                            val offset = reader.getInt32()
                             val target = pos + offset
                             out.line(
                                 "" + match.repr().lpad(8, " ") +
@@ -369,20 +371,20 @@ class JVMClass {
                         # invokeinterface -- has a funky signature
                         # in that it duplicates the invocation arg length in
                         # its opcode argument (in addition to its descriptor)
-                        val index = reader.getU16()
-                        val argc = reader.getU8()
-                        Assert.equal(reader.getU8(), 0)
+                        val index = reader.getUint16()
+                        val argc = reader.getUint8()
+                        Assert.equal(reader.getUint8(), 0)
                         out.end("B9 invokeinterface " + cp.getConst(index) + " " + argc)
                     }
                     case 0xBA = {
                         # invokedynamic -- requires 2 extra 0 bytes for some reason
-                        val index = reader.getU16()
-                        Assert.equal(reader.getU16(), 0)
+                        val index = reader.getUint16()
+                        Assert.equal(reader.getUint16(), 0)
                         out.end("BA invokedynamic " + cp.getConst(index))
                     }
                     case 0xBC = {
                         # create new primitive array
-                        val atype = reader.getU8()
+                        val atype = reader.getUint8()
                         val atypeName = switch atype {
                             case 4 = "boolean"
                             case 5 = "char"
@@ -398,15 +400,15 @@ class JVMClass {
                     }
                     case 0xc4 = {
                         # wide modifier for local variable opcodes
-                        val nextOpcode = reader.getU8()
+                        val nextOpcode = reader.getUint8()
                         if nextOpcode == 0x84 {
                             # i.e. modified iinc
-                            val index = reader.getU16()
-                            val value = reader.getI16()
+                            val index = reader.getUint16()
+                            val value = reader.getInt16()
                             out.end("c4 84 iinc_w " + index + " " + value)
                         } else {
                             val opcodeName = Opcode.oneU8LocalArgOpcode[nextOpcode] + "_w"
-                            val index = reader.getU16()
+                            val index = reader.getUint16()
                             out.end(
                                 "c4 " + nextOpcode.hex().lpad(2, "0") + " " +
                                 opcodeName + " " + index)
@@ -414,9 +416,9 @@ class JVMClass {
                     }
                     case 0xc5 = {
                         # multianewarray
-                        val index = reader.getU16()
+                        val index = reader.getUint16()
                         val typename = cp.getConst(index)
-                        val dim = reader.getU8()
+                        val dim = reader.getUint8()
                         out.end("C5 multianewarray " + typename + " " + dim)
                     }
                     else = {
@@ -426,7 +428,7 @@ class JVMClass {
                             out.end(opcodeHex + " " + opcodeName)
                         } else if opcode in Opcode.oneU16BranchArgOpcode {
                             val opcodeName = Opcode.oneU16BranchArgOpcode[opcode]
-                            val offset = reader.getI16()
+                            val offset = reader.getInt16()
                             val dest = pos + offset
                             val destHex = dest.hex()
                             out.end(
@@ -435,11 +437,11 @@ class JVMClass {
                                 " -> " + destHex)
                         } else if opcode in Opcode.oneU16ConstArgOpcode {
                             val opcodeName = Opcode.oneU16ConstArgOpcode[opcode]
-                            val index = reader.getU16()
+                            val index = reader.getUint16()
                             out.end(opcodeHex + " " + opcodeName + " " + cp.getConst(index))
                         } else if opcode in Opcode.oneU8LocalArgOpcode {
                             val opcodeName = Opcode.oneU8LocalArgOpcode[opcode]
-                            val index = reader.getU8()
+                            val index = reader.getUint8()
                             out.end(opcodeHex + " " + opcodeName + " " + index)
                         } else {
                             out.end("Unrecognized opcode: 0x" + opcodeHex)
@@ -483,28 +485,28 @@ class JVMClass {
     ## Write out the contents of this class file into a DynamicBuffer
     def toBuffer(self): DynamicBuffer {
         val out = DynamicBuffer.empty()
-        out.useLittleEndian(false)
+        out.endian = Endian.big
         emit(out)
         out
     }
 
     def emit(self, out: DynamicBuffer) {
-        out.addU32(0xCAFEBABE)
-        out.addU16(minorVersion)
-        out.addU16(majorVersion)
+        out.addUint32(0xCAFEBABE)
+        out.addUint16(minorVersion)
+        out.addUint16(majorVersion)
         cp.emit(out)
-        out.addU16(accessFlags)
-        out.addU16(thisClass)
-        out.addU16(superClass)
-        out.addU16(interfaces.size())
+        out.addUint16(accessFlags)
+        out.addUint16(thisClass)
+        out.addUint16(superClass)
+        out.addUint16(interfaces.size())
         for iface in interfaces {
-            out.addU16(iface)
+            out.addUint16(iface)
         }
-        out.addU16(fields.size())
+        out.addUint16(fields.size())
         for field in fields {
             emitField(out, field)
         }
-        out.addU16(methods.size())
+        out.addUint16(methods.size())
         for method in methods {
             emitMethod(out, method)
         }
@@ -512,69 +514,69 @@ class JVMClass {
     }
 
     def emitField(self, out: DynamicBuffer, field: FieldInfo) {
-        out.addU16(field.accessFlags)
-        out.addU16(field.nameIndex)
-        out.addU16(field.descriptorIndex)
+        out.addUint16(field.accessFlags)
+        out.addUint16(field.nameIndex)
+        out.addUint16(field.descriptorIndex)
         emitAttributeList(out, field.attributes)
     }
 
     def emitMethod(self, out: DynamicBuffer, method: MethodInfo) {
-        out.addU16(method.accessFlags)
-        out.addU16(method.nameIndex)
-        out.addU16(method.descriptorIndex)
+        out.addUint16(method.accessFlags)
+        out.addUint16(method.nameIndex)
+        out.addUint16(method.descriptorIndex)
         emitAttributeList(out, method.attributes)
     }
 
     def emitAttributeList(self, out: DynamicBuffer, attributes: List[AttributeInfo]) {
-        out.addU16(attributes.size())
+        out.addUint16(attributes.size())
         for attribute in attributes {
             emitAttribute(out, attribute)
         }
     }
 
     def emitAttribute(self, out: DynamicBuffer, attribute: AttributeInfo) {
-        out.addU16(attribute.attributeNameIndex)
+        out.addUint16(attribute.attributeNameIndex)
         val attributeLengthPosition = out.size()
-        out.addI32(0) # attributeLength
+        out.addInt32(0) # attributeLength
         val attributeBodyStart = out.size()
         when attribute.data {
-            case constantValue(cvattr) = out.addU16(cvattr.constantValueIndex)
-            case sourceFile(sfattr) = out.addU16(sfattr.sourcefileIndex)
+            case constantValue(cvattr) = out.addUint16(cvattr.constantValueIndex)
+            case sourceFile(sfattr) = out.addUint16(sfattr.sourcefileIndex)
             case code(cattr) = {
-                out.addU16(cattr.maxStack)
-                out.addU16(cattr.maxLocals)
-                out.addI32(cattr.code.size())
+                out.addUint16(cattr.maxStack)
+                out.addUint16(cattr.maxLocals)
+                out.addInt32(cattr.code.size())
                 out.addBuffer(cattr.code)
-                out.addU16(cattr.exceptionTable.size())
+                out.addUint16(cattr.exceptionTable.size())
                 for entry in cattr.exceptionTable {
-                    out.addU16(entry.startPc)
-                    out.addU16(entry.endPc)
-                    out.addU16(entry.handlerPc)
-                    out.addU16(entry.catchType)
+                    out.addUint16(entry.startPc)
+                    out.addUint16(entry.endPc)
+                    out.addUint16(entry.handlerPc)
+                    out.addUint16(entry.catchType)
                 }
                 emitAttributeList(out, cattr.attributes)
             }
             case lineNumberTable(entries) = {
-                out.addU16(entries.size())
+                out.addUint16(entries.size())
                 for entry in entries {
-                    out.addU16(entry.startPc)
-                    out.addU16(entry.lineNumber)
+                    out.addUint16(entry.startPc)
+                    out.addUint16(entry.lineNumber)
                 }
             }
             case localVariableTable(entries) = {
-                out.addU16(entries.size())
+                out.addUint16(entries.size())
                 for entry in entries {
-                    out.addU16(entry.startPc)
-                    out.addU16(entry.length)
-                    out.addU16(entry.nameIndex)
-                    out.addU16(entry.descriptorIndex)
-                    out.addU16(entry.index)
+                    out.addUint16(entry.startPc)
+                    out.addUint16(entry.length)
+                    out.addUint16(entry.nameIndex)
+                    out.addUint16(entry.descriptorIndex)
+                    out.addUint16(entry.index)
                 }
             }
             case unknown(data) = out.addBuffer(data)
         }
         val attributeBodyEnd = out.size()
-        out.setI32(attributeLengthPosition, attributeBodyEnd - attributeBodyStart)
+        out.setInt32(attributeLengthPosition, attributeBodyEnd - attributeBodyStart)
     }
 
     class Parser {
@@ -582,26 +584,26 @@ class JVMClass {
         var cp: ConstantPool = ?
 
         def(buffer: DynamicBuffer): Self {
-            buffer.useLittleEndian(false)
+            buffer.endian = Endian.big
             __malloc(BufferReader(buffer))
         }
 
         def parseJVMClass(self): JVMClass {
             val cls = JVMClass()
-            val magic = BigInt(reader.getU32())
+            val magic = BigInt(reader.getUint32())
             if magic != JVMClass.magic {
                 throw Error("Invalid magic: " + magic.hex())
             }
-            cls.minorVersion = reader.getU16()
-            cls.majorVersion = reader.getU16()
+            cls.minorVersion = reader.getUint16()
+            cls.majorVersion = reader.getUint16()
             cls.cp = parseConstantPool()
             cp = cls.cp
-            cls.accessFlags = reader.getU16()
-            cls.thisClass = reader.getU16()
-            cls.superClass = reader.getU16()
-            val interfacesCount = reader.getU16()
+            cls.accessFlags = reader.getUint16()
+            cls.thisClass = reader.getUint16()
+            cls.superClass = reader.getUint16()
+            val interfacesCount = reader.getUint16()
             for i = 0; i < interfacesCount; i++ {
-                cls.interfaces.add(reader.getU16())
+                cls.interfaces.add(reader.getUint16())
             }
             cls.fields = parseFieldList()
             cls.methods = parseMethodList()
@@ -610,7 +612,7 @@ class JVMClass {
         }
 
         def parseConstantPool(self): ConstantPool {
-            val constantPoolSize = reader.getU16()
+            val constantPoolSize = reader.getUint16()
             val cp = ConstantPool()
             for i = 1; i < constantPoolSize; {
                 val cpInfo = parseCpInfo()
@@ -621,11 +623,11 @@ class JVMClass {
         }
 
         def parseCpInfo(self): CpInfo {
-            val tag = reader.getU8()
+            val tag = reader.getUint8()
             switch tag {
                 case JVMClass.cUtf8 = {
                     # TODO: Use the modified UTF-8 encoding as required by the JVM spec
-                    val length = reader.getU16()
+                    val length = reader.getUint16()
                     val string = reader.getUTF8(length)
                     # TODO: Do length validation
                     # if length != string.size() {
@@ -634,44 +636,44 @@ class JVMClass {
                     # Assert.equal(length, string.size())
                     CpInfo.utf8(string)
                 }
-                case JVMClass.cInteger = CpInfo.integer(reader.getI32())
-                case JVMClass.cFloat = CpInfo.float(reader.getF32())
-                case JVMClass.cLong = CpInfo.long(reader.getI64())
-                case JVMClass.cDouble = CpInfo.double(reader.getF64())
-                case JVMClass.cClassref = CpInfo.classref(reader.getU16())
-                case JVMClass.cString = CpInfo.string(reader.getU16())
+                case JVMClass.cInteger = CpInfo.integer(reader.getInt32())
+                case JVMClass.cFloat = CpInfo.float(reader.getFloat32())
+                case JVMClass.cLong = CpInfo.long(reader.getBigInt64())
+                case JVMClass.cDouble = CpInfo.double(reader.getFloat64())
+                case JVMClass.cClassref = CpInfo.classref(reader.getUint16())
+                case JVMClass.cString = CpInfo.string(reader.getUint16())
                 case JVMClass.cFieldref = {
-                    val classIndex = reader.getU16()
-                    val nameAndTypeIndex = reader.getU16()
+                    val classIndex = reader.getUint16()
+                    val nameAndTypeIndex = reader.getUint16()
                     CpInfo.fieldref(classIndex, nameAndTypeIndex)
                 }
                 case JVMClass.cMethodref = {
-                    val classIndex = reader.getU16()
-                    val nameAndTypeIndex = reader.getU16()
+                    val classIndex = reader.getUint16()
+                    val nameAndTypeIndex = reader.getUint16()
                     CpInfo.methodref(classIndex, nameAndTypeIndex)
                 }
                 case JVMClass.cInterfaceMethodref = {
-                    val classIndex = reader.getU16()
-                    val nameAndTypeIndex = reader.getU16()
+                    val classIndex = reader.getUint16()
+                    val nameAndTypeIndex = reader.getUint16()
                     CpInfo.interfaceMethodref(classIndex, nameAndTypeIndex)
                 }
                 case JVMClass.cNameAndType = {
-                    val nameIndex = reader.getU16()
-                    val descriptorIndex = reader.getU16()
+                    val nameIndex = reader.getUint16()
+                    val descriptorIndex = reader.getUint16()
                     CpInfo.nameAndType(nameIndex, descriptorIndex)
                 }
                 case JVMClass.cMethodHandle = {
-                    val referenceKind = reader.getU8()
-                    val referenceIndex = reader.getU16()
+                    val referenceKind = reader.getUint8()
+                    val referenceIndex = reader.getUint16()
                     CpInfo.methodHandle(referenceKind, referenceIndex)
                 }
                 case JVMClass.cMethodType = {
-                    val descriptorIndex = reader.getU16()
+                    val descriptorIndex = reader.getUint16()
                     CpInfo.methodType(descriptorIndex)
                 }
                 case JVMClass.cInvokeDynamic = {
-                    val bootstrapMethodAttrIndex = reader.getU16()
-                    val nameAndTypeIndex = reader.getU16()
+                    val bootstrapMethodAttrIndex = reader.getUint16()
+                    val nameAndTypeIndex = reader.getUint16()
                     CpInfo.invokeDynamic(bootstrapMethodAttrIndex, nameAndTypeIndex)
                 }
                 else = throw Error("Unrecognized cpinfo tag: " + tag)
@@ -680,7 +682,7 @@ class JVMClass {
 
         def parseFieldList(self): List[FieldInfo] {
             val fields: List[FieldInfo] = []
-            val fieldsCount = reader.getU16()
+            val fieldsCount = reader.getUint16()
             for i = 0; i < fieldsCount; i++ {
                 fields.add(parseField())
             }
@@ -688,16 +690,16 @@ class JVMClass {
         }
 
         def parseField(self): FieldInfo {
-            val accessFlags = reader.getU16()
-            val nameIndex = reader.getU16()
-            val descriptorIndex = reader.getU16()
+            val accessFlags = reader.getUint16()
+            val nameIndex = reader.getUint16()
+            val descriptorIndex = reader.getUint16()
             val attributes = parseAttributeList()
             FieldInfo(accessFlags, nameIndex, descriptorIndex, attributes)
         }
 
         def parseMethodList(self): List[MethodInfo] {
             val methods: List[MethodInfo] = []
-            val methodsCount = reader.getU16()
+            val methodsCount = reader.getUint16()
             for i = 0; i < methodsCount; i++ {
                 methods.add(parseMethod())
             }
@@ -705,15 +707,15 @@ class JVMClass {
         }
 
         def parseMethod(self): MethodInfo {
-            val accessFlags = reader.getU16()
-            val nameIndex = reader.getU16()
-            val descriptorIndex = reader.getU16()
+            val accessFlags = reader.getUint16()
+            val nameIndex = reader.getUint16()
+            val descriptorIndex = reader.getUint16()
             val attributes = parseAttributeList()
             MethodInfo(accessFlags, nameIndex, descriptorIndex, attributes)
         }
 
         def parseAttributeList(self): List[AttributeInfo] {
-            val attributesCount = reader.getU16()
+            val attributesCount = reader.getUint16()
             val attributes: List[AttributeInfo] = []
             for i = 0; i < attributesCount; i++ {
                 attributes.add(parseAttribute())
@@ -722,8 +724,8 @@ class JVMClass {
         }
 
         def parseAttribute(self): AttributeInfo {
-            val attributeNameIndex = reader.getU16()
-            val length = reader.getI32()
+            val attributeNameIndex = reader.getUint16()
+            val length = reader.getInt32()
             val attributeName = cp.getUtf8(attributeNameIndex)
             val attributeBodyStart = reader.i
             val data = switch attributeName {
@@ -736,7 +738,7 @@ class JVMClass {
                     parseLineNumberTableAttribute())
                 case "LocalVariableTable" = AttributeInfoData.localVariableTable(
                     parseLocalVariableTableAttribute())
-                else = AttributeInfoData.unknown(reader.getBuffer(length))
+                else = AttributeInfoData.unknown(DynamicBuffer(reader.getBuffer(length)))
             }
             val attributeBodyEnd = reader.i
             Assert.equal(length, attributeBodyEnd - attributeBodyStart)
@@ -744,22 +746,22 @@ class JVMClass {
         }
 
         def parseConstantValueAttribute(self): ConstantValueAttribute {
-            val constantValueIndex = reader.getU16()
+            val constantValueIndex = reader.getUint16()
             ConstantValueAttribute(constantValueIndex)
         }
 
         def parseSourceFileAttribute(self): SourceFileAttribute {
-            val sourcefileIndex = reader.getU16()
+            val sourcefileIndex = reader.getUint16()
             SourceFileAttribute(sourcefileIndex)
         }
 
         def parseCodeAttribute(self): CodeAttribute {
-            val maxStack = reader.getU16()
-            val maxLocals = reader.getU16()
-            val codeLength = reader.getI32()
-            val code = reader.getBuffer(codeLength)
-            code.useLittleEndian(false)
-            val exceptionTableLength = reader.getU16()
+            val maxStack = reader.getUint16()
+            val maxLocals = reader.getUint16()
+            val codeLength = reader.getInt32()
+            val code = DynamicBuffer(reader.getBuffer(codeLength))
+            code.endian = Endian.big
+            val exceptionTableLength = reader.getUint16()
             val exceptionTable: List[ExceptionTableEntry] = []
             for i = 0; i < exceptionTableLength; i++ {
                 exceptionTable.add(parseExceptionTableEntry())
@@ -769,33 +771,33 @@ class JVMClass {
         }
 
         def parseExceptionTableEntry(self): ExceptionTableEntry {
-            val startPc = reader.getU16()
-            val endPc = reader.getU16()
-            val handlerPc = reader.getU16()
-            val catchType = reader.getU16()
+            val startPc = reader.getUint16()
+            val endPc = reader.getUint16()
+            val handlerPc = reader.getUint16()
+            val catchType = reader.getUint16()
             ExceptionTableEntry(startPc, endPc, handlerPc, catchType)
         }
 
         def parseLineNumberTableAttribute(self): List[LineNumberTableEntry] {
-            val lineNumberTableLength = reader.getU16()
+            val lineNumberTableLength = reader.getUint16()
             val entries: List[LineNumberTableEntry] = []
             for i = 0; i < lineNumberTableLength; i++ {
-                val startPc = reader.getU16()
-                val lineNumber = reader.getU16()
+                val startPc = reader.getUint16()
+                val lineNumber = reader.getUint16()
                 entries.add(LineNumberTableEntry(startPc, lineNumber))
             }
             entries
         }
 
         def parseLocalVariableTableAttribute(self): List[LocalVariableTableEntry] {
-            val lineNumberTableLength = reader.getU16()
+            val lineNumberTableLength = reader.getUint16()
             val entries: List[LocalVariableTableEntry] = []
             for i = 0; i < lineNumberTableLength; i++ {
-                val startPc = reader.getU16()
-                val length = reader.getU16()
-                val nameIndex = reader.getU16()
-                val descriptorIndex = reader.getU16()
-                val index = reader.getU16()
+                val startPc = reader.getUint16()
+                val length = reader.getUint16()
+                val nameIndex = reader.getUint16()
+                val descriptorIndex = reader.getUint16()
+                val index = reader.getUint16()
                 entries.add(LocalVariableTableEntry(
                     startPc, length, nameIndex, descriptorIndex, index))
             }
@@ -829,7 +831,7 @@ class JVMClass {
         }
 
         def emit(self, out: DynamicBuffer) {
-            out.addU16(count()) # constantPoolCount
+            out.addUint16(count()) # constantPoolCount
             for info in infos {
                 info.emit(out)
             }
@@ -1085,50 +1087,50 @@ class JVMClass {
                 case empty() = return ()
                 else = ()
             }
-            out.addU8(tag)
+            out.addUint8(tag)
             when self {
                 case utf8(string) = {
                     val utf8 = DynamicBuffer.fromUTF8(string)
-                    out.addU16(utf8.size())
+                    out.addUint16(utf8.size())
                     out.addBuffer(utf8)
                 }
-                case integer(i) = out.addI32(i)
-                case float(f) = out.addF32(f)
-                case long(i) = out.addI64(i)
+                case integer(i) = out.addInt32(i)
+                case float(f) = out.addFloat32(f)
+                case long(i) = out.addBigInt64(i)
                 case empty() = ()
-                case double(f) = out.addF64(f)
+                case double(f) = out.addFloat64(f)
                 case classref(nameIndex) = {
-                    out.addU16(nameIndex)
+                    out.addUint16(nameIndex)
                 }
                 case string(utf8Index) = {
-                    out.addU16(utf8Index)
+                    out.addUint16(utf8Index)
                 }
                 case fieldref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case methodref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case interfaceMethodref(classIndex, nameAndTypeIndex) = {
-                    out.addU16(classIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(classIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
                 case nameAndType(nameIndex, descriptorIndex) = {
-                    out.addU16(nameIndex)
-                    out.addU16(descriptorIndex)
+                    out.addUint16(nameIndex)
+                    out.addUint16(descriptorIndex)
                 }
                 case methodHandle(referenceKind, referenceIndex) = {
-                    out.addU8(referenceKind)
-                    out.addU16(referenceIndex)
+                    out.addUint8(referenceKind)
+                    out.addUint16(referenceIndex)
                 }
                 case methodType(descriptorIndex) = {
-                    out.addU16(descriptorIndex)
+                    out.addUint16(descriptorIndex)
                 }
                 case invokeDynamic(bootstrapMethodAttrIndex, nameAndTypeIndex) = {
-                    out.addU16(bootstrapMethodAttrIndex)
-                    out.addU16(nameAndTypeIndex)
+                    out.addUint16(bootstrapMethodAttrIndex)
+                    out.addUint16(nameAndTypeIndex)
                 }
             }
         }

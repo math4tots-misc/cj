@@ -10,14 +10,14 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, Euclidea
     @implicit(Int, fromInt)
     @implicit(Double, fromDouble)
     @implicit(String, fromString)
-    class Converter {
+    class Convertible {
         val x: BigInt
         def fromInt(i: Int): Self = __malloc(i)
         def fromDouble(f: Double): Self = __malloc(BigInt.fromDouble(f))
         def fromString(s: String): Self = __malloc(BigInt.fromString(s))
     }
 
-    def(conv: Converter): Self = conv.x
+    def(conv: Convertible): Self = conv.x
     def fromString(s: String): Self = js!(Self, "BigInt(", s, ")")
     def fromInt(i: Int): Self = js!(Self, "BigInt(", i, ")")
     def fromDouble(d: Double): Self = js!(Self, "BigInt(", d, ")")

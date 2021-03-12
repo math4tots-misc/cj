@@ -9,13 +9,13 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     @implicit(Int, __new)
     @implicit(Double, fromDouble)
     @implicit(String, fromString)
-    class Converter {
+    class Convertible {
         val x: Int
         def fromDouble(d: Int): Self = __malloc(d.toInt())
         def fromString(s: String): Self = __malloc(s.parseInt().get())
     }
 
-    def(x: Converter): Self
+    def(x: Convertible): Self
     def repr(self: Self): String
     def __eq(self: Self, other: Self): Bool
     def hash(self: Self): Int

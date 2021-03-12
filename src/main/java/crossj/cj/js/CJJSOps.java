@@ -118,7 +118,7 @@ public final class CJJSOps {
                 } else {
                     return null;
                 }
-            }), mkpair("cj.String._addstr", ctx -> translateOp("(", ")", "+", ctx.args)),
+            }),
             mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
             mkpair("cj.String.default", ctx -> CJJSBlob2.simplestr("''", true)),
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),

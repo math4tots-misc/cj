@@ -1,12 +1,19 @@
 package cj
 
+import cj.Endian
+import cj.DataView
 import cj.DynamicBuffer
 
 class BufferReader : ToBool {
-    val buffer: DynamicBuffer
+    val view: DataView
     var i = 0
 
-    def toBool(self): Bool = i < buffer.size()
+    def(conv: DataView.Convertible): Self = __malloc(conv.x)
+
+    def __get_endian(self): Endian = view.endian
+    def __set_endian(self, endian: Endian) { view.endian = endian }
+
+    def toBool(self): Bool = i < view.size()
 
     def skip(self, n: Int) {
         i = i + n
@@ -18,76 +25,76 @@ class BufferReader : ToBool {
         }
     }
 
-    def peekUTF8(self, len: Int): String = buffer.getUTF8(i, i + len)
-    def peekBuffer(self, len: Int): DynamicBuffer = buffer.cut(i, i + len)
-    def peekI8(self): Int = buffer.getI8(i)
-    def peekU8(self): Int = buffer.getU8(i)
-    def peekI16(self): Int = buffer.getI16(i)
-    def peekU16(self): Int = buffer.getU16(i)
-    def peekI32(self): Int = buffer.getI32(i)
-    def peekU32(self): Double = buffer.getU32(i)
-    def peekI64(self): BigInt = buffer.getI64(i)
-    def peekU64(self): BigInt = buffer.getU64(i)
-    def peekF32(self): Double = buffer.getF32(i)
-    def peekF64(self): Double = buffer.getF64(i)
+    def peekUTF8(self, len: Int): String = view.getUTF8(i, i + len)
+    def peekBuffer(self, len: Int): DataView = view[i:i + len]
+    def peekI8(self): Int = view.getInt8(i)
+    def peekU8(self): Int = view.getUint8(i)
+    def peekI16(self): Int = view.getInt16(i)
+    def peekU16(self): Int = view.getUint16(i)
+    def peekI32(self): Int = view.getInt32(i)
+    def peekU32(self): Double = view.getUint32(i)
+    def peekI64(self): BigInt = view.getBigInt64(i)
+    def peekU64(self): BigInt = view.getBigUint64(i)
+    def peekF32(self): Double = view.getFloat32(i)
+    def peekF64(self): Double = view.getFloat64(i)
 
     def getUTF8(self, len: Int): String = {
-        val ret = buffer.getUTF8(i, i + len)
+        val ret = view.getUTF8(i, i + len)
         i = i + len
         ret
     }
-    def getBuffer(self, len: Int): DynamicBuffer = {
-        val ret = buffer.cut(i, i + len)
+    def getBuffer(self, len: Int): DataView = {
+        val ret = view[i:i + len]
         i = i + len
         ret
     }
-    def getI8(self): Int = {
-        val ret = buffer.getI8(i)
+    def getInt8(self): Int = {
+        val ret = view.getInt8(i)
         i = i + 1
         ret
     }
-    def getU8(self): Int = {
-        val ret = buffer.getU8(i)
+    def getUint8(self): Int = {
+        val ret = view.getUint8(i)
         i = i + 1
         ret
     }
-    def getI16(self): Int = {
-        val ret = buffer.getI16(i)
+    def getInt16(self): Int = {
+        val ret = view.getInt16(i)
         i = i + 2
         ret
     }
-    def getU16(self): Int = {
-        val ret = buffer.getU16(i)
+    def getUint16(self): Int = {
+        val ret = view.getUint16(i)
         i = i + 2
         ret
     }
-    def getI32(self): Int = {
-        val ret = buffer.getI32(i)
+    def getInt32(self): Int = {
+        val ret = view.getInt32(i)
         i = i + 4
         ret
     }
-    def getU32(self): Double = {
-        val ret = buffer.getU32(i)
+    def getUint32(self): Double = {
+        val ret = view.getUint32(i)
         i = i + 4
         ret
     }
-    def getI64(self): BigInt = {
-        val ret = buffer.getI64(i)
+    def getBigInt64(self): BigInt = {
+        val ret = view.getBigInt64(i)
         i = i + 8
         ret
     }
-    def getU64(self): BigInt = {
-        val ret = buffer.getU64(i)
+    def getBigUint64(self): BigInt = {
+        val ret = view.getBigUint64(i)
         i = i + 8
         ret
     }
-    def getF32(self): Double = {
-        val ret = buffer.getF32(i)
+    def getFloat32(self): Double = {
+        val ret = view.getFloat32(i)
         i = i + 4
         ret
     }
-    def getF64(self): Double = {
-        val ret = buffer.getF64(i)
+    def getFloat64(self): Double = {
+        val ret = view.getFloat64(i)
         i = i + 8
         ret
     }

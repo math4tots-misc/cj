@@ -3,20 +3,20 @@ package cj
 import cj.Math
 
 native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
-    def toString(self: Self): Self
+    def toString(self: Self): Self = self
     def repr(self: Self): String
 
-    def __add[T?: ToString](self: Self, other: T): Self = _addstr(other.toString())
-    def _addstr(self, other: String): Self
+    def __add[T?: ToString](self: Self, other: T): Self = js!(Self, self, "+", other.toString())
 
     ## Number of char codes in this string.
     ## NOTE: If the default encoding is UTF-16, this is neither the number of bytes
     ## nor the number of code points.
-    def size(self: Self): Int
+    def size(self: Self): Int = js!(Int, self, ".length")
 
-    def toBool(self: Self): Bool
+    def toBool(self: Self): Bool = js!(Bool, "!!", self)
 
-    def __eq(self: Self, other: Self): Bool
+    def __eq(self: Self, other: Self): Bool = js!(Bool, self, "===", other)
+
     def hash(self: Self): Int {
         var h = 0;
         for c in self {

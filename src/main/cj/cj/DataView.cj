@@ -1,24 +1,46 @@
 package cj
 
+import cj.DataViewMixin
+import cj.Endian
+import cj.BufferLike
+import cj.ArrayBufferOrView
 import cj.ArrayBufferView
 import cj.BigInt
 import cj.ArrayBuffer
 
-native class DataView: ArrayBufferView {
-    def(abuf: ArrayBuffer): Self = fromParts(abuf, 0, abuf.byteLength, false)
-    def usingLittleEndian(abuf: ArrayBuffer): Self = fromParts(abuf, 0, abuf.byteLength, true)
+native class DataView: ArrayBufferView, DataViewMixin {
+
+    def __get_defaultEndian(): Endian = Endian.big
+
+    @implicit(ArrayBuffer, fromArrayBuffer)
+    @implicit(BufferLike, fromBufferLike)
+    @implicit(DataView, __new)
+    class Convertible {
+        val x: DataView
+        def fromArrayBuffer(abuf: ArrayBuffer): Self = Self(DataView.fromArrayBuffer(abuf))
+        def fromBufferLike[V: BufferLike](v: V): Self = Self(DataView.fromParts(
+            v.buffer, v.byteOffset, v.byteLength, DataView.defaultEndian))
+    }
+
+    def(conv: Convertible): Self = conv.x
+    def fromArrayBufferWithEndian(abuf: ArrayBuffer, endian: Endian): Self = fromParts(
+        abuf, 0, abuf.byteLength, endian)
+    def fromArrayBuffer(abuf: ArrayBuffer): Self = fromArrayBufferWithEndian(abuf, defaultEndian)
+    def usingBigEndian(abuf: ArrayBuffer): Self = fromArrayBufferWithEndian(abuf, Endian.big)
+    def usingLittleEndian(abuf: ArrayBuffer): Self = fromArrayBufferWithEndian(abuf, Endian.little)
     def fromParts(
             abuf: ArrayBuffer,
             byteOffset: Int,
             byteLength: Int,
-            useLittleEndian: Bool): Self {
+            endian: Endian): Self {
         val dv = js!(Self, "new DataView(", abuf, ",", byteOffset, ",", byteLength, ")")
-        js!(Unit, dv, "._useLittleEndian=", useLittleEndian)
+        js!(Unit, dv, "._endian=", endian)
         dv
     }
-    def useLittleEndian(self, useLittleEndian: Bool) = js!(
-        Unit, self, "._useLittleEndian=", useLittleEndian)
-    private def _ule(self): Bool = js!(Bool, self, "._useLittleEndian")
+    def size(self): Int = byteLength
+    def __set_endian(self, endian: Endian) = js!(Unit, self, "._endian=", endian)
+    def __get_endian(self): Endian = js!(Endian, self, "._endian")
+    private def _ule(self): Bool = endian.isLittle()
     def getInt8(self, byteOffset: Int): Int = js!(
         Int, self, ".getInt8(", byteOffset, ",", _ule(), ")")
     def getUint8(self, byteOffset: Int): Int = js!(
@@ -39,6 +61,8 @@ native class DataView: ArrayBufferView {
         BigInt, self, ".getBigInt64(", byteOffset, ",", _ule(), ")")
     def getBigUint64(self, byteOffset: Int): BigInt = js!(
         BigInt, self, ".getBigUint64(", byteOffset, ",", _ule(), ")")
+    def getUTF8(self, start: Int, end: Int): String = js!(
+        String, "new TextDecoder().decode(", self[start:end], ")")
     def setInt8(self, byteOffset: Int, value: Int) = js!(
         Unit, self, ".setInt8(", byteOffset, ",", value, ",", _ule(), ")")
     def setUint8(self, byteOffset: Int, value: Int) = js!(
@@ -59,4 +83,24 @@ native class DataView: ArrayBufferView {
         Unit, self, ".setBigInt64(", byteOffset, ",", value, ",", _ule(), ")")
     def setBigUint64(self, byteOffset: Int, value: BigInt) = js!(
         Unit, self, ".setBigUint64(", byteOffset, ",", value, ",", _ule(), ")")
+    def setUTF8(self, start: Int, string: String) {
+        setBuffer(start, js!(ArrayBuffer, "new TextEncoder().encode(", string, ").buffer"))
+    }
+    def setBuffer[B: BufferLike](self, start: Int, buffer: B) {
+        self[start:start + buffer.byteLength].set(buffer, 0)
+    }
+
+    def __slice(self, start: Int, end: Int): Self = fromParts(
+        buffer, byteOffset + start, end - start, endian)
+    def __sliceFrom(self, start: Int): Self = self[start:size()]
+    def __sliceTo(self, end: Int): Self = self[0:end]
+
+    def set[B: BufferLike](self, other: B, offset: Int) = buffer.set(
+        other, byteOffset + offset)
+
+    def toArrayBuffer(self): ArrayBuffer {
+        val buf = ArrayBuffer(byteLength)
+        buf.set(self, 0)
+        buf
+    }
 }

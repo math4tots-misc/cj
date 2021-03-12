@@ -1,5 +1,7 @@
 package cjx.jvm.main
 
+import cj.DataView
+import cj.Endian
 import cj.Error
 import cj.StringBuilder
 import cj.BigInt
@@ -67,8 +69,8 @@ class OldDump {
     def main() {
         val path = Argv()[0]
         val buffer = FS.readFileBytes(path)
-        buffer.useLittleEndian(false)
         val reader = BufferReader(buffer)
+        reader.endian = Endian.big
         __malloc(path, reader).run()
     }
 
@@ -92,13 +94,13 @@ class OldDump {
         println("Reading file " + path)
 
         # Check magic
-        val magic = BigInt(reader.getU32())
+        val magic = BigInt(reader.getUint32())
         Assert.equal(magic.hex(), "CAFEBABE")
         println("magic " + magic.hex())
 
-        println("minor version = " + reader.getU16())
+        println("minor version = " + reader.getUint16())
 
-        val major = reader.getU16()
+        val major = reader.getUint16()
         val majorStr = switch major {
             case 0x3D = "Java SE 17"
             case 0x3C = "Java SE 16"
@@ -121,7 +123,7 @@ class OldDump {
         }
         println("major version = " + majorStr + " (" + major.hex() + ")")
 
-        val constantPoolSize = reader.getU16()
+        val constantPoolSize = reader.getUint16()
         println("constantPoolSize = " + constantPoolSize + " - 1")
 
         # Look ahead in constant info to be able to print nicer looking
@@ -132,24 +134,24 @@ class OldDump {
 
         for i = 1; i < constantPoolSize; i += dumpConstantInfo(i) {}
 
-        val accessFlags = reader.getU16()
+        val accessFlags = reader.getUint16()
         println("accessFlags = " + translateFlags(accessFlags))
 
-        val thisClass = reader.getU16()
+        val thisClass = reader.getUint16()
         println("thisClass = " + classref(thisClass))
 
-        val superClass = reader.getU16()
+        val superClass = reader.getUint16()
         println("superClass = " + classref(superClass))
 
-        val interfacesCount = reader.getU16()
+        val interfacesCount = reader.getUint16()
         println("interfacesCount = " + interfacesCount)
         Assert.equal(interfacesCount, 0) # TODO
 
-        val fieldsCount = reader.getU16()
+        val fieldsCount = reader.getUint16()
         println("fieldsCount = " + fieldsCount)
         Assert.equal(fieldsCount, 0) # TODO
 
-        val methodsCount = reader.getU16()
+        val methodsCount = reader.getUint16()
         println("methodsCount = " + methodsCount)
         for i = 0; i < methodsCount; i++ {
             dumpMethodInfo()
@@ -233,47 +235,47 @@ class OldDump {
     }
 
     def fillConstantInfo(self, i: Int): Int {
-        val tag = reader.getU8()
+        val tag = reader.getUint8()
         switch tag {
             case cUtf8 = {
-                val length = reader.getU16()
+                val length = reader.getUint16()
                 val string = reader.getUTF8(length)
                 Assert.equal(length, string.size())
                 utf8Map[i] = string
             }
             case cInteger = {
-                val value = reader.getI32()
+                val value = reader.getInt32()
                 primitiveMap[i] = "int(" + value + ")"
             }
             case cFloat = {
-                val value = reader.getF32()
+                val value = reader.getFloat32()
                 primitiveMap[i] = "float(" + value + ")"
             }
             case cLong = {
-                val value = reader.getI64()
+                val value = reader.getBigInt64()
                 primitiveMap[i] = "long(" + value + ")"
             }
             case cDouble = {
-                val value = reader.getF64()
+                val value = reader.getFloat64()
                 primitiveMap[i] = "double(" + value + ")"
             }
             case cClassref = {
-                val utf8id = reader.getU16()
+                val utf8id = reader.getUint16()
                 classrefMap[i] = utf8id
             }
             case cString = {
-                stringMap[i] = reader.getU16()
+                stringMap[i] = reader.getUint16()
             }
             case cFieldref
             case cMethodref
             case cInterfaceMethodref = {
-                val classIndex = reader.getU16()
-                val nameAndTypeIndex = reader.getU16()
+                val classIndex = reader.getUint16()
+                val nameAndTypeIndex = reader.getUint16()
                 memberrefMap[i] = (classIndex, nameAndTypeIndex)
             }
             case cNameAndType = {
-                val nameUtf8Index = reader.getU16()
-                val descriptorUtf8Index = reader.getU16()
+                val nameUtf8Index = reader.getUint16()
+                val descriptorUtf8Index = reader.getUint16()
                 nameAndTypeMap[i] = (nameUtf8Index, descriptorUtf8Index)
             }
             else = throw Error("Unrecognized cpinfo tag (during lookahead): " + tag)
@@ -287,66 +289,66 @@ class OldDump {
 
     def dumpConstantInfo(self, i: Int): Int {
         print0("  #" + i.toString().lpad(5, " ") + " ")
-        val tag = reader.getU8()
+        val tag = reader.getUint8()
         switch tag {
             case cUtf8 = {
                 IO.print("Utf8 ".rpad(16, " "))
-                val length = reader.getU16()
+                val length = reader.getUint16()
                 val string = reader.getUTF8(length)
                 IO.println(string.repr())
             }
             case cInteger = {
                 IO.print("Integer ".rpad(16, " "))
-                val value = reader.getI32()
+                val value = reader.getInt32()
                 IO.println(value)
             }
             case cFloat = {
                 IO.print("Float ".rpad(16, " "))
-                val value = reader.getF32()
+                val value = reader.getFloat32()
                 IO.println(value)
             }
             case cLong = {
                 IO.print("Long ".rpad(16, " "))
-                val value = reader.getI64()
+                val value = reader.getBigInt64()
                 IO.println(value)
             }
             case cDouble = {
                 IO.print("Double ".rpad(16, " "))
-                val value = reader.getF64()
+                val value = reader.getFloat64()
                 IO.println(value)
             }
             case cClassref = {
                 IO.print("Class ".rpad(16, " "))
-                val utf8id = reader.getU16()
+                val utf8id = reader.getUint16()
                 IO.println("" + utf8(utf8id))
             }
             case cString = {
                 IO.print("String ".rpad(16, " "))
-                val utf8id = reader.getU16()
+                val utf8id = reader.getUint16()
                 IO.println("" + utf8(utf8id))
             }
             case cFieldref = {
                 IO.print("Fieldref ".rpad(16, " "))
-                val classIndex = reader.getU16()
-                val nameAndTypeIndex = reader.getU16()
+                val classIndex = reader.getUint16()
+                val nameAndTypeIndex = reader.getUint16()
                 IO.println("" + member(i))
             }
             case cMethodref = {
                 IO.print("Methodref ".rpad(16, " "))
-                val classIndex = reader.getU16()
-                val nameAndTypeIndex = reader.getU16()
+                val classIndex = reader.getUint16()
+                val nameAndTypeIndex = reader.getUint16()
                 IO.println("" + member(i))
             }
             case cInterfaceMethodref = {
                 IO.print("InterfaceMethodref ".rpad(16, " "))
-                val classIndex = reader.getU16()
-                val nameAndTypeIndex = reader.getU16()
+                val classIndex = reader.getUint16()
+                val nameAndTypeIndex = reader.getUint16()
                 IO.println("" + member(i))
             }
             case cNameAndType = {
                 IO.print("NameAndType ".rpad(16, " "))
-                val nameUtf8Index = reader.getU16()
-                val descriptorUtf8Index = reader.getU16()
+                val nameUtf8Index = reader.getUint16()
+                val descriptorUtf8Index = reader.getUint16()
                 IO.println(utf8(nameUtf8Index) + ":" + utf8(descriptorUtf8Index))
             }
             else = throw Error("Unrecognized cpinfo tag: " + tag)
@@ -359,9 +361,9 @@ class OldDump {
     }
 
     def dumpMethodInfo(self) {
-        val accessFlags = reader.getU16()
-        val nameIndex = reader.getU16()
-        val descriptorIndex = reader.getU16()
+        val accessFlags = reader.getUint16()
+        val nameIndex = reader.getUint16()
+        val descriptorIndex = reader.getUint16()
         val name = utf8(nameIndex)
         val descriptor = utf8(descriptorIndex)
         println("=== Method " + name + " : " + descriptor + " " + translateFlags(accessFlags) + " ===")
@@ -370,7 +372,7 @@ class OldDump {
     }
 
     def dumpAttributeList(self) {
-        val attributesCount = reader.getU16()
+        val attributesCount = reader.getUint16()
         println("attributesCount = " + attributesCount)
         enter()
         for i = 0; i < attributesCount; i++ {
@@ -380,27 +382,27 @@ class OldDump {
     }
 
     def dumpAttribute(self) {
-        val attributeNameIndex = reader.getU16()
-        val attributeLength = reader.getI32()
+        val attributeNameIndex = reader.getUint16()
+        val attributeLength = reader.getInt32()
         val attributeName = utf8(attributeNameIndex)
         println("Attribute " + attributeName)
         switch attributeName {
             case "Code" = {
-                val maxStack = reader.getU16()
-                val maxLocals = reader.getU16()
-                val codeLength = reader.getI32()
+                val maxStack = reader.getUint16()
+                val maxLocals = reader.getUint16()
+                val codeLength = reader.getInt32()
                 println(
                     "maxStack = " + maxStack +
                     ", maxLocals = " + maxLocals +
                     ", codeLength = " + codeLength)
                 val code = reader.getBuffer(codeLength)
                 dumpCode(code)
-                val exceptionTableLength = reader.getU16()
+                val exceptionTableLength = reader.getUint16()
                 for i = 0; i < exceptionTableLength; i++ {
-                    val startPc = reader.getU16()
-                    val endPc = reader.getU16()
-                    val handlerPc = reader.getU16()
-                    val catchType = reader.getU16()
+                    val startPc = reader.getUint16()
+                    val endPc = reader.getUint16()
+                    val handlerPc = reader.getUint16()
+                    val catchType = reader.getUint16()
                 }
                 dumpAttributeList()
             }
@@ -411,11 +413,11 @@ class OldDump {
         }
     }
 
-    def dumpCode(self, code: DynamicBuffer) {
+    def dumpCode(self, code: DataView) {
         enter()
         val reader = BufferReader(code)
         while reader {
-            val opcode = reader.getU8()
+            val opcode = reader.getUint8()
             switch opcode {
                 case 0x00 = println("00 nop")
                 case 0x01 = println("01 aconst_null")
@@ -427,33 +429,33 @@ class OldDump {
                 case 0x07 = println("07 iconst_4")
                 case 0x08 = println("08 iconst_5")
                 case 0x12 = {
-                    val index = reader.getU8()
+                    val index = reader.getUint8()
                     println("12 ldc " + const(index))
                 }
                 case 0x13 = {
                     # Note, long or double not allowed with ldc or ldc_w
-                    val index = reader.getU16()
+                    val index = reader.getUint16()
                     println("13 ldc_w " + const(index))
                 }
                 case 0x14 = {
                     # Like ldc_w, but for long or double
-                    val index = reader.getU16()
+                    val index = reader.getUint16()
                     println("14 ldc2_w" + const(index))
                 }
                 case 0x2A = println("2A aload_0")
                 case 0xB2 = {
-                    val fieldrefIndex = reader.getU16()
+                    val fieldrefIndex = reader.getUint16()
                     # IO.println("fieldrefIndex = " + fieldrefIndex)
                     val fieldref = member(fieldrefIndex)
                     println("B2 getstatic " + fieldref)
                 }
                 case 0xB6 = {
-                    val index = reader.getU16()
+                    val index = reader.getUint16()
                     val methodref = member(index)
                     println("B6 invokevirtual " + methodref)
                 }
                 case 0xB7 = {
-                    val methodref = member(reader.getU16())
+                    val methodref = member(reader.getUint16())
                     println("B7 invokespecial " + methodref)
                 }
                 case 0xB1 = println("B1 return")

@@ -282,8 +282,11 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             }
         }
 
-        // for unions: emit case constructors
+        // for unions: emit tag method and case constructors
         if (item.getKind() == CJIRItemKind.Union && !item.isNative()) {
+            out.append(translateMethodName("__tag") + "(x){return ");
+            out.append(item.isSimpleUnion() ? "x" : "x[0]");
+            out.append("}\n");
             for (var caseDefn : item.getCases()) {
                 var methodName = translateMethodName(caseDefn.getName());
                 var argc = caseDefn.getTypes().size();

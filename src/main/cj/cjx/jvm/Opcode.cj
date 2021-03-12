@@ -222,9 +222,9 @@ union Opcode {
     ## Gets the length of the instruction at the given index in the buffer
     ## For stepping over instructions
     def instructionSize(buffer: DynamicBuffer, i: Int): Int {
-        val opcode = buffer.getU8(i)
+        val opcode = buffer.getUint8(i)
         switch opcode {
-            case wide = if buffer.getU8(i + 1) == iinc {
+            case wide = if buffer.getUint8(i + 1) == iinc {
                     # iinc_w has 2 u16 args
                     # wide(u1) iinc(u1) <arg1>(u2) <arg2>(u2)
                     6
@@ -235,13 +235,13 @@ union Opcode {
                 }
             case tableswitch = {
                 val padding = paddingToNearestMultipleOf4(i + 1)
-                val low = buffer.getI32(i + 1 + padding + 4)
-                val high = buffer.getI32(i + 1 + padding + 8)
+                val low = buffer.getInt32(i + 1 + padding + 4)
+                val high = buffer.getInt32(i + 1 + padding + 8)
                 1 + padding + 3 * 4 + (high - low + 1) * 4
             }
             case lookupswitch = {
                 val padding = paddingToNearestMultipleOf4(i + 1)
-                val npairs = buffer.getI32(i + 1 + padding + 4)
+                val npairs = buffer.getInt32(i + 1 + padding + 4)
                 1 + padding + 2 * 4 + npairs * 8
             }
             case multianewarray = 4

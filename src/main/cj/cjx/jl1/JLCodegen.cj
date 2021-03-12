@@ -312,7 +312,7 @@ class JLCodegen {
                         for jumpPos in jumpPosList {
                             Assert.that(landPos - jumpPos <= 32767)
                             val jumpPatchPos = jumpPos + 1
-                            jvmcode.code.setI16(jumpPatchPos, landPos - jumpPos)
+                            jvmcode.code.setInt16(jumpPatchPos, landPos - jumpPos)
                         }
                     } else {
                         jvmcode.iconst_1()
@@ -331,7 +331,7 @@ class JLCodegen {
                         for jumpPos in jumpPosList {
                             Assert.that(landPos - jumpPos <= 32767)
                             val jumpPatchPos = jumpPos + 1
-                            jvmcode.code.setI16(jumpPatchPos, landPos - jumpPos)
+                            jvmcode.code.setInt16(jumpPatchPos, landPos - jumpPos)
                         }
                     } else {
                         jvmcode.iconst_0()
@@ -349,8 +349,8 @@ class JLCodegen {
                     Assert.that(landPos2 - jumpPos2 <= 32767)
                     val jumpPatchPos1 = jumpPos1 + 1
                     val jumpPatchPos2 = jumpPos2 + 1
-                    jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
-                    jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
+                    jvmcode.code.setInt16(jumpPatchPos1, landPos1 - jumpPos1)
+                    jvmcode.code.setInt16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
                 case while_(cond, body) = {
                     val landPos1 = jvmcode.code.size(); emit(cond)
@@ -363,8 +363,8 @@ class JLCodegen {
                     Assert.that(landPos2 - jumpPos2 <= 32767)
                     val jumpPatchPos1 = jumpPos1 + 1
                     val jumpPatchPos2 = jumpPos2 + 1
-                    jvmcode.code.setI16(jumpPatchPos1, landPos1 - jumpPos1)
-                    jvmcode.code.setI16(jumpPatchPos2, landPos2 - jumpPos2)
+                    jvmcode.code.setInt16(jumpPatchPos1, landPos1 - jumpPos1)
+                    jvmcode.code.setInt16(jumpPatchPos2, landPos2 - jumpPos2)
                 }
                 case throw_(inner) = {
                     emit(inner)
@@ -393,7 +393,7 @@ class JLCodegen {
                     for jumpPos in jumpPosList {
                         Assert.that(okLandPos - jumpPos <= 32767)
                         val jumpPatchPos = jumpPos + 1
-                        jvmcode.code.setI16(jumpPatchPos, okLandPos - jumpPos)
+                        jvmcode.code.setInt16(jumpPatchPos, okLandPos - jumpPos)
                     }
                 }
                 case tryfinally(body, fin) = {
@@ -419,7 +419,7 @@ class JLCodegen {
                     # register the location to jump to when no exceptions are thrown
                     Assert.that(okLandPos - okJumpPos <= 32767)
                     val okJumpPatchPos = okJumpPos + 1
-                    jvmcode.code.setI16(okJumpPatchPos, okLandPos - okJumpPos)
+                    jvmcode.code.setInt16(okJumpPatchPos, okLandPos - okJumpPos)
 
                     # Add entry in exception table for which finally to trigger
                     # when an exception is thrown
