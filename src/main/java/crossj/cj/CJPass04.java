@@ -1028,7 +1028,7 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitMacroCall(CJAstMacroCall e, Optional<CJIRType> a) {
                 switch (e.getName()) {
-                case "include_str!":
+                case "include_str!": {
                     if (e.getArgs().size() != 1) {
                         throw CJError.of("include_str! requires exactly 1 argument (strlit)", e.getMark());
                     }
@@ -1039,6 +1039,36 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     var contents = IO.readFile(path);
                     return evalExpression(new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(contents)));
+                }
+                case "include_bytes!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("include_bytes! requires exactly 1 argument (strlit)", e.getMark());
+                    }
+                    var relpath = solveExprForStringLiteral(e.getArgs().get(0));
+                    var path = IO.join(IO.dirname(e.getMark().filename), relpath);
+                    if (!FS.isFile(path)) {
+                        throw CJError.of("File " + path + " not found", e.getMark());
+                    }
+                    var contents = IO.readFileBytes(path);
+                    var sb = new StringBuilder();
+                    sb.append("stringToArrayBuffer(\"");
+                    for (int i = 0; i < contents.size(); i++) {
+                        var value = contents.getU8(i);
+                        if (value == 0) {
+                            sb.append("\\0");
+                        } else if (value == '\\' || value == '"') {
+                            sb.append('\\');
+                            sb.append((char) value);
+                        } else if (value >= ' ' && value <= '~') {
+                            sb.append((char) value);
+                        } else {
+                            sb.append("\\x" + String.format("%02x", value));
+                        }
+                    }
+                    sb.append("\")");
+                    var arrbuftype = ctx.getTypeWithArgs("cj.ArrayBuffer", List.of(), e.getMark());
+                    return new CJIRJSBlob(e, arrbuftype, List.of(sb.toString()));
+                }
                 case "listdir!": {
                     if (e.getArgs().size() != 1) {
                         throw CJError.of("listdir! requires exactly 1 argument (strlit)", e.getMark());

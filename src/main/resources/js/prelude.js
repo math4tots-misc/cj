@@ -69,3 +69,15 @@ class WrappingException extends Error {
         this.data = data;
     }
 }
+
+/**
+ * @param {string} string
+ */
+function stringToArrayBuffer(string) {
+    const buffer = new ArrayBuffer(string.length);
+    const view = new Uint8Array(buffer);
+    for (let i = 0; i < string.length; i++) {
+        view[i] = string.charCodeAt(i);
+    }
+    return buffer;
+}

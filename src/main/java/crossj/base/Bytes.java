@@ -128,6 +128,9 @@ public final class Bytes {
         return bytes;
     }
 
+    /**
+     * Byte length
+     */
     public int size() {
         return buffer.limit();
     }
