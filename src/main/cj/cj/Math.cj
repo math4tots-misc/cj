@@ -11,7 +11,7 @@ native class Math {
 
     ## Returns a random number between 0 and 1
     ## (inclusive of 0, but not 1)
-    def random(): Double = js!(Double, "Math.random")
+    def random(): Double = js!(Double, "Math.random()")
 
     def floor(x: Double): Int = js!(Int, "Math.floor(", x, ")")
     def ceil(x: Double): Int = js!(Int, "Math.ceil(", x, ")")
