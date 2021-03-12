@@ -13,7 +13,7 @@ class Deque[T?] :
     var start: Int = 0
 
     @generic def empty(): Self = __malloc([])
-    @variadic @generic def(list: List[T]): Self = __malloc(list)
+    @generic def(list: List[T]): Self = __malloc(list)
     @generic def fromList(list: List[T]): Self = __malloc(list)
     def fromIterator(iterator: Iterator[T]): Self = fromList(iterator.toList())
 
