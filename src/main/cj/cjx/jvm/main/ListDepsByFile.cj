@@ -4,7 +4,7 @@ import cj.FS
 import cjx.jvm.JVMClass
 import cj.Argv
 
-class ListDeps {
+class ListDepsByFile {
 
     static val excludes: Set[String] = SetOf(
         "java/lang/String",
@@ -69,6 +69,7 @@ class ListDeps {
             }
         }
         for cls in clss {
+            externals.clear()
             for cpinfo in cls.cp.infos {
                 when cpinfo {
                     case classref(utf8i) {
@@ -88,28 +89,32 @@ class ListDeps {
                     else = ()
                 }
             }
-        }
-        for depcls in externals.keys().sorted() {
-            IO.println(depcls)
-            val fields = externals[depcls].fields
-            val methods = externals[depcls].methods
-            var any = false
-            if fields {
-                IO.println("  FIELDS")
-                for (fieldName, fieldType) in externals[depcls].fields.sorted() {
-                    IO.println("    " + fieldName + ": " + fieldType)
-                }
-                any = true
-            }
-            if methods {
-                IO.println("  METHODS")
-                for (methodName, methodType) in externals[depcls].methods.sorted() {
-                    IO.println("    " + methodName + ": " + methodType)
-                }
-                any = true
-            }
-            if not any {
+            IO.println(cls.name)
+            if externals.isEmpty() {
                 IO.println("  NONE")
+            }
+            for depcls in externals.keys().sorted() {
+                IO.println("  " + depcls)
+                val fields = externals[depcls].fields
+                val methods = externals[depcls].methods
+                var any = false
+                if fields {
+                    IO.println("    FIELDS")
+                    for (fieldName, fieldType) in externals[depcls].fields.sorted() {
+                        IO.println("      " + fieldName + ": " + fieldType)
+                    }
+                    any = true
+                }
+                if methods {
+                    IO.println("    METHODS")
+                    for (methodName, methodType) in externals[depcls].methods.sorted() {
+                        IO.println("      " + methodName + ": " + methodType)
+                    }
+                    any = true
+                }
+                if not any {
+                    IO.println("    NONE")
+                }
             }
         }
     }

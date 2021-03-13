@@ -25,6 +25,10 @@ class Map[K?: Hash, V?] :
 
     def(pairs: List[Tuple[K, V]]): Self = Self.of(pairs)
 
+    def clear(self) { _size = 0; _list = [] }
+
+    def isEmpty(self): Bool = _size == 0
+
     def clone(self): Self = of(pairs().toList())
 
     def _rehash(self: Self, newCap: Int) = {
