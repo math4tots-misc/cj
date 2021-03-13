@@ -1,4 +1,8 @@
 #!/bin/sh
 
 # run a CJ app (see list in src/main/app)
-java -cp target/classes crossj.cj.main.JSMain -a "$@" -o target/out && open target/out/index.html
+java -cp target/classes crossj.cj.main.JSMain -a "$@" -o target/out && (cd target/out && if test -f package.json; then
+    ~/misc/programs/nwjs-v0.52.0-osx-x64/nwjs.app/Contents/MacOS/nwjs .
+else
+    open index.html
+fi )

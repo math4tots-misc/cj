@@ -6,9 +6,11 @@ import crossj.base.List;
 import crossj.cj.CJIRContext;
 import crossj.cj.CJIRRunMode;
 import crossj.cj.CJIRRunModeMain;
+import crossj.cj.CJIRRunModeNW;
 import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
+import crossj.cj.CJIRRunModeWWWBase;
 import crossj.cj.CJJSTranslator;
 // import crossj.cj.js.CJJSTranslator2;
 import crossj.json.JSON;
@@ -17,56 +19,56 @@ public final class JSMain {
     public static void main(String[] args) {
         var mode = Mode.Default;
         var sourceRoots = List.of(
-            // FS.join("src", "main", "cj2"), // for CJJSTranslator2
-            FS.join("src", "main", "cj"));
+                // FS.join("src", "main", "cj2"), // for CJJSTranslator2
+                FS.join("src", "main", "cj"));
         var outPath = "";
         String appId = "";
         CJIRRunMode runMode = null;
         for (var arg : args) {
             switch (mode) {
-                case Default:
-                    switch (arg) {
-                        case "-a":
-                        case "--app":
-                            mode = Mode.App;
-                            break;
-                        case "-m":
-                        case "--main-class":
-                            mode = Mode.MainClass;
-                            break;
-                        case "-r":
-                        case "--source-root":
-                            mode = Mode.SourceRoot;
-                            break;
-                        case "-t":
-                        case "--test":
-                            runMode = new CJIRRunModeTest();
-                            sourceRoots.add(FS.join("src", "test", "cj"));
-                            break;
-                        case "-o":
-                        case "--out":
-                            mode = Mode.Out;
-                            break;
-                        default:
-                            throw new RuntimeException("Unrecognized arg: " + arg);
-                    }
+            case Default:
+                switch (arg) {
+                case "-a":
+                case "--app":
+                    mode = Mode.App;
                     break;
-                case App:
-                    appId = arg;
-                    mode = Mode.Default;
+                case "-m":
+                case "--main-class":
+                    mode = Mode.MainClass;
                     break;
-                case MainClass:
-                    runMode = new CJIRRunModeMain(arg);
-                    mode = Mode.Default;
+                case "-r":
+                case "--source-root":
+                    mode = Mode.SourceRoot;
                     break;
-                case SourceRoot:
-                    sourceRoots.add(arg);
-                    mode = Mode.Default;
+                case "-t":
+                case "--test":
+                    runMode = new CJIRRunModeTest();
+                    sourceRoots.add(FS.join("src", "test", "cj"));
                     break;
-                case Out:
-                    outPath = arg;
-                    mode = Mode.Default;
+                case "-o":
+                case "--out":
+                    mode = Mode.Out;
                     break;
+                default:
+                    throw new RuntimeException("Unrecognized arg: " + arg);
+                }
+                break;
+            case App:
+                appId = arg;
+                mode = Mode.Default;
+                break;
+            case MainClass:
+                runMode = new CJIRRunModeMain(arg);
+                mode = Mode.Default;
+                break;
+            case SourceRoot:
+                sourceRoots.add(arg);
+                mode = Mode.Default;
+                break;
+            case Out:
+                outPath = arg;
+                mode = Mode.Default;
+                break;
             }
         }
         if (!appId.isEmpty()) {
@@ -82,7 +84,7 @@ public final class JSMain {
         ctx.getSourceRoots().addAll(sourceRoots);
         ctx.loadAutoImportItems();
         var mainClasses = List.<String>of();
-        runMode.accept(new CJIRRunModeVisitor<Void,Void>(){
+        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
 
             @Override
             public Void visitMain(CJIRRunModeMain m, Void a) {
@@ -101,6 +103,12 @@ public final class JSMain {
                 mainClasses.add(m.getMainClass());
                 return null;
             }
+
+            @Override
+            public Void visitNW(CJIRRunModeNW m, Void a) {
+                mainClasses.add(m.getMainClass());
+                return null;
+            }
         }, null);
         ctx.loadItemsRec(mainClasses);
         ctx.runAllPasses();
@@ -113,36 +121,70 @@ public final class JSMain {
         }
 
         var jsSink = CJJSTranslator.translate(ctx, runMode);
-        if (runMode instanceof CJIRRunModeWWW) {
-            var config = ((CJIRRunModeWWW) runMode).getConfig();
-            var appdir = ((CJIRRunModeWWW) runMode).getAppdir();
-            IO.delete(outPath);
-            if (config.has("www")) {
-                var keys = config.get("www").keys();
-                for (var key : keys) {
-                    var src = findResourcePath(sourceRoots, appdir, key);
-                    var reldest = config.get("www").get(key).getString();
-                    var dest = FS.join(outPath, reldest);
-                    IO.copy(src, dest);
+
+        var finalOutPath = outPath;
+        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+
+            private void handleWWW(CJIRRunModeWWWBase m) {
+                var config = m.getConfig();
+                var appdir = m.getAppdir();
+                IO.delete(finalOutPath);
+                if (config.has("www")) {
+                    var keys = config.get("www").keys();
+                    for (var key : keys) {
+                        var src = findResourcePath(sourceRoots, appdir, key);
+                        var reldest = config.get("www").get(key).getString();
+                        var dest = FS.join(finalOutPath, reldest);
+                        IO.copy(src, dest);
+                    }
                 }
-            }
-            var filePath = FS.join(outPath, "main.js");
-            var sourceMapPath = filePath + ".map";
-            var js = jsSink.getSource(filePath);
-            var sourceMap = jsSink.getSourceMap(filePath);
-            IO.writeFile(filePath, js);
-            IO.writeFile(sourceMapPath, sourceMap);
-        } else {
-            if (outPath.equals("-")) {
-                IO.print(jsSink.getSource(""));
-            } else {
-                var sourceMapPath = outPath + ".map";
-                var js = jsSink.getSource(outPath);
-                var sourceMap = jsSink.getSourceMap(outPath);
-                IO.writeFile(outPath, js);
+                var filePath = FS.join(finalOutPath, "main.js");
+                var sourceMapPath = filePath + ".map";
+                var js = jsSink.getSource(filePath);
+                var sourceMap = jsSink.getSourceMap(filePath);
+                IO.writeFile(filePath, js);
                 IO.writeFile(sourceMapPath, sourceMap);
             }
-        }
+
+            private void handleCLI() {
+                if (finalOutPath.equals("-")) {
+                    IO.print(jsSink.getSource(""));
+                } else {
+                    var sourceMapPath = finalOutPath + ".map";
+                    var js = jsSink.getSource(finalOutPath);
+                    var sourceMap = jsSink.getSourceMap(finalOutPath);
+                    IO.writeFile(finalOutPath, js);
+                    IO.writeFile(sourceMapPath, sourceMap);
+                }
+            }
+
+            @Override
+            public Void visitMain(CJIRRunModeMain m, Void a) {
+                handleCLI();
+                return null;
+            }
+
+            @Override
+            public Void visitTest(CJIRRunModeTest m, Void a) {
+                handleCLI();
+                return null;
+            }
+
+            @Override
+            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+                handleWWW(m);
+                return null;
+            }
+
+            @Override
+            public Void visitNW(CJIRRunModeNW m, Void a) {
+                handleWWW(m);
+                var pkgjsonpath = IO.join(finalOutPath, "package.json");
+                IO.writeFile(pkgjsonpath,
+                        "{\"name\":\"" + m.getAppId() + "\",\"version\":\"0.0.1\",\"main\":\"index.html\"}");
+                return null;
+            }
+        }, null);
     }
 
     private static enum Mode {
@@ -163,11 +205,14 @@ public final class JSMain {
                         var config = blob.get(baseName);
                         var type = config.get("type").getString();
                         switch (type) {
-                            case "www": {
-                                return new CJIRRunModeWWW(appdir, config);
-                            }
-                            default:
-                                throw new RuntimeException(appId + " has unsupported app type " + type);
+                        case "www": {
+                            return new CJIRRunModeWWW(appId, appdir, config);
+                        }
+                        case "nw": {
+                            return new CJIRRunModeNW(appId, appdir, config);
+                        }
+                        default:
+                            throw new RuntimeException(appId + " has unsupported app type " + type);
                         }
                     } else {
                         throw new RuntimeException("Traget " + baseName + " not found in " + packageName);

@@ -7,6 +7,14 @@
             "roms": "roms"
         }
     },
+    "nwdemo": {
+        "type": "nw",
+        "main": "www.emu.chip8.main.Demo",
+        "www": {
+            "/www/html/empty.html": "index.html",
+            "roms": "roms"
+        }
+    },
     "rendererdemo": {
         "type": "www",
         "main": "www.emu.chip8.main.RendererDemo",

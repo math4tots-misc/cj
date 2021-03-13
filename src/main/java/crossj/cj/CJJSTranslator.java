@@ -28,12 +28,16 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 return null;
             }
 
-            @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            private void handleWWW(CJIRRunModeWWWBase m) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
                 out.append("window.onload = () => {");
                 out.append(mainClass + "." + translateMethodName("main") + "();");
                 out.append("}\n");
+            }
+
+            @Override
+            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+                handleWWW(m);
                 return null;
             }
 
@@ -59,6 +63,12 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                     }
                 }
                 out.append("console.log('" + testCount + " tests in " + itemCount + " items pass');\n");
+                return null;
+            }
+
+            @Override
+            public Void visitNW(CJIRRunModeNW m, Void a) {
+                handleWWW(m);
                 return null;
             }
         }, null);

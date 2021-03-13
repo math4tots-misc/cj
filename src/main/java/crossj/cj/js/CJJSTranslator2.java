@@ -19,6 +19,7 @@ import crossj.cj.CJIRLiteral;
 import crossj.cj.CJIRNullWrap;
 import crossj.cj.CJIRRunMode;
 import crossj.cj.CJIRRunModeMain;
+import crossj.cj.CJIRRunModeNW;
 import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
@@ -69,6 +70,12 @@ public final class CJJSTranslator2 {
                 tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
+
+            @Override
+            public Void visitNW(CJIRRunModeNW m, Void a) {
+                tr.queueMethodByName(m.getMainClass(), "main");
+                return null;
+            }
         }, null);
         tr.out.append("(function(){\n\"use strict\";\n");
         tr.emitQueued();
@@ -108,6 +115,13 @@ public final class CJJSTranslator2 {
 
             @Override
             public Void visitWWW(CJIRRunModeWWW m, Void a) {
+                var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
+                tr.out.append("window.onload=" + mainMethodName + ";\n");
+                return null;
+            }
+
+            @Override
+            public Void visitNW(CJIRRunModeNW m, Void a) {
                 var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
                 tr.out.append("window.onload=" + mainMethodName + ";\n");
                 return null;
