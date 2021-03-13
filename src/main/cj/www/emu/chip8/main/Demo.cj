@@ -15,7 +15,6 @@ import www.dom.Document
 
 class Demo {
     def main() {
-        js!(Unit, "nw.Window.get().showDevTools()")
         IO.println("START")
         val document = Document.get()
 
