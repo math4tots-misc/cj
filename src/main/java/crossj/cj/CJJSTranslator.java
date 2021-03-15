@@ -167,10 +167,11 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         if (item.isNative()) {
             out.addMark(item.getMark());
             var path = FS.join(jsroot, item.getFullName() + ".js");
-            if (!FS.exists(path) && item.getTypeParameters().isEmpty()) {
+            if (!FS.exists(path)) {
                 // If the file doesn't exist, and it's non-generic, create a dummy
                 var metaClassName = translateItemMetaClassName(item.getFullName());
                 out.append("class " + metaClassName + "{\n");
+                emitMetaClassConstructor(item);
                 emitMethods(item, true);
                 out.append("}\n");
             } else {
@@ -191,9 +192,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         }
     }
 
-    private void emitMetaClass() {
-        var metaClassName = translateItemMetaClassName(item.getFullName());
-        out.append("class " + metaClassName + "{\n");
+    private void emitMetaClassConstructor(CJIRItem item) {
         if (!item.isTrait() && item.getTypeParameters().size() > 0) {
             var args = item.getTypeParameters().map(p -> translateMethodLevelTypeVariable(p.getName()));
             out.append("constructor(" + Str.join(",", args) + "){");
@@ -202,6 +201,12 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             }
             out.append("}\n");
         }
+    }
+
+    private void emitMetaClass() {
+        var metaClassName = translateItemMetaClassName(item.getFullName());
+        out.append("class " + metaClassName + "{\n");
+        emitMetaClassConstructor(item);
 
         // emit static fields
         for (var field : item.getFields().filter(f -> f.isStatic())) {
