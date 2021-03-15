@@ -9,8 +9,12 @@ native class WebAssembly {
         def __get_instance(self): Instance = js!(Instance, self, ".instance")
     }
     native class Module {
+        def[S: ArrayBufferOrView](bufferSource: S): Self = js!(
+            Self, "new WebAssembly.Module(", bufferSource, ")")
     }
     native class Instance {
+        def(module: Module, importObject: JSObject): Self = js!(
+            Self, "new WebAssembly.Instance(", module, ",", importObject, ")")
         def __get_exports(self): JSObject = js!(JSObject, self, ".exports")
     }
     native class Table {

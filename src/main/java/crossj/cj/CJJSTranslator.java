@@ -174,7 +174,16 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 emitMethods(item, true);
                 out.append("}\n");
             } else {
-                out.append(IO.readFile(path));
+                var contents = IO.readFile(path);
+                if (contents.startsWith("//!") || contents.contains("\n//!")) {
+                    for (var line : contents.split("\n")) {
+                        if (line.trim().startsWith("//!")) {
+                            var includePath = FS.join(jsroot, line.trim().substring(3).trim());
+                            out.append(IO.readFile(includePath));
+                        }
+                    }
+                }
+                out.append(contents);
                 emitMethods(item, false); // we still want to use the methods that have a body
             }
         } else {
