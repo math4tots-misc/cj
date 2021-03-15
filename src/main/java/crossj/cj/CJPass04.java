@@ -11,6 +11,7 @@ import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Tuple3;
 import crossj.base.Tuple5;
+import crossj.books.dragon.ch03.Regex;
 
 /**
  * Pass 4
@@ -1025,9 +1026,79 @@ final class CJPass04 extends CJPassBaseEx {
                 return new CJIRTry(e, a.get(), body, clauses, fin);
             }
 
+            private List<CJIRField> getMatchingStaticFields(CJIRClassType ownerType, Regex re) {
+                var ret = List.<CJIRField>of();
+                for (var field : ownerType.getItem().getFields()) {
+                    if (field.isStatic() && re.matches(field.getName())) {
+                        ret.add(field);
+                    }
+                }
+                return ret;
+            }
+
             @Override
             public CJIRExpression visitMacroCall(CJAstMacroCall e, Optional<CJIRType> a) {
                 switch (e.getName()) {
+                case "static_field_names!": {
+                    if (e.getArgs().size() != 2) {
+                        throw CJError.of(
+                                "static_field_names! requires exactly 2 arguments " + "(owner-type, strlit-regex)",
+                                e.getMark());
+                    }
+                    var ownerType = solveExprForClassType(e.getArgs().get(0));
+                    var re = solveExprForRegex(e.getArgs().get(1));
+                    var subexprs = List.<CJIRExpression>of();
+                    for (var field : getMatchingStaticFields(ownerType, re)) {
+                        var name = field.getName();
+                        if (re.matches(name)) {
+                            subexprs.add(new CJIRLiteral(e, ctx.getStringType(), CJIRLiteralKind.String,
+                                    "\"" + name + "\""));
+                        }
+                    }
+                    return new CJIRListDisplay(e, ctx.getListType(ctx.getStringType()), subexprs);
+                }
+                case "static_field_values!": {
+                    if (e.getArgs().size() != 2) {
+                        throw CJError.of(
+                                "static_field_names! requires exactly 2 arguments " + "(owner-type, strlit-regex)",
+                                e.getMark());
+                    }
+                    var ownerType = solveExprForClassType(e.getArgs().get(0));
+                    var ownerTypeExpr = solveExprForTypeExpression(e.getArgs().get(0));
+                    var re = solveExprForRegex(e.getArgs().get(1));
+                    var subexprs = List.<CJAstExpression>of();
+                    for (var field : getMatchingStaticFields(ownerType, re)) {
+                        var name = field.getName();
+                        if (re.matches(name)) {
+                            var getterName = field.getGetterName();
+                            subexprs.add(new CJAstMethodCall(e.getMark(), Optional.of(ownerTypeExpr), getterName,
+                                    List.of(), List.of()));
+                        }
+                    }
+                    return evalExpressionEx(new CJAstListDisplay(e.getMark(), subexprs), a);
+                }
+                case "static_field_name_value_pairs!": {
+                    if (e.getArgs().size() != 2) {
+                        throw CJError.of(
+                                "static_field_names! requires exactly 2 arguments " + "(owner-type, strlit-regex)",
+                                e.getMark());
+                    }
+                    var ownerType = solveExprForClassType(e.getArgs().get(0));
+                    var ownerTypeExpr = solveExprForTypeExpression(e.getArgs().get(0));
+                    var re = solveExprForRegex(e.getArgs().get(1));
+                    var subexprs = List.<CJAstExpression>of();
+                    for (var field : getMatchingStaticFields(ownerType, re)) {
+                        var name = field.getName();
+                        if (re.matches(name)) {
+                            var getterName = field.getGetterName();
+                            var nameExpr = new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, "\"" + name + "\"");
+                            subexprs.add(new CJAstTupleDisplay(e.getMark(),
+                                    List.of(nameExpr, new CJAstMethodCall(e.getMark(), Optional.of(ownerTypeExpr),
+                                            getterName, List.of(), List.of()))));
+                        }
+                    }
+                    return evalExpressionEx(new CJAstListDisplay(e.getMark(), subexprs), a);
+                }
                 case "include_str!": {
                     if (e.getArgs().size() != 1) {
                         throw CJError.of("include_str! requires exactly 1 argument (strlit)", e.getMark());
@@ -1152,6 +1223,21 @@ final class CJPass04 extends CJPassBaseEx {
         return Pair.of(tuple.getExpressions().get(0), tuple.getExpressions().get(1));
     }
 
+    private CJIRClassType solveExprForClassType(CJAstExpression expr) {
+        var t = solveExprForType(expr);
+        if (!(t instanceof CJIRClassType)) {
+            throw CJError.of("Expected class type expression here", expr.getMark());
+        }
+        return (CJIRClassType) t;
+    }
+
+    private CJAstTypeExpression solveExprForTypeExpression(CJAstExpression expr) {
+        if (!(expr instanceof CJAstTypeExpression)) {
+            throw CJError.of("Expected type expression here", expr.getMark());
+        }
+        return (CJAstTypeExpression) expr;
+    }
+
     private CJIRType solveExprForType(CJAstExpression expr) {
         if (!(expr instanceof CJAstTypeExpression)) {
             throw CJError.of("Expected type expression here", expr.getMark());
@@ -1177,6 +1263,15 @@ final class CJPass04 extends CJPassBaseEx {
         } else {
             return null;
         }
+    }
+
+    private static Regex solveExprForRegex(CJAstExpression expr) {
+        var pattern = solveExprForStringLiteral(expr);
+        var tryRe = Regex.fromPatterns(pattern);
+        if (tryRe.isFail()) {
+            throw CJError.of("Failed to parse regex: " + tryRe.getErrorMessage(), expr.getMark());
+        }
+        return tryRe.get();
     }
 
     private static String solveExprForStringLiteral(CJAstExpression expr) {

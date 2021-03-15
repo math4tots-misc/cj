@@ -1251,6 +1251,18 @@ public final class CJParser {
                         throw CJError.of("FUBAR: UNRECOGNIZED UNARY OP", mark);
                 }
                 var inner = parseExpressionWithPrecedence(UNARY_OP_PRECEDENCE);
+
+                if (methodName.equals("__neg") && inner instanceof CJAstLiteral) {
+                    var literal = (CJAstLiteral) inner;
+                    switch (literal.getKind()) {
+                        case Int:
+                        case Double:
+                            return new CJAstLiteral(mark, literal.getKind(), "-" + literal.getRawText());
+                        default:
+                            break;
+                    }
+                }
+
                 return new CJAstMethodCall(mark, Optional.empty(), methodName, List.of(), List.of(inner));
             }
             case CJToken.KW_VAL:
