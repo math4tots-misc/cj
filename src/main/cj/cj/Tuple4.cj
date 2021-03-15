@@ -11,6 +11,10 @@ native class Tuple4[A0?, A1?, A2?, A3?]:
     @generic def get1(self: Self): A1
     @generic def get2(self: Self): A2
     @generic def get3(self: Self): A3
+    @generic def __get_f0(self): A0 = js!(A0, self, "[0]")
+    @generic def __get_f1(self): A1 = js!(A1, self, "[1]")
+    @generic def __get_f2(self): A2 = js!(A2, self, "[2]")
+    @generic def __get_f3(self): A3 = js!(A3, self, "[3]")
     if A0 : Eq and A1 : Eq and A2 : Eq and A3 : Eq def __eq(self: Self, other: Self): Bool = self is other or (
         get0() == other.get0() and
         get1() == other.get1() and
