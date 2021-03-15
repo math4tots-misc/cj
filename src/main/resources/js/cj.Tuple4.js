@@ -5,16 +5,4 @@ class MC$cj$Tuple4 {
         this.TV$A2 = TV$A2;
         this.TV$A3 = TV$A3;
     }
-    M$get0(self) {
-        return self[0];
-    }
-    M$get1(self) {
-        return self[1];
-    }
-    M$get2(self) {
-        return self[2];
-    }
-    M$get3(self) {
-        return self[3];
-    }
 }
