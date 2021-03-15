@@ -45,14 +45,14 @@ class Map[K?: Hash, V?] :
     }
 
     def _insertNoRehash(self: Self, triple: Tuple[Int, K, V]) = {
-        val hash = triple.get0()
-        val key = triple.get1()
+        val hash = triple.f0
+        val key = triple.f1
         val list = self._list
         val index = Self._getIndex(hash, list.size())
         val bucket = list[index]
         for i = 0; i < bucket.size(); i++ {
             val entry = bucket[i]
-            if hash == entry.get0() and entry.get1() == key {
+            if hash == entry.f0 and entry.f1 == key {
                 bucket[i] = triple
                 return ()
             }
@@ -93,7 +93,7 @@ class Map[K?: Hash, V?] :
         val index = Self._getIndex(hash, list.size())
         val bucket = list[index]
         for triple in bucket {
-            if triple.get0() == hash and triple.get1() == key {
+            if triple.f0 == hash and triple.f1 == key {
                 return null(triple)
             }
         }
@@ -102,7 +102,7 @@ class Map[K?: Hash, V?] :
 
     def getOrInsert(self: Self, key: K, f: Fn[V]): V = {
         if val triple = self._getTriple(key) {
-            triple.get2()
+            triple.f2
         } else {
             val value = f.call()
             self[key] = value
@@ -111,17 +111,17 @@ class Map[K?: Hash, V?] :
     }
 
     def getOrDefault(self: Self, key: K, d: V): V = (
-        if val t = self._getTriple(key) { t.get2() } else { d })
+        if val t = self._getTriple(key) { t.f2 } else { d })
 
     def getOrElse(self: Self, key: K, f: Fn[V]): V = (
-        if val t = self._getTriple(key) { t.get2() } else { f.call() })
+        if val t = self._getTriple(key) { t.f2 } else { f.call() })
 
     if V : NonNull def getOrNull(self: Self, key: K) : Nullable[V] = (
-        if val t = self._getTriple(key) { null(t.get2()) } else { null })
+        if val t = self._getTriple(key) { null(t.f2) } else { null })
 
     def __contains(self: Self, key: K): Bool = self._getTriple(key).isPresent()
 
-    def __getitem(self: Self, key: K): V = self._getTriple(key).get().get2()
+    def __getitem(self: Self, key: K): V = self._getTriple(key).get().f2
 
     def __add(self: Self, other: Self): Self = {
         val ret = Self.empty()
@@ -143,7 +143,7 @@ class Map[K?: Hash, V?] :
         val bucket = self._list[index]
         for i = 0; i < bucket.size(); i++ {
             val triple = bucket[i]
-            if triple.get0() == hash and triple.get1() == key {
+            if triple.f0 == hash and triple.f1 == key {
                 self._size += -1
                 return null(bucket.removeIndex(i))
             }
@@ -153,7 +153,7 @@ class Map[K?: Hash, V?] :
 
     def removeOrFalse(self: Self, key: K): Bool = self._removeTriple(key).isPresent()
 
-    if V : NonNull def remove(self: Self, key: K): Nullable[V] = self._removeTriple(key).map(t -> t.get2())
+    if V : NonNull def remove(self: Self, key: K): Nullable[V] = self._removeTriple(key).map(t -> t.f2)
 
     if K : Repr def removeOrThrow(self: Self, key: K) = {
         if self._removeTriple(key).isEmpty() {
@@ -162,13 +162,13 @@ class Map[K?: Hash, V?] :
     }
 
     def keys(self: Self): Iterator[K] = (
-        self._list.iter().flatMap(bucket -> bucket.map(triple -> triple.get1())))
+        self._list.iter().flatMap(bucket -> bucket.map(triple -> triple.f1)))
 
     def values(self: Self): Iterator[V] = (
-        self._list.iter().flatMap(bucket -> bucket.map(triple -> triple.get2())))
+        self._list.iter().flatMap(bucket -> bucket.map(triple -> triple.f2)))
 
     def pairs(self: Self): Iterator[Tuple[K, V]] = (
-        self._list.iter().flatMap(bucket -> bucket.map(triple -> (triple.get1(), triple.get2()))))
+        self._list.iter().flatMap(bucket -> bucket.map(triple -> (triple.f1, triple.f2))))
 
     def _getIndex(hash: Int, size: Int) : Int = (hash % size + size) % size
 
@@ -195,6 +195,6 @@ class Map[K?: Hash, V?] :
 
     if K: Repr and V: Repr def repr(self: Self): String = (
         "MapOf(" +
-        ", ".join(self.pairs().map(kv -> kv.get0().repr() + ": " + kv.get1().repr())) +
+        ", ".join(self.pairs().map(kv -> kv.f0.repr() + ": " + kv.f1.repr())) +
         ")")
 }

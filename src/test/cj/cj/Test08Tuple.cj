@@ -5,14 +5,14 @@ class Test08Tuple {
     def samples() = {
         {
             val tuple = (1, 2.2, "three")
-            Assert.equal(tuple.get0(), 1)
-            Assert.equal(tuple.get1(), 2.2)
-            Assert.equal(tuple.get2(), "three")
+            Assert.equal(tuple.f0, 1)
+            Assert.equal(tuple.f1, 2.2)
+            Assert.equal(tuple.f2, "three")
         }
         {
             val tuple = Self.returnPair()
-            Assert.equal(tuple.get0(), 1)
-            Assert.equal(tuple.get1(), "two")
+            Assert.equal(tuple.f0, 1)
+            Assert.equal(tuple.f1, "two")
         }
     }
 

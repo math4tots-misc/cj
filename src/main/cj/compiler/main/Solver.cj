@@ -18,7 +18,7 @@ class Solver {
         }
         solver.solve()
         val pairs = solver.itemMap.pairs().toList()
-        pairs.sortBy(pair -> pair.get0())
+        pairs.sortBy(pair -> pair.f0)
         for (name, item) in pairs {
             IO.println(CJIRInspector.inspectItem(item))
         }

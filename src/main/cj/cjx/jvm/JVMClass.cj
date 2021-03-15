@@ -975,7 +975,7 @@ class JVMClass {
             className + "." + memberName + ":" + descriptor
         }
 
-        def getMemberDescriptor(self, index: Int): String = getMemberTriple(index).get2()
+        def getMemberDescriptor(self, index: Int): String = getMemberTriple(index).f2
 
         def methodref(self, className: String, name: String, descriptor: String): Int = {
             val key = (className, name, descriptor)

@@ -21,10 +21,10 @@ class Color : Repr {
     }
 
     private def _fromRGB(rgb: Tuple[Double, Double, Double]): Self = (
-        Self.__malloc(rgb.get0(), rgb.get1(), rgb.get2(), 1))
+        Self.__malloc(rgb.f0, rgb.f1, rgb.f2, 1))
 
     private def _fromRGBA(rgba: Tuple[Double, Double, Double, Double]): Self = (
-        Self.__malloc(rgba.get0(), rgba.get1(), rgba.get2(), rgba.get3()))
+        Self.__malloc(rgba.f0, rgba.f1, rgba.f2, rgba.f3))
 
     def fromI32RGBA(rgba: Int): Self = {
         val (ri, gi, bi, ai) = _split(rgba)

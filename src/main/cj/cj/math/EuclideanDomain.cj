@@ -9,11 +9,11 @@ trait EuclideanDomain : CommutativeRing {
 
     ## Euclidean Division.
     ## This may or may not be the same as __div
-    def ediv(self, other: Self): Self = edivrem(other).get0()
+    def ediv(self, other: Self): Self = edivrem(other).f0
 
     ## Euclidean Remainder.
     ## This may or may not be the same as __rem
-    def erem(self, other: Self): Self = edivrem(other).get1()
+    def erem(self, other: Self): Self = edivrem(other).f1
 
     ## Compute the GCD with the euclidean algorithm
     def gcd(var a: Self, var b: Self): Self = {

@@ -204,7 +204,7 @@ class CJAst {
         val body: Expr
         def repr(self): String {
             "CaseWhen(" + ", ".join(patterns.map(t ->
-                "[" + t.get1() + ", " + t.get2() + ", " + t.get3() + "]")) + ", " + body + ")"
+                "[" + t.f1 + ", " + t.f2 + ", " + t.f3 + "]")) + ", " + body + ")"
         }
     }
 
