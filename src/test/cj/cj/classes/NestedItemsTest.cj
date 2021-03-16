@@ -8,7 +8,7 @@ class NestedItemsTest {
             case b
             case c
             case last
-            def repr(self): String = tag_names!(Self)[tag!(self)]
+            def repr(self): String = tag_name!(self)
         }
     }
 

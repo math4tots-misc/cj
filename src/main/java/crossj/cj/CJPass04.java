@@ -1046,6 +1046,24 @@ final class CJPass04 extends CJPassBaseEx {
                     var target = solveExprForUnionType(e.getArgs().get(0));
                     return listOfStrings(e, target.getItem().getCases().map(c -> c.getName()));
                 }
+                case "tag_name!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("tag_name! requires exactly 1 argument", e.getMark());
+                    }
+                    var target = evalExpression(e.getArgs().get(0));
+                    if (!target.getType().isUnionType()) {
+                        throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());
+                    }
+                    var switchTarget = new CJAstMacroCall(e.getMark(), "tag!", List.of(e.getArgs().get(0)));
+                    List<Pair<List<CJAstExpression>, CJAstExpression>> cases = List.of();
+                    for (var case_ : ((CJIRClassType) target.getType()).getItem().getCases()) {
+                        cases.add(Pair.of(
+                                List.of(new CJAstLiteral(e.getMark(), CJIRLiteralKind.Int, "" + case_.getTag())),
+                                new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, "\"" + case_.getName() + "\"")));
+                    }
+                    return evalExpressionWithType(new CJAstSwitch(e.getMark(), switchTarget, cases, Optional.empty()),
+                            ctx.getStringType());
+                }
                 case "tag!": {
                     if (e.getArgs().size() != 1 && e.getArgs().size() != 2) {
                         throw CJError.of("tag! requires 1 or 2 arguments", e.getMark());

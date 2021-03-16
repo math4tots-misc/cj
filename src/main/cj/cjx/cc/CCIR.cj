@@ -22,7 +22,7 @@ class CCIR {
             case pos
             case neg
             case int
-            def repr(self): String = tag_names!(Self)[tag!(self)]
+            def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
         }
