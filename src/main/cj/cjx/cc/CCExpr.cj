@@ -11,8 +11,8 @@ class CCExpr {
         case ineg
         case int
         def repr(self): String = when self { else name() = name }
-        def __eq(self, other: Self): Bool = __tag() == other.__tag()
-        def hash(self): Int = __tag().hash()
+        def __eq(self, other: Self): Bool = tag!(self) == tag!(other)
+        def hash(self): Int = tag!(self).hash()
     }
 
     val mark: CCMark

@@ -1039,6 +1039,26 @@ final class CJPass04 extends CJPassBaseEx {
             @Override
             public CJIRExpression visitMacroCall(CJAstMacroCall e, Optional<CJIRType> a) {
                 switch (e.getName()) {
+                case "tag_names!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("tag_names! requires exactly 1 argument (owner-type)", e.getMark());
+                    }
+                    var target = solveExprForClassType(e.getArgs().get(0));
+                    if (!target.isUnionType()) {
+                        throw CJError.of(target.repr() + " is not a union type", e.getArgs().get(0).getMark());
+                    }
+                    return listOfStrings(e, target.getItem().getCases().map(c -> c.getName()));
+                }
+                case "tag!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("tag! requires exactly 1 argument", e.getMark());
+                    }
+                    var target = evalExpression(e.getArgs().get(0));
+                    if (!target.getType().isUnionType()) {
+                        throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());
+                    }
+                    return new CJIRTag(e, ctx.getIntType(), target);
+                }
                 case "static_field_names!": {
                     if (e.getArgs().size() != 2) {
                         throw CJError.of(
@@ -1047,15 +1067,7 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     var ownerType = solveExprForClassType(e.getArgs().get(0));
                     var re = solveExprForRegex(e.getArgs().get(1));
-                    var subexprs = List.<CJIRExpression>of();
-                    for (var field : getMatchingStaticFields(ownerType, re)) {
-                        var name = field.getName();
-                        if (re.matches(name)) {
-                            subexprs.add(new CJIRLiteral(e, ctx.getStringType(), CJIRLiteralKind.String,
-                                    "\"" + name + "\""));
-                        }
-                    }
-                    return new CJIRListDisplay(e, ctx.getListType(ctx.getStringType()), subexprs);
+                    return listOfStrings(e, getMatchingStaticFields(ownerType, re).map(f -> f.getName()));
                 }
                 case "static_field_values!": {
                     if (e.getArgs().size() != 2) {
@@ -1146,11 +1158,7 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     var rawpath = solveExprForStringLiteral(e.getArgs().get(0));
                     var dirpath = IO.join(IO.dirname(e.getMark().filename), rawpath);
-                    var strexprs = FS.list(dirpath).map(
-                            s -> (CJAstExpression) new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(s)));
-                    var listexpr = new CJAstListDisplay(e.getMark(), strexprs);
-                    var expectedType = ctx.getListType(ctx.getStringType());
-                    return evalExpressionWithType(listexpr, expectedType);
+                    return listOfStrings(e, FS.list(dirpath));
                 }
                 case "js!": {
                     if (e.getArgs().size() < 2) {
@@ -1202,6 +1210,16 @@ final class CJPass04 extends CJPassBaseEx {
             }
         }, a);
         return ir;
+    }
+
+    private CJIRExpression listOfStrings(CJAstExpression ast, List<String> strings) {
+        var subexprs = List.<CJIRExpression>of();
+        for (var string : strings) {
+            Assert.that(!string.contains("\""));
+            Assert.that(!string.contains("\\"));
+            subexprs.add(new CJIRLiteral(ast, ctx.getStringType(), CJIRLiteralKind.String, "\"" + string + "\""));
+        }
+        return new CJIRListDisplay(ast, ctx.getListType(ctx.getStringType()), subexprs);
     }
 
     private Pair<CJAstExpression, CJAstExpression> solveExprForPair(CJAstExpression expr) {

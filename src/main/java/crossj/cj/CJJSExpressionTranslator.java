@@ -886,6 +886,20 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             }
 
             @Override
+            public CJJSBlob visitTag(CJIRTag e, Void a) {
+                var inner = translateExpression(e.getTarget());
+                if (e.getTarget().getType().isSimpleUnion()) {
+                    return inner;
+                } else {
+                    return new CJJSBlob(inner.getPrep(), out -> {
+                        inner.emitMain(out);
+                        out.append("[0]");
+                        return null;
+                    }, false);
+                }
+            }
+
+            @Override
             public CJJSBlob visitJSBlob(CJIRJSBlob e, Void a) {
                 var parts = e.getParts().map(p -> (p instanceof String) ? p : translateExpression((CJIRExpression) p));
                 var blobs0 = parts.filter(p -> p instanceof CJJSBlob).map(p -> (CJJSBlob) p);
