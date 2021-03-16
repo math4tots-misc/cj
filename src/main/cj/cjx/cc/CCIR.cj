@@ -26,6 +26,12 @@ class CCIR {
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
         }
+
+        @implicit(Int, int)
+        union Value {
+            case int(Int)
+        }
+
         val mark: Mark
         val kind: Kind
 
@@ -37,7 +43,8 @@ class CCIR {
         def __set_arg(self, node: Node) { lhs = node }
         def __get_arg(self): Node = lhs
 
-        # case int
-        var intValue: Int = ?
+        # literal value
+        var value: Value = ?
+        def __get_intValue(self): Int = when value { case int(i) = i }
     }
 }

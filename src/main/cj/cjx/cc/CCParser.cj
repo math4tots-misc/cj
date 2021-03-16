@@ -67,6 +67,12 @@ class CCParser: ParserMixin[CCToken] {
         node
     }
 
+    def literal(mark: Mark, kind: Node.Kind, value: Node.Value): Node {
+        val node = Node(mark, kind)
+        node.value = value
+        node
+    }
+
     def atom(self): Node {
         val mark = mark()
         switch peek().type {
@@ -78,12 +84,7 @@ class CCParser: ParserMixin[CCToken] {
             }
             case '+' { next(); unop(mark, Node.Kind.pos, atom()) }
             case '-' { next(); unop(mark, Node.Kind.neg, atom()) }
-            case CCToken.tINT {
-                val value = next().intValue
-                val expr = Node(mark, Node.Kind.int)
-                expr.intValue = value
-                expr
-            }
+            case CCToken.tINT { literal(mark, Node.Kind.int, next().intValue) }
             else = errorKind("expression")
         }
     }
