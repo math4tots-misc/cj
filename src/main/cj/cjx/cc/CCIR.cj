@@ -1,6 +1,6 @@
 package cjx.cc
 
-import cjx.cc.CCMark
+import cjx.parser.Mark
 
 class CCIR {
     class Node {
@@ -15,7 +15,7 @@ class CCIR {
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
         }
-        val mark: CCMark
+        val mark: Mark
         val kind: Kind
         val args: List[Node] = []
         var intValue: Int = 0

@@ -1,7 +1,7 @@
 package cjx.cc
 
+import cjx.parser.Mark
 import cjx.cc.CCIR.Node
-import cjx.cc.CCMark
 import cjx.cc.CCError
 import cjx.cc.CCLexer
 import cjx.cc.CCToken
@@ -27,8 +27,8 @@ class CCParser: ParserMixin[CCToken] {
     val tokens: List[CCToken]
     var i = 0
 
-    def mark(self): CCMark = markAt(peek())
-    def markAt(self, token: CCToken): CCMark = CCMark(filepath, token.line, token.column)
+    def mark(self): Mark = markAt(peek())
+    def markAt(self, token: CCToken): Mark = Mark(filepath, token.line, token.column)
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
 
@@ -54,7 +54,7 @@ class CCParser: ParserMixin[CCToken] {
         else = -1
     }
 
-    def binop(mark: CCMark, kind: Node.Kind, lhs: Node, rhs: Node): Node {
+    def binop(mark: Mark, kind: Node.Kind, lhs: Node, rhs: Node): Node {
         val node = Node(mark, kind)
         node.args.add(lhs)
         node.args.add(rhs)

@@ -1,20 +1,19 @@
 package cjx.cc
 
+import cjx.parser.Mark
 import cj.StringBuilder
-import cjx.cc.CCMark
-import cj.Error
 
 class CCError {
-    val error: Error
-    val stack: List[CCMark]
+    val message: String
+    val stack: List[Mark]
 
-    def(message: String, stack: List[CCMark]): Self = __malloc(Error(message), stack)
+    def(message: String, stack: List[Mark]): Self = __malloc(message, stack)
 
-    def repr(self): String = "CCError(" + error.message() + ", " + stack.repr() + ")"
+    def repr(self): String = "CCError(" + message + ", " + stack.repr() + ")"
 
     def toString(self): String = {
         val sb = StringBuilder()
-        sb.add(error.message() + "\n")
+        sb.add(message + "\n")
         for mark in stack {
             sb.add("  " + mark + "\n")
         }

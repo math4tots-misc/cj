@@ -1,7 +1,7 @@
 package cjx.cc
 
+import cjx.parser.Mark
 import cjx.cc.CCError
-import cjx.cc.CCMark
 import cjx.re.Regex
 import cjx.re.Lexer
 import cjx.cc.CCToken
@@ -26,7 +26,7 @@ class CCLexer {
         b.onEOF(m -> [CCToken(CCToken.tEOF, (), m.line, m.column)])
 
         b.onError(m -> {
-            val mark = CCMark(m.filename, m.line, m.column)
+            val mark = Mark(m.filename, m.line, m.column)
             throw CCError("Unrecognized token", [mark])
         })
 
