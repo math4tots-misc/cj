@@ -56,8 +56,14 @@ class CCParser: ParserMixin[CCToken] {
 
     def binop(mark: Mark, kind: Node.Kind, lhs: Node, rhs: Node): Node {
         val node = Node(mark, kind)
-        node.args.add(lhs)
-        node.args.add(rhs)
+        node.lhs = lhs
+        node.rhs = rhs
+        node
+    }
+
+    def unop(mark: Mark, kind: Node.Kind, arg: Node): Node {
+        val node = Node(mark, kind)
+        node.arg = arg
         node
     }
 
@@ -70,14 +76,8 @@ class CCParser: ParserMixin[CCToken] {
                 expect(')')
                 inner
             }
-            case '+' { next(); atom() }
-            case '-' {
-                next()
-                val inner = atom()
-                val expr = Node(mark, Node.Kind.neg)
-                expr.args.add(inner)
-                expr
-            }
+            case '+' { next(); unop(mark, Node.Kind.pos, atom()) }
+            case '-' { next(); unop(mark, Node.Kind.neg, atom()) }
             case CCToken.tINT {
                 val value = next().intValue
                 val expr = Node(mark, Node.Kind.int)

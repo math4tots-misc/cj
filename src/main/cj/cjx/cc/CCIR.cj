@@ -3,12 +3,23 @@ package cjx.cc
 import cjx.parser.Mark
 
 class CCIR {
+
+    class Type {
+        union Kind {
+            case int
+            case ptr
+        }
+        val kind: Kind
+        var base: Type = ?
+    }
+
     class Node {
         union Kind: Repr, Hash {
             case add
             case sub
             case mul
             case div
+            case pos
             case neg
             case int
             def repr(self): String = tag_names!(Self)[tag!(self)]
@@ -17,15 +28,16 @@ class CCIR {
         }
         val mark: Mark
         val kind: Kind
-        val args: List[Node] = []
-        var intValue: Int = 0
-        def __get_lhs(self): Node = args[0]
-        def __get_rhs(self): Node = args[1]
-        def __get_arg(self): Node = args[0]
-    }
 
-    class Foo {
-        class Kind {
-        }
+        # binops
+        var lhs: Node = ?
+        var rhs: Node = ?
+
+        # unops
+        def __set_arg(self, node: Node) { lhs = node }
+        def __get_arg(self): Node = lhs
+
+        # case int
+        var intValue: Int = ?
     }
 }

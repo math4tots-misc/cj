@@ -31,7 +31,8 @@ class CCCodegen {
     def expr(self, expr: CCIR.Node): Binaryen.Expression {
         when expr.kind {
             case int = m.i32.const(expr.intValue)
-            case neg = m.i32.sub(m.i32.const(0), expr(expr.args[0]))
+            case neg = m.i32.sub(m.i32.const(0), expr(expr.arg))
+            case pos = expr(expr.arg)
             case add = m.i32.add(expr(expr.lhs), expr(expr.rhs))
             case sub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])
