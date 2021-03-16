@@ -37,6 +37,10 @@ native class Binaryen {
                     self, ".addFunction(", name, ",", params, ",", results, ",", vars, ",", body, ")")
         def addFunctionExport(self, internalName: String, externalName: String) = js!(
             Unit, self, ".addFunctionExport(", internalName, ",", externalName, ")")
+
+        def block(self, label: Nullable[String], exprs: List[Expression], type: Type): Expression {
+            js!(Expression, self, ".block(", label, ",", exprs, ",", type, ")")
+        }
     }
     native class ModuleLocal {
         def get(self, index: Int, type: Type): Expression = js!(
@@ -53,8 +57,66 @@ native class Binaryen {
             Expression, self, ".set(", name, ",", value, ")")
     }
     trait IntOps {
+        def const(self, value: Int): Expression = js!(
+            Expression, self, ".const(", value, ")")
+        def clz(self, value: Expression): Expression = js!(
+            Expression, self, ".clz(", value, ")")
+        def ctz(self, value: Expression): Expression = js!(
+            Expression, self, ".ctz(", value, ")")
+        def popcnt(self, value: Expression): Expression = js!(
+            Expression, self, ".popcnt(", value, ")")
+        def eqz(self, value: Expression): Expression = js!(
+            Expression, self, ".eqz(", value, ")")
         def add(self, left: Expression, right: Expression): Expression = js!(
             Expression, self, ".add(", left, ",", right, ")")
+        def sub(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".sub(", left, ",", right, ")")
+        def mul(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".mul(", left, ",", right, ")")
+        def div_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".div_s(", left, ",", right, ")")
+        def div_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".div_u(", left, ",", right, ")")
+        def rem_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".rem_s(", left, ",", right, ")")
+        def rem_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".rem_u(", left, ",", right, ")")
+        def and_(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".and(", left, ",", right, ")")
+        def or_(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".or(", left, ",", right, ")")
+        def xor(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".xor(", left, ",", right, ")")
+        def shl(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".shl(", left, ",", right, ")")
+        def shr_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".shr_u(", left, ",", right, ")")
+        def shr_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".shr_s(", left, ",", right, ")")
+        def rotl(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".rotl(", left, ",", right, ")")
+        def rotr(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".rotr(", left, ",", right, ")")
+        def eq(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".eq(", left, ",", right, ")")
+        def ne(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".ne(", left, ",", right, ")")
+        def lt_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".lt_s(", left, ",", right, ")")
+        def lt_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".lt_u(", left, ",", right, ")")
+        def le_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".le_s(", left, ",", right, ")")
+        def le_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".le_u(", left, ",", right, ")")
+        def gt_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".gt_s(", left, ",", right, ")")
+        def gt_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".gt_u(", left, ",", right, ")")
+        def ge_s(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".ge_s(", left, ",", right, ")")
+        def ge_u(self, left: Expression, right: Expression): Expression = js!(
+            Expression, self, ".ge_u(", left, ",", right, ")")
     }
     native class ModuleI32 : IntOps {}
     native class ModuleI64 : IntOps {}

@@ -13,6 +13,7 @@ native class DynamicBuffer: Repr, Eq, BufferLike, DataViewMixin {
     @implicit(ArrayBuffer, fromArrayBuffer)
     @implicit(List, fromList)
     @implicit(BufferLike, fromBufferLike)
+    @implicit(Int, fromSize)
     class Convertible {
         val x: DynamicBuffer
 
@@ -20,6 +21,7 @@ native class DynamicBuffer: Repr, Eq, BufferLike, DataViewMixin {
         def fromList(u8s: List[Int]): Self = Self(DynamicBuffer.fromArrayBuffer(ArrayBuffer(u8s)))
         def fromBufferLike[B: BufferLike](b: B): Self = Self(
             DynamicBuffer.fromArrayBuffer(ArrayBuffer(b)))
+        def fromSize(size: Int): Self = Self(DynamicBuffer.withSize(size))
     }
 
     def(conv: Convertible): Self = conv.x
