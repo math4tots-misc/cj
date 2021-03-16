@@ -1043,21 +1043,30 @@ final class CJPass04 extends CJPassBaseEx {
                     if (e.getArgs().size() != 1) {
                         throw CJError.of("tag_names! requires exactly 1 argument (owner-type)", e.getMark());
                     }
-                    var target = solveExprForClassType(e.getArgs().get(0));
-                    if (!target.isUnionType()) {
-                        throw CJError.of(target.repr() + " is not a union type", e.getArgs().get(0).getMark());
-                    }
+                    var target = solveExprForUnionType(e.getArgs().get(0));
                     return listOfStrings(e, target.getItem().getCases().map(c -> c.getName()));
                 }
                 case "tag!": {
-                    if (e.getArgs().size() != 1) {
-                        throw CJError.of("tag! requires exactly 1 argument", e.getMark());
+                    if (e.getArgs().size() != 1 && e.getArgs().size() != 2) {
+                        throw CJError.of("tag! requires 1 or 2 arguments", e.getMark());
                     }
-                    var target = evalExpression(e.getArgs().get(0));
-                    if (!target.getType().isUnionType()) {
-                        throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());
+                    if (e.getArgs().size() == 1) {
+                        var target = evalExpression(e.getArgs().get(0));
+                        if (!target.getType().isUnionType()) {
+                            throw CJError.of(target.getType().repr() + " is not a union type", target.getMark());
+                        }
+                        return new CJIRTag(e, ctx.getIntType(), target);
+                    } else {
+                        Assert.equals(e.getArgs().size(), 2);
+                        var type = solveExprForUnionType(e.getArgs().get(0));
+                        var name = solveExprForName(e.getArgs().get(1));
+                        for (var case_ : type.getItem().getCases()) {
+                            if (case_.getName().equals(name)) {
+                                return intExpr(e, case_.getTag());
+                            }
+                        }
+                        throw CJError.of("Tag name " + name + " not found", e.getMark());
                     }
-                    return new CJIRTag(e, ctx.getIntType(), target);
                 }
                 case "static_field_names!": {
                     if (e.getArgs().size() != 2) {
@@ -1212,6 +1221,10 @@ final class CJPass04 extends CJPassBaseEx {
         return ir;
     }
 
+    private CJIRExpression intExpr(CJAstExpression ast, int value) {
+        return new CJIRLiteral(ast, ctx.getIntType(), CJIRLiteralKind.Int, "" + value);
+    }
+
     private CJIRExpression listOfStrings(CJAstExpression ast, List<String> strings) {
         var subexprs = List.<CJIRExpression>of();
         for (var string : strings) {
@@ -1239,6 +1252,14 @@ final class CJPass04 extends CJPassBaseEx {
             return null;
         }
         return Pair.of(tuple.getExpressions().get(0), tuple.getExpressions().get(1));
+    }
+
+    private CJIRClassType solveExprForUnionType(CJAstExpression expr) {
+        var t = solveExprForClassType(expr);
+        if (!t.isUnionType()) {
+            throw CJError.of("Expected union type expression here", expr.getMark());
+        }
+        return t;
     }
 
     private CJIRClassType solveExprForClassType(CJAstExpression expr) {
@@ -1281,6 +1302,14 @@ final class CJPass04 extends CJPassBaseEx {
         } else {
             return null;
         }
+    }
+
+    private static String solveExprForName(CJAstExpression expr) {
+        var name = solveExprForNameOrNull(expr);
+        if (name == null) {
+            throw CJError.of("Expected name", expr.getMark());
+        }
+        return name;
     }
 
     private static Regex solveExprForRegex(CJAstExpression expr) {
