@@ -32,14 +32,41 @@ class CCParser: ParserMixin[CCToken] {
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
 
-    def expr(self): Node = atom()
+    def expr(self): Node = exprpr(0)
+
+    def exprpr(self, precedence: Int): Node {
+        var expr = atom()
+        var tokprec = precof(peek().type)
+        while precedence < tokprec {
+            val mark = mark()
+            switch peek().type {
+                case '+' { next(); expr = binop(mark, Node.Kind.add, expr, exprpr(tokprec)) }
+                case '-' { next(); expr = binop(mark, Node.Kind.sub, expr, exprpr(tokprec)) }
+                else = error("Unhandled operator " + peek().repr())
+            }
+            tokprec = precof(peek().type)
+        }
+        expr
+    }
+
+    def precof(type: Int): Int = switch type {
+        case '+'; case '-' = 50
+        else = -1
+    }
+
+    def binop(mark: CCMark, kind: Node.Kind, lhs: Node, rhs: Node): Node {
+        val node = Node(mark, kind)
+        node.args.add(lhs)
+        node.args.add(rhs)
+        node
+    }
 
     def atom(self): Node {
         val mark = mark()
         switch peek().type {
             case '(' {
                 next()
-                val inner = expr()
+                val inner = exprpr(0)
                 expect(')')
                 inner
             }
