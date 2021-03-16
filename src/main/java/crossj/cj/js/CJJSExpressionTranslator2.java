@@ -34,6 +34,7 @@ import crossj.cj.CJIRNameAssignmentTarget;
 import crossj.cj.CJIRNullWrap;
 import crossj.cj.CJIRReturn;
 import crossj.cj.CJIRSwitch;
+import crossj.cj.CJIRTag;
 import crossj.cj.CJIRThrow;
 import crossj.cj.CJIRTry;
 import crossj.cj.CJIRTupleAssignmentTarget;
@@ -583,6 +584,19 @@ final class CJJSExpressionTranslator2 {
                 }, out -> {
                     out.append(tmpvar);
                 }, true);
+            }
+
+            @Override
+            public CJJSBlob2 visitTag(CJIRTag e, Void a) {
+                var inner = translate(e.getTarget());
+                if (e.getTarget().getType().isSimpleUnion()) {
+                    return inner;
+                } else {
+                    return new CJJSBlob2(inner.getPrep(), out -> {
+                        inner.emitBody(out);
+                        out.append("[0]");
+                    }, false);
+                }
             }
 
             @Override

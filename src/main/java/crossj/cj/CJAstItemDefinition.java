@@ -5,20 +5,20 @@ import crossj.base.Optional;
 
 public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     private final String packageName;
-    private final List<CJAstImport> imports;
+    private final List<List<CJAstImport>> importsCombo;
     private final CJIRItemKind kind;
     private final List<CJAstTypeParameter> typeParameters;
     private final List<CJAstTraitDeclaration> traitDeclarations;
     private final List<CJAstItemMemberDefinition> members;
     private final boolean simpleUnion;
 
-    CJAstItemDefinition(CJMark mark, String packageName, List<CJAstImport> imports, Optional<String> comment,
+    CJAstItemDefinition(CJMark mark, String packageName, List<List<CJAstImport>> importsCombo, Optional<String> comment,
             List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers, CJIRItemKind kind,
             String shortName, List<CJAstTypeParameter> typeParameters, List<CJAstTraitDeclaration> traitDeclarations,
             List<CJAstItemMemberDefinition> members) {
         super(mark, comment, annotations, modifiers, shortName);
         this.packageName = packageName;
-        this.imports = imports;
+        this.importsCombo = importsCombo;
         this.kind = kind;
         this.typeParameters = typeParameters;
         this.traitDeclarations = traitDeclarations;
@@ -31,8 +31,12 @@ public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
         return packageName;
     }
 
+    public List<List<CJAstImport>> getImportsCombo() {
+        return importsCombo;
+    }
+
     public List<CJAstImport> getImports() {
-        return imports;
+        return importsCombo.flatMap(x -> x);
     }
 
     public CJIRItemKind getKind() {

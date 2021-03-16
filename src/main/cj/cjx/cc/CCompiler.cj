@@ -1,7 +1,7 @@
 package cjx.cc
 
+import cjx.cc.CCIR
 import cjx.cc.CCError
-import cjx.cc.CCExpr
 import cjx.cc.CCParser
 import www.wa.WebAssembly
 import cj.Uint8Array
@@ -37,10 +37,10 @@ class CCompiler {
         instance.exports.call("main").unsafeCast()
     }
 
-    private def expr(m: Binaryen.Module, expr: CCExpr): Binaryen.Expression {
+    private def expr(m: Binaryen.Module, expr: CCIR.Node): Binaryen.Expression {
         when expr.kind {
             case int = m.i32.const(expr.intValue)
-            case ineg = m.i32.sub(m.i32.const(0), expr(m, expr.args[0]))
+            case neg = m.i32.sub(m.i32.const(0), expr(m, expr.args[0]))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])
         }
     }

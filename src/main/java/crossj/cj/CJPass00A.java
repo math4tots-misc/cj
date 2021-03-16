@@ -23,7 +23,7 @@ public final class CJPass00A {
 
     private static CJAstItemDefinition handleInterface(CJAstItemDefinition oldItem) {
         var itemMark = oldItem.getMark();
-        var imports = oldItem.getImports().clone();
+        var importsCombo = oldItem.getImportsCombo().clone();
         var annotations = oldItem.getAnnotations();
         annotations.add(new CJAstAnnotationExpression(itemMark, "implicit",
                 List.of(new CJAstAnnotationExpression(itemMark, "Trait", List.of()),
@@ -53,9 +53,9 @@ public final class CJPass00A {
         newMembers.add(createFromTrait(oldItem, interfaceMethods));
         var synthTrait = createTrait(oldItem, interfaceMethods);
         newMembers.add(synthTrait);
-        imports.add(new CJAstImport(itemMark,
-                synthTrait.getPackageName() + "." + synthTrait.getShortName(), Optional.empty()));
-        var newItem = new CJAstItemDefinition(itemMark, oldItem.getPackageName(), imports,
+        importsCombo.add(List.of(new CJAstImport(itemMark,
+                synthTrait.getPackageName() + "." + synthTrait.getShortName(), Optional.empty())));
+        var newItem = new CJAstItemDefinition(itemMark, oldItem.getPackageName(), importsCombo,
                 oldItem.getComment(), annotations, oldItem.getModifiers(), oldItem.getKind(), oldItem.getShortName(),
                 oldItem.getTypeParameters(), oldItem.getTraitDeclarations(), newMembers);
         return newItem;
@@ -102,7 +102,7 @@ public final class CJPass00A {
     private static CJAstItemDefinition createTrait(CJAstItemDefinition oldItem,
             List<CJAstMethodDefinition> interfaceMethods) {
         var newPackageName = oldItem.getPackageName() + "." + oldItem.getName();
-        return new CJAstItemDefinition(oldItem.getMark(), newPackageName, oldItem.getImports(), Optional.empty(),
+        return new CJAstItemDefinition(oldItem.getMark(), newPackageName, oldItem.getImportsCombo(), Optional.empty(),
                 List.of(), List.of(), CJIRItemKind.Trait, "Trait", oldItem.getTypeParameters(), List.of(),
                 interfaceMethods.map(m -> m));
     }

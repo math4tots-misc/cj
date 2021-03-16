@@ -1,6 +1,6 @@
 package cjx.cc
 
-import cjx.cc.CCExpr
+import cjx.cc.CCIR.Node
 import cjx.cc.CCMark
 import cjx.cc.CCError
 import cjx.cc.CCLexer
@@ -15,7 +15,7 @@ class CCParser: ParserMixin[CCToken] {
         val tokens = CCLexer.lex(filepath, contents)
     }
 
-    def parseExpression(filepath: String, contents: String): CCExpr {
+    def parseExpression(filepath: String, contents: String): Node {
         val tokens = CCLexer.lex(filepath, contents)
         val self = Self(filepath, tokens)
         val expr = expr()
@@ -32,9 +32,9 @@ class CCParser: ParserMixin[CCToken] {
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
 
-    def expr(self): CCExpr = atom()
+    def expr(self): Node = atom()
 
-    def atom(self): CCExpr {
+    def atom(self): Node {
         val mark = mark()
         switch peek().type {
             case '(' {
@@ -47,13 +47,13 @@ class CCParser: ParserMixin[CCToken] {
             case '-' {
                 next()
                 val inner = atom()
-                val expr = CCExpr(mark, CCExpr.Kind.ineg)
+                val expr = Node(mark, Node.Kind.neg)
                 expr.args.add(inner)
                 expr
             }
             case CCToken.tINT {
                 val value = next().intValue
-                val expr = CCExpr(mark, CCExpr.Kind.int)
+                val expr = Node(mark, Node.Kind.int)
                 expr.intValue = value
                 expr
             }
