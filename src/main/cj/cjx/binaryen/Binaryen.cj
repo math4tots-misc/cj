@@ -49,6 +49,15 @@ native class Binaryen {
         def block(self, label: Nullable[String], exprs: List[Expression], type: Type): Expression {
             js!(Expression, self, ".block(", label, ",", exprs, ",", type, ")")
         }
+        def loop(self, label: Nullable[String], expr: Expression): Expression {
+            js!(Expression, self, ".loop(", label, ",", expr, ")")
+        }
+        def br(self, label: String): Expression {
+            js!(Expression, self, ".br(", label, ")")
+        }
+        def br_if(self, label: String, cond: Expression): Expression {
+            js!(Expression, self, ".br(", label, ",", cond, ")")
+        }
     }
     native class ModuleLocal {
         def get(self, index: Int, type: Type): Expression = js!(

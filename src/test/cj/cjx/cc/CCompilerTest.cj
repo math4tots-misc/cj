@@ -58,12 +58,18 @@ class CCompilerTest {
     }
 
     @test
-    def ifStmts() {
+    def ifStmt() {
         assertCode("{ if (0) return 2; return 3; }", 3)
         assertCode("{ if (1-1) return 2; return 3; }", 3)
         assertCode("{ if (1) return 2; return 3; }", 2)
         assertCode("{ if (2-1) return 2; return 3; }", 2)
         assertCode("{ if (0) { 1; 2; return 3; } else { return 4; } }", 4)
         assertCode("{ if (1) { 1; 2; return 3; } else { return 4; } }", 3)
+    }
+
+    @test
+    def forStmt() {
+        assertCode("{ i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }", 55)
+        assertCode("{ for (;;) {return 3;} return 5; }", 3)
     }
 }

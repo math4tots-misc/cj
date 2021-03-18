@@ -18,6 +18,7 @@ class CCCodegen {
     private val m: Binaryen.Module = Binaryen.Module()
     private var localSlotSP = 0
     private var locals: List[Binaryen.Type] = []
+    private var labelCount = 0
 
     def emit(self, stmts: List[CCIR.Node]): Uint8Array {
 
@@ -26,8 +27,8 @@ class CCCodegen {
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(8))
 
-        locals = [i32]   # the first non-param local is a local copy of SP
-        localSlotSP = 0  # the index into locals reserved for a copy of SP
+        locals = []
+        localSlotSP = newLocal(i32)
 
         val body = stmts(stmts)
 
@@ -44,6 +45,12 @@ class CCCodegen {
         val index = locals.size()
         locals.add(type)
         index
+    }
+
+    def newLabel(self): String {
+        val name = "l" + labelCount
+        labelCount++
+        name
     }
 
     def withLocal[R](self, type: Binaryen.Type, f: Fn[Int, R]): R {
@@ -73,6 +80,23 @@ class CCCodegen {
             case block {
                 val bexprs = stmt.body.map(n -> stmt(n))
                 m.block(null, bexprs, none)
+            }
+            case for_ {
+                val breakLabel = newLabel()
+                val continueLabel = newLabel()
+                val init = stmt(stmt.init)
+                val cond = expr(stmt.cond)
+                val inc = expr(stmt.inc)
+                val then = stmt(stmt.then)
+                m.block(null(breakLabel), [
+                    init,
+                    m.loop(null(continueLabel), m.block(null, [
+                        m.br_if(breakLabel, m.i32.eqz(cond)),
+                        then,
+                        m.drop(inc),
+                        m.br(continueLabel),
+                    ], none))
+                ], none)
             }
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             else = throw CCError("TODO stmt " + stmt.kind, [stmt.mark])

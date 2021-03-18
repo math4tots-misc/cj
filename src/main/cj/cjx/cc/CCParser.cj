@@ -68,6 +68,18 @@ class CCParser: ParserMixin[CCToken] {
                 stmt.els = if consume(CCToken.kwELSE) { stmt() } else { nop(mark) }
                 stmt
             }
+            case CCToken.kwFOR {
+                next()
+                expect('(')
+                val stmt = Node(mark, Node.Kind.for_)
+                stmt.init = stmt()
+                stmt.cond = if at(';') { intlit(mark, 1) } else { expr() }
+                expect(';')
+                stmt.inc = if at(')') { intlit(mark, 0) } else { expr() }
+                expect(')')
+                stmt.then = stmt()
+                stmt
+            }
             case '{' = block()
             else {
                 val stmt = unop(mark, Node.Kind.exprStmt, expr())
@@ -132,6 +144,8 @@ class CCParser: ParserMixin[CCToken] {
         node
     }
 
+    def intlit(mark: Mark, value: Int): Node = literal(mark, Node.Kind.int, value)
+
     def atom(self): Node {
         val mark = mark()
         switch peek().type {
@@ -143,7 +157,7 @@ class CCParser: ParserMixin[CCToken] {
             }
             case '+' { next(); unop(mark, Node.Kind.pos, atom()) }
             case '-' { next(); unop(mark, Node.Kind.neg, atom()) }
-            case CCToken.tINT { literal(mark, Node.Kind.int, next().intValue) }
+            case CCToken.tINT { intlit(mark, next().intValue) }
             case CCToken.tIDENT {
                 val name = next().stringValue
                 val var_ = varMap.getOrInsert(name, () -> Obj(name, varMap.size()))

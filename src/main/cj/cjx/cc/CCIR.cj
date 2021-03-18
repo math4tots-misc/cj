@@ -41,6 +41,7 @@ class CCIR {
             case assign
             case return_
             case if_
+            case for_
             case block
             case exprStmt  # expression statement
             case var_
@@ -69,10 +70,12 @@ class CCIR {
         var lhs: Node = ?
         var rhs: Node = ?
 
-        # if
+        # if or for
         var cond: Node = ?
         var then: Node = ?
         var els: Node = ?
+        var init: Node = ?
+        var inc: Node = ?
 
         # unops
         def __set_arg(self, node: Node) { lhs = node }
