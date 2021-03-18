@@ -19,6 +19,7 @@ class CCToken {
         kwIF
         kwELSE
         kwFOR
+        kwWHILE
     }
 
     static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")

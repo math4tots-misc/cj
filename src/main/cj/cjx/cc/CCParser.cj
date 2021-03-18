@@ -80,6 +80,17 @@ class CCParser: ParserMixin[CCToken] {
                 stmt.then = stmt()
                 stmt
             }
+            case CCToken.kwWHILE {
+                next()
+                expect('(')
+                val stmt = Node(mark, Node.Kind.for_)
+                stmt.init = nop(mark)
+                stmt.cond = expr()
+                expect(')')
+                stmt.inc = intlit(mark, 0)
+                stmt.then = stmt()
+                stmt
+            }
             case '{' = block()
             else {
                 val stmt = unop(mark, Node.Kind.exprStmt, expr())
