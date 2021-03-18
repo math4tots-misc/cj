@@ -12,8 +12,8 @@ class CCompiler {
 
     def compileString(string: String): Uint8Array {
         val codegen = CCCodegen()
-        val expr = CCParser.parseExpression("main", string)
-        codegen.emit(expr)
+        val stmts = CCParser.parseStatements("main", string)
+        codegen.emit(stmts)
     }
 
     def compileAndRunMain(string: String): Int {

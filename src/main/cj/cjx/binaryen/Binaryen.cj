@@ -21,11 +21,14 @@ native class Binaryen {
         def __get_i64(self): ModuleI64 = js!(ModuleI64, self, ".i64")
         def return_(self, value: Expression): Expression = js!(
             Expression, self, ".return(", value, ")")
+        def drop(self, value: Expression): Expression = js!(
+            Expression, self, ".drop(", value, ")")
         def emitText(self): String = js!(String, self, ".emitText()")
         def emitBinary(self): Uint8Array = js!(Uint8Array, self, ".emitBinary()")
         def optimize(self) = js!(Unit, self, ".optimize()")
         def validate(self): Bool = js!(Bool, self, ".validate()")
         def dispose(self) = js!(Unit, self, ".dispose()")
+        def autoDrop(self) = js!(Unit, self, ".autoDrop()")
         def addFunction(
                 self,
                 name: String,

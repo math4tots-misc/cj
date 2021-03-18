@@ -16,16 +16,30 @@ class CCCodegen {
 
     private val m: Binaryen.Module = Binaryen.Module()
 
-    def emit(self, expr: CCIR.Node): Uint8Array {
-        val outExpr = expr(expr)
+    def emit(self, stmts: List[CCIR.Node]): Uint8Array {
 
-        m.addFunction("main", Binaryen.createType([]), i32, [], m.block(
-            null,
-            [expr(expr)],
-            auto))
+        m.addFunction("main", Binaryen.createType([]), i32, [], stmts(stmts))
         m.addFunctionExport("main", "main")
 
         m.emitBinary()
+    }
+
+    def stmts(self, stmts: List[CCIR.Node]): Binaryen.Expression {
+        val bexprs: List[Binaryen.Expression] = []
+        if stmts {
+            for i = 0; i + 1 < stmts.size(); i++ {
+                bexprs.add(m.drop(stmt(stmts[i])))
+            }
+            bexprs.add(stmt(stmts.last()))
+        }
+        m.block(null, bexprs, auto)
+    }
+
+    def stmt(self, stmt: CCIR.Node): Binaryen.Expression {
+        when stmt.kind {
+            case exprStmt = expr(stmt.arg)
+            else = throw CCError("TODO stmt " + stmt.kind, [stmt.mark])
+        }
     }
 
     def expr(self, expr: CCIR.Node): Binaryen.Expression {

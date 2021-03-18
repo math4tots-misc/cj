@@ -24,6 +24,9 @@ class CCLexer {
         b.add("<=", m -> symtok(m, CCToken.tLE))
         b.add(">=", m -> symtok(m, CCToken.tGE))
 
+        # whitespace
+        b.add("\\s+", m -> [])
+
         b.onEOF(m -> [CCToken(CCToken.tEOF, (), m.line, m.column)])
 
         b.onError(m -> {

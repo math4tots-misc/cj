@@ -23,6 +23,16 @@ class CCParser: ParserMixin[CCToken] {
         expr
     }
 
+    def parseStatements(filepath: String, contents: String): List[Node] {
+        val tokens = CCLexer.lex(filepath, contents)
+        val self = Self(filepath, tokens)
+        val stmts: List[Node] = []
+        while not at(CCToken.tEOF) {
+            stmts.add(stmt())
+        }
+        stmts
+    }
+
     val filepath: String
     val tokens: List[CCToken]
     var i = 0
@@ -31,6 +41,15 @@ class CCParser: ParserMixin[CCToken] {
     def markAt(self, token: CCToken): Mark = Mark(filepath, token.line, token.column)
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
+
+    def stmt(self): Node = exprStmt()
+
+    def exprStmt(self): Node {
+        val mark = mark()
+        val stmt = unop(mark, Node.Kind.exprStmt, expr())
+        expect(';')
+        stmt
+    }
 
     def expr(self): Node = exprpr(0)
 
