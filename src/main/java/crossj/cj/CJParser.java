@@ -94,6 +94,10 @@ public final class CJParser {
         return expect(CJToken.TYPE_ID).text;
     }
 
+    private int parseInt() {
+        return Integer.parseInt(expect(CJToken.INT).text);
+    }
+
     private Optional<String> parseComment() {
         if (at(CJToken.COMMENT)) {
             var ret = Optional.of(expect(CJToken.COMMENT).text);
@@ -204,7 +208,7 @@ public final class CJParser {
         skipDelimiters();
         var members = List.<CJAstItemMemberDefinition>of();
         while (!consume('}')) {
-            members.add(parseItemMember(packageName, shortName, importsCombo));
+            members.addAll(parseItemMembers(packageName, shortName, importsCombo));
         }
         skipDelimiters();
         if (!at(CJToken.EOF)) {
@@ -372,28 +376,50 @@ public final class CJParser {
         return new CJAstTypeCondition(mark, variableName, traits);
     }
 
-    private CJAstItemMemberDefinition parseItemMember(String outerPackageName, String outerShortName,
+    private List<CJAstItemMemberDefinition> parseItemMembers(String outerPackageName, String outerShortName,
             List<List<CJAstImport>> importsCombo) {
         var comment = parseComment();
         var annotations = parseAnnotations();
         var modifiers = parseModifiers();
         switch (peek().type) {
+        case CJToken.KW_ENUM:
+            return parseEnum();
         case CJToken.KW_VAL:
         case CJToken.KW_VAR:
-            return parseFieldDefinition(comment, annotations, modifiers);
+            return List.of(parseFieldDefinition(comment, annotations, modifiers));
         case CJToken.KW_CASE:
-            return parseCaseDefinition(comment, annotations, modifiers);
+            return List.of(parseCaseDefinition(comment, annotations, modifiers));
         case CJToken.KW_IF:
         case CJToken.KW_DEF:
-            return parseMethod(comment, annotations, modifiers);
+            return List.of(parseMethod(comment, annotations, modifiers));
         case CJToken.KW_CLASS:
         case CJToken.KW_TRAIT:
         case CJToken.KW_UNION:
         case CJToken.KW_INTERFACE:
-            return parseChildItemDefinition(outerPackageName, outerShortName, importsCombo, comment, annotations,
-                    modifiers);
+            return List.of(parseChildItemDefinition(outerPackageName, outerShortName, importsCombo, comment,
+                    annotations, modifiers));
         }
         throw ekind("val, var, def or if");
+    }
+
+    private List<CJAstItemMemberDefinition> parseEnum() {
+        List<CJAstItemMemberDefinition> list = List.of();
+        int nextValue = 0;
+        expect(CJToken.KW_ENUM);
+        expect('{');
+        skipDelimiters();
+        while (!consume('}')) {
+            var mark = getMark();
+            var name = parseId();
+            var value = consume('=') ? parseInt() : nextValue;
+            list.add(new CJAstFieldDefinition(mark, Optional.empty(), List.of(), List.of(CJIRModifier.Static), false,
+                    name, new CJAstTypeExpression(mark, "Int", List.of()),
+                    Optional.of(new CJAstLiteral(mark, CJIRLiteralKind.Int, "" + value))));
+            nextValue = value + 1;
+            skipDelimiters();
+        }
+        skipDelimiters();
+        return list;
     }
 
     private CJAstItemDefinition parseChildItemDefinition(String outerPackageName, String outerShortName,
@@ -413,7 +439,7 @@ public final class CJParser {
         skipDelimiters();
         var members = List.<CJAstItemMemberDefinition>of();
         while (!consume('}')) {
-            members.add(parseItemMember(packageName, shortName, importsCombo));
+            members.addAll(parseItemMembers(packageName, shortName, importsCombo));
         }
         expectDelimiters();
         return new CJAstItemDefinition(mark, packageName, importsCombo, comment, annotations, modifiers, kind,
