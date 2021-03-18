@@ -10,6 +10,7 @@ import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Tuple3;
+import crossj.base.Tuple4;
 import crossj.base.Tuple5;
 import crossj.books.dragon.ch03.Regex;
 
@@ -1138,6 +1139,28 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     return evalExpressionEx(new CJAstListDisplay(e.getMark(), subexprs), a);
                 }
+                case "get!": {
+                    if (e.getArgs().size() != 3) {
+                        throw CJError.of("get! requires exactly 3 arguments (owner, case-name, index)", e.getMark());
+                    }
+                    var mark = e.getMark();
+                    var target = e.getArgs().get(0);
+                    var caseName = solveExprForName(e.getArgs().get(1));
+                    var index = solveExprForInt(e.getArgs().get(2));
+                    var expr = new CJAstWhen(
+                            mark, target, List
+                                    .of(Pair.of(
+                                            List.of(Tuple4.of(mark, caseName,
+                                                    Range.upto(index + 1).map(i -> Tuple3.of(mark, false, "a" + i))
+                                                            .list(),
+                                                    true)),
+                                            new CJAstVariableAccess(mark, "a" + index))),
+                            List.of(),
+                            Optional.of(new CJAstMethodCall(mark,
+                                    Optional.of(new CJAstTypeExpression(mark, "IO", List.of())), "panic", List.of(),
+                                    List.of(new CJAstLiteral(mark, CJIRLiteralKind.String, "\"get! match failed\"")))));
+                    return evalExpressionEx(expr, a);
+                }
                 case "include_str!": {
                     if (e.getArgs().size() != 1) {
                         throw CJError.of("include_str! requires exactly 1 argument (strlit)", e.getMark());
@@ -1328,6 +1351,29 @@ final class CJPass04 extends CJPassBaseEx {
             throw CJError.of("Expected name", expr.getMark());
         }
         return name;
+    }
+
+    private static Integer solveExprForIntOrNull(CJAstExpression expr) {
+        if (expr instanceof CJAstLiteral) {
+            var lit = (CJAstLiteral) expr;
+            switch (lit.getKind()) {
+            case Int:
+                return Integer.parseInt(lit.getRawText());
+            default:
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private static int solveExprForInt(CJAstExpression expr) {
+        var i = solveExprForIntOrNull(expr);
+        if (i != null) {
+            return i;
+        } else {
+            throw CJError.of("Expected int literal", expr.getMark());
+        }
     }
 
     private static Regex solveExprForRegex(CJAstExpression expr) {
