@@ -74,6 +74,7 @@ class CCCodegen {
                 val bexprs = stmt.body.map(n -> stmt(n))
                 m.block(null, bexprs, none)
             }
+            case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             else = throw CCError("TODO stmt " + stmt.kind, [stmt.mark])
         }
     }

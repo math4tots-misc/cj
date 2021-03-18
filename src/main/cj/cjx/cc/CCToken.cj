@@ -3,17 +3,22 @@ package cjx.cc
 import cj.Error
 
 class CCToken {
-    static val tEOF = 201
-    static val tINT = 202
-    static val tIDENT = 203
 
-    static val tEQ = 251
-    static val tNE = 252
-    static val tLE = 253
-    static val tGE = 254
+    enum {
+        tEOF = 200
+        tINT
+        tIDENT
 
-    static val kwINT = 301
-    static val kwRETURN = 302
+        tEQ
+        tNE
+        tLE
+        tGE
+
+        kwINT
+        kwRETURN
+        kwIF
+        kwELSE
+    }
 
     static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")
 

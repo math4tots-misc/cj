@@ -56,4 +56,14 @@ class CCompilerTest {
         assertCode("{ {1; {2;} return 3;} }", 3)
         assertCode("{ ;;; return 5; }", 5)
     }
+
+    @test
+    def ifStmts() {
+        assertCode("{ if (0) return 2; return 3; }", 3)
+        assertCode("{ if (1-1) return 2; return 3; }", 3)
+        assertCode("{ if (1) return 2; return 3; }", 2)
+        assertCode("{ if (2-1) return 2; return 3; }", 2)
+        assertCode("{ if (0) { 1; 2; return 3; } else { return 4; } }", 4)
+        assertCode("{ if (1) { 1; 2; return 3; } else { return 4; } }", 3)
+    }
 }

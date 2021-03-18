@@ -24,6 +24,8 @@ native class Binaryen {
             Expression, self, ".return(", value, ")")
         def drop(self, value: Expression): Expression = js!(
             Expression, self, ".drop(", value, ")")
+        def if_(self, cond: Expression, ifTrue: Expression, ifFalse: Expression): Expression = js!(
+            Expression, self, ".if(", cond, ",", ifTrue, ",", ifFalse, ")")
         def emitText(self): String = js!(String, self, ".emitText()")
         def emitBinary(self): Uint8Array = js!(Uint8Array, self, ".emitBinary()")
         def optimize(self) = js!(Unit, self, ".optimize()")

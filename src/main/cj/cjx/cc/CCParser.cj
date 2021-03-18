@@ -50,14 +50,22 @@ class CCParser: ParserMixin[CCToken] {
         switch (peek().type) {
             case ';' {
                 next()
-                val node = Node(mark, Node.Kind.block)
-                node.body = []
-                node
+                nop(mark)
             }
             case CCToken.kwRETURN {
                 next()
                 val stmt = unop(mark, Node.Kind.return_, expr())
                 expect(';')
+                stmt
+            }
+            case CCToken.kwIF {
+                next()
+                val stmt = Node(mark, Node.Kind.if_)
+                expect('(')
+                stmt.cond = expr()
+                expect(')')
+                stmt.then = stmt()
+                stmt.els = if consume(CCToken.kwELSE) { stmt() } else { nop(mark) }
                 stmt
             }
             case '{' = block()
@@ -156,6 +164,12 @@ class CCParser: ParserMixin[CCToken] {
         }
         val node = Node(mark, Node.Kind.block)
         node.body = body
+        node
+    }
+
+    def nop(self, mark: Mark): Node {
+        val node = Node(mark, Node.Kind.block)
+        node.body = []
         node
     }
 }
