@@ -47,14 +47,19 @@ class CCParser: ParserMixin[CCToken] {
 
     def stmt(self): Node {
         val mark = mark()
-        if consume(CCToken.kwRETURN) {
-            val stmt = unop(mark, Node.Kind.return_, expr())
-            expect(';')
-            stmt
-        } else {
-            val stmt = unop(mark, Node.Kind.exprStmt, expr())
-            expect(';')
-            stmt
+        switch (peek().type) {
+            case CCToken.kwRETURN {
+                next()
+                val stmt = unop(mark, Node.Kind.return_, expr())
+                expect(';')
+                stmt
+            }
+            case '{' = block()
+            else {
+                val stmt = unop(mark, Node.Kind.exprStmt, expr())
+                expect(';')
+                stmt
+            }
         }
     }
 
@@ -134,5 +139,17 @@ class CCParser: ParserMixin[CCToken] {
             }
             else = errorKind("expression")
         }
+    }
+
+    def block(self): Node {
+        val mark = mark()
+        val body: List[Node] = []
+        expect('{')
+        while not consume('}') {
+            body.add(stmt())
+        }
+        val node = Node(mark, Node.Kind.block)
+        node.body = body
+        node
     }
 }

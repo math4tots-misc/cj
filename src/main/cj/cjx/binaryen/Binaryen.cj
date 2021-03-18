@@ -12,6 +12,7 @@ native class Binaryen {
     def __get_unreachable(): Type = js!(Type, "binaryen.unreachable")
 
     def createType(types: List[Type]): Type = js!(Type, "binaryen.createType(", types, ")")
+    def getExpressionType(e: Expression): Type = js!(Type, "binaryen.getExpressionType(", e, ")")
 
     native class Module {
         def(): Self = js!(Self, "new binaryen.Module()")
@@ -133,5 +134,7 @@ native class Binaryen {
     native class ModuleI64 : IntOps {}
     native class Function {}
     native class Expression {}
-    native class Type {}
+    native class Type: Eq {
+        def __eq(self, other: Self): Bool = self is other
+    }
 }

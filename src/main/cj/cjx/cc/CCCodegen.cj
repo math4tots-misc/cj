@@ -60,20 +60,20 @@ class CCCodegen {
 
         # initialize local variable '0' with "SP"
         bexprs.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
-
-        if stmts {
-            for i = 0; i + 1 < stmts.size(); i++ {
-                bexprs.add(m.drop(stmt(stmts[i])))
-            }
-            bexprs.add(stmt(stmts.last()))
+        for stmt in stmts {
+            bexprs.add(stmt(stmt))
         }
-        m.block(null, bexprs, auto)
+        m.block(null, bexprs, none)
     }
 
     def stmt(self, stmt: CCIR.Node): Binaryen.Expression {
         when stmt.kind {
-            case exprStmt = expr(stmt.arg)
+            case exprStmt = m.drop(expr(stmt.arg))
             case return_ = m.return_(expr(stmt.arg))
+            case block {
+                val bexprs = stmt.body.map(n -> stmt(n))
+                m.block(null, bexprs, none)
+            }
             else = throw CCError("TODO stmt " + stmt.kind, [stmt.mark])
         }
     }

@@ -40,6 +40,7 @@ class CCIR {
             case le
             case assign
             case return_
+            case block
             case exprStmt  # expression statement
             case var_
             case int
@@ -59,6 +60,9 @@ class CCIR {
 
         val mark: Mark
         val kind: Kind
+
+        # block
+        var body: List[Node] = ?
 
         # binops
         var lhs: Node = ?
