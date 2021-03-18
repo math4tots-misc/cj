@@ -48,6 +48,10 @@ class CCCodegen {
     def withLocal[R](self, type: Binaryen.Type, f: Fn[Int, R]): R {
         val local = newLocal(type)
         f.call(local)
+        # while methods like withLocal help to reflect syntactically
+        # the idea that temporary variables are scoped, we don't actually
+        # do any kind of manual reuse. Instead, we let Binaryen's
+        # optimizer figure out the best way to recycle locals.
     }
 
     def stmts(self, stmts: List[CCIR.Node]): Binaryen.Expression {
