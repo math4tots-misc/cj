@@ -7,8 +7,9 @@ class CCToken {
     static val tINT = 202
 
     static val tEQ = 251
-    static val tLE = 252
-    static val tGE = 253
+    static val tNE = 252
+    static val tLE = 253
+    static val tGE = 254
 
     static val kwINT = 301
 

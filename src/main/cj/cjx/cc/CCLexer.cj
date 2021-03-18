@@ -20,6 +20,7 @@ class CCLexer {
             m -> chartok(m))
 
         b.add("==", m -> symtok(m, CCToken.tEQ))
+        b.add("!=", m -> symtok(m, CCToken.tNE))
         b.add("<=", m -> symtok(m, CCToken.tLE))
         b.add(">=", m -> symtok(m, CCToken.tGE))
 

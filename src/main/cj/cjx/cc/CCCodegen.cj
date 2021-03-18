@@ -37,6 +37,10 @@ class CCCodegen {
             case sub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
             case mul = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
             case div = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
+            case eq = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
+            case ne = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
+            case lt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
+            case le = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])
         }
     }

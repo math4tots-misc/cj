@@ -45,6 +45,12 @@ class CCParser: ParserMixin[CCToken] {
                 case '*' { next(); expr = binop(mark, Node.Kind.mul, expr, exprpr(tokprec)) }
                 case '/' { next(); expr = binop(mark, Node.Kind.div, expr, exprpr(tokprec)) }
                 case '%' { next(); expr = binop(mark, Node.Kind.rem, expr, exprpr(tokprec)) }
+                case CCToken.tEQ { next(); expr = binop(mark, Node.Kind.eq, expr, exprpr(tokprec)) }
+                case CCToken.tNE { next(); expr = binop(mark, Node.Kind.ne, expr, exprpr(tokprec)) }
+                case '<'         { next(); expr = binop(mark, Node.Kind.lt, expr, exprpr(tokprec)) }
+                case CCToken.tLE { next(); expr = binop(mark, Node.Kind.le, expr, exprpr(tokprec)) }
+                case '>'         { next(); expr = binop(mark, Node.Kind.lt, exprpr(tokprec), expr) }
+                case CCToken.tGE { next(); expr = binop(mark, Node.Kind.le, exprpr(tokprec), expr) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -53,8 +59,10 @@ class CCParser: ParserMixin[CCToken] {
     }
 
     def precof(type: Int): Int = switch type {
-        case '*'; case '/'; case '%' = 60
-        case '+'; case '-' = 50
+        case '*'; case '/'; case '%' = 120
+        case '+'; case '-' = 100
+        case '<'; case '>'; case CCToken.tLE; case CCToken.tGE = 80
+        case CCToken.tEQ; case CCToken.tNE = 70
         else = -1
     }
 

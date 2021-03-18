@@ -22,6 +22,10 @@ class CCIR {
             case rem
             case pos
             case neg
+            case eq
+            case ne
+            case lt
+            case le
             case int
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
