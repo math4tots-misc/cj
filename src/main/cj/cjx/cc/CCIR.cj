@@ -20,8 +20,13 @@ class CCIR {
         val id: Int
     }
 
-    class Node {
+    class Node: Repr {
         union Kind: Repr, Hash {
+            static val binops: Set[Kind] = SetOf(
+                add, sub, mul, div, rem, eq, ne, lt, le, assign)
+
+            static val unops: Set[Kind] = SetOf(neg, pos, exprStmt)
+
             case add
             case sub
             case mul
@@ -40,6 +45,8 @@ class CCIR {
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
+            def isUnop(self): Bool = self in unops
+            def isBinop(self): Bool = self in binops
         }
 
         @implicit(Int, int)
@@ -67,5 +74,17 @@ class CCIR {
         var value: Value = ?
         def __get_intValue(self): Int = get!(value, int, 0)
         def __get_stringValue(self): String = get!(value, string, 0)
+
+        def repr(self): String = when kind {
+            case var_ = "var(" + var_.name + "," + var_.id + ")"
+            case int = "int(" + intValue + ")"
+            else = if kind.isBinop() {
+                kind.repr() + "(" + lhs + "," + rhs + ")"
+            } else if kind.isUnop() {
+                kind.repr() + "(" + arg + ")"
+            } else {
+                kind.repr()
+            }
+        }
     }
 }

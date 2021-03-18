@@ -73,7 +73,7 @@ class CCParser: ParserMixin[CCToken] {
                 case CCToken.tLE { next(); expr = binop(mark, Node.Kind.le, expr, exprpr(tokprec)) }
                 case '>'         { next(); expr = binop(mark, Node.Kind.lt, exprpr(tokprec), expr) }
                 case CCToken.tGE { next(); expr = binop(mark, Node.Kind.le, exprpr(tokprec), expr) }
-                case '='         { next(); expr = binop(mark, Node.Kind.assign, expr, exprpr(tokprec)) }
+                case '='         { next(); expr = binop(mark, Node.Kind.assign, expr, exprpr(tokprec - 1)) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)

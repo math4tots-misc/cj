@@ -52,8 +52,8 @@ native class Binaryen {
             Expression, self, ".get(", index, ",", type, ")")
         def set(self, index: Int, value: Expression): Expression = js!(
             Expression, self, ".set(", index, ",", value, ")")
-        def tee(self, index: Int, value: Expression): Expression = js!(
-            Expression, self, ".tee(", index, ",", value, ")")
+        def tee(self, index: Int, value: Expression, type: Type): Expression = js!(
+            Expression, self, ".tee(", index, ",", value, ",", type, ")")
     }
     native class ModuleGlobal {
         def get(self, name: String, type: Type): Expression = js!(

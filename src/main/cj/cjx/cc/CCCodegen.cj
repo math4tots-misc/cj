@@ -14,10 +14,9 @@ class CCCodegen {
     private static val unreachable: Binaryen.Type = Binaryen.unreachable
     private static val auto: Binaryen.Type = Binaryen.auto
 
-    private static val localSlotSP = 0
-    private static val localSlotTmp = 1
-
     private val m: Binaryen.Module = Binaryen.Module()
+    private var localSlotSP = 0
+    private var locals: List[Binaryen.Type] = []
 
     def emit(self, stmts: List[CCIR.Node]): Uint8Array {
 
@@ -26,13 +25,29 @@ class CCCodegen {
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(8))
 
-        m.addFunction("main", Binaryen.createType([]), i32, [i32, i32], stmts(stmts))
+        locals = [i32]   # the first non-param local is a local copy of SP
+        localSlotSP = 0  # the index into locals reserved for a copy of SP
+
+        val body = stmts(stmts)
+
+        m.addFunction("main", Binaryen.createType([]), i32, locals, body)
         m.addFunctionExport("main", "main")
 
         m.validate()
         m.optimize()
-        IO.println(m.emitText())
+        # IO.println(m.emitText())
         m.emitBinary()
+    }
+
+    def newLocal(self, type: Binaryen.Type): Int {
+        val index = locals.size()
+        locals.add(type)
+        index
+    }
+
+    def withLocal[R](self, type: Binaryen.Type, f: Fn[Int, R]): R {
+        val local = newLocal(type)
+        f.call(local)
     }
 
     def stmts(self, stmts: List[CCIR.Node]): Binaryen.Expression {
@@ -60,13 +75,12 @@ class CCCodegen {
     def addr(self, expr: CCIR.Node): Binaryen.Expression {
         when expr.kind {
             case assign {
-                # TODO: Need to figure out how to use the stack somehow...
-                # binaryen doesn't seem to have a way to access this...
-                m.block(null, [
-                    m.local.set(localSlotTmp, addr(expr.lhs)),
-                    m.i32.store(0, 0, m.local.get(localSlotTmp, i32), expr(expr.rhs)),
-                    m.local.get(localSlotTmp, i32),
-                ], i32)
+                withLocal(i32, tmp ->
+                    m.block(null, [
+                        m.local.set(tmp, addr(expr.lhs)),
+                        m.i32.store(0, 0, m.local.get(tmp, i32), expr(expr.rhs)),
+                        m.local.get(tmp, i32),
+                    ], i32))
             }
             case var_ {
                 val var_ = expr.var_
@@ -89,15 +103,7 @@ class CCCodegen {
             case ne = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case lt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case le = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case assign {
-                val addr = addr(expr.lhs)
-                m.block(null, [
-                    m.local.set(localSlotTmp, addr),
-                    m.i32.store(0, 0, m.local.get(localSlotTmp, i32), expr(expr.rhs)),
-                    m.i32.load(0, 0, m.local.get(localSlotTmp, i32)),
-                ], auto)
-            }
-            case var_ = m.i32.load(0, 0, addr(expr))
+            case assign; case var_ = m.i32.load(0, 0, addr(expr))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])
         }
     }

@@ -52,6 +52,6 @@ class CCompilerTest {
     def returnCodes2() {
         assertCode("a=3; a;", 3)
         assertCode("a=3; z=5; a+z;", 8)
-        assertCode("a=b=3; a+b; ", 13)
+        assertCode("a=b=3; a+b; ", 6)
     }
 }
