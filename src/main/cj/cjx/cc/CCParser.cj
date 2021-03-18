@@ -48,6 +48,12 @@ class CCParser: ParserMixin[CCToken] {
     def stmt(self): Node {
         val mark = mark()
         switch (peek().type) {
+            case ';' {
+                next()
+                val node = Node(mark, Node.Kind.block)
+                node.body = []
+                node
+            }
             case CCToken.kwRETURN {
                 next()
                 val stmt = unop(mark, Node.Kind.return_, expr())

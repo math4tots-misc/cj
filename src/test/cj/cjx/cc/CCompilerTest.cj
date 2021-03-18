@@ -54,5 +54,6 @@ class CCompilerTest {
 
         assertCode("{1; 2; return 3;}", 3)
         assertCode("{ {1; {2;} return 3;} }", 3)
+        assertCode("{ ;;; return 5; }", 5)
     }
 }
