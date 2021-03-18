@@ -42,6 +42,9 @@ class CCParser: ParserMixin[CCToken] {
             switch peek().type {
                 case '+' { next(); expr = binop(mark, Node.Kind.add, expr, exprpr(tokprec)) }
                 case '-' { next(); expr = binop(mark, Node.Kind.sub, expr, exprpr(tokprec)) }
+                case '*' { next(); expr = binop(mark, Node.Kind.mul, expr, exprpr(tokprec)) }
+                case '/' { next(); expr = binop(mark, Node.Kind.div, expr, exprpr(tokprec)) }
+                case '%' { next(); expr = binop(mark, Node.Kind.rem, expr, exprpr(tokprec)) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -50,6 +53,7 @@ class CCParser: ParserMixin[CCToken] {
     }
 
     def precof(type: Int): Int = switch type {
+        case '*'; case '/'; case '%' = 60
         case '+'; case '-' = 50
         else = -1
     }

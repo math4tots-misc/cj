@@ -19,6 +19,7 @@ class CCIR {
             case sub
             case mul
             case div
+            case rem
             case pos
             case neg
             case int
