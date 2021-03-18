@@ -1,5 +1,6 @@
 package cj
 
+import cj.Error
 import cj.Math
 import cj.StringBuilder
 import cj.Approximate
@@ -17,11 +18,13 @@ native class List[T?] :
     @variadic @generic def of(self): Self = self
     @generic def iter(self: Self): Iterator[T] = js!(Iterator[T], self, "[Symbol.iterator]()")
     @generic def iterFrom(self: Self, start: Int): Iterator[T]
-    @generic def size(self: Self): Int
-    @generic def isEmpty(self: Self): Bool
-    @generic def add(self: Self, t: T)
+    @generic def size(self: Self): Int = js!(Int, self, ".length")
+    @generic def isEmpty(self: Self): Bool = js!(Bool, self, ".length==0")
+    @generic def add(self: Self, t: T) = js!(Unit, self, ".push(", t, ")")
     @genericSelf def addAll[C: Iterable[T]](self: Self, ts: C) { for t in ts { add(t) } }
-    @generic def pop(self): T
+    @generic def pop(self): T {
+        if self { js!(T, self, ".pop()") } else { throw Error("Pop from empty list") }
+    }
     @generic def __add(self: Self, other: Self): Self
     @generic def __getitem(self: Self, i: Int): T
     @generic def __setitem(self: Self, i: Int, t: T)
@@ -35,11 +38,11 @@ native class List[T?] :
 
     @generic def __mul(self: Self, n: Int): Self
 
-    @generic def map[R?](self: Self, f: Fn[T, R]): List[R]
-    @generic def filter(self: Self, f: Fn[T, Bool]): Self
-    @generic def clone(self): Self
+    @generic def map[R?](self: Self, f: Fn[T, R]): List[R] = js!(List[R], self, ".map(", f, ")")
+    @generic def filter(self: Self, f: Fn[T, Bool]): Self = js!(Self, self, ".filter(", f, ")")
+    @generic def clone(self): Self = js!(Self, "Array.from(", self, ")")
 
-    @generic def _clearListWithSize(size: Int): Self
+    @generic def _clearListWithSize(size: Int): Self = js!(Self, "Array(", size, ")")
     @generic def _clearItem(self, i: Int)
 
     def toBool(self: Self): Bool

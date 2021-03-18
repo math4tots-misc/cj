@@ -2,27 +2,28 @@ class MC$cj$List {
     constructor(TV$T) {
         this.TV$T = TV$T;
     }
+    checkedIndex(self, i) {
+        if (i < 0) {
+            i += self.length;
+        }
+        if (i < 0 || i >= self.length) {
+            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
+        }
+        return i;
+    }
+    checkedIndex2(self, i) {
+        if (i < 0) {
+            i += self.length;
+        }
+        if (i < 0 || i > self.length) {
+            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
+        }
+        return i;
+    }
     *M$iterFrom(self, start) {
         for (let i = start; i < self.length; i++) {
             yield self[i];
         }
-    }
-    M$size(self) {
-        return self.length;
-    }
-    M$isEmpty(self) {
-        return self.length === 0;
-    }
-    M$add(self, t) {
-        self.push(t);
-    }
-    M$addAll(TV$C, self, ts) {
-        for (const t of TV$C.M$iter(ts)) {
-            self.push(t);
-        }
-    }
-    M$pop(self) {
-        return self.pop();
     }
     M$__add(self, other) {
         const ret = [];
@@ -35,25 +36,23 @@ class MC$cj$List {
         return ret;
     }
     M$__getitem(self, i) {
-        if (i >= self.length) {
-            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
-        }
+        i = this.checkedIndex(self, i);
         return self[i];
     }
     M$__setitem(self, i, t) {
-        if (i >= self.length) {
-            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
-        }
+        i = this.checkedIndex(self, i);
         self[i] = t;
     }
     M$removeIndex(self, i) {
+        i = this.checkedIndex(self, i);
         return self.splice(i, 1)[0];
     }
     M$insert(self, i, t) {
+        i = this.checkedIndex2(self, i);
         self.splice(i, 0, t);
     }
     M$last(self) {
-        if (self.length === 0) {
+        if (!self.length) {
             throw new Error(`Index out of bounds (last() on empty list)`);
         }
         return self[self.length - 1];
@@ -64,12 +63,16 @@ class MC$cj$List {
         self[j] = tmp;
     }
     M$__slice(self, start, end) {
+        start = this.checkedIndex(self, start);
+        end = this.checkedIndex2(self, end);
         return self.slice(start, end);
     }
     M$__sliceFrom(self, start) {
+        start = this.checkedIndex(self, start);
         return self.slice(start);
     }
     M$__sliceTo(self, end) {
+        end = this.checkedIndex2(self, end);
         return self.slice(0, end);
     }
     M$__mul(self, n) {
@@ -80,18 +83,6 @@ class MC$cj$List {
             }
         }
         return ret;
-    }
-    M$map(TV$R, self, f) {
-        return self.map(f);
-    }
-    M$filter(self, f) {
-        return self.filter(f);
-    }
-    M$clone(self) {
-        return Array.from(self);
-    }
-    M$_clearListWithSize(size) {
-        return Array(size);
     }
     M$_clearItem(self, i) {
         self[i] = undefined;

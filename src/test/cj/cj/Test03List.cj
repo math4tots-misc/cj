@@ -166,4 +166,20 @@ class Test03List {
         Assert.equal(List[Int].empty().reversed(), [])
         Assert.equal([1, 2, 3].reversed(), [3, 2, 1])
     }
+
+    @test
+    def negativeIndices() {
+        val list = ["a", "b", "c", "d"]
+        Assert.equal(list[-1], "d")
+        Assert.equal(list[:-1], ["a", "b", "c"])
+        Assert.equal(list[1:-1], ["b", "c"])
+        Assert.equal(list[-1:], ["d"])
+    }
+
+    @test
+    def filter() {
+        val list = [1, 2, 3, 4, 5]
+        val filtered = list.filter(i -> i % 2 == 0)
+        Assert.equal(filtered, [2, 4])
+    }
 }
