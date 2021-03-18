@@ -321,12 +321,19 @@ final class CJPass04 extends CJPassBaseEx {
                     // This is an unqualified method name.
                     // In this case, check if the first parameter is named 'self'.
                     // If so, implicitly add 'self' as the first argument
+                    //
+                    // Also, since ASTs can sometimes be shallow copied to multiple places,
+                    // check that adding this implicit self wasn't done already.
+                    //
                     Assert.that(e.getOwner().isPresent());
                     Assert.that(args.isEmpty());
                     var method = methodRef.getMethod();
                     var parameters = method.getParameters();
                     if (!parameters.isEmpty() && parameters.get(0).getName().equals("self")) {
-                        argAsts.insert(0, new CJAstVariableAccess(e.getMark(), "self"));
+                        if (!e.isImplicitSelfAdded()) {
+                            argAsts.insert(0, new CJAstVariableAccess(e.getMark(), "self"));
+                            e.setImplicitSelfAdded(true);
+                        }
                     }
                 }
 

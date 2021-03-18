@@ -9,6 +9,7 @@ public final class CJAstMethodCall extends CJAstExpression {
     private final List<CJAstTypeExpression> typeArgs;
     private final List<CJAstExpression> args;
     private final boolean receiverOmitted;
+    private boolean implicitSelfAdded = false;
 
     CJAstMethodCall(CJMark mark, Optional<CJAstTypeExpression> owner, String name, List<CJAstTypeExpression> typeArgs,
             List<CJAstExpression> args, boolean receiverOmitted) {
@@ -43,6 +44,14 @@ public final class CJAstMethodCall extends CJAstExpression {
 
     public boolean isReceiverOmitted() {
         return receiverOmitted;
+    }
+
+    public boolean isImplicitSelfAdded() {
+        return implicitSelfAdded;
+    }
+
+    public void setImplicitSelfAdded(boolean implicitSelfAdded) {
+        this.implicitSelfAdded = implicitSelfAdded;
     }
 
     @Override
