@@ -14,6 +14,10 @@ class CCLexer {
         b.add("0x[0-9A-Fa-f]+", m -> tok(m, CCToken.tINT, s -> s.parseInt().get())) # hex literals
         b.add("\\d+", m -> tok(m, CCToken.tINT, s -> s.parseInt().get()))
 
+        for type in CCToken.keywordTypes {
+            b.add(CCToken.keywordString(type), m -> symtok(m, type))
+        }
+
         b.add("[a-zA-Z_][a-zA-Z_0-9]*", m -> tok(m, CCToken.tIDENT, s -> s))
 
         # single character symbol tokens

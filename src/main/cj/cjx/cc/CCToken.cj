@@ -13,6 +13,7 @@ class CCToken {
     static val tGE = 254
 
     static val kwINT = 301
+    static val kwRETURN = 302
 
     static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")
 

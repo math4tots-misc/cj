@@ -6,6 +6,7 @@ import cjx.cc.CCIR
 import cjx.binaryen.Binaryen
 
 class CCCodegen {
+    private static val optimize = false
     private static val none: Binaryen.Type = Binaryen.none
     private static val i32: Binaryen.Type = Binaryen.i32
     private static val i64: Binaryen.Type = Binaryen.i64
@@ -34,7 +35,7 @@ class CCCodegen {
         m.addFunctionExport("main", "main")
 
         m.validate()
-        m.optimize()
+        if optimize { m.optimize() }
         # IO.println(m.emitText())
         m.emitBinary()
     }
@@ -72,6 +73,7 @@ class CCCodegen {
     def stmt(self, stmt: CCIR.Node): Binaryen.Expression {
         when stmt.kind {
             case exprStmt = expr(stmt.arg)
+            case return_ = m.return_(expr(stmt.arg))
             else = throw CCError("TODO stmt " + stmt.kind, [stmt.mark])
         }
     }

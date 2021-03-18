@@ -45,13 +45,17 @@ class CCParser: ParserMixin[CCToken] {
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
 
-    def stmt(self): Node = exprStmt()
-
-    def exprStmt(self): Node {
+    def stmt(self): Node {
         val mark = mark()
-        val stmt = unop(mark, Node.Kind.exprStmt, expr())
-        expect(';')
-        stmt
+        if consume(CCToken.kwRETURN) {
+            val stmt = unop(mark, Node.Kind.return_, expr())
+            expect(';')
+            stmt
+        } else {
+            val stmt = unop(mark, Node.Kind.exprStmt, expr())
+            expect(';')
+            stmt
+        }
     }
 
     def expr(self): Node = exprpr(0)

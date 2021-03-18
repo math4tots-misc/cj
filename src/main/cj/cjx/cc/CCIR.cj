@@ -39,6 +39,7 @@ class CCIR {
             case lt
             case le
             case assign
+            case return_
             case exprStmt  # expression statement
             case var_
             case int
