@@ -2,6 +2,7 @@ package cjx.cc
 
 import cjx.parser.Mark
 import cjx.cc.CCIR.Node
+import cjx.cc.CCIR.Obj
 import cjx.cc.CCError
 import cjx.cc.CCLexer
 import cjx.cc.CCToken
@@ -37,6 +38,8 @@ class CCParser: ParserMixin[CCToken] {
     val tokens: List[CCToken]
     var i = 0
 
+    val varMap: Map[String, Obj] = MapOf()
+
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: CCToken): Mark = Mark(filepath, token.line, token.column)
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
@@ -59,17 +62,18 @@ class CCParser: ParserMixin[CCToken] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '+' { next(); expr = binop(mark, Node.Kind.add, expr, exprpr(tokprec)) }
-                case '-' { next(); expr = binop(mark, Node.Kind.sub, expr, exprpr(tokprec)) }
-                case '*' { next(); expr = binop(mark, Node.Kind.mul, expr, exprpr(tokprec)) }
-                case '/' { next(); expr = binop(mark, Node.Kind.div, expr, exprpr(tokprec)) }
-                case '%' { next(); expr = binop(mark, Node.Kind.rem, expr, exprpr(tokprec)) }
+                case '+'         { next(); expr = binop(mark, Node.Kind.add, expr, exprpr(tokprec)) }
+                case '-'         { next(); expr = binop(mark, Node.Kind.sub, expr, exprpr(tokprec)) }
+                case '*'         { next(); expr = binop(mark, Node.Kind.mul, expr, exprpr(tokprec)) }
+                case '/'         { next(); expr = binop(mark, Node.Kind.div, expr, exprpr(tokprec)) }
+                case '%'         { next(); expr = binop(mark, Node.Kind.rem, expr, exprpr(tokprec)) }
                 case CCToken.tEQ { next(); expr = binop(mark, Node.Kind.eq, expr, exprpr(tokprec)) }
                 case CCToken.tNE { next(); expr = binop(mark, Node.Kind.ne, expr, exprpr(tokprec)) }
                 case '<'         { next(); expr = binop(mark, Node.Kind.lt, expr, exprpr(tokprec)) }
                 case CCToken.tLE { next(); expr = binop(mark, Node.Kind.le, expr, exprpr(tokprec)) }
                 case '>'         { next(); expr = binop(mark, Node.Kind.lt, exprpr(tokprec), expr) }
                 case CCToken.tGE { next(); expr = binop(mark, Node.Kind.le, exprpr(tokprec), expr) }
+                case '='         { next(); expr = binop(mark, Node.Kind.assign, expr, exprpr(tokprec)) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -82,6 +86,7 @@ class CCParser: ParserMixin[CCToken] {
         case '+'; case '-' = 100
         case '<'; case '>'; case CCToken.tLE; case CCToken.tGE = 80
         case CCToken.tEQ; case CCToken.tNE = 70
+        case '=' = 50
         else = -1
     }
 
@@ -116,6 +121,13 @@ class CCParser: ParserMixin[CCToken] {
             case '+' { next(); unop(mark, Node.Kind.pos, atom()) }
             case '-' { next(); unop(mark, Node.Kind.neg, atom()) }
             case CCToken.tINT { literal(mark, Node.Kind.int, next().intValue) }
+            case CCToken.tIDENT {
+                val name = next().stringValue
+                val var_ = varMap.getOrInsert(name, () -> Obj(name, varMap.size()))
+                val node = Node(mark, Node.Kind.var_)
+                node.var_ = var_
+                node
+            }
             else = errorKind("expression")
         }
     }

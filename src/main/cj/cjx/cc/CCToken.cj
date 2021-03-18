@@ -5,6 +5,7 @@ import cj.Error
 class CCToken {
     static val tEOF = 201
     static val tINT = 202
+    static val tIDENT = 203
 
     static val tEQ = 251
     static val tNE = 252

@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Error
 import cjx.parser.Mark
 
 class CCIR {
@@ -11,6 +12,12 @@ class CCIR {
         }
         val kind: Kind
         var base: Type = ?
+    }
+
+    ## variable
+    class Obj {
+        val name: String
+        val id: Int
     }
 
     class Node {
@@ -26,7 +33,9 @@ class CCIR {
             case ne
             case lt
             case le
+            case assign
             case exprStmt  # expression statement
+            case var_
             case int
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
@@ -34,8 +43,10 @@ class CCIR {
         }
 
         @implicit(Int, int)
+        @implicit(String, string)
         union Value {
             case int(Int)
+            case string(String)
         }
 
         val mark: Mark
@@ -49,8 +60,12 @@ class CCIR {
         def __set_arg(self, node: Node) { lhs = node }
         def __get_arg(self): Node = lhs
 
+        # var
+        var var_: Obj = ?
+
         # literal value
         var value: Value = ?
-        def __get_intValue(self): Int = when value { case int(i) = i }
+        def __get_intValue(self): Int = get!(value, int, 0)
+        def __get_stringValue(self): String = get!(value, string, 0)
     }
 }

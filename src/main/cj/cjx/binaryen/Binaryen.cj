@@ -28,7 +28,9 @@ native class Binaryen {
         def optimize(self) = js!(Unit, self, ".optimize()")
         def validate(self): Bool = js!(Bool, self, ".validate()")
         def dispose(self) = js!(Unit, self, ".dispose()")
-        def autoDrop(self) = js!(Unit, self, ".autoDrop()")
+        def addGlobal(self, name: String, type: Type, mutable: Bool, value: Expression) = js!(
+            Unit, self, ".addGlobal(", name, ",", type, ",", mutable, ",", value, ")")
+        def setMemory(self, init: Int, max: Int) = js!(Unit, self, ".setMemory(", init, ",", max, ")")
         def addFunction(
                 self,
                 name: String,
@@ -59,7 +61,13 @@ native class Binaryen {
         def set(self, name: String, value: Expression): Expression = js!(
             Expression, self, ".set(", name, ",", value, ")")
     }
-    trait IntOps {
+    trait MemOps {
+        def load(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
+            Expression, self, ".load(", offset, ",", align, ",", ptr, ")")
+        def store(self, offset: Int, align: Int, ptr: Expression, v: Expression): Expression = js!(
+            Expression, self, ".store(", offset, ",", align, ",", ptr, ",", v, ")")
+    }
+    trait IntOps : MemOps {
         def const(self, value: Int): Expression = js!(
             Expression, self, ".const(", value, ")")
         def clz(self, value: Expression): Expression = js!(

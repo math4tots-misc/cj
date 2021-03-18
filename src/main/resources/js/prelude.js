@@ -1,3 +1,5 @@
+Error.stackTraceLimit = 100
+
 /**
  * Combines the hash in a way that is consistent with
  * `java.util.List.hashCode` in the Java language.
