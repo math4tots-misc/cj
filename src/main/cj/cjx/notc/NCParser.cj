@@ -18,14 +18,19 @@ class NCParser: ParserMixin[NCToken] {
     def parse(filepath: String, contents: String): Program {
         val tokens = NCLexer.lex(filepath, contents)
         val self = Self(filepath, tokens)
-        val p = program()
+        program()
         assert(NCToken.tEOF)
-        p
+        program
     }
 
     val filepath: String
     val tokens: List[NCToken]
     var i = 0
+
+    # module-level
+    val program: Program = Program()
+
+    # function-level
     var locals: List[Var] = []
 
     def mark(self): Mark = markAt(peek())
@@ -42,7 +47,7 @@ class NCParser: ParserMixin[NCToken] {
             val mark = mark()
             val type = type()
             val name = id()
-            program.funcs.add(func(mark, type, name))
+            func(mark, type, name)
         }
         program
     }
@@ -59,12 +64,12 @@ class NCParser: ParserMixin[NCToken] {
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
-    def func(self, mark: Mark, returnType: Type, name: String): Func {
+    def func(self, mark: Mark, returnType: Type, name: String) {
         funcPrep()
         val nparams = params().size()
         val func = Func(mark, returnType, name, nparams, locals)
         if consume('=') { func.body = expr() } else { expect(';') }
-        func
+        program.funcs.add(func)
     }
 
     def funcPrep(self) {
