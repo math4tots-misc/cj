@@ -1,5 +1,6 @@
 package cjx.notc
 
+import cj.Error
 import cjx.notc.NCError
 import cjx.parser.Mark
 
@@ -8,6 +9,16 @@ class NCIR {
 
     class Program {
         val funcs: List[Func] = []
+        val funcMap: Map[String, Func] = MapOf()
+
+        def addFunc(self, func: Func) {
+            funcs.add(func)
+            funcMap[func.name] = func
+        }
+
+        def getFuncOrNull(self, funcName: String): Func? {
+            funcMap.getOrNull(funcName)
+        }
     }
 
     class Var {
@@ -25,22 +36,33 @@ class NCIR {
         val locals: List[Var]
         var body: Expr = ?
         def __get_params(self): List[Var] = locals[:nparams]
+        def __get_type(self): Type = Type.func(returnType, params.map(p -> p.type))
     }
 
     union Type: Repr, Eq {
         case unreachable
         case void
         case int
+        case func(Type, List[Type])
         def isUnreachable(self): Bool = tag!(self) == tag!(Type, unreachable)
         def isVoid(self): Bool = tag!(self) == tag!(Type, void)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
+        def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def size(self): Int = when self {
             case unreachable = 0
             case void = NCIR.ptrSize
             case int = NCIR.ptrSize
+            case func(..) = throw Error("Func type not supported here")
         }
         def repr(self): String = tag_name!(self)
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and switch tag!(self) {
+            case tag!(Self, func) = when self {
+                case func(rt, argts) = when other {
+                    case func(ort, oargts) = rt == ort and argts == oargts
+                    else = false
+                }
+                else = throw Error("FUBAR")
+            }
             else = true
         }
         def common(mark: Mark, a: Self, b: Self): Self {
@@ -77,6 +99,9 @@ class NCIR {
             kIF
             kWHILE
 
+            kGETFUNC
+            kCALL
+
             kRETURN
 
             kBLOCK
@@ -105,6 +130,11 @@ class NCIR {
         var then: Expr = ?
         var els: Expr = ?
 
+        # getfunc/call
+        var func: Func = ?
+        def __get_args(self): List[Expr] = stmts
+        def __set_args(self, value: List[Expr]) { stmts = value }
+
         # block
         var stmts: List[Expr] = ?
 
@@ -124,6 +154,22 @@ class NCIR {
             val self = unop(mark, kSETVAR, var_.type, valexpr)
             self.var_ = var_
             self
+        }
+
+        def getfunc(mark: Mark, func: Func): Self {
+            val self = Self(mark, kGETFUNC, func.type)
+            self.func = func
+            self
+        }
+
+        def call(mark: Mark, fexpr: Expr, args: List[Expr]): Self {
+            if fexpr.kind == kGETFUNC {
+                val self = Self(mark, kCALL, fexpr.func.returnType)
+                self.func = fexpr.func
+                self.args = args
+                return self
+            }
+            throw NCError(kindNames[fexpr.kind] + " is not callable", [mark])
         }
 
         def assign(mark: Mark, lhs: Expr, rhs: Expr): Self {

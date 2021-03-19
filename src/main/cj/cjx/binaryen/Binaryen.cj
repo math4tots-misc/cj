@@ -46,6 +46,10 @@ native class Binaryen {
         def addFunctionExport(self, internalName: String, externalName: String) = js!(
             Unit, self, ".addFunctionExport(", internalName, ",", externalName, ")")
 
+        def call(self, name: String, operands: List[Expression], returnType: Type): Expression {
+            js!(Expression, self, ".call(", name, ",", operands, ",", returnType, ")")
+        }
+
         def block(self, label: Nullable[String], exprs: List[Expression], type: Type): Expression {
             js!(Expression, self, ".block(", label, ",", exprs, ",", type, ")")
         }

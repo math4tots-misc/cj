@@ -74,7 +74,7 @@ class NCParser: ParserMixin[NCToken] {
             func.body = block()
         }
         expectDelim()
-        program.funcs.add(func)
+        program.addFunc(func)
     }
 
     def funcPrep(self) {
@@ -112,6 +112,7 @@ class NCParser: ParserMixin[NCToken] {
     }
 
     def precof(type: Int): Int = switch type {
+        case '('; case '.' = 140
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
         case '<'; case '>'; case NCToken.tLE; case NCToken.tGE = 80
@@ -128,6 +129,7 @@ class NCParser: ParserMixin[NCToken] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
+                case '('          { val args = args(); expr = Expr.call(mark, expr, args) }
                 case '='          { next(); expr = Expr.assign(mark, expr, exprpr(tokprec - 1)) }
                 case '+'          { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
                 case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
@@ -146,6 +148,8 @@ class NCParser: ParserMixin[NCToken] {
         expr
     }
 
+    def args(self): List[Expr] = parseJoin('(', ')', ',', () -> expr())
+
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
@@ -155,8 +159,13 @@ class NCParser: ParserMixin[NCToken] {
             case '{' = block()
             case NCToken.tID {
                 val name = next().stringValue
-                val var_ = locals.get(mark, name)
-                Expr.getvar(mark, var_)
+                if val var_ = locals.getOrNull(name) {
+                    Expr.getvar(mark, var_)
+                } else if val func = program.getFuncOrNull(name) {
+                    Expr.getfunc(mark, func)
+                } else {
+                    throw NCError("Variable '" + name + "' not found", [mark])
+                }
             }
             case NCToken.tINT = Expr.int(mark, next().intValue)
             else = errorKind("expression")

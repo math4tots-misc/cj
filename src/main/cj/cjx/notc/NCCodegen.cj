@@ -1,5 +1,7 @@
 package cjx.notc
 
+import cjx.parser.Mark
+import cj.Error
 import cjx.notc.NCError
 import cjx.notc.NCIR
 import cj.Uint8Array
@@ -39,18 +41,19 @@ class NCCodegen {
     def func(self, func: NCIR.Func) {
         m.addFunction(
             func.name,
-            Binaryen.createType(func.params.map(v -> type(v.type))),
-            type(func.returnType),
-            func.locals.map(v -> type(v.type)),
+            Binaryen.createType(func.params.map(v -> type(v.mark, v.type))),
+            type(func.mark, func.returnType),
+            func.locals.map(v -> type(v.mark, v.type)),
             expr(func.body))
         m.addFunctionExport(func.name, func.name)
     }
 
-    def type(self, type: NCIR.Type): Binaryen.Type {
+    def type(self, mark: Mark, type: NCIR.Type): Binaryen.Type {
         when type {
             case unreachable = unreachable
             case void = i32
             case int = i32
+            case func(..) = throw NCError("func type not supported here", [mark])
         }
     }
 
@@ -65,8 +68,8 @@ class NCCodegen {
             case NCIR.Expr.kINT_NE = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_LT = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_LE = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case NCIR.Expr.kGETVAR = m.local.get(expr.var_.index, type(expr.var_.type))
-            case NCIR.Expr.kSETVAR = m.local.tee(expr.var_.index, expr(expr.arg), type(expr.var_.type))
+            case NCIR.Expr.kGETVAR = m.local.get(expr.var_.index, type(expr.mark, expr.var_.type))
+            case NCIR.Expr.kSETVAR = m.local.tee(expr.var_.index, expr(expr.arg), type(expr.mark, expr.var_.type))
             case NCIR.Expr.kIF = m.if_(expr(expr.cond), expr(expr.then), expr(expr.els))
             case NCIR.Expr.kWHILE {
                 val continueLabel = newLabel()
@@ -80,8 +83,10 @@ class NCCodegen {
                         ], none)),
                     ], none),
                     expr(NCIR.Expr.nop(expr.mark)),
-                ], type(NCIR.Type.void))
+                ], type(expr.mark, NCIR.Type.void))
             }
+            case NCIR.Expr.kCALL = m.call(
+                expr.func.name, expr.args.map(a -> expr(a)), type(expr.mark, expr.func.returnType))
             case NCIR.Expr.kRETURN = m.return_(expr(expr.arg))
             case NCIR.Expr.kBLOCK {
                 val bexprs: List[Binaryen.Expression] = []
@@ -93,7 +98,7 @@ class NCCodegen {
                 } else {
                     bexprs.add(m.i32.const(0)) # void
                 }
-                m.block(null, bexprs, type(expr.type))
+                m.block(null, bexprs, type(expr.mark, expr.type))
             }
             else = throw NCError("TODO expr " + expr, [expr.mark])
         }

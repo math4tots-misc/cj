@@ -79,6 +79,8 @@ class NCCompilerTest {
         assertCode("int main() { int i=0; int j=0; for (i=0; i<=10; i=i+1) j=i+j; j}", 55)
         assertCode("int main() { for (;;) { return 3 } return 5 }", 3)
         assertCode("int main() { int i=0; while(i<10) { i=i+1; } return i; }", 10)
+        assertCode("int foo() = 12321\nint main() = foo()", 12321)
+        assertCode("int add2(int x) = x + 2\nint main() = add2(72)", 74)
     }
 
 }
