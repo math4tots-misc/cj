@@ -53,6 +53,10 @@ class NCCodegen {
             case NCIR.Expr.kINT_SUB = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_MUL = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_DIV = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_EQ = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_NE = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_LT = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_LE = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             else = throw NCError("TODO expr " + expr, [expr.mark])
         }
     }

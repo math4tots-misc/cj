@@ -44,6 +44,10 @@ class NCIR {
             kINT_MUL
             kINT_DIV
             kINT_NEG
+            kINT_EQ
+            kINT_NE
+            kINT_LT
+            kINT_LE
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -126,6 +130,38 @@ class NCIR {
             }
             throw NCError(
                 "Invalid args to binary '/' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def eq(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_EQ, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '==' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def ne(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_NE, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '!=' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def lt(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_LT, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '<' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def le(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_LE, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '<=' (" + lhs.type + "," + rhs.type + ")", [mark])
         }
 
         def repr(self): String {

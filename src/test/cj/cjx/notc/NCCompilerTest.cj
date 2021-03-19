@@ -24,6 +24,25 @@ class NCCompilerTest {
         assertCode("int main() = -10+20", 10)
         assertCode("int main() = - -10", 10)
         assertCode("int main() = - - +10", 10)
+
+        assertCode("int main() = 0==1", 0)
+        assertCode("int main() = 42==42", 1)
+        assertCode("int main() = 0!=1", 1)
+        assertCode("int main() = 42!=42", 0)
+
+        assertCode("int main() = 0<1", 1)
+        assertCode("int main() = 1<1", 0)
+        assertCode("int main() = 2<1", 0)
+        assertCode("int main() = 0<=1", 1)
+        assertCode("int main() = 1<=1", 1)
+        assertCode("int main() = 2<=1", 0)
+
+        assertCode("int main() = 1>0", 1)
+        assertCode("int main() = 1>1", 0)
+        assertCode("int main() = 1>2", 0)
+        assertCode("int main() = 1>=0", 1)
+        assertCode("int main() = 1>=1", 1)
+        assertCode("int main() = 1>=2", 0)
     }
 
 }

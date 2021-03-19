@@ -109,10 +109,16 @@ class NCParser: ParserMixin[NCToken] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '+' { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
-                case '-' { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
-                case '*' { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
-                case '/' { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
+                case '+'          { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
+                case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
+                case '*'          { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
+                case '/'          { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
+                case NCToken.tEQ  { next(); expr = Expr.eq(mark, expr, exprpr(tokprec)) }
+                case NCToken.tNE  { next(); expr = Expr.ne(mark, expr, exprpr(tokprec)) }
+                case NCToken.tLE  { next(); expr = Expr.le(mark, expr, exprpr(tokprec)) }
+                case '<'          { next(); expr = Expr.lt(mark, expr, exprpr(tokprec)) }
+                case NCToken.tGE  { next(); expr = Expr.le(mark, exprpr(tokprec), expr) }
+                case '>'          { next(); expr = Expr.lt(mark, exprpr(tokprec), expr) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
