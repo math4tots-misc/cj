@@ -748,7 +748,7 @@ final class CJPass04 extends CJPassBaseEx {
                 var container = evalExpression(e.getContainer());
                 var iterable = container.getType().getImplementingTraitByItemOrNull(ctx.getIterableItem());
                 if (iterable == null) {
-                    throw CJError.of("For loop requires an iterable, but got " + container.getType(), e.getMark());
+                    throw CJError.of("For loop requires an iterable, but got " + container.getType().repr(), e.getMark());
                 }
                 var methodRef = container.getType().findMethod("iter", e.getMark());
                 var iterator = synthesizeMethodCall(e, container.getType(), methodRef, List.of(), List.of(container));
