@@ -12,6 +12,8 @@ class NCCompilerTest {
     def sample() {
         assertCode("int main() = 0", 0)
         assertCode("int main() = 24", 24)
+        assertCode("int main() = 5 + 7", 12)
+        assertCode("int main() = 5 - 7", -2)
     }
 
 }

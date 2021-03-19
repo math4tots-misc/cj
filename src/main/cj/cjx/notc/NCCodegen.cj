@@ -1,5 +1,6 @@
 package cjx.notc
 
+import cjx.notc.NCError
 import cjx.notc.NCIR
 import cj.Uint8Array
 import cjx.binaryen.Binaryen
@@ -48,6 +49,9 @@ class NCCodegen {
     def expr(self, expr: NCIR.Expr): Binaryen.Expression {
         switch expr.kind {
             case NCIR.Expr.kINT = m.i32.const(expr.intValue)
+            case NCIR.Expr.kINT_ADD = m.i32.add(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_SUB = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
+            else = throw NCError("TODO expr " + expr, [expr.mark])
         }
     }
 }

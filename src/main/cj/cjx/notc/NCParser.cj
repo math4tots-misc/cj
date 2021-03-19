@@ -23,14 +23,6 @@ class NCParser: ParserMixin[NCToken] {
         p
     }
 
-    def parseExpression(filepath: String, contents: String): Expr = {
-        val tokens = NCLexer.lex(filepath, contents)
-        val self = Self(filepath, tokens)
-        val expr = expr()
-        assert(NCToken.tEOF)
-        expr
-    }
-
     val filepath: String
     val tokens: List[NCToken]
     var i = 0
@@ -93,7 +85,31 @@ class NCParser: ParserMixin[NCToken] {
         }
     }
 
-    def expr(self): Expr = atom()
+    def precof(type: Int): Int = switch type {
+        case '*'; case '/'; case '%' = 120
+        case '+'; case '-' = 100
+        case '<'; case '>'; case NCToken.tLE; case NCToken.tGE = 80
+        case NCToken.tEQ; case NCToken.tNE = 70
+        case '=' = 50
+        else = -1
+    }
+
+    def expr(self): Expr = exprpr(0)
+
+    def exprpr(self, precedence: Int): Expr {
+        var expr = atom()
+        var tokprec = precof(peek().type)
+        while precedence < tokprec {
+            val mark = mark()
+            switch peek().type {
+                case '+' { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
+                case '-' { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
+                else = error("Unhandled operator " + peek().repr())
+            }
+            tokprec = precof(peek().type)
+        }
+        expr
+    }
 
     def atom(self): Expr {
         val mark = mark()
