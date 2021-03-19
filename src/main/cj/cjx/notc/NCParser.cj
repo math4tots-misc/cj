@@ -179,8 +179,10 @@ class NCParser: ParserMixin[NCToken] {
                 expect('(')
                 val cond = expr()
                 expect(')')
+                skipDelims()
                 val then = stmt()
-                val els = if consume(NCToken.kwELSE) { stmt() } else { Expr.nop(mark) }
+                val els = if consume(NCToken.kwELSE) {
+                    skipDelims(); stmt() } else { Expr.nop(mark) }
                 Expr.if_(mark, cond, then, els)
             }
             else {
