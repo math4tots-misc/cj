@@ -23,6 +23,7 @@ import crossj.cj.CJIRFor;
 import crossj.cj.CJIRIf;
 import crossj.cj.CJIRIfNull;
 import crossj.cj.CJIRIs;
+import crossj.cj.CJIRIsSet;
 import crossj.cj.CJIRJSBlob;
 import crossj.cj.CJIRLambda;
 import crossj.cj.CJIRListDisplay;
@@ -614,6 +615,11 @@ final class CJJSExpressionTranslator2 {
                     }
                     out.append(")");
                 }, false);
+            }
+
+            @Override
+            public CJJSBlob2 visitIsSet(CJIRIsSet e, Void a) {
+                throw CJError.of("TODO translate IsSet", e.getMark());
             }
         }, null);
     }
