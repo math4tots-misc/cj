@@ -109,6 +109,8 @@ class NCParser: ParserMixin[NCToken] {
             switch peek().type {
                 case '+' { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
                 case '-' { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
+                case '*' { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
+                case '/' { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -119,7 +121,7 @@ class NCParser: ParserMixin[NCToken] {
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
-            case '(' { val e = expr(); expect(')'); e }
+            case '(' { next(); val e = expr(); expect(')'); e }
             case NCToken.tINT = Expr.int(mark, next().intValue)
             else = errorKind("expression")
         }

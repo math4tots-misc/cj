@@ -41,6 +41,8 @@ class NCIR {
             kINT
             kINT_ADD
             kINT_SUB
+            kINT_MUL
+            kINT_DIV
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -61,14 +63,14 @@ class NCIR {
         }
 
         private def binop(mark: Mark, kind: Int, type: Type, lhs: Expr, rhs: Expr): Expr {
-            val expr = Expr(mark, kind, Type.int)
+            val expr = Expr(mark, kind, type)
             expr.lhs = lhs
             expr.rhs = rhs
             expr
         }
 
         private def unop(mark: Mark, kind: Int, type: Type, arg: Expr): Expr {
-            val expr = Expr(mark, kind, Type.int)
+            val expr = Expr(mark, kind, type)
             expr.arg = arg
             expr
         }
@@ -86,7 +88,23 @@ class NCIR {
                 return binop(mark, kINT_SUB, Type.int, lhs, rhs)
             }
             throw NCError(
-                "Invalid args to binary '+' (" + lhs.type + "," + rhs.type + ")", [mark])
+                "Invalid args to binary '-' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def mul(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_MUL, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '*' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def div(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_DIV, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '/' (" + lhs.type + "," + rhs.type + ")", [mark])
         }
 
         def repr(self): String {

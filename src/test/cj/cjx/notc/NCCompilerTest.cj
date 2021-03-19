@@ -14,6 +14,12 @@ class NCCompilerTest {
         assertCode("int main() = 24", 24)
         assertCode("int main() = 5 + 7", 12)
         assertCode("int main() = 5 - 7", -2)
+        assertCode("int main() = 5+20-4", 21)
+        assertCode("int main() = 12 + 34 - 5", 41)
+
+        assertCode("int main() = 5+6*7", 47)
+        assertCode("int main() = 5*(9-6)", 15)
+        assertCode("int main() = (3+5)/2", 4)
     }
 
 }
