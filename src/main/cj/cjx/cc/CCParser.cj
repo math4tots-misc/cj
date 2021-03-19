@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.cc.CCLocals
 import cjx.cc.CCType
 import cjx.parser.Mark
 import cjx.cc.CCIR
@@ -42,8 +43,7 @@ class CCParser: ParserMixin[CCToken] {
     val filepath: String
     val tokens: List[CCToken]
     var i = 0
-
-    val varMap: Map[String, Obj] = MapOf()
+    var locals: CCLocals = CCLocals()
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: CCToken): Mark = Mark(filepath, token.line, token.column)
@@ -80,9 +80,9 @@ class CCParser: ParserMixin[CCToken] {
                 expect('(')
                 val stmt = Node(mark, Node.Kind.for_)
                 stmt.init = stmt()
-                stmt.cond = if at(';') { intlit(mark, 1) } else { expr() }
+                stmt.cond = if at(';') { intNode(mark, 1) } else { expr() }
                 expect(';')
-                stmt.inc = if at(')') { intlit(mark, 0) } else { expr() }
+                stmt.inc = if at(')') { intNode(mark, 0) } else { expr() }
                 expect(')')
                 stmt.then = stmt()
                 stmt
@@ -94,13 +94,13 @@ class CCParser: ParserMixin[CCToken] {
                 stmt.init = nop(mark)
                 stmt.cond = expr()
                 expect(')')
-                stmt.inc = intlit(mark, 0)
+                stmt.inc = intNode(mark, 0)
                 stmt.then = stmt()
                 stmt
             }
             case '{' = block()
             else {
-                val stmt = unop(mark, Node.Kind.exprStmt, expr())
+                val stmt = exprStmtNode(expr())
                 expect(';')
                 stmt
             }
@@ -169,7 +169,7 @@ class CCParser: ParserMixin[CCToken] {
         # ptr + int
         Assert.that(lhs.type.isPtr())
         Assert.that(rhs.type.isInt())
-        rhs = binop(mark, Node.Kind.mul, rhs, intlit(mark, CCIR.ptrSize))
+        rhs = binop(mark, Node.Kind.mul, rhs, intNode(mark, CCIR.ptrSize))
         binop(mark, Node.Kind.add, lhs, rhs)
     }
 
@@ -184,14 +184,14 @@ class CCParser: ParserMixin[CCToken] {
 
         # ptr - int
         if lhs.type.isPtr() and rhs.type.isInt() {
-            rhs = binop(mark, Node.Kind.mul, rhs, intlit(mark, CCIR.ptrSize))
+            rhs = binop(mark, Node.Kind.mul, rhs, intNode(mark, CCIR.ptrSize))
             return binop(mark, Node.Kind.sub, lhs, rhs)
         }
 
         # ptr - ptr
         if lhs.type.isPtr() and rhs.type.isPtr() {
             val diff = binop(mark, Node.Kind.sub, lhs, rhs)
-            val node = binop(mark, Node.Kind.div, diff, intlit(mark, CCIR.ptrSize))
+            val node = binop(mark, Node.Kind.div, diff, intNode(mark, CCIR.ptrSize))
             node.type = Type.int
             return node
         }
@@ -211,7 +211,21 @@ class CCParser: ParserMixin[CCToken] {
         node
     }
 
-    def intlit(mark: Mark, value: Int): Node = literal(mark, Node.Kind.int, value)
+    def intNode(mark: Mark, value: Int): Node = literal(mark, Node.Kind.int, value)
+
+    def exprStmtNode(expr: Node): Node = unop(expr.mark, Node.Kind.exprStmt, expr)
+
+    def varNode(mark: Mark, var_: Obj): Node {
+        val node = Node(mark, Node.Kind.var_)
+        node.var_ = var_
+        node
+    }
+
+    def blockNode(mark: Mark, stmts: List[Node]): Node {
+        val node = Node(mark, Node.Kind.block)
+        node.body = stmts
+        node
+    }
 
     def atom(self): Node {
         val mark = mark()
@@ -226,28 +240,67 @@ class CCParser: ParserMixin[CCToken] {
             case '-' { next(); unop(mark, Node.Kind.neg, exprpr(unaryPrec)) }
             case '&' { next(); unop(mark, Node.Kind.addr, exprpr(unaryPrec)) }
             case '*' { next(); unop(mark, Node.Kind.deref, exprpr(unaryPrec)) }
-            case CCToken.tINT { intlit(mark, next().intValue) }
+            case CCToken.tINT { intNode(mark, next().intValue) }
             case CCToken.tIDENT {
                 val name = next().stringValue
-                val var_ = varMap.getOrInsert(name, () -> Obj(name, varMap.size()))
-                val node = Node(mark, Node.Kind.var_)
-                node.var_ = var_
-                node
+                val var_ = locals.get(name, mark)
+                varNode(mark, var_)
             }
             else = errorKind("expression")
         }
     }
 
+    ## block = "{" (declaration | stmt)* "}"
     def block(self): Node {
         val mark = mark()
         val body: List[Node] = []
         expect('{')
         while not consume('}') {
-            body.add(stmt())
+            val stmt = if at(CCToken.kwINT) { declaration() } else { stmt() }
+            body.add(stmt)
         }
-        val node = Node(mark, Node.Kind.block)
-        node.body = body
-        node
+        blockNode(mark, body)
+    }
+
+    def declspec(self): Type {
+        expect(CCToken.kwINT)
+        Type.int
+    }
+
+    ## declarator = "*"* ident?
+    def declarator(self, var type: Type): Tuple[Mark, String, Type] {
+        while consume('*') {
+            type = Type.ptr(type)
+        }
+        val mark = mark()
+        val name = if at(CCToken.tIDENT) { next().stringValue } else { "" }
+        (mark, name, type)
+    }
+
+    ## declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
+    def declaration(self): Node {
+        val mark = mark()
+        val baseType = declspec()
+        var first = true
+
+        val initstmts: List[Node] = []
+        while not consume(';') {
+            if not first {
+                expect(',')
+            }
+            first = false
+            val (mark, name, type) = declarator(baseType)
+            if not name {
+                throw CCError("Expected name", [mark])
+            }
+            val var_ = locals.add(name, type, mark)
+            if consume('=') {
+                val init = expr()
+                initstmts.add(exprStmtNode(
+                    binop(mark, Node.Kind.assign, varNode(mark, var_), init)))
+            }
+        }
+        blockNode(mark, initstmts)
     }
 
     def nop(self, mark: Mark): Node {

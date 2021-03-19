@@ -48,9 +48,9 @@ class CCompilerTest {
 
     @test
     def returnCodes2() {
-        assertCode("{a=3; return a;}", 3)
-        assertCode("{a=3; z=5; return a+z;}", 8)
-        assertCode("{a=b=3; return a+b; } ", 6)
+        assertCode("{int a=3; return a;}", 3)
+        assertCode("{int a=3; int z=5; return a+z;}", 8)
+        assertCode("{int a; int b; a=b=3; return a+b; } ", 6)
 
         assertCode("{1; 2; return 3;}", 3)
         assertCode("{ {1; {2;} return 3;} }", 3)
@@ -69,21 +69,21 @@ class CCompilerTest {
 
     @test
     def forStmt() {
-        assertCode("{ i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }", 55)
+        assertCode("{ int i=0, j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }", 55)
         assertCode("{ for (;;) {return 3;} return 5; }", 3)
-        assertCode("{ i=0; while(i<10) { i=i+1; } return i; }", 10)
+        assertCode("{ int i=0; while(i<10) { i=i+1; } return i; }", 10)
     }
 
     @test
     def addr() {
-        assertCode("{ x=3; return *&x; }", 3)
-        assertCode("{ x=3; y=&x; z=&y; return **z; }", 3)
-        assertCode("{ x=3; y=5; return *(&x+1); }", 5)
-        assertCode("{ x=3; y=5; return *(&y-1); }", 3)
-        assertCode("{ x=3; y=5; return *(&x-(-1)); }", 5)
-        assertCode("{ x=3; y=&x; *y=5; return x; }", 5)
-        assertCode("{ x=3; y=5; *(&x+1)=7; return y; }", 7)
-        assertCode("{ x=3; y=5; *(&y-1)=7; return x; }", 7)
-        assertCode("{ x=3; return (&x+2)-&x+3; }", 5)
+        assertCode("{ int x=3; return *&x; }", 3)
+        assertCode("{ int x=3; int *y=&x; int **z=&y; return **z; }", 3)
+        assertCode("{ int x=3; int y=5; return *(&x+1); }", 5)
+        assertCode("{ int x=3; int y=5; return *(&y-1); }", 3)
+        assertCode("{ int x=3; int y=5; return *(&x-(-1)); }", 5)
+        assertCode("{ int x=3; int y=&x; *y=5; return x; }", 5)
+        assertCode("{ int x=3; int y=5; *(&x+1)=7; return y; }", 7)
+        assertCode("{ int x=3; int y=5; *(&y-1)=7; return x; }", 7)
+        assertCode("{ int x=3; return (&x+2)-&x+3; }", 5)
     }
 }

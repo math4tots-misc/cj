@@ -48,7 +48,8 @@ class CCIR {
     ## variable
     class Obj {
         val name: String
-        val id: Int
+        val offset: Int   # offset for the location of this local variable
+        val type: Type
     }
 
     class Node: Repr {
@@ -125,7 +126,7 @@ class CCIR {
         def __get_stringValue(self): String = get!(value, string, 0)
 
         def repr(self): String = when kind {
-            case var_ = "var(" + var_.name + "," + var_.id + ")"
+            case var_ = "var(" + var_.name + "," + var_.offset + ")"
             case int = "int(" + intValue + ")"
             else = if kind.isBinop() {
                 kind.repr() + "(" + lhs + "," + rhs + ")"
