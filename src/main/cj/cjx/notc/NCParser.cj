@@ -19,8 +19,12 @@ class NCParser: ParserMixin[NCToken] {
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
     def parse(filepath: String, contents: String): Program {
+        parseEx(Program(), filepath, contents)
+    }
+
+    def parseEx(program: Program, filepath: String, contents: String): Program {
         val tokens = NCLexer.lex(filepath, contents)
-        val self = Self(filepath, tokens)
+        val self = Self(filepath, tokens, program)
         program()
         assert(NCToken.tEOF)
         program
@@ -31,7 +35,7 @@ class NCParser: ParserMixin[NCToken] {
     var i = 0
 
     # module-level
-    val program: Program = Program()
+    val program: Program
 
     # function-level
     var locals: NCLocals = NCLocals()
@@ -82,17 +86,15 @@ class NCParser: ParserMixin[NCToken] {
     }
 
     def type(self): Type {
-        switch peek().type {
+        var type = switch peek().type {
             case NCToken.kwINT { next(); Type.int }
             else = errorKind("type")
         }
-    }
-
-    def atDeclaration(self): Bool {
-        switch peek().type {
-            case NCToken.kwINT = true
-            else = false
+        while consume('[') {
+            expect(']')
+            type = Type.array(type)
         }
+        type
     }
 
     def atDelim(self): Bool = switch peek().type {
@@ -112,7 +114,7 @@ class NCParser: ParserMixin[NCToken] {
     }
 
     def precof(type: Int): Int = switch type {
-        case '('; case '.' = 140
+        case '('; case '['; case '.' = 140
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
         case '<'; case '>'; case NCToken.tLE; case NCToken.tGE = 80
@@ -141,6 +143,19 @@ class NCParser: ParserMixin[NCToken] {
                 case '<'          { next(); expr = Expr.lt(mark, expr, exprpr(tokprec)) }
                 case NCToken.tGE  { next(); expr = Expr.le(mark, exprpr(tokprec), expr) }
                 case '>'          { next(); expr = Expr.lt(mark, exprpr(tokprec), expr) }
+                case '[' {
+                    next()
+                    if consume(']') {
+                        if expr.kind != Expr.kTYPE {
+                            throw NCError("Expected type", [expr.mark])
+                        }
+                        expr = Expr.type(mark, Type.array(expr.ty))
+                    } else {
+                        val iexpr = expr()
+                        expect(']')
+                        expr = Expr.getitem(mark, expr, iexpr)
+                    }
+                }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -168,6 +183,12 @@ class NCParser: ParserMixin[NCToken] {
                 }
             }
             case NCToken.tINT = Expr.int(mark, next().intValue)
+            case NCToken.kwINT { next(); Expr.type(mark, Type.int) }
+            case NCToken.tMACROID {
+                val name = next().stringValue
+                val args = args()
+                Expr.macro(mark, name, args)
+            }
             else = errorKind("expression")
         }
     }
@@ -222,10 +243,10 @@ class NCParser: ParserMixin[NCToken] {
                 ])
             }
             else {
-                if atDeclaration() {
-                    declaration()
+                val expr = expr()
+                if expr.kind == Expr.kTYPE {
+                    declaration(mark, expr.ty)
                 } else {
-                    val expr = expr()
                     expectDelim()
                     expr
                 }
@@ -233,9 +254,7 @@ class NCParser: ParserMixin[NCToken] {
         }
     }
 
-    def declaration(self): Expr {
-        val mark = mark()
-        val type = type()
+    def declaration(self, mark: Mark, type: Type): Expr {
         var repeat = true
         val exprs: List[Expr] = []
         while repeat {

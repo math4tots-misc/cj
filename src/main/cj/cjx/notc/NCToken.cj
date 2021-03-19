@@ -7,6 +7,7 @@ class NCToken {
         tEOF = 200
         tINT
         tID
+        tMACROID
 
         tEQ
         tNE

@@ -43,18 +43,27 @@ class NCIR {
         case unreachable
         case void
         case int
+        case type
+        case array(Type)
         case func(Type, List[Type])
         def isUnreachable(self): Bool = tag!(self) == tag!(Type, unreachable)
         def isVoid(self): Bool = tag!(self) == tag!(Type, void)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
+        def isMeta(self): Bool = tag!(self) == tag!(Type, type)
+        def isArray(self): Bool = tag!(self) == tag!(Type, array)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def size(self): Int = when self {
             case unreachable = 0
             case void = NCIR.ptrSize
             case int = NCIR.ptrSize
+            case type = NCIR.ptrSize
+            case array(..) = NCIR.ptrSize
             case func(..) = throw Error("Func type not supported here")
         }
-        def repr(self): String = tag_name!(self)
+        def repr(self): String = when self {
+            case array(t) = "array(" + t + ")"
+            else = tag_name!(self)
+        }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and switch tag!(self) {
             case tag!(Self, func) = when self {
                 case func(rt, argts) = when other {
@@ -65,6 +74,7 @@ class NCIR {
             }
             else = true
         }
+        def __get_itemType(self): Type = get!(self, array, 0)
         def common(mark: Mark, a: Self, b: Self): Self {
             if a.isVoid() or b.isVoid() {
                 void
@@ -96,6 +106,12 @@ class NCIR {
             kGETVAR
             kSETVAR
 
+            kARRAY
+            kGETITEM
+            kSETITEM
+
+            kNEWARRAY
+
             kIF
             kWHILE
 
@@ -105,6 +121,8 @@ class NCIR {
             kRETURN
 
             kBLOCK
+
+            kTYPE
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -119,21 +137,23 @@ class NCIR {
         # variable
         var var_: Var = ?
 
-        # binops/unops
+        # binops/unops/getitem/setitem
         var lhs: Expr = ?
         var rhs: Expr = ?
-        def __get_arg(self): Expr = lhs
-        def __set_arg(self, value: Expr) { lhs = value }
+        var arg: Expr = ?
 
         # if/while
         var cond: Expr = ?
         var then: Expr = ?
         var els: Expr = ?
 
-        # getfunc/call
+        # getfunc/call/array
         var func: Func = ?
         def __get_args(self): List[Expr] = stmts
         def __set_args(self, value: List[Expr]) { stmts = value }
+
+        # type/meta
+        var ty: Type = ?
 
         # block
         var stmts: List[Expr] = ?
@@ -151,7 +171,7 @@ class NCIR {
         }
 
         def setvar(mark: Mark, var_: Var, valexpr: Expr): Self {
-            val self = unop(mark, kSETVAR, var_.type, valexpr)
+            val self = unop(mark, kSETVAR, var_.type, icast(valexpr, var_.type))
             self.var_ = var_
             self
         }
@@ -172,11 +192,39 @@ class NCIR {
             throw NCError(kindNames[fexpr.kind] + " is not callable", [mark])
         }
 
+        def evalType(expr: Expr): Type {
+            if expr.kind != kTYPE {
+                throw NCError("Expected type", [expr.mark])
+            }
+            expr.ty
+        }
+
+        def macro(mark: Mark, macroName: String, args: List[Expr]): Self {
+            switch macroName {
+                case "new!" = switch args.size() {
+                    case 1 = throw NCError("TODO new!(Type)", [mark])
+                    case 2 {
+                        val itemType = evalType(args[0])
+                        unop(mark, kNEWARRAY, Type.array(itemType), args[1])
+                    }
+                    else = throw NCError(
+                        "new! requires 1 or 2 args but got " + args.size(), [mark])
+                }
+                else = throw NCError("Unrecognized macro '" + macroName + "'", [mark])
+            }
+        }
+
         def assign(mark: Mark, lhs: Expr, rhs: Expr): Self {
             if lhs.kind == kGETVAR {
                 return setvar(mark, lhs.var_, rhs)
             }
             throw NCError(kindNames[lhs.kind] + " is not assignable", [mark])
+        }
+
+        def type(mark: Mark, type: Type): Self {
+            val self = Self(mark, kTYPE, Type.type)
+            self.ty = type
+            self
         }
 
         def if_(mark: Mark, cond: Expr, then: Expr, els: Expr): Self {
@@ -185,20 +233,54 @@ class NCIR {
             }
             val type = Type.common(mark, cond.type, els.type)
             val self = Self(mark, kIF, type)
-            self.cond = cond
-            self.then = then
-            self.els = els
+            self.cond = icast(cond, Type.int)
+            self.then = icast(then, type)
+            self.els = icast(els, type)
             self
         }
 
         def while_(mark: Mark, cond: Expr, then: Expr): Self {
-            if not cond.type.isInt() {
-                throw NCError("'while' condition should be an int, but got " + cond.type, [mark])
-            }
             val self = Self(mark, kWHILE, Type.void)
-            self.cond = cond
+            self.cond = icast(cond, Type.int)
             self.then = then
             self
+        }
+
+        def array(mark: Mark, var args: List[Expr], itemType: Type?): Self {
+            if not args and itemType.isEmpty() {
+                throw NCError("Could not infer type of array", [mark])
+            }
+            val itype = if val t = itemType { t } else { args[0].type }
+            args = args.map(a -> icast(a, itype))
+            val self = Self(mark, kARRAY, Type.array(itype))
+            self.args = args
+            self
+        }
+
+        def getitem(mark: Mark, owner: Expr, index: Expr): Expr {
+            when owner.type {
+                case array(itemType) {
+                    val self = Self(mark, kGETITEM, itemType)
+                    self.lhs = owner
+                    self.rhs = index
+                    self
+                }
+                else = throw NCError("Subscripting not supported for " + owner.type, [mark])
+            }
+        }
+
+        ## implicit cast
+        private def icast(expr: Expr, type: Type): Expr {
+            if expr.type.isMeta() {
+                throw NCError("Expected expression, but got type", [expr.mark])
+            }
+            if expr.type == type or expr.type.isUnreachable() { # no cast needed
+                return expr
+            }
+            if type.isVoid() { # cast to void
+                return block(expr.mark, [expr, nop(expr.mark)])
+            }
+            throw NCError("Expected " + type + " but got " + expr.type, [expr.mark])
         }
 
         private def binop(mark: Mark, kind: Int, type: Type, lhs: Expr, rhs: Expr): Expr {

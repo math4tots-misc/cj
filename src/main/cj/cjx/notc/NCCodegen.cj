@@ -53,6 +53,8 @@ class NCCodegen {
             case unreachable = unreachable
             case void = i32
             case int = i32
+            case type = i32
+            case array(..) = i32
             case func(..) = throw NCError("func type not supported here", [mark])
         }
     }

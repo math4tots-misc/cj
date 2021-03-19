@@ -18,6 +18,7 @@ class NCLexer {
             b.add(NCToken.keywordString(type), m -> symtok(m, type))
         }
 
+        b.add("[a-z_][a-zA-Z_0-9]*!", m -> tok(m, NCToken.tMACROID, s -> s))
         b.add("[a-z_][a-zA-Z_0-9]*", m -> tok(m, NCToken.tID, s -> s))
 
         # single character symbol tokens
