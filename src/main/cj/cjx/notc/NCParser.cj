@@ -132,8 +132,30 @@ class NCParser: ParserMixin[NCToken] {
             case '(' { next(); val e = expr(); expect(')'); e }
             case '+' { next(); val e = exprpr(unaryPrec); Expr.pos(mark, e) }
             case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
+            case '{' = block()
             case NCToken.tINT = Expr.int(mark, next().intValue)
             else = errorKind("expression")
         }
+    }
+
+    def stmt(self): Expr {
+        switch peek().type {
+            case '{' = block()
+            else {
+                val expr = expr()
+                expect(';')
+                expr
+            }
+        }
+    }
+
+    def block(self): Expr {
+        val mark = mark()
+        expect('{')
+        val exprs: List[Expr] = []
+        while not consume('}') {
+            exprs.add(stmt())
+        }
+        Expr.block(mark, exprs)
     }
 }

@@ -43,6 +43,8 @@ class NCCompilerTest {
         assertCode("int main() = 1>=0", 1)
         assertCode("int main() = 1>=1", 1)
         assertCode("int main() = 1>=2", 0)
+
+        assertCode("int main() = { 1; 2; 3; }", 3)
     }
 
 }

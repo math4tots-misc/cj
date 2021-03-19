@@ -28,9 +28,11 @@ class NCIR {
     }
 
     union Type: Repr {
+        case void
         case int
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def size(self): Int = when self {
+            case void = NCIR.ptrSize
             case int = NCIR.ptrSize
         }
         def repr(self): String = tag_name!(self)
@@ -48,6 +50,8 @@ class NCIR {
             kINT_NE
             kINT_LT
             kINT_LE
+
+            kBLOCK
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -55,11 +59,18 @@ class NCIR {
         val mark: Mark
         val kind: Int
         var type: Type
+
+        # int literal
         var intValue: Int = ?
+
+        # binops/unops
         var lhs: Expr = ?
         var rhs: Expr = ?
         def __get_arg(self): Expr = lhs
         def __set_arg(self, value: Expr) { lhs = value }
+
+        # block
+        var stmts: List[Expr] = ?
 
         def int(mark: Mark, value: Int): Self {
             val self = Self(mark, kINT, Type.int)
@@ -162,6 +173,13 @@ class NCIR {
             }
             throw NCError(
                 "Invalid args to binary '<=' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def block(mark: Mark, stmts: List[Expr]): Self {
+            val type = if stmts { stmts.last().type } else { Type.void }
+            val block = Expr(mark, kBLOCK, type)
+            block.stmts = stmts
+            block
         }
 
         def repr(self): String {

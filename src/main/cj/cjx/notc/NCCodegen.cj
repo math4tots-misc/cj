@@ -43,6 +43,7 @@ class NCCodegen {
     def type(self, type: NCIR.Type): Binaryen.Type {
         when type {
             case int = i32
+            case void = i32
         }
     }
 
@@ -57,6 +58,14 @@ class NCCodegen {
             case NCIR.Expr.kINT_NE = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_LT = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_LE = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kBLOCK {
+                val bexprs: List[Binaryen.Expression] = []
+                for stmt in expr.stmts[:-1] {
+                    bexprs.add(m.drop(expr(stmt)))
+                }
+                bexprs.add(expr(expr.stmts[-1]))
+                m.block(null, bexprs, type(expr.type))
+            }
             else = throw NCError("TODO expr " + expr, [expr.mark])
         }
     }
