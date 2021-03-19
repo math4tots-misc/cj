@@ -18,6 +18,7 @@ native class Binaryen {
         def(): Self = js!(Self, "new binaryen.Module()")
         def __get_local(self): ModuleLocal = js!(ModuleLocal, self, ".local")
         def __get_global(self): ModuleGlobal = js!(ModuleGlobal, self, ".global")
+        def __get_memory(self): ModuleMemory = js!(ModuleMemory, self, ".memory")
         def __get_i32(self): ModuleI32 = js!(ModuleI32, self, ".i32")
         def __get_i64(self): ModuleI64 = js!(ModuleI64, self, ".i64")
         def return_(self, value: Expression): Expression = js!(
@@ -65,6 +66,9 @@ native class Binaryen {
         def br_if_with_value(self, label: String, cond: Expression, v: Expression): Expression {
             js!(Expression, self, ".br(", label, ",", cond, ",", v, ")")
         }
+    }
+    native class ModuleMemory {
+        def size(self): Expression = js!(Expression, self, ".size()")
     }
     native class ModuleLocal {
         def get(self, index: Int, type: Type): Expression = js!(

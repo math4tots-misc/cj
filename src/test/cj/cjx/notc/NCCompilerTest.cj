@@ -82,6 +82,11 @@ class NCCompilerTest {
         assertCode("int foo() = 12321\nint main() = foo()", 12321)
         assertCode("int add2(int x) = x + 2\nint main() = add2(72)", 74)
         # assertCode("int main() { int[] arr = new!(int, 3); 0 }", 74)
+
+        assertCode("int main() { memsize!() }", 1) # start out with 1 page of memory (64k)
+        assertCode("int main() { load!(int, 5) }", 0) # memory should be fresh (zeroed out)
+        assertCode("int main() { store!(int, 4, 600); load!(int, 5) }", 600 // 256)
+        assertCode("int main() { store!(int, 4, 600); load!(int, 4) }", 600)
     }
 
 }

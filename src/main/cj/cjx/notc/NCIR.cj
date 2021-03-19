@@ -123,6 +123,11 @@ class NCIR {
             kBLOCK
 
             kTYPE
+
+            # low-level operations
+            kMEMSIZE
+            kLOAD
+            kSTORE
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -199,6 +204,30 @@ class NCIR {
             expr.ty
         }
 
+        def evalNumericType(expr: Expr): Type {
+            val type = evalType(expr)
+            when type {
+                case int = type
+                else {
+                    throw NCError("Expected numeric type but got " + type, [expr.mark])
+                }
+            }
+        }
+
+        def memsize(mark: Mark): Self = Self(mark, kMEMSIZE, Type.int)
+
+        def load(mark: Mark, ty: Type, addr: Expr): Self {
+            val ret = unop(mark, kLOAD, ty, icast(addr, Type.int))
+            ret.ty = ty
+            ret
+        }
+
+        def store(mark: Mark, ty: Type, addr: Expr, value: Expr): Self {
+            val ret = binop(mark, kSTORE, Type.void, icast(addr, Type.int), icast(value, ty))
+            ret.ty = ty
+            ret
+        }
+
         def macro(mark: Mark, macroName: String, args: List[Expr]): Self {
             switch macroName {
                 case "new!" = switch args.size() {
@@ -207,8 +236,18 @@ class NCIR {
                         val itemType = evalType(args[0])
                         unop(mark, kNEWARRAY, Type.array(itemType), args[1])
                     }
-                    else = throw NCError(
-                        "new! requires 1 or 2 args but got " + args.size(), [mark])
+                    else = throw NCError("new! requires 1 or 2 args", [mark])
+                }
+                case "memsize!" = memsize(mark)
+                case "load!" {
+                    if args.size() != 2 { throw NCError("load! requires 2 args", [mark]) }
+                    val ty = evalNumericType(args[0])
+                    load(mark, ty, args[1])
+                }
+                case "store!" {
+                    if args.size() != 3 { throw NCError("store! requires 3 args", [mark]) }
+                    val ty = evalNumericType(args[0])
+                    store(mark, ty, args[1], args[2])
                 }
                 else = throw NCError("Unrecognized macro '" + macroName + "'", [mark])
             }
