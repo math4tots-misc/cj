@@ -918,6 +918,23 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     return null;
                 }, false);
             }
+
+            @Override
+            public CJJSBlob visitIsSet(CJIRIsSet e, Void a) {
+                if (e.getOwner().isPresent()) {
+                    var owner = translateExpression(e.getOwner().get());
+                    return new CJJSBlob(owner.getPrep(), out -> {
+                        out.append("(");
+                        owner.emitMain(out);
+                        out.append("[" + e.getField().getIndex() + "]!==undefined)");
+                        return null;
+                    }, false);
+                } else {
+                    var ownerType = translateType(e.getOwnerType());
+                    var fieldName = translateFieldName(e.getField().getName());
+                    return CJJSBlob.simplestr("(\"" + fieldName + "\" in " + ownerType + ")");
+                }
+            }
         }, null);
     }
 

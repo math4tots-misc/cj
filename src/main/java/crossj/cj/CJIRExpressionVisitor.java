@@ -27,4 +27,5 @@ public abstract class CJIRExpressionVisitor<R, A> {
     public abstract R visitTry(CJIRTry e, A a);
     public abstract R visitTag(CJIRTag e, A a);
     public abstract R visitJSBlob(CJIRJSBlob e, A a);
+    public abstract R visitIsSet(CJIRIsSet e, A a);
 }

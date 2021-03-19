@@ -1146,7 +1146,48 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     return evalExpressionEx(new CJAstListDisplay(e.getMark(), subexprs), a);
                 }
+                case "is_set!": {
+                    // Checks if a lateinit field has had its value set yet.
+                    if (e.getArgs().size() != 2) {
+                        throw CJError.of("is_set! requires exactly 2 arguments (owner, field-name)", e.getMark());
+                    }
+                    var fieldName = solveExprForName(e.getArgs().get(1));
+                    CJIRClassType ownerType;
+                    Optional<CJIRExpression> optOwner;
+
+                    if (e.getArgs().get(0) instanceof CJAstTypeExpression) {
+                        // static fields
+                        ownerType = solveExprForClassType(e.getArgs().get(0));
+                        optOwner = Optional.empty();
+                    } else {
+                        // instance fields
+                        var owner = evalExpression(e.getArgs().get(0));
+                        optOwner = Optional.of(owner);
+                        if (!(owner.getType() instanceof CJIRClassType)) {
+                            throw CJError.of("is_set! requires a class type", e.getMark());
+                        }
+                        ownerType = (CJIRClassType) owner.getType();
+                    }
+                    var field = ownerType.getItem().findFieldOrNull(fieldName);
+                    if (field == null) {
+                        throw CJError.of("Field " + fieldName + " not found in " + ownerType.repr(), e.getMark());
+                    }
+                    if (field.isStatic()) {
+                        if (optOwner.isPresent()) {
+                            throw CJError.of(fieldName + " is a static field", e.getMark());
+                        }
+                    } else {
+                        if (optOwner.isEmpty()) {
+                            throw CJError.of(fieldName + " is a non-static field", e.getMark());
+                        }
+                    }
+                    if (!field.isLateinit()) {
+                        throw CJError.of(fieldName + " is not a lateinit field", e.getMark());
+                    }
+                    return new CJIRIsSet(e, ctx.getBoolType(), ownerType, optOwner, field);
+                }
                 case "get!": {
+                    // Get a value from a union element, asserting a specific case.
                     if (e.getArgs().size() != 3) {
                         throw CJError.of("get! requires exactly 3 arguments (owner, case-name, index)", e.getMark());
                     }

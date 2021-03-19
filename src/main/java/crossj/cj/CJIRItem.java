@@ -164,6 +164,15 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         return fields;
     }
 
+    public CJIRField findFieldOrNull(String fieldName) {
+        for (var field : fields) {
+            if (field.getName().equals(fieldName)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
     public List<CJIRCase> getCases() {
         if (cases == null) {
             throw new NullPointerException();
