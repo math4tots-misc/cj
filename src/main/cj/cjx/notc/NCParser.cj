@@ -139,8 +139,15 @@ class NCParser: ParserMixin[NCToken] {
     }
 
     def stmt(self): Expr {
+        val mark = mark()
         switch peek().type {
             case '{' = block()
+            case NCToken.kwRETURN {
+                next()
+                val expr = if at(';') { Expr.int(mark, 0) } else { expr() }
+                expect(';')
+                Expr.ret(mark, expr)
+            }
             else {
                 val expr = expr()
                 expect(';')

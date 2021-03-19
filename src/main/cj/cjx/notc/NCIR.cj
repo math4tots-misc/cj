@@ -28,10 +28,12 @@ class NCIR {
     }
 
     union Type: Repr {
+        case unreachable
         case void
         case int
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def size(self): Int = when self {
+            case unreachable = 0
             case void = NCIR.ptrSize
             case int = NCIR.ptrSize
         }
@@ -50,6 +52,8 @@ class NCIR {
             kINT_NE
             kINT_LT
             kINT_LE
+
+            kRETURN
 
             kBLOCK
         }
@@ -173,6 +177,10 @@ class NCIR {
             }
             throw NCError(
                 "Invalid args to binary '<=' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def ret(mark: Mark, expr: Expr): Self {
+            return unop(mark, kRETURN, Type.unreachable, expr)
         }
 
         def block(mark: Mark, stmts: List[Expr]): Self {
