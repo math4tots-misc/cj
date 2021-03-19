@@ -55,6 +55,8 @@ class NCCompilerTest {
         assertCode("int main() = { int a = 3, z = 5; a + z; }", 8)
         assertCode("int main() = { int b; int a=b=3; a+b; }", 6)
         assertCode("int main() = { int a, b; a=b=3; a+b; }", 6)
+
+        assertCode("int main() = { ;;; return 5; }", 5)
     }
 
 }

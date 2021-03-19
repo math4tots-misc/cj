@@ -215,6 +215,8 @@ class NCIR {
             block
         }
 
+        def nop(mark: Mark): Self = block(mark, [])
+
         def repr(self): String {
             val kindstr = kindNames[kind]
             switch kind {

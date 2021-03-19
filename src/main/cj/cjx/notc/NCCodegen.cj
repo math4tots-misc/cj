@@ -30,7 +30,6 @@ class NCCodegen {
     }
 
     def func(self, func: NCIR.Func) {
-        # TODO: func args
         m.addFunction(
             func.name,
             Binaryen.createType(func.params.map(v -> type(v.type))),
