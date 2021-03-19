@@ -43,6 +43,7 @@ class NCIR {
             kINT_SUB
             kINT_MUL
             kINT_DIV
+            kINT_NEG
         }
 
         private static val kindNames: List[String] = static_field_names!(Self, "k[A-Z_]+")
@@ -73,6 +74,26 @@ class NCIR {
             val expr = Expr(mark, kind, type)
             expr.arg = arg
             expr
+        }
+
+        def neg(mark: Mark, arg: Expr): Self {
+            if arg.type.isInt() {
+                if arg.kind == kINT {
+                    return int(mark, -arg.intValue)
+                } else {
+                    return unop(mark, kINT_NEG, Type.int, arg)
+                }
+            }
+            throw NCError(
+                "Invalid args to unary '-' (" + arg.type + ")", [mark])
+        }
+
+        def pos(mark: Mark, arg: Expr): Self {
+            if arg.type.isInt() {
+                return arg
+            }
+            throw NCError(
+                "Invalid args to unary '-' (" + arg.type + ")", [mark])
         }
 
         def add(mark: Mark, lhs: Expr, rhs: Expr): Self {

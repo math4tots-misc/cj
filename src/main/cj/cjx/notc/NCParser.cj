@@ -12,6 +12,8 @@ import cjx.notc.NCToken
 import cjx.parser.ParserMixin
 
 class NCParser: ParserMixin[NCToken] {
+    static val unaryPrec: Int = precof('*') + 5
+
     def typeOfToken(token: NCToken): Int = token.type
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
@@ -122,6 +124,8 @@ class NCParser: ParserMixin[NCToken] {
         val mark = mark()
         switch peek().type {
             case '(' { next(); val e = expr(); expect(')'); e }
+            case '+' { next(); val e = exprpr(unaryPrec); Expr.pos(mark, e) }
+            case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
             case NCToken.tINT = Expr.int(mark, next().intValue)
             else = errorKind("expression")
         }

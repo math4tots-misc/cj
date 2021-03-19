@@ -20,6 +20,10 @@ class NCCompilerTest {
         assertCode("int main() = 5+6*7", 47)
         assertCode("int main() = 5*(9-6)", 15)
         assertCode("int main() = (3+5)/2", 4)
+
+        assertCode("int main() = -10+20", 10)
+        assertCode("int main() = - -10", 10)
+        assertCode("int main() = - - +10", 10)
     }
 
 }
