@@ -27,10 +27,12 @@ class NCIR {
         def __get_params(self): List[Var] = locals[:nparams]
     }
 
-    union Type: Repr {
+    union Type: Repr, Eq {
         case unreachable
         case void
         case int
+        def isUnreachable(self): Bool = tag!(self) == tag!(Type, unreachable)
+        def isVoid(self): Bool = tag!(self) == tag!(Type, void)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def size(self): Int = when self {
             case unreachable = 0
@@ -38,6 +40,22 @@ class NCIR {
             case int = NCIR.ptrSize
         }
         def repr(self): String = tag_name!(self)
+        def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and switch tag!(self) {
+            else = true
+        }
+        def common(mark: Mark, a: Self, b: Self): Self {
+            if a.isVoid() or b.isVoid() {
+                void
+            } else if a.isUnreachable() {
+                b
+            } else if b.isUnreachable() {
+                a
+            } else if a == b {
+                a
+            } else {
+                throw NCError("Types " + a + " and " + b + " are not compatiable", [mark])
+            }
+        }
     }
 
     class Expr: Repr {
@@ -55,6 +73,8 @@ class NCIR {
 
             kGETVAR
             kSETVAR
+
+            kIF
 
             kRETURN
 
@@ -78,6 +98,11 @@ class NCIR {
         var rhs: Expr = ?
         def __get_arg(self): Expr = lhs
         def __set_arg(self, value: Expr) { lhs = value }
+
+        # if
+        var cond: Expr = ?
+        var then: Expr = ?
+        var els: Expr = ?
 
         # block
         var stmts: List[Expr] = ?
@@ -105,6 +130,18 @@ class NCIR {
                 return setvar(mark, lhs.var_, rhs)
             }
             throw NCError(kindNames[lhs.kind] + " is not assignable", [mark])
+        }
+
+        def if_(mark: Mark, cond: Expr, then: Expr, els: Expr): Self {
+            if not cond.type.isInt() {
+                throw NCError("if condition should be an int, but got " + cond.type, [mark])
+            }
+            val type = Type.common(mark, cond.type, els.type)
+            val self = Self(mark, kIF, type)
+            self.cond = cond
+            self.then = then
+            self.els = els
+            self
         }
 
         private def binop(mark: Mark, kind: Int, type: Type, lhs: Expr, rhs: Expr): Expr {

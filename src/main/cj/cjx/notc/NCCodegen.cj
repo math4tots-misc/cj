@@ -60,6 +60,7 @@ class NCCodegen {
             case NCIR.Expr.kINT_LE = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kGETVAR = m.local.get(expr.var_.index, type(expr.var_.type))
             case NCIR.Expr.kSETVAR = m.local.tee(expr.var_.index, expr(expr.arg), type(expr.var_.type))
+            case NCIR.Expr.kIF = m.if_(expr(expr.cond), expr(expr.then), expr(expr.els))
             case NCIR.Expr.kRETURN = m.return_(expr(expr.arg))
             case NCIR.Expr.kBLOCK {
                 val bexprs: List[Binaryen.Expression] = []

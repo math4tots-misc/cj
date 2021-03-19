@@ -57,6 +57,13 @@ class NCCompilerTest {
         assertCode("int main() = { int a, b; a=b=3; a+b; }", 6)
 
         assertCode("int main() = { ;;; return 5; }", 5)
+
+        assertCode("int main() = { if (0) return 2; return 3; }", 3)
+        assertCode("int main() = { if (1-1) return 2; return 3; }", 3)
+        assertCode("int main() = { if (1) return 2; return 3; }", 2)
+        assertCode("int main() = { if (2-1) return 2; return 3; }", 2)
+        assertCode("int main() = { if (0) { 1; 2; return 3; } else { return 4; } }", 4)
+        assertCode("int main() = { if (1) { 1; 2; return 3; } else { return 4; } }", 3)
     }
 
 }

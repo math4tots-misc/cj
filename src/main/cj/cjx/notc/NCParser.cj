@@ -153,6 +153,15 @@ class NCParser: ParserMixin[NCToken] {
                 expect(';')
                 Expr.ret(mark, expr)
             }
+            case NCToken.kwIF {
+                next()
+                expect('(')
+                val cond = expr()
+                expect(')')
+                val then = stmt()
+                val els = if consume(NCToken.kwELSE) { stmt() } else { Expr.nop(mark) }
+                Expr.if_(mark, cond, then, els)
+            }
             else {
                 if atDeclaration() {
                     declaration()
