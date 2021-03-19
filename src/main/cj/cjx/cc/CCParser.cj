@@ -9,6 +9,8 @@ import cjx.cc.CCToken
 import cjx.parser.ParserMixin
 
 class CCParser: ParserMixin[CCToken] {
+    static private val unaryPrec: Int = precof('*') + 5
+
     def typeOfToken(token: CCToken): Int = token.type
     def nameOfType(type: Int): String = CCToken.typeRepr(type)
 
@@ -166,8 +168,10 @@ class CCParser: ParserMixin[CCToken] {
                 expect(')')
                 inner
             }
-            case '+' { next(); unop(mark, Node.Kind.pos, atom()) }
-            case '-' { next(); unop(mark, Node.Kind.neg, atom()) }
+            case '+' { next(); unop(mark, Node.Kind.pos, exprpr(unaryPrec)) }
+            case '-' { next(); unop(mark, Node.Kind.neg, exprpr(unaryPrec)) }
+            case '&' { next(); unop(mark, Node.Kind.addr, exprpr(unaryPrec)) }
+            case '*' { next(); unop(mark, Node.Kind.deref, exprpr(unaryPrec)) }
             case CCToken.tINT { intlit(mark, next().intValue) }
             case CCToken.tIDENT {
                 val name = next().stringValue

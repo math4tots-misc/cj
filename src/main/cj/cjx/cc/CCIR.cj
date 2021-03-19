@@ -39,6 +39,8 @@ class CCIR {
             case lt
             case le
             case assign
+            case addr
+            case deref
             case return_
             case if_
             case for_

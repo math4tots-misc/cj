@@ -73,4 +73,15 @@ class CCompilerTest {
         assertCode("{ for (;;) {return 3;} return 5; }", 3)
         assertCode("{ i=0; while(i<10) { i=i+1; } return i; }", 10)
     }
+
+    @test
+    def addr() {
+        assertCode("{ x=3; return *&x; }", 3)
+        assertCode("{ x=3; y=&x; z=&y; return **z; }", 3)
+        assertCode("{ x=3; y=5; return *(&x+8); }", 5)
+        assertCode("{ x=3; y=5; return *(&y-8); }", 3)
+        assertCode("{ x=3; y=&x; *y=5; return x; }", 5)
+        assertCode("{ x=3; y=5; *(&x+8)=7; return y; }", 7)
+        assertCode("{ x=3; y=5; *(&y-8)=7; return x; }", 7)
+    }
 }

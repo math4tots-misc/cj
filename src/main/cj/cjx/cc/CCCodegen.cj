@@ -117,6 +117,7 @@ class CCCodegen {
                 val var_ = expr.var_
                 m.i32.add(m.local.get(localSlotSP, i32), m.i32.const(var_.id * 8))
             }
+            case deref = expr(expr.arg)
             else = throw CCError("Not an lvalue", [expr.mark])
         }
     }
@@ -134,7 +135,8 @@ class CCCodegen {
             case ne = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case lt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case le = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case assign; case var_ = m.i32.load(0, 0, addr(expr))
+            case addr = addr(expr.arg)
+            case assign; case var_; case deref = m.i32.load(0, 0, addr(expr))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])
         }
     }
