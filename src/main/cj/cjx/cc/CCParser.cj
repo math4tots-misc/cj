@@ -1,7 +1,10 @@
 package cjx.cc
 
+import cjx.cc.CCType
 import cjx.parser.Mark
+import cjx.cc.CCIR
 import cjx.cc.CCIR.Node
+import cjx.cc.CCIR.Type
 import cjx.cc.CCIR.Obj
 import cjx.cc.CCError
 import cjx.cc.CCLexer
@@ -46,6 +49,8 @@ class CCParser: ParserMixin[CCToken] {
     def markAt(self, token: CCToken): Mark = Mark(filepath, token.line, token.column)
     def errorAt(self, message: String, token: CCToken): NoReturn = throw CCError(
         message, [markAt(token)])
+    def errorAtMark(self, message: String, mark: Mark): NoReturn = throw CCError(
+        message, [mark])
 
     def stmt(self): Node {
         val mark = mark()
@@ -110,8 +115,8 @@ class CCParser: ParserMixin[CCToken] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '+'         { next(); expr = binop(mark, Node.Kind.add, expr, exprpr(tokprec)) }
-                case '-'         { next(); expr = binop(mark, Node.Kind.sub, expr, exprpr(tokprec)) }
+                case '+'         { next(); expr = newadd(mark, expr, exprpr(tokprec)) }
+                case '-'         { next(); expr = newsub(mark, expr, exprpr(tokprec)) }
                 case '*'         { next(); expr = binop(mark, Node.Kind.mul, expr, exprpr(tokprec)) }
                 case '/'         { next(); expr = binop(mark, Node.Kind.div, expr, exprpr(tokprec)) }
                 case '%'         { next(); expr = binop(mark, Node.Kind.rem, expr, exprpr(tokprec)) }
@@ -143,6 +148,55 @@ class CCParser: ParserMixin[CCToken] {
         node.lhs = lhs
         node.rhs = rhs
         node
+    }
+
+    def newadd(self, mark: Mark, var lhs: Node, var rhs: Node): Node {
+        CCType.addType(lhs)
+        CCType.addType(rhs)
+
+        # 'int + int' goes through as is
+        if lhs.type.isInt() and rhs.type.isInt() {
+            return binop(mark, Node.Kind.add, lhs, rhs)
+        }
+
+        # 'num + ptr' -> 'ptr + num'
+        if lhs.type.isInt() and rhs.type.isPtr() {
+            val tmp = lhs
+            lhs = rhs
+            rhs = tmp
+        }
+
+        # ptr + int
+        Assert.that(lhs.type.isPtr())
+        Assert.that(rhs.type.isInt())
+        rhs = binop(mark, Node.Kind.mul, rhs, intlit(mark, CCIR.ptrSize))
+        binop(mark, Node.Kind.add, lhs, rhs)
+    }
+
+    def newsub(self, mark: Mark, var lhs: Node, var rhs: Node): Node {
+        CCType.addType(lhs)
+        CCType.addType(rhs)
+
+        # 'int - int' goes through as is
+        if lhs.type.isInt() and rhs.type.isInt() {
+            return binop(mark, Node.Kind.sub, lhs, rhs)
+        }
+
+        # ptr - int
+        if lhs.type.isPtr() and rhs.type.isInt() {
+            rhs = binop(mark, Node.Kind.mul, rhs, intlit(mark, CCIR.ptrSize))
+            return binop(mark, Node.Kind.sub, lhs, rhs)
+        }
+
+        # ptr - ptr
+        if lhs.type.isPtr() and rhs.type.isPtr() {
+            val diff = binop(mark, Node.Kind.sub, lhs, rhs)
+            val node = binop(mark, Node.Kind.div, diff, intlit(mark, CCIR.ptrSize))
+            node.type = Type.int
+            return node
+        }
+
+        errorAtMark("Invalid operands to binary '-' (" + lhs.type + ", " + rhs.type + ")", mark)
     }
 
     def unop(mark: Mark, kind: Node.Kind, arg: Node): Node {

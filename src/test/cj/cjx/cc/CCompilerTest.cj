@@ -78,10 +78,12 @@ class CCompilerTest {
     def addr() {
         assertCode("{ x=3; return *&x; }", 3)
         assertCode("{ x=3; y=&x; z=&y; return **z; }", 3)
-        assertCode("{ x=3; y=5; return *(&x+8); }", 5)
-        assertCode("{ x=3; y=5; return *(&y-8); }", 3)
+        assertCode("{ x=3; y=5; return *(&x+1); }", 5)
+        assertCode("{ x=3; y=5; return *(&y-1); }", 3)
+        assertCode("{ x=3; y=5; return *(&x-(-1)); }", 5)
         assertCode("{ x=3; y=&x; *y=5; return x; }", 5)
-        assertCode("{ x=3; y=5; *(&x+8)=7; return y; }", 7)
-        assertCode("{ x=3; y=5; *(&y-8)=7; return x; }", 7)
+        assertCode("{ x=3; y=5; *(&x+1)=7; return y; }", 7)
+        assertCode("{ x=3; y=5; *(&y-1)=7; return x; }", 7)
+        assertCode("{ x=3; return (&x+2)-&x+3; }", 5)
     }
 }

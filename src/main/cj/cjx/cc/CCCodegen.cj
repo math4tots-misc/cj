@@ -115,7 +115,7 @@ class CCCodegen {
             }
             case var_ {
                 val var_ = expr.var_
-                m.i32.add(m.local.get(localSlotSP, i32), m.i32.const(var_.id * 8))
+                m.i32.add(m.local.get(localSlotSP, i32), m.i32.const(var_.id * 4))
             }
             case deref = expr(expr.arg)
             else = throw CCError("Not an lvalue", [expr.mark])

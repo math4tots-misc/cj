@@ -5,13 +5,44 @@ import cjx.parser.Mark
 
 class CCIR {
 
-    class Type {
-        union Kind {
+    # wasm32 uses 4-byte pointers
+    static val ptrSize = 4
+
+    class Type: Eq, Repr {
+        static val int: Self = Self(Kind.int)
+
+        def ptr(ty: Self): Self {
+            val self = Self(Kind.ptr)
+            self.base = ty
+            self
+        }
+
+        union Kind: Eq {
             case int
             case ptr
+            def __eq(self, other: Self): Bool = self is other
         }
         val kind: Kind
         var base: Type = ?
+
+        def isPtr(self): Bool = tag!(kind) == tag!(Kind, ptr)
+        def isInt(self): Bool = tag!(kind) == tag!(Kind, int)
+
+        def __eq(self, other: Self): Bool {
+            val tag = tag!(kind)
+            if tag != tag!(other.kind) {
+                return false
+            }
+            switch tag {
+                case tag!(Kind, ptr) = base == other.base
+                else = true
+            }
+        }
+
+        def repr(self): String = when kind {
+            case int = "int"
+            case ptr = "ptr(" + base + ")"
+        }
     }
 
     ## variable
@@ -64,6 +95,8 @@ class CCIR {
 
         val mark: Mark
         val kind: Kind
+
+        var type: Type = ?
 
         # block
         var body: List[Node] = ?
