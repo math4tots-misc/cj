@@ -72,9 +72,8 @@ class NCParser: ParserMixin[NCToken] {
             func.body = expr()
         } else if at('{') {
             func.body = block()
-        } else {
-            expect(';')
         }
+        expectDelim()
         program.funcs.add(func)
     }
 
@@ -94,6 +93,22 @@ class NCParser: ParserMixin[NCToken] {
             case NCToken.kwINT = true
             else = false
         }
+    }
+
+    def atDelim(self): Bool = switch peek().type {
+        case ';'; case '\n'; case NCToken.tEOF; case '}' = true
+        else = false
+    }
+
+    def expectDelim(self) {
+        if not atDelim() {
+            errorKind("delimiter")
+        }
+        skipDelims()
+    }
+
+    def skipDelims(self) {
+        while consume(';') or consume('\n') {}
     }
 
     def precof(type: Int): Int = switch type {
@@ -152,11 +167,11 @@ class NCParser: ParserMixin[NCToken] {
         val mark = mark()
         switch peek().type {
             case '{' = block()
-            case ';' = { next(); Expr.nop(mark) }
+            case ';'; case '\n' = { skipDelims(); Expr.nop(mark) }
             case NCToken.kwRETURN {
                 next()
-                val expr = if at(';') { Expr.int(mark, 0) } else { expr() }
-                expect(';')
+                val expr = if atDelim() { Expr.int(mark, 0) } else { expr() }
+                expectDelim()
                 Expr.ret(mark, expr)
             }
             case NCToken.kwIF {
@@ -173,7 +188,7 @@ class NCParser: ParserMixin[NCToken] {
                     declaration()
                 } else {
                     val expr = expr()
-                    expect(';')
+                    expectDelim()
                     expr
                 }
             }
@@ -193,7 +208,7 @@ class NCParser: ParserMixin[NCToken] {
             }
             repeat = consume(',')
         }
-        expect(';')
+        expectDelim()
         Expr.block(mark, exprs)
     }
 

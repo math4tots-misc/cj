@@ -9,7 +9,7 @@ class NCCompilerTest {
     }
 
     @test
-    def sample() {
+    def sample1() {
         assertCode("int main() = 0", 0)
         assertCode("int main() = 24", 24)
         assertCode("int main() = 5 + 7", 12)
@@ -71,6 +71,11 @@ class NCCompilerTest {
         assertCode("int main() { if (2-1) return 2; return 3; }", 2)
         assertCode("int main() { if (0) { 1; 2; return 3; } else { return 4; } }", 4)
         assertCode("int main() { if (1) { 1; 2; return 3; } else { return 4; } }", 3)
+    }
+
+    @test
+    def samples2() {
+        assertCode("int main() { if (1) { 1\n2\nreturn 3 } else { return 4 } }", 3)
     }
 
 }

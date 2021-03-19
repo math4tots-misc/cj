@@ -30,8 +30,14 @@ class NCLexer {
         b.add("<=", m -> symtok(m, NCToken.tLE))
         b.add(">=", m -> symtok(m, NCToken.tGE))
 
+        # newline
+        b.add("\n\\s*", m -> chartok(m))
+
+        # comments
+        b.add("//[^\n]*(\n\\s*//[^\n]*)*", m -> [])
+
         # whitespace
-        b.add("\\s+", m -> [])
+        b.add("[^\\S\n]+", m -> [])
 
         b.onEOF(m -> [NCToken(NCToken.tEOF, (), m.line, m.column)])
 
@@ -57,5 +63,32 @@ class NCLexer {
     private def symtok(m: Regex.MatchResult, type: Int): List[NCToken] = [
         NCToken(type, (), m.line, m.column)]
 
-    def lex(filepath: String, string: String): List[NCToken] = lexer.lex(filepath, string)
+    def lex(filename: String, string: String): List[NCToken] = {
+        val oldTokens = lexer.lex(filename, string)
+        val newTokens = List[NCToken].empty()
+        val stack = List[Int].empty()
+        for token in oldTokens {
+            switch token.type {
+                case '('
+                case '['
+                case '{' = {
+                    stack.add(token.type)
+                    newTokens.add(token)
+                }
+                case ')'
+                case '}'
+                case ']' = {
+                    if stack {
+                        stack.pop()
+                    }
+                    newTokens.add(token)
+                }
+                case '\n' = if not stack or stack.last() == '{' {
+                    newTokens.add(token)
+                }
+                else = newTokens.add(token)
+            }
+        }
+        newTokens
+    }
 }
