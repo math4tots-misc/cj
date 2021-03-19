@@ -75,6 +75,7 @@ class NCIR {
             kSETVAR
 
             kIF
+            kWHILE
 
             kRETURN
 
@@ -99,7 +100,7 @@ class NCIR {
         def __get_arg(self): Expr = lhs
         def __set_arg(self, value: Expr) { lhs = value }
 
-        # if
+        # if/while
         var cond: Expr = ?
         var then: Expr = ?
         var els: Expr = ?
@@ -134,13 +135,23 @@ class NCIR {
 
         def if_(mark: Mark, cond: Expr, then: Expr, els: Expr): Self {
             if not cond.type.isInt() {
-                throw NCError("if condition should be an int, but got " + cond.type, [mark])
+                throw NCError("'if' condition should be an int, but got " + cond.type, [mark])
             }
             val type = Type.common(mark, cond.type, els.type)
             val self = Self(mark, kIF, type)
             self.cond = cond
             self.then = then
             self.els = els
+            self
+        }
+
+        def while_(mark: Mark, cond: Expr, then: Expr): Self {
+            if not cond.type.isInt() {
+                throw NCError("'while' condition should be an int, but got " + cond.type, [mark])
+            }
+            val self = Self(mark, kWHILE, Type.void)
+            self.cond = cond
+            self.then = then
             self
         }
 

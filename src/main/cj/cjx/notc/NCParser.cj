@@ -185,6 +185,33 @@ class NCParser: ParserMixin[NCToken] {
                     skipDelims(); stmt() } else { Expr.nop(mark) }
                 Expr.if_(mark, cond, then, els)
             }
+            case NCToken.kwWHILE {
+                next()
+                expect('(')
+                val cond = expr()
+                expect(')')
+                skipDelims()
+                val then = stmt()
+                Expr.while_(mark, cond, then)
+            }
+            case NCToken.kwFOR {
+                next()
+                expect('(')
+                val init = if consume(';') { Expr.nop(mark) } else { stmt() }
+                val cond = if at(';') { Expr.int(mark, 1) } else { expr() }
+                expect(';')
+                val incr = if at(')') { Expr.int(mark, 0) } else { expr() }
+                expect(')')
+                skipDelims()
+                val then = stmt()
+                Expr.block(mark, [
+                    init,
+                    Expr.while_(mark, cond, Expr.block(mark, [
+                        then,
+                        incr,
+                    ])),
+                ])
+            }
             else {
                 if atDeclaration() {
                     declaration()

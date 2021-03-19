@@ -58,6 +58,9 @@ native class Binaryen {
         def br_if(self, label: String, cond: Expression): Expression {
             js!(Expression, self, ".br(", label, ",", cond, ")")
         }
+        def br_if_with_value(self, label: String, cond: Expression, v: Expression): Expression {
+            js!(Expression, self, ".br(", label, ",", cond, ",", v, ")")
+        }
     }
     native class ModuleLocal {
         def get(self, index: Int, type: Type): Expression = js!(

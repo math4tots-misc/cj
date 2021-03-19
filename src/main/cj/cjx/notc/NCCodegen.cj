@@ -17,6 +17,7 @@ class NCCodegen {
 
     private val program: NCIR.Program
     private val m: Binaryen.Module = Binaryen.Module()
+    private var labelCount = 0
 
     def emit(program: NCIR.Program): Uint8Array {
         val self = Self(program)
@@ -27,6 +28,12 @@ class NCCodegen {
         m.validate()
         if optimize { m.optimize() }
         m.emitBinary()
+    }
+
+    def newLabel(self): String {
+        val label = "l" + labelCount
+        labelCount++
+        label
     }
 
     def func(self, func: NCIR.Func) {
@@ -61,6 +68,20 @@ class NCCodegen {
             case NCIR.Expr.kGETVAR = m.local.get(expr.var_.index, type(expr.var_.type))
             case NCIR.Expr.kSETVAR = m.local.tee(expr.var_.index, expr(expr.arg), type(expr.var_.type))
             case NCIR.Expr.kIF = m.if_(expr(expr.cond), expr(expr.then), expr(expr.els))
+            case NCIR.Expr.kWHILE {
+                val continueLabel = newLabel()
+                val breakLabel = newLabel()
+                m.block(null, [
+                    m.block(null(breakLabel), [
+                        m.loop(null(continueLabel), m.block(null, [
+                            m.br_if(breakLabel, m.i32.eqz(expr(expr.cond))),
+                            m.drop(expr(expr.then)),
+                            m.br(continueLabel),
+                        ], none)),
+                    ], none),
+                    expr(NCIR.Expr.nop(expr.mark)),
+                ], type(NCIR.Type.void))
+            }
             case NCIR.Expr.kRETURN = m.return_(expr(expr.arg))
             case NCIR.Expr.kBLOCK {
                 val bexprs: List[Binaryen.Expression] = []

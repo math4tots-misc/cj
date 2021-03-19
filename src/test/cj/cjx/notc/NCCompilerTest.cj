@@ -76,6 +76,9 @@ class NCCompilerTest {
     @test
     def samples2() {
         assertCode("int main() { if (1) { 1\n2\nreturn 3 } else { return 4 } }", 3)
+        assertCode("int main() { int i=0; int j=0; for (i=0; i<=10; i=i+1) j=i+j; j}", 55)
+        assertCode("int main() { for (;;) { return 3 } return 5 }", 3)
+        assertCode("int main() { int i=0; while(i<10) { i=i+1; } return i; }", 10)
     }
 
 }
