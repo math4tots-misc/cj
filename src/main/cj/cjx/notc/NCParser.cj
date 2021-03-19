@@ -68,7 +68,13 @@ class NCParser: ParserMixin[NCToken] {
         funcPrep()
         val nparams = params().size()
         val func = Func(mark, returnType, name, nparams, locals.list)
-        if consume('=') { func.body = expr() } else { expect(';') }
+        if consume('=') {
+            func.body = expr()
+        } else if at('{') {
+            func.body = block()
+        } else {
+            expect(';')
+        }
         program.funcs.add(func)
     }
 
