@@ -1,5 +1,6 @@
 package cjx.notc
 
+import cjx.notc.NCLocals
 import cjx.notc.NCLexer
 import cjx.notc.NCIR.Expr
 import cjx.notc.NCIR.Type
@@ -33,7 +34,7 @@ class NCParser: ParserMixin[NCToken] {
     val program: Program = Program()
 
     # function-level
-    var locals: List[Var] = []
+    var locals: NCLocals = NCLocals()
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: NCToken): Mark = Mark(filepath, token.line, token.column)
@@ -58,10 +59,7 @@ class NCParser: ParserMixin[NCToken] {
         val mark = mark()
         val type = type()
         val name = id()
-        val index = locals.size()
-        val var_ = Var(mark, type, name, index)
-        locals.add(var_)
-        var_
+        locals.add(mark, type, name)
     }
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
@@ -69,13 +67,13 @@ class NCParser: ParserMixin[NCToken] {
     def func(self, mark: Mark, returnType: Type, name: String) {
         funcPrep()
         val nparams = params().size()
-        val func = Func(mark, returnType, name, nparams, locals)
+        val func = Func(mark, returnType, name, nparams, locals.list)
         if consume('=') { func.body = expr() } else { expect(';') }
         program.funcs.add(func)
     }
 
     def funcPrep(self) {
-        locals = []
+        locals = NCLocals()
     }
 
     def type(self): Type {
@@ -85,7 +83,7 @@ class NCParser: ParserMixin[NCToken] {
         }
     }
 
-    def atType(self): Bool {
+    def atDeclaration(self): Bool {
         switch peek().type {
             case NCToken.kwINT = true
             else = false
@@ -109,6 +107,7 @@ class NCParser: ParserMixin[NCToken] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
+                case '='          { next(); expr = Expr.assign(mark, expr, exprpr(tokprec - 1)) }
                 case '+'          { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
                 case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
                 case '*'          { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
@@ -133,6 +132,11 @@ class NCParser: ParserMixin[NCToken] {
             case '+' { next(); val e = exprpr(unaryPrec); Expr.pos(mark, e) }
             case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
             case '{' = block()
+            case NCToken.tID {
+                val name = next().stringValue
+                val var_ = locals.get(mark, name)
+                Expr.getvar(mark, var_)
+            }
             case NCToken.tINT = Expr.int(mark, next().intValue)
             else = errorKind("expression")
         }
@@ -149,11 +153,32 @@ class NCParser: ParserMixin[NCToken] {
                 Expr.ret(mark, expr)
             }
             else {
-                val expr = expr()
-                expect(';')
-                expr
+                if atDeclaration() {
+                    declaration()
+                } else {
+                    val expr = expr()
+                    expect(';')
+                    expr
+                }
             }
         }
+    }
+
+    def declaration(self): Expr {
+        val mark = mark()
+        val type = type()
+        var repeat = true
+        val exprs: List[Expr] = []
+        while repeat {
+            val name = id()
+            val var_ = locals.add(mark, type, name)
+            if consume('=') {
+                exprs.add(Expr.setvar(mark, var_, expr()))
+            }
+            repeat = consume(',')
+        }
+        expect(';')
+        Expr.block(mark, exprs)
     }
 
     def block(self): Expr {

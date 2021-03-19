@@ -53,6 +53,9 @@ class NCIR {
             kINT_LT
             kINT_LE
 
+            kGETVAR
+            kSETVAR
+
             kRETURN
 
             kBLOCK
@@ -64,8 +67,11 @@ class NCIR {
         val kind: Int
         var type: Type
 
-        # int literal
+        # literals
         var intValue: Int = ?
+
+        # variable
+        var var_: Var = ?
 
         # binops/unops
         var lhs: Expr = ?
@@ -80,6 +86,25 @@ class NCIR {
             val self = Self(mark, kINT, Type.int)
             self.intValue = value
             self
+        }
+
+        def getvar(mark: Mark, var_: Var): Self {
+            val self = Self(mark, kGETVAR, var_.type)
+            self.var_ = var_
+            self
+        }
+
+        def setvar(mark: Mark, var_: Var, valexpr: Expr): Self {
+            val self = unop(mark, kSETVAR, var_.type, valexpr)
+            self.var_ = var_
+            self
+        }
+
+        def assign(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.kind == kGETVAR {
+                return setvar(mark, lhs.var_, rhs)
+            }
+            throw NCError(kindNames[lhs.kind] + " is not assignable", [mark])
         }
 
         private def binop(mark: Mark, kind: Int, type: Type, lhs: Expr, rhs: Expr): Expr {
