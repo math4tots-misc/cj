@@ -20,12 +20,12 @@ class JSBuilder {
     private var generatedLineStart = true
     var jsFilePath: String = ?
     var sourceRoot: String = ?
-    var includeSourceMapAsDataURL = true
+    var inlineSourceMap = false
 
     def getSource(self): String {
         val base = src.toString()
-        if includeSourceMapAsDataURL {
-            base + "\n//" + "# sourceMappingURL=data:;base64," + Base64.encodeString(
+        if inlineSourceMap {
+            base + "\n//" + "# sourceMappingURL=data:application/json;base64," + Base64.encodeString(
                 getSourceMap())
         } else if is_set!(self, jsFilePath) {
             val index = jsFilePath.lastIndexOf(FS.sep)
