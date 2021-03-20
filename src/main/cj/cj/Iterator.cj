@@ -6,6 +6,11 @@ native class Iterator[T?] : Iterable[T] {
     @generic def nextOrElse(self: Self, f: Fn[T]): T
     @generic def toList(self: Self): List[T]
 
+    @generic def forEach(self, f: Fn[T, Unit]) {
+        for t in self {
+            f.call(t)
+        }
+    }
     @generic def map[R?](self: Self, f: Fn[T, R]): Iterator[R]
     @generic def filter(self: Self, f: Fn[T, Bool]): Iterator[T]
     @generic def reduce(self: Self, f: Fn[T, T, T]): T

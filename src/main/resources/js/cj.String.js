@@ -147,9 +147,6 @@ class MC$cj$String {
             return self.split(sep);
         }
     }
-    M$indexOf(self, substring) {
-        return self.indexOf(substring);
-    }
 
     M$default() {
         return "";

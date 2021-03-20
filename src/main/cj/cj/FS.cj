@@ -9,6 +9,7 @@ import cj.DynamicBuffer
 native class FS {
     def __get_sep(): String = js!(String, "require('path').sep")
     @variadic def join(parts: List[String]): String = js!(String, "require('path').join(...", parts, ")")
+    def basename(path: String): String = js!(String, "require('path').basename(", path, ")")
     def dirname(path: String): String = js!(String, "require('path').dirname(", path, ")")
     def isfile(path: String): Bool = js!(Bool, "require('fs').lstatSync(", path, ").isFile()")
     def isdir(path: String): Bool = js!(Bool, "require('fs').lstatSync(", path, ").isDirectory()")

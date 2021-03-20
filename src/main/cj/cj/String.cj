@@ -72,7 +72,10 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def split(self, sep: String): List[String]
 
     ## Return -1 if not found
-    def indexOf(self, substring: String): Int
+    def indexOf(self, substring: String): Int = js!(Int, self, ".indexOf(", substring, ")")
+
+    ## Return -1 if not found
+    def lastIndexOf(self, substring: String): Int = js!(Int, self, ".lastIndexOf(", substring, ")")
 
     def default(): Self
 }
