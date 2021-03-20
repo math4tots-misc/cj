@@ -25,7 +25,9 @@ class JSBuilder {
         if is_set!(self, jsFilePath) {
             val index = jsFilePath.lastIndexOf(FS.sep)
             val jsFilePath = if index == -1 { jsFilePath } else { jsFilePath[index + 1:] }
-            base + "\n//# sourceMappingURL=" + jsFilePath + ".map"
+            # The '//.. sourceMap...' pattern seems to mess with node's ability
+            # to detect the sourcemap, so we split up the string here
+            base + "\n//" + "# sourceMappingURL=" + jsFilePath + ".map"
         } else {
             base
         }
