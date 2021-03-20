@@ -1,5 +1,7 @@
 package cj
 
+import cj.BufferLike
+import cj.Uint8Array
 import cj.Math
 
 native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
@@ -76,6 +78,10 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
 
     ## Return -1 if not found
     def lastIndexOf(self, substring: String): Int = js!(Int, self, ".lastIndexOf(", substring, ")")
+
+    def toUTF8(self): Uint8Array = js!(Uint8Array, "new TextEncoder().encode(", self, ")")
+    def fromUTF8[B: BufferLike](b: B): String = js!(
+        String, "new TextDecoder().decode(", b.asUint8Array(), ")")
 
     def default(): Self
 }

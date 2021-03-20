@@ -3,6 +3,7 @@ package cj
 import cj.Uint8Array
 import cj.ArrayBuffer
 
+## trait for types that wrap an ArrayBuffer in some way
 trait BufferLike: Eq {
     def __get_buffer(self): ArrayBuffer
     def __get_byteOffset(self): Int
@@ -24,4 +25,9 @@ trait BufferLike: Eq {
         }
         true
     }
+
+    def bytes(self): Iterator[Int] = asUint8Array().iter()
+
+    ## Returns a Uint8Array wrapping the same ArrayBuffer as self
+    def asUint8Array(self): Uint8Array = Uint8Array.fromParts(buffer, byteOffset, byteLength)
 }

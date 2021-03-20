@@ -100,6 +100,7 @@ native class DynamicBuffer: Repr, Eq, BufferLike, DataViewMixin {
     def setBigInt64(self, byteOffset: Int, value: BigInt) = view.setBigInt64(byteOffset, value)
     def setBigUint64(self, byteOffset: Int, value: BigInt) = view.setBigUint64(byteOffset, value)
     def setUTF8(self, start: Int, string: String) {
+        # TODO: Determine whether this is safe to do
         setBuffer[ArrayBuffer](start, js!(ArrayBuffer, "new TextEncoder().encode(", string, ").buffer"))
     }
     def setBuffer[B: BufferLike](self, start: Int, buffer: B) {
