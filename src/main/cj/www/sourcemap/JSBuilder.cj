@@ -1,5 +1,6 @@
 package www.sourcemap
 
+import cjx.base64.Base64
 import cj.FS
 import www.sourcemap.JSB64VLQ
 import cjx.parser.Mark
@@ -19,10 +20,14 @@ class JSBuilder {
     private var generatedLineStart = true
     var jsFilePath: String = ?
     var sourceRoot: String = ?
+    var includeSourceMapAsDataURL = true
 
     def getSource(self): String {
         val base = src.toString()
-        if is_set!(self, jsFilePath) {
+        if includeSourceMapAsDataURL {
+            base + "\n//" + "# sourceMappingURL=data:;base64," + Base64.encodeString(
+                getSourceMap())
+        } else if is_set!(self, jsFilePath) {
             val index = jsFilePath.lastIndexOf(FS.sep)
             val jsFilePath = if index == -1 { jsFilePath } else { jsFilePath[index + 1:] }
             # The '//.. sourceMap...' pattern seems to mess with node's ability

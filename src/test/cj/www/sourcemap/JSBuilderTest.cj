@@ -8,6 +8,7 @@ class JSBuilderTest {
     @test
     def empty() {
         val jb = JSBuilder()
+        jb.includeSourceMapAsDataURL = false
         val mapstr = jb.getSourceMap()
         val srcmap = JSON.parse(mapstr)
         Assert.equal(srcmap, MapOf(
@@ -22,6 +23,7 @@ class JSBuilderTest {
     @test
     def sample1() {
         val jb = JSBuilder()
+        jb.includeSourceMapAsDataURL = false
         jb.str("hello ")
         jb.addMark(Mark("<test>", 2, 1))
         jb.str("world\n")

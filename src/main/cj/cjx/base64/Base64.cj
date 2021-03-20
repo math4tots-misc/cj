@@ -5,6 +5,17 @@ import cj.BufferLike
 
 native class Base64 {
 
+    ## Encode a string, treating it as a sequence of byte values, to a base64 string (aka btoa)
+    def encodeString(b: String): String {
+        if js!(Bool, "inBrowser") {
+            # browser
+            js!(String, "btoa(", b, ")")
+        } else {
+            # nodejs
+            js!(String, "Buffer.from(", b, ").toString('base64')")
+        }
+    }
+
     ## Encode a buffer bytes to a base64 string (aka btoa)
     def encode[B: BufferLike](b: B): String {
         if js!(Bool, "inBrowser") {
