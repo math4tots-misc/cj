@@ -37,6 +37,8 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def charAt(self: Self, i: Int): Char
     def iter(self: Self): Iterator[Char]
 
+    def __getitem(self, i: Int): Char = charAt(i)
+
     def __slice(self: Self, start: Int, end: Int): String
     def __sliceFrom(self: Self, start: Int): String
     def __sliceTo(self: Self, end: Int): String
