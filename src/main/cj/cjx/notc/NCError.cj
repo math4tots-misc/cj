@@ -9,7 +9,7 @@ class NCError {
 
     def(message: String, stack: List[Mark]): Self = __malloc(message, stack)
 
-    def repr(self): String = "CCError(" + message + ", " + stack.repr() + ")"
+    def repr(self): String = "NCError(" + message + ", " + stack.repr() + ")"
 
     def toString(self): String = {
         val sb = StringBuilder()
