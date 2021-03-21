@@ -104,16 +104,12 @@ class NCCodegen {
                 m.block(null, bexprs, type(expr.mark, expr.type))
             }
             case NCIR.Expr.kMEMSIZE = m.memory.size()
-            case NCIR.Expr.kLOAD = when expr.ty {
-                case int = m.i32.load(0, 0, expr(expr.arg))
-                else = throw NCError("TODO kLOAD " + expr.ty, [expr.mark])
-            }
-            case NCIR.Expr.kSTORE = when expr.ty {
-                case int = m.block(null, [
+            case NCIR.Expr.kLOAD = m.i32.load(0, 0, expr(expr.arg))
+            case NCIR.Expr.kSTORE = {
+                m.block(null, [
                     m.i32.store(0, 0, expr(expr.lhs), expr(expr.rhs)),
                     expr(NCIR.Expr.nop(expr.mark))
                 ], type(expr.mark, NCIR.Type.void))
-                else = throw NCError("TODO kSTORE " + expr.ty, [expr.mark])
             }
             else = throw NCError("TODO expr " + expr, [expr.mark])
         }

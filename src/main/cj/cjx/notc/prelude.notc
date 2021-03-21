@@ -4,14 +4,14 @@ const __HEAP_START_REF = 8
 const __HEAP_END_REF = 12
 const __HEAP_FREELIST_START = 16
 
-int __heap_start() = load!(int, __HEAP_START_REF)
-int __heap_end() = load!(int, __HEAP_END_REF)
-int __heap_freelist_get(int index) = load!(int, __HEAP_FREELIST_START + 4 * index)
-int __heap_freelist_set(int index, int ptr) = store!(int, __HEAP_FREELIST_START + 4 * index, ptr)
+int __heap_start() = load!(__HEAP_START_REF)
+int __heap_end() = load!(__HEAP_END_REF)
+int __heap_freelist_get(int index) = load!(__HEAP_FREELIST_START + 4 * index)
+int __heap_freelist_set(int index, int ptr) = store!(__HEAP_FREELIST_START + 4 * index, ptr)
 int __heap_alloc(int size) {
     // 'size' must be a multiple of 8
-    int ptr = load!(int, __HEAP_END_REF)
-    store!(int, __HEAP_END_REF, ptr + size)
+    int ptr = load!(__HEAP_END_REF)
+    store!(__HEAP_END_REF, ptr + size)
     ptr
 }
 
@@ -33,16 +33,16 @@ int __malloc(int askSize) {
 
     int freelistptr = __HEAP_FREELIST_START + 4 * log2
 
-    int freelist = load!(int, freelistptr)
+    int freelist = load!(freelistptr)
 
     if (freelist) {
         // freelists contain:
         //    * first 4 bytes is the pointer to the next entry in the freelist
         //    * garbage data
-        int nextPtr = load!(int, freelistptr)
-        store!(int, freelistptr, nextPtr)
-        store!(int, freelist,        1) // reference count
-        store!(int, freelist + 4, log2) // store reserved size (~log2)
+        int nextPtr = load!(freelistptr)
+        store!(freelistptr, nextPtr)
+        store!(freelist,        1) // reference count
+        store!(freelist + 4, log2) // store reserved size (~log2)
         freelist
     } else {
         // there's nothing in the freelist, so we need to allocate some fresh data
@@ -50,8 +50,8 @@ int __malloc(int askSize) {
     }
 
     int ptr = __heap_alloc(size + 8)
-    store!(int, ptr, 1)
-    store!(int, ptr, size)
+    store!(ptr, 1)
+    store!(ptr, size)
     ptr + 8
 }
 
@@ -60,9 +60,9 @@ void __free(int ptr) {
     // a freelist block's memory looks like:
     //   * first 4 bytes is a pointer to the next entry in the freelist
     //   * rest of the bytes is garbage
-    int log2 = load!(int, ptr + 4)
+    int log2 = load!(ptr + 4)
     int freelistptr = __HEAP_FREELIST_START + 4 * log2
-    int nextPtr = load!(int, freelistptr)
-    store!(int, ptr, nextPtr)
-    store!(int, freelistptr, ptr)
+    int nextPtr = load!(freelistptr)
+    store!(ptr, nextPtr)
+    store!(freelistptr, ptr)
 }

@@ -86,9 +86,9 @@ class NCCompilerTest {
         # assertCode("int main() { int[] arr = new!(int, 3); 0 }", 74)
 
         assertCode("int main() { memsize!() }", 1) # start out with 1 page of memory (64k)
-        assertCode("int main() { load!(int, 5) }", 0) # memory should be fresh (zeroed out)
-        assertCode("int main() { store!(int, 4, 600); load!(int, 5) }", 600 // 256)
-        assertCode("int main() { store!(int, 4, 600); load!(int, 4) }", 600)
+        assertCode("int main() { load!(5) }", 0) # memory should be fresh (zeroed out)
+        assertCode("int main() { store!(4, 600); load!(5) }", 600 // 256)
+        assertCode("int main() { store!(4, 600); load!(4) }", 600)
     }
 
 }

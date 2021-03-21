@@ -224,16 +224,10 @@ class NCIR {
 
         def memsize(mark: Mark): Self = Self(mark, kMEMSIZE, Type.int)
 
-        def load(mark: Mark, ty: Type, addr: Expr): Self {
-            val ret = unop(mark, kLOAD, ty, icast(addr, Type.int))
-            ret.ty = ty
-            ret
-        }
+        def load(mark: Mark, addr: Expr): Self = unop(mark, kLOAD, Type.int, icast(addr, Type.int))
 
-        def store(mark: Mark, ty: Type, addr: Expr, value: Expr): Self {
-            val ret = binop(mark, kSTORE, Type.void, icast(addr, Type.int), icast(value, ty))
-            ret.ty = ty
-            ret
+        def store(mark: Mark, addr: Expr, value: Expr): Self {
+            binop(mark, kSTORE, Type.void, icast(addr, Type.int), icast(value, Type.int))
         }
 
         def macro(mark: Mark, macroName: String, args: List[Expr]): Self {
@@ -248,14 +242,12 @@ class NCIR {
                 }
                 case "memsize!" = memsize(mark)
                 case "load!" {
-                    if args.size() != 2 { throw NCError("load! requires 2 args", [mark]) }
-                    val ty = evalNumericType(args[0])
-                    load(mark, ty, args[1])
+                    if args.size() != 1 { throw NCError("load! requires 1 arg", [mark]) }
+                    load(mark, args[0])
                 }
                 case "store!" {
-                    if args.size() != 3 { throw NCError("store! requires 3 args", [mark]) }
-                    val ty = evalNumericType(args[0])
-                    store(mark, ty, args[1], args[2])
+                    if args.size() != 2 { throw NCError("store! requires 2 arg", [mark]) }
+                    store(mark, args[0], args[1])
                 }
                 else = throw NCError("Unrecognized macro '" + macroName + "'", [mark])
             }
