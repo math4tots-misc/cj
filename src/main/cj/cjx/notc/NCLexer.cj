@@ -14,6 +14,12 @@ class NCLexer {
         b.add("0x[0-9A-Fa-f]+", m -> tok(m, NCToken.tINT, s -> s.parseInt().get())) # hex literals
         b.add("\\d+", m -> tok(m, NCToken.tINT, s -> s.parseInt().get()))
 
+        b.add("'[^'\\\\]'", m -> tok(m, NCToken.tINT, s -> s[1].toInt()))
+        b.add("'\\\\'", m -> tok(m, NCToken.tINT, s -> '\\'.toInt()))
+
+        # TODO: properly handle string literals
+        b.add("\"(\\\\.|[^\"\\\\])*\"", m -> tok(m, NCToken.tSTRING, s -> s.unrepr()))
+
         for type in NCToken.keywordTypes {
             b.add(NCToken.keywordString(type), m -> symtok(m, type))
         }
@@ -69,6 +75,7 @@ class NCLexer {
         val newTokens = List[NCToken].empty()
         val stack = List[Int].empty()
         for token in oldTokens {
+            token.filepath = filename
             switch token.type {
                 case '('
                 case '['

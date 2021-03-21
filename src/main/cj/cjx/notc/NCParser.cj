@@ -18,32 +18,23 @@ class NCParser: ParserMixin[NCToken] {
     def typeOfToken(token: NCToken): Int = token.type
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
-    def parseAll(sources: List[Tuple[String, String]]): Program {
-        val pairs = sources.map(p -> (p.f0, NCLexer.lex(p.f0, p.f1)))
+    def parseAll(sources: List[List[NCToken]]): Program {
         val program = Program()
         for pass in [0, 1, 2] {
-            for (filepath, tokens) in pairs {
-                parseEx(pass, program, filepath, tokens)
+            for tokens in sources {
+                parseEx(pass, program, tokens)
             }
         }
         program
     }
 
-    # def parse(program: Program, filepath: String, contents: String) {
-    #     val tokens = NCLexer.lex(filepath, contents)
-    #     val self = Self(filepath, tokens, program)
-    #     file()
-    #     assert(NCToken.tEOF)
-    # }
-
-    def parseEx(pass: Int, program: Program, filepath: String, tokens: List[NCToken]) {
-        val self = Self(pass, filepath, tokens, program)
+    def parseEx(pass: Int, program: Program, tokens: List[NCToken]) {
+        val self = Self(pass, tokens, program)
         file()
         assert(NCToken.tEOF)
     }
 
     val pass: Int
-    val filepath: String
     val tokens: List[NCToken]
     var i = 0
 
@@ -54,7 +45,7 @@ class NCParser: ParserMixin[NCToken] {
     var locals: NCLocals = NCLocals()
 
     def mark(self): Mark = markAt(peek())
-    def markAt(self, token: NCToken): Mark = Mark(filepath, token.line, token.column)
+    def markAt(self, token: NCToken): Mark = token.toMark()
     def errorAt(self, message: String, token: NCToken): NoReturn = errorAtMark(
         message, markAt(token))
     def errorAtMark(self, message: String, mark: Mark): NoReturn = throw NCError(
@@ -100,12 +91,11 @@ class NCParser: ParserMixin[NCToken] {
             program.addFunc(func)
             skipToDelimiter()
         } else {
-            if consume('=') {
-                func.body = expr()
-            } else if at('{') {
-                func.body = block()
+            if at('=') or at('{') {
+                val body = if consume('=') { expr() } else { block() }
+                func.body = body.icast(returnType)
+                program.updateFunc(func)
             }
-            program.updateFunc(func)
         }
         expectDelim()
     }
@@ -243,10 +233,16 @@ class NCParser: ParserMixin[NCToken] {
     }
 
     def stmt(self): Expr {
+        val stmt = _stmt()
+        skipDelims()
+        stmt
+    }
+
+    def _stmt(self): Expr {
         val mark = mark()
         switch peek().type {
             case '{' = block()
-            case ';'; case '\n' = { skipDelims(); Expr.nop(mark) }
+            case ';' = { skipDelims(); Expr.nop(mark) }
             case NCToken.kwRETURN {
                 next()
                 val expr = if atDelim() { Expr.int(mark, 0) } else { expr() }
@@ -322,8 +318,10 @@ class NCParser: ParserMixin[NCToken] {
         val mark = mark()
         expect('{')
         val exprs: List[Expr] = []
+        skipDelims()
         while not consume('}') {
             exprs.add(stmt())
+            skipDelims()
         }
         Expr.block(mark, exprs)
     }

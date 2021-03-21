@@ -5,7 +5,6 @@ trait ParserMixin[Token] {
     def typeOfToken(token: Token): Int
     def nameOfType(type: Int): String
 
-    def __get_filepath(self): String
     def __get_tokens(self): List[Token]
     def __get_i(self): Int
     def __set_i(self, value: Int)

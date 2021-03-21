@@ -1,5 +1,6 @@
 package www.wa
 
+import cj.ArrayBuffer
 import cj.ArrayBufferOrView
 import www.JSObject
 
@@ -20,6 +21,9 @@ native class WebAssembly {
     native class Table {
     }
     native class Memory {
+        def(init: Int, max: Int): Self = js!(
+            Self, "new WebAssembly.Memory({initial: ", init, ", maximum: ", max, "})")
+        def __get_buffer(self): ArrayBuffer = js!(ArrayBuffer, self, ".buffer")
     }
     def instantiate[S: ArrayBufferOrView](
         bufferSource: S,

@@ -1,5 +1,7 @@
 package cj
 
+import cj.Error
+import cj.StringBuilder
 import cj.BufferLike
 import cj.Uint8Array
 import cj.Math
@@ -7,6 +9,29 @@ import cj.Math
 native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def toString(self: Self): Self = self
     def repr(self: Self): String
+
+    def unrepr(self): String {
+        Assert.that(startsWith("\"") and endsWith("\""))
+        val sb = StringBuilder()
+        var escape = false
+        for ch in self[1:-1] {
+            if escape {
+                switch ch {
+                    case '0' { sb.char('\0') }
+                    case 't' { sb.char('\t') }
+                    case 'n' { sb.char('\n') }
+                    case '"' { sb.char('"') }
+                    case '\\' { sb.char('\\') }
+                    else = throw Error("Unrecognized escape char " + ch.repr())
+                }
+            } else if ch == '\\' {
+                escape = true
+            } else {
+                sb.char(ch)
+            }
+        }
+        sb.toString()
+    }
 
     def __add[T?: ToString](self: Self, other: T): Self = js!(Self, self, "+", other.toString())
 
@@ -17,7 +42,7 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
 
     def toBool(self: Self): Bool = js!(Bool, "!!", self)
 
-    def __eq(self: Self, other: Self): Bool = js!(Bool, self, "===", other)
+    def __eq(self: Self, other: Self): Bool = self is other
 
     def hash(self: Self): Int {
         var h = 0;
@@ -26,14 +51,14 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
         }
         h
     }
-    def __lt(self, other: Self): Bool
+    def __lt(self, other: Self): Bool = js!(Bool, self, "<", other)
 
-    def __contains(self, other: Self): Bool
+    def __contains(self, other: Self): Bool = js!(Bool, self, ".includes(", other, ")")
 
     def join[T?: ToString, C?: Iterable[T]](self: Self, parts: C): String = _join(
         parts.iter().map(p -> p.toString()).toList())
 
-    def _join(self, parts: List[String]): String
+    def _join(self, parts: List[String]): String = js!(String, parts, ".join(", self, ")")
 
     def charCodeAt(self: Self, i: Int): Int
     def charAt(self: Self, i: Int): Char

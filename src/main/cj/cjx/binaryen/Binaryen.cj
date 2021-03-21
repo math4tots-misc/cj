@@ -35,6 +35,18 @@ native class Binaryen {
         def addGlobal(self, name: String, type: Type, mutable: Bool, value: Expression) = js!(
             Unit, self, ".addGlobal(", name, ",", type, ",", mutable, ",", value, ")")
         def setMemory(self, init: Int, max: Int) = js!(Unit, self, ".setMemory(", init, ",", max, ")")
+        def addMemoryExport(self, internalName: String, externalName: String) = js!(
+            Unit, self, ".addMemoryExport(", internalName, ",", externalName, ")")
+        def addMemoryImport(
+            self,
+            internalName: String,
+            externalModuleName: String,
+            externalBaseName: String) = js!(
+                Unit,
+                self,
+                ".addMemoryImport(", internalName,
+                ",", externalModuleName,
+                ",", externalBaseName, ")")
         def addFunction(
                 self,
                 name: String,
@@ -46,6 +58,20 @@ native class Binaryen {
                     self, ".addFunction(", name, ",", params, ",", results, ",", vars, ",", body, ")")
         def addFunctionExport(self, internalName: String, externalName: String) = js!(
             Unit, self, ".addFunctionExport(", internalName, ",", externalName, ")")
+        def addFunctionImport(
+            self,
+            internalName: String,
+            externalModuleName: String,
+            externalBaseName: String,
+            params: Type,
+            results: Type) = js!(
+                Unit,
+                self,
+                ".addFunctionImport(", internalName,
+                ",", externalModuleName,
+                ",", externalBaseName,
+                ",", params,
+                ",", results, ")")
 
         def call(self, name: String, operands: List[Expression], returnType: Type): Expression {
             js!(Expression, self, ".call(", name, ",", operands, ",", returnType, ")")

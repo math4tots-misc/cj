@@ -19,31 +19,6 @@ class MC$cj$String {
             }
         }) + '"';
     }
-    M$toBool(self) {
-        return self.length !== 0;
-    }
-    M$__eq(self, other) {
-        return self === other;
-    }
-    M$hash(self) {
-        let h = 0;
-        for (const c of self) {
-            h = combineHash(h, c.codePointAt(0));
-        }
-        return h;
-    }
-    M$__lt(self, other) {
-        return self < other;
-    }
-    M$__contains(self, other) {
-        self.includes(other);
-    }
-    M$join(TV$T, TV$C, self, parts) {
-        return Array.from(TV$C.M$iter(parts)).map(t => TV$T.M$toString(t)).join(self);
-    }
-    M$_join(self, parts) {
-        return parts.join(self);
-    }
 
     M$charCodeAt(self, i) {
         return defined(self.charCodeAt(i));

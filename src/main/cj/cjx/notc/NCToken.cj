@@ -1,13 +1,15 @@
 package cjx.notc
 
+import cjx.parser.Mark
 import cj.Error
 
-class NCToken {
+class NCToken: Repr {
     enum {
         tEOF = 200
         tINT
         tID
         tMACROID
+        tSTRING
 
         tEQ
         tNE
@@ -33,6 +35,7 @@ class NCToken {
     val value: Value
     val line : Int
     val column : Int
+    var filepath: String = ?
 
     @implicit(Unit, fromUnit)
     @implicit(Int, int)
@@ -77,4 +80,6 @@ class NCToken {
             "Unknown(" + type + ")"
         }
     }
+
+    def toMark(self): Mark = Mark(filepath, line, column)
 }

@@ -24,6 +24,7 @@ class NCCodegen {
     def emit(program: NCIR.Program): Uint8Array {
         val self = Self(program)
         m.setMemory(1, 1024)
+        m.addMemoryImport("0", "js", "memory")
         for func in program.funcs {
             func(func)
         }
@@ -39,13 +40,19 @@ class NCCodegen {
     }
 
     def func(self, func: NCIR.Func) {
-        m.addFunction(
-            func.name,
-            Binaryen.createType(func.params.map(v -> type(v.mark, v.type))),
-            type(func.mark, func.returnType),
-            func.locals.map(v -> type(v.mark, v.type)),
-            expr(func.body))
-        m.addFunctionExport(func.name, func.name)
+        val paramTypes = Binaryen.createType(func.params.map(v -> type(v.mark, v.type)))
+        val returnType = type(func.mark, func.returnType)
+        if is_set!(func, body) {
+            m.addFunction(
+                func.name,
+                paramTypes,
+                returnType,
+                func.locals.map(v -> type(v.mark, v.type)),
+                expr(func.body))
+            m.addFunctionExport(func.name, func.name)
+        } else {
+            m.addFunctionImport(func.name, "imports", func.name, paramTypes, returnType)
+        }
     }
 
     def type(self, mark: Mark, type: NCIR.Type): Binaryen.Type {

@@ -318,7 +318,7 @@ class NCIR {
         }
 
         ## implicit cast
-        private def icast(expr: Expr, type: Type): Expr {
+        def icast(expr: Expr, type: Type): Expr {
             if expr.type.isMeta() {
                 throw NCError("Expected expression, but got type", [expr.mark])
             }
@@ -452,6 +452,8 @@ class NCIR {
         def repr(self): String {
             val kindstr = kindNames[kind]
             switch kind {
+                case kBLOCK = "block(" + type + "," + ",".join(stmts.map(s -> s.repr())) + ")"
+                case kIF = "if_(" + type + "," + cond + "," + then + "," + els + ")"
                 else = kindstr
             }
         }
