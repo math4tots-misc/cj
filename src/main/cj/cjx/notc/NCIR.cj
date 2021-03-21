@@ -9,16 +9,25 @@ class NCIR {
 
     class Program {
         val funcs: List[Func] = []
-        val funcMap: Map[String, Func] = MapOf()
+        val funcMap: Map[String, Int] = MapOf()
         val constMap: Map[String, Int] = MapOf()
 
         def addFunc(self, func: Func) {
+            if func.name in funcMap {
+                throw NCError(
+                    "Duplicate function definition",
+                    [func.mark, funcs[funcMap[func.name]].mark])
+            }
+            funcMap[func.name] = funcs.size()
             funcs.add(func)
-            funcMap[func.name] = func
+        }
+
+        def updateFunc(self, func: Func) {
+            funcs[funcMap[func.name]] = func
         }
 
         def getFuncOrNull(self, funcName: String): Func? {
-            funcMap.getOrNull(funcName)
+            funcMap.getOrNull(funcName).map(i -> funcs[i])
         }
 
         def addConst(self, name: String, value: Int) {

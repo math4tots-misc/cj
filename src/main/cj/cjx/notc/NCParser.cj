@@ -18,13 +18,31 @@ class NCParser: ParserMixin[NCToken] {
     def typeOfToken(token: NCToken): Int = token.type
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
-    def parse(program: Program, filepath: String, contents: String) {
-        val tokens = NCLexer.lex(filepath, contents)
-        val self = Self(filepath, tokens, program)
+    def parseAll(sources: List[Tuple[String, String]]): Program {
+        val pairs = sources.map(p -> (p.f0, NCLexer.lex(p.f0, p.f1)))
+        val program = Program()
+        for pass in [0, 1, 2] {
+            for (filepath, tokens) in pairs {
+                parseEx(pass, program, filepath, tokens)
+            }
+        }
+        program
+    }
+
+    # def parse(program: Program, filepath: String, contents: String) {
+    #     val tokens = NCLexer.lex(filepath, contents)
+    #     val self = Self(filepath, tokens, program)
+    #     file()
+    #     assert(NCToken.tEOF)
+    # }
+
+    def parseEx(pass: Int, program: Program, filepath: String, tokens: List[NCToken]) {
+        val self = Self(pass, filepath, tokens, program)
         file()
         assert(NCToken.tEOF)
     }
 
+    val pass: Int
     val filepath: String
     val tokens: List[NCToken]
     var i = 0
@@ -52,7 +70,9 @@ class NCParser: ParserMixin[NCToken] {
                 expect('=')
                 val value = expect(NCToken.tINT).intValue
                 expectDelim()
-                program.addConst(name, value)
+                if pass == 0 { program.addConst(name, value) }
+            } else if pass < 1 {
+                skipToDelimiter()
             } else {
                 val type = type()
                 val name = id()
@@ -73,20 +93,40 @@ class NCParser: ParserMixin[NCToken] {
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
     def func(self, mark: Mark, returnType: Type, name: String) {
-        funcPrep()
+        locals = NCLocals()
         val nparams = params().size()
         val func = Func(mark, returnType, name, nparams, locals.list)
-        if consume('=') {
-            func.body = expr()
-        } else if at('{') {
-            func.body = block()
+        if pass < 2 {
+            program.addFunc(func)
+            skipToDelimiter()
+        } else {
+            if consume('=') {
+                func.body = expr()
+            } else if at('{') {
+                func.body = block()
+            }
+            program.updateFunc(func)
         }
         expectDelim()
-        program.addFunc(func)
     }
 
-    def funcPrep(self) {
-        locals = NCLocals()
+    def skipToDelimiter(self) {
+        while not atDelim() {
+            skipOne()
+        }
+    }
+
+    def skipOne(self) {
+        var repeat = true
+        var depth = 0
+        while repeat {
+            switch next().type {
+                case '('; case '['; case '{' { depth++ }
+                case ')'; case ']'; case '}' { depth-- }
+                else = ()
+            }
+            repeat = depth > 0
+        }
     }
 
     def type(self): Type {

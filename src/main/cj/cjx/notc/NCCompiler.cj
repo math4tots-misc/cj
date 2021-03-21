@@ -11,11 +11,15 @@ class NCCompiler {
     var includePrelude = true
 
     def compileString(self, string: String): Uint8Array {
-        val program = NCIR.Program()
+        val sources: List[Tuple[String, String]] = []
+        # val program = NCIR.Program()
         if includePrelude {
-            NCParser.parse(program, "<prelude>", include_str!("prelude.notc"))
+            sources.add(("<prelude>", include_str!("prelude.notc")))
+            # NCParser.parse(program, "<prelude>", include_str!("prelude.notc"))
         }
-        NCParser.parse(program, "<string>", string)
+        # NCParser.parse(program, "<string>", string)
+        sources.add(("<string>", string))
+        val program = NCParser.parseAll(sources)
         NCCodegen.emit(program)
     }
 

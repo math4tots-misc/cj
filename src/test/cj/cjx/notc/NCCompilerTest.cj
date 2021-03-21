@@ -89,6 +89,8 @@ class NCCompilerTest {
         assertCode("int main() { load!(5) }", 0) # memory should be fresh (zeroed out)
         assertCode("int main() { store!(4, 600); load!(5) }", 600 // 256)
         assertCode("int main() { store!(4, 600); load!(4) }", 600)
+
+        assertCode("int main() = foo()\nint foo() = 12321", 12321)
     }
 
 }
