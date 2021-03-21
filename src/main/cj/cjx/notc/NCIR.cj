@@ -10,6 +10,7 @@ class NCIR {
     class Program {
         val funcs: List[Func] = []
         val funcMap: Map[String, Func] = MapOf()
+        val constMap: Map[String, Int] = MapOf()
 
         def addFunc(self, func: Func) {
             funcs.add(func)
@@ -19,6 +20,12 @@ class NCIR {
         def getFuncOrNull(self, funcName: String): Func? {
             funcMap.getOrNull(funcName)
         }
+
+        def addConst(self, name: String, value: Int) {
+            constMap[name] = value
+        }
+
+        def getConstOrNull(self, name: String): Int? = constMap.getOrNull(name)
     }
 
     class Var {
@@ -97,6 +104,7 @@ class NCIR {
             kINT_SUB
             kINT_MUL
             kINT_DIV
+            kINT_REM
             kINT_NEG
             kINT_EQ
             kINT_NE
@@ -385,6 +393,14 @@ class NCIR {
             }
             throw NCError(
                 "Invalid args to binary '/' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def rem(mark: Mark, lhs: Expr, rhs: Expr): Self {
+            if lhs.type.isInt() and rhs.type.isInt() {
+                return binop(mark, kINT_REM, Type.int, lhs, rhs)
+            }
+            throw NCError(
+                "Invalid args to binary '%' (" + lhs.type + "," + rhs.type + ")", [mark])
         }
 
         def eq(mark: Mark, lhs: Expr, rhs: Expr): Self {

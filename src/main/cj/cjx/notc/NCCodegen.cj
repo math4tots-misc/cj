@@ -65,6 +65,7 @@ class NCCodegen {
             case NCIR.Expr.kINT_ADD = m.i32.add(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_SUB = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_MUL = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
+            case NCIR.Expr.kINT_REM = m.i32.rem_s(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_DIV = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_EQ = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
             case NCIR.Expr.kINT_NE = m.i32.ne(expr(expr.lhs), expr(expr.rhs))

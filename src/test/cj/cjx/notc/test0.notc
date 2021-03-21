@@ -1,0 +1,15 @@
+
+typedef int[] string
+
+string sprintf(string fmt, ...args);
+void printf(string fmt, ...args) = __print(sprintf(fmt, ...args))
+
+int main() {
+    var foo = 12
+
+    auto a = "hello";
+    auto b = "world";
+    auto c = a + b
+    auto d = sprintf("%s .. %s -> %s", a, b, c)
+    return c.size();
+}

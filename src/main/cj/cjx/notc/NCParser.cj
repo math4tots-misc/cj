@@ -19,15 +19,16 @@ class NCParser: ParserMixin[NCToken] {
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
     def parse(filepath: String, contents: String): Program {
-        parseEx(Program(), filepath, contents)
+        val p = Program()
+        parseEx(p, filepath, contents)
+        p
     }
 
-    def parseEx(program: Program, filepath: String, contents: String): Program {
+    def parseEx(program: Program, filepath: String, contents: String) {
         val tokens = NCLexer.lex(filepath, contents)
         val self = Self(filepath, tokens, program)
-        program()
+        file()
         assert(NCToken.tEOF)
-        program
     }
 
     val filepath: String
@@ -48,13 +49,22 @@ class NCParser: ParserMixin[NCToken] {
         message, [mark])
     def id(self): String = expect(NCToken.tID).stringValue
 
-    def program(self): Program {
-        val program = Program()
+    def file(self): Program {
+        skipDelims()
         while not at(NCToken.tEOF) {
             val mark = mark()
-            val type = type()
-            val name = id()
-            func(mark, type, name)
+            if consume(NCToken.kwCONST) {
+                val name = id()
+                expect('=')
+                val value = expect(NCToken.tINT).intValue
+                expectDelim()
+                program.addConst(name, value)
+            } else {
+                val type = type()
+                val name = id()
+                func(mark, type, name)
+            }
+            skipDelims()
         }
         program
     }
@@ -88,6 +98,7 @@ class NCParser: ParserMixin[NCToken] {
     def type(self): Type {
         var type = switch peek().type {
             case NCToken.kwINT { next(); Type.int }
+            case NCToken.kwVOID { next(); Type.void }
             else = errorKind("type")
         }
         while consume('[') {
@@ -137,6 +148,7 @@ class NCParser: ParserMixin[NCToken] {
                 case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
                 case '*'          { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
                 case '/'          { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
+                case '%'          { next(); expr = Expr.rem(mark, expr, exprpr(tokprec)) }
                 case NCToken.tEQ  { next(); expr = Expr.eq(mark, expr, exprpr(tokprec)) }
                 case NCToken.tNE  { next(); expr = Expr.ne(mark, expr, exprpr(tokprec)) }
                 case NCToken.tLE  { next(); expr = Expr.le(mark, expr, exprpr(tokprec)) }
@@ -178,12 +190,15 @@ class NCParser: ParserMixin[NCToken] {
                     Expr.getvar(mark, var_)
                 } else if val func = program.getFuncOrNull(name) {
                     Expr.getfunc(mark, func)
+                } else if val value = program.getConstOrNull(name) {
+                    Expr.int(mark, value)
                 } else {
                     throw NCError("Variable '" + name + "' not found", [mark])
                 }
             }
             case NCToken.tINT = Expr.int(mark, next().intValue)
             case NCToken.kwINT { next(); Expr.type(mark, Type.int) }
+            case NCToken.kwVOID { next(); Expr.type(mark, Type.void) }
             case NCToken.tMACROID {
                 val name = next().stringValue
                 val args = args()

@@ -15,11 +15,13 @@ class NCToken {
         tGE
 
         kwINT
+        kwVOID
         kwRETURN
         kwIF
         kwELSE
         kwFOR
         kwWHILE
+        kwCONST
     }
 
     static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")
