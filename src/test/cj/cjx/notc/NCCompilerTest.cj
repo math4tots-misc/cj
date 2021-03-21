@@ -3,9 +3,11 @@ package cjx.notc
 import cjx.notc.NCCompiler
 
 class NCCompilerTest {
+    private static val compiler: NCCompiler = NCCompiler()
 
     def assertCode(source: String, code: Int) {
-        Assert.equal(NCCompiler.compileAndRunMain(source), code)
+        compiler.includePrelude = false
+        Assert.equal(compiler.compileAndRunMain(source), code)
     }
 
     @test

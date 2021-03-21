@@ -18,13 +18,7 @@ class NCParser: ParserMixin[NCToken] {
     def typeOfToken(token: NCToken): Int = token.type
     def nameOfType(type: Int): String = NCToken.typeRepr(type)
 
-    def parse(filepath: String, contents: String): Program {
-        val p = Program()
-        parseEx(p, filepath, contents)
-        p
-    }
-
-    def parseEx(program: Program, filepath: String, contents: String) {
+    def parse(program: Program, filepath: String, contents: String) {
         val tokens = NCLexer.lex(filepath, contents)
         val self = Self(filepath, tokens, program)
         file()
