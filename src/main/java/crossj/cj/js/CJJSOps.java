@@ -18,12 +18,12 @@ public final class CJJSOps {
             "cj.Int16Array", "cj.Uint32Array", "cj.Int32Array", "cj.Uint64Array", "cj.Int64Array", "cj.Float32Array",
             "cj.Float64Array");
 
-    private static List<String> dynamicBufferMethods = List.of("__new", "fromArrayBuffer", "withSize", "withCapacity",
-            "empty", "fromUTF8", "ofU8s", "capacity", "size", "useLittleEndian", "resize", "getI8", "getU8", "getI16",
-            "getU16", "getI32", "getU32", "getI64", "getU64", "getF32", "getF64", "getUTF8", "cut", "cutFrom", "setI8",
-            "setU8", "setI16", "setU16", "setI32", "setU32", "setI64", "setU64", "setF32", "setF64", "setBuffer",
-            "setUTF8", "addI8", "addU8", "addI16", "addU16", "addI32", "addU32", "addI64", "addU64", "addF32", "addF64",
-            "addBuffer", "addUTF8", "toString", "repr", "__eq", "__get_buffer");
+    // private static List<String> dynamicBufferMethods = List.of("__new", "fromArrayBuffer", "withSize", "withCapacity",
+    //         "empty", "fromUTF8", "ofU8s", "capacity", "size", "useLittleEndian", "resize", "getI8", "getU8", "getI16",
+    //         "getU16", "getI32", "getU32", "getI64", "getU64", "getF32", "getF64", "getUTF8", "cut", "cutFrom", "setI8",
+    //         "setU8", "setI16", "setU16", "setI32", "setU32", "setI64", "setU64", "setF32", "setF64", "setBuffer",
+    //         "setUTF8", "addI8", "addU8", "addI16", "addU16", "addI32", "addU32", "addI64", "addU64", "addF32", "addF64",
+    //         "addBuffer", "addUTF8", "toString", "repr", "__eq", "__get_buffer");
 
     private static List<String> dataViewMethods = List.of("__new", "fromParts", "useLittleEndian", "__get_byteLength",
             "getInt8", "getUint8", "getInt16", "getUint16", "getInt32", "getUint32", "getFloat32", "getFloat64",
