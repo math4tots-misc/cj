@@ -718,13 +718,13 @@ class CJParser {
                 text[:text.size() - 1]
             })))
             case CJToken.tTYPEID {
+                val startMark = mark
                 val owner = parseType()
                 if at('(') {
                     val opmark = self.mark
                     val args = parseArgs()
                     Expr(opmark, ED.call(null(owner), "__new", [], args))
-                } else {
-                    expect('.')
+                } else if consume('.') {
                     val opmark = self.mark
                     val name = parseId()
                     if atMethodArgsStart(i) {
@@ -734,6 +734,9 @@ class CJParser {
                     } else {
                         Expr(opmark, ED.getstatic(owner, name))
                     }
+                } else {
+                    val opmark = mark
+                    Expr(opmark, ED.type(owner))
                 }
             }
             case CJToken.tID {
@@ -750,6 +753,12 @@ class CJParser {
                     val name = parseId()
                     Expr(opmark, ED.getvar(name))
                 }
+            }
+            case CJToken.tMACROID {
+                val opmark = mark
+                val name = next().text
+                val args = parseArgs()
+                Expr(opmark, ED.macro(name, args))
             }
             case CJToken.kwIF {
                 next()
@@ -959,7 +968,7 @@ class CJParser {
             case '(' = true
             case '[' {
                 val j = indexAfterMatching(i)
-                j < tokens.size() and tokens[j].type == CJToken.tRIGHT_ARROW
+                j < tokens.size() and tokens[j].type == '('
             }
             else = false
         }

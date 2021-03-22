@@ -197,6 +197,8 @@ class CJAst {
         case await_(Expr)
         case throw_(Expr)
         case try_(Expr, List[Catch], Expr?)
+        case macro(String, List[Expr])
+        case type(Type)
     }
 
     class WhenCase: Repr {
