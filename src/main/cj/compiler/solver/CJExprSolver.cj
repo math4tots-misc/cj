@@ -92,6 +92,8 @@ class CJExprSolver {
             case await_(..) = throw CJError("TODO solveExpr await_", [mark])
             case throw_(..) = throw CJError("TODO solveExpr throw_", [mark])
             case try_(..) = throw CJError("TODO solveExpr try_", [mark])
+            case macro(..) = throw CJError("TODO solveExpr macro", [mark])
+            case type(..) = throw CJError("TODO solveExpr type", [mark])
         }
     }
 }

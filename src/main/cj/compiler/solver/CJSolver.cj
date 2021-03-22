@@ -212,6 +212,7 @@ class CJSolver:
                 handleItemTraits(itemScope, item, iritem)
                 handleItemMethods(itemScope, item, iritem)
             }
+            case interface_ = throw CJError("TODO", [item.mark])
         }
         for member in item.members {
             when member {

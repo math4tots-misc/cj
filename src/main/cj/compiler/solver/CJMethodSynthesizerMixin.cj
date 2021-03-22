@@ -62,6 +62,7 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
             case class_ = _synthesizeEqForClass(item)
             case union_ = _synthesizeEqForUnion(item)
             case trait_ = throw CJError("derive eq not supported for traits", [item.mark])
+            case interface_ = throw CJError("derive eq not supported for interfaces", [item.mark])
         }
     }
 
@@ -69,7 +70,8 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
         when item.kind {
             case class_ = _synthesizeHashForClass(item)
             case union_ = _synthesizeHashForUnion(item)
-            case trait_ = throw CJError("derive eq not supported for traits", [item.mark])
+            case trait_ = throw CJError("derive hash not supported for traits", [item.mark])
+            case interface_ = throw CJError("derive hash not supported for interfaces", [item.mark])
         }
     }
 
@@ -78,6 +80,7 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
             case class_ = _synthesizeReprForClass(item)
             case union_ = _synthesizeReprForUnion(item)
             case trait_ = throw CJError("derive repr not supported for traits", [item.mark])
+            case interface_ = throw CJError("derive repr not supported for interfaces", [item.mark])
         }
     }
 
@@ -86,6 +89,7 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
             case class_ = _synthesizeDefaultForClass(item)
             case union_ = throw CJError("derive default not supported for unions", [item.mark])
             case trait_ = throw CJError("derive default not supported for traits", [item.mark])
+            case interface_ = throw CJError("derive default not supported for interfaces", [item.mark])
         }
     }
 
