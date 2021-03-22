@@ -47,14 +47,8 @@ class CJAstInspector {
     def _ntype(nt: Nullable[CJAst.Type]): String = if val t = nt { _type(t) } else { "null" }
     def _ltype(lt: List[CJAst.Type]): String = "[" + ", ".join(lt.map(t -> _type(t))) + "]"
 
-    def _itemkind(itemKind: CJItemKind): String = when itemKind {
-        case class_ = "class"
-        case union_ = "union"
-        case trait_ = "trait"
-    }
-
     def _inspectItem(self, item: CJAst.Item) {
-        line(_itemkind(item.kind) + " " + item.shortName)
+        line("" + item.kind + " " + item.shortName)
         nest(() -> {
             for member in item.members {
                 _inspectMember(member)

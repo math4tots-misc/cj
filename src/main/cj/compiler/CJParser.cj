@@ -202,7 +202,7 @@ class CJParser {
         skipDelimiters()
         val members = List[CJAst.Member].empty()
         while not consume('}') {
-            members.add(parseMember())
+            parseMember(members)
         }
         expectDelimiters()
         CJAst.Item(
@@ -216,19 +216,54 @@ class CJParser {
             traitDeclarations,
             members)
     }
-    private def parseMember(self): CJAst.Member {
+    private def parseEnum(self, members: List[CJAst.Member]) {
+        expect(CJToken.kwENUM)
+        expect('{')
+        skipDelimiters()
+        var nextValue = 0
+        while not consume('}') {
+            val m = mark
+            val name = parseId()
+            val value = if consume('=') { parseInt() } else { nextValue }
+            members.add(CJAst.Member.field(CJAst.Field(
+                m,
+                null,
+                [],
+                [CJModifier.static_],
+                false,
+                name,
+                null(CJAst.Type(m,"Int", [])),
+                null(Expr(m, ED.int(value))),
+            )))
+            nextValue = value + 1
+            skipDelimiters()
+        }
+        skipDelimiters()
+    }
+    private def parseInt(self): Int = Int(expect(CJToken.tINT).text)
+    private def parseMember(self, members: List[CJAst.Member]) {
         val comment = parseComment()
         val annotations = parseAnnotations()
         val modifiers = parseModifiers()
         switch peek().type {
             case CJToken.kwVAL
-            case CJToken.kwVAR = CJAst.Member.field(parseField(comment, annotations, modifiers))
-            case CJToken.kwCASE = CJAst.Member.case_(parseCase(comment, annotations, modifiers))
+            case CJToken.kwVAR {
+                members.add(CJAst.Member.field(parseField(comment, annotations, modifiers)))
+            }
+            case CJToken.kwCASE {
+                members.add(CJAst.Member.case_(parseCase(comment, annotations, modifiers)))
+            }
             case CJToken.kwIF
-            case CJToken.kwDEF = CJAst.Member.method(parseMethod(comment, annotations, modifiers))
+            case CJToken.kwDEF {
+                members.add(CJAst.Member.method(parseMethod(comment, annotations, modifiers)))
+            }
             case CJToken.kwCLASS
             case CJToken.kwTRAIT
-            case CJToken.kwUNION = CJAst.Member.item(parseItem(comment, annotations, modifiers))
+            case CJToken.kwUNION
+            case CJToken.kwINTERFACE {
+                members.add(CJAst.Member.item(parseItem(comment, annotations, modifiers)))
+            }
+            case CJToken.kwENUM = parseEnum(members)
             else = throw ekind("var, val, def, if, class, trait or union")
         }
     }
@@ -345,6 +380,7 @@ class CJParser {
             case CJToken.kwCLASS { next(); CJItemKind.class_ }
             case CJToken.kwUNION { next(); CJItemKind.union_ }
             case CJToken.kwTRAIT { next(); CJItemKind.trait_ }
+            case CJToken.kwINTERFACE { next(); CJItemKind.interface_ }
             else = throw ekind("class, union or trait")
         }
     }
