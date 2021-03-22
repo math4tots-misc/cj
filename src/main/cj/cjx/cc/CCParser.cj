@@ -14,6 +14,7 @@ import cjx.cc.CCToken
 import cjx.parser.ParserMixin
 
 class CCParser: ParserMixin[CCToken] {
+    static private val assingPrec: Int = precof('=')
     static private val unaryPrec: Int = precof('*') + 5
 
     def typeOfToken(token: CCToken): Int = token.type
@@ -68,9 +69,12 @@ class CCParser: ParserMixin[CCToken] {
 
     def func(self) {
         var baseType = declspec()
-        val (mark, name, type) = declarator(baseType)
-        val func = Func(mark, name, type)
+        val (mark, name, funcType) = declarator(baseType)
+        val func = Func(mark, name, funcType)
         locals = CCLocals()
+        for (mark, type, name) in funcType.params {
+            locals.add(mark, type, name)
+        }
         func.body = block()
         func.locals = locals.list
         funcMap[func.name] = funcs.size()
@@ -133,6 +137,8 @@ class CCParser: ParserMixin[CCToken] {
     }
 
     def expr(self): Node = exprpr(0)
+
+    def assign(self): Node = exprpr(assingPrec - 1)
 
     def exprpr(self, precedence: Int): Node {
         var expr = atom()
@@ -253,10 +259,13 @@ class CCParser: ParserMixin[CCToken] {
     }
 
     def args(self): List[Node] {
-        # TODO
         expect('(')
-        expect(')')
-        []
+        val args: List[Node] = []
+        while not consume(')') {
+            args.add(assign())
+            if not consume(',') { assert(')') }
+        }
+        args
     }
 
     def atom(self): Node {
@@ -317,12 +326,29 @@ class CCParser: ParserMixin[CCToken] {
         }
         val mark = mark()
         val name = if at(CCToken.tIDENT) { next().stringValue } else { "" }
-        while consume('(') {
-            # TODO: function parameters
-            expect(')')
-            type = Type.func(type)
-        }
+
+        # type suffix
+        type = typeSuffix(type)
         (mark, name, type)
+    }
+
+    def typeSuffix(self, var type: Type): Type {
+        var repeat = true
+        while repeat {
+            if consume('(') {
+                val params: List[Tuple[Mark, Type, String]] = []
+                while not consume(')') {
+                    val baseType = declspec()
+                    val (mark, paramName, paramType) = declarator(baseType)
+                    params.add((mark, paramType, paramName))
+                    if not consume(',') { assert(')') }
+                }
+                type = Type.func(type, params)
+            } else {
+                repeat = false
+            }
+        }
+        type
     }
 
     ## declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
@@ -341,7 +367,7 @@ class CCParser: ParserMixin[CCToken] {
             if not name {
                 throw CCError("Expected name", [mark])
             }
-            val var_ = locals.add(name, type, mark)
+            val var_ = locals.add(mark, type, name)
             if consume('=') {
                 val init = expr()
                 initstmts.add(exprStmtNode(

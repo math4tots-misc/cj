@@ -18,7 +18,7 @@ class CCLocals {
         }
     }
 
-    def add(self, name: String, type: Type, mark: Mark): Obj {
+    def add(self, mark: Mark, type: Type, name: String): Obj {
         val offset = nextOffset
         nextOffset += 4
 

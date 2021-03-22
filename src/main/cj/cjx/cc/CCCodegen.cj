@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Error
 import cjx.cc.CCError
 import cj.Uint8Array
 import cjx.cc.CCIR
@@ -41,9 +42,30 @@ class CCCodegen {
         locals = []
         localSlotSP = newLocal(i32)
 
-        val body = stmt(func.body)
+        val stmts: List[Binaryen.Expression] = []
+
+        val params = func.params
+        for i = 0; i < params.size(); i++ {
+            val param = params[i]
+            val ptype = type(param.type)
+            val spptr = m.local.get(localSlotSP, i32)
+            stmts.add(if ptype == i32 {
+                m.i32.store(param.offset, 0, spptr, m.local.get(i, ptype))
+            } else if ptype == i64 {
+                m.i64.store(param.offset, 0, spptr, m.local.get(i, ptype))
+            } else {
+                throw Error("TODO")
+            })
+        }
+
+        stmts.add(stmt(func.body))
+        val body = m.block(null, stmts, auto)
         m.addFunction(
-            func.name, Binaryen.createType([]), type(func.type.returnType), locals, body)
+            func.name,
+            Binaryen.createType(func.type.paramTypes.map(t -> type(t))),
+            type(func.type.returnType),
+            locals,
+            body)
         m.addFunctionExport(func.name, func.name)
     }
 

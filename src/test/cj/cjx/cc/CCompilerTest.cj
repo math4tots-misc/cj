@@ -94,5 +94,6 @@ class CCompilerTest {
     @test
     def funcs() {
         assert2("int foo() { return 5; } int main() { return foo(); }", 5)
+        assert2("int add(int a, int b) { return a + b; } int main() { return add(3, 17); }", 20)
     }
 }

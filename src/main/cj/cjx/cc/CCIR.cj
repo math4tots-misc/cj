@@ -17,9 +17,10 @@ class CCIR {
             self
         }
 
-        def func(returnType: Self): Self {
+        def func(returnType: Self, params: List[Tuple[Mark, Type, String]]): Self {
             val self = Self(Kind.func)
             self.returnType = returnType
+            self.params = params
             self
         }
 
@@ -35,6 +36,8 @@ class CCIR {
         # functions
         def __get_returnType(self): Type = base
         def __set_returnType(self, returnType: Type) { base = returnType }
+        var params: List[Tuple[Mark, Type, String]] = ?
+        def __get_paramTypes(self): List[Type] = params.map(p -> p.f1)
 
         def isPtr(self): Bool = tag!(kind) == tag!(Kind, ptr)
         def isInt(self): Bool = tag!(kind) == tag!(Kind, int)
@@ -63,6 +66,7 @@ class CCIR {
         val type: Type
         var locals: List[Obj] = []
         var body: Node = ?
+        def __get_params(self): List[Obj] = locals[:type.params.size()]
     }
 
     ## variable
