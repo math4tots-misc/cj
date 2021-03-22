@@ -6,7 +6,7 @@ import cjx.cc.CCIR.Obj
 import cjx.cc.CCIR.Type
 
 class CCLocals {
-    var locals: List[Obj] = []
+    var list: List[Obj] = []
     var map: Map[String, Obj] = MapOf()
     var nextOffset: Int = 0
 
@@ -24,7 +24,7 @@ class CCLocals {
 
         val obj = Obj(name, offset, type)
         map[name] = obj
-        locals.add(obj)
+        list.add(obj)
         obj
     }
 }

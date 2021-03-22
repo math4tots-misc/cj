@@ -17,13 +17,24 @@ class CCIR {
             self
         }
 
+        def func(returnType: Self): Self {
+            val self = Self(Kind.func)
+            self.returnType = returnType
+            self
+        }
+
         union Kind: Eq {
             case int
             case ptr
+            case func
             def __eq(self, other: Self): Bool = self is other
         }
         val kind: Kind
         var base: Type = ?
+
+        # functions
+        def __get_returnType(self): Type = base
+        def __set_returnType(self, returnType: Type) { base = returnType }
 
         def isPtr(self): Bool = tag!(kind) == tag!(Kind, ptr)
         def isInt(self): Bool = tag!(kind) == tag!(Kind, int)
@@ -42,7 +53,16 @@ class CCIR {
         def repr(self): String = when kind {
             case int = "int"
             case ptr = "ptr(" + base + ")"
+            case func = "func(" + returnType + ")"
         }
+    }
+
+    class Func {
+        val mark: Mark
+        val name: String
+        val type: Type
+        var locals: List[Obj] = []
+        var body: Node = ?
     }
 
     ## variable
@@ -77,6 +97,7 @@ class CCIR {
             case if_
             case for_
             case block
+            case funcall
             case exprStmt  # expression statement
             case var_
             case int
@@ -116,6 +137,11 @@ class CCIR {
         # unops
         def __set_arg(self, node: Node) { lhs = node }
         def __get_arg(self): Node = lhs
+
+        # function call
+        var func: Func = ?
+        def __set_args(self, args: List[Node]) { body = args }
+        def __get_args(self): List[Node] = body
 
         # var
         var var_: Obj = ?

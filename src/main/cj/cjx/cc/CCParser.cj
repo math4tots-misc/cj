@@ -7,6 +7,7 @@ import cjx.cc.CCIR
 import cjx.cc.CCIR.Node
 import cjx.cc.CCIR.Type
 import cjx.cc.CCIR.Obj
+import cjx.cc.CCIR.Func
 import cjx.cc.CCError
 import cjx.cc.CCLexer
 import cjx.cc.CCToken
@@ -40,9 +41,20 @@ class CCParser: ParserMixin[CCToken] {
         stmts
     }
 
+    def parseFunctions(filepath: String, contents: String): List[Func] {
+        val tokens = CCLexer.lex(filepath, contents)
+        val self = Self(filepath, tokens)
+        while not at(CCToken.tEOF) {
+            func()
+        }
+        funcs
+    }
+
     val filepath: String
     val tokens: List[CCToken]
     var i = 0
+    val funcMap: Map[String, Int] = MapOf()
+    val funcs: List[Func] = []
     var locals: CCLocals = CCLocals()
 
     def mark(self): Mark = markAt(peek())
@@ -51,6 +63,19 @@ class CCParser: ParserMixin[CCToken] {
         message, [markAt(token)])
     def errorAtMark(self, message: String, mark: Mark): NoReturn = throw CCError(
         message, [mark])
+
+    def getFuncOrNull(self, name: String): Func? = funcMap.getOrNull(name).map(i -> funcs[i])
+
+    def func(self) {
+        var baseType = declspec()
+        val (mark, name, type) = declarator(baseType)
+        val func = Func(mark, name, type)
+        locals = CCLocals()
+        func.body = block()
+        func.locals = locals.list
+        funcMap[func.name] = funcs.size()
+        funcs.add(func)
+    }
 
     def stmt(self): Node {
         val mark = mark()
@@ -227,6 +252,13 @@ class CCParser: ParserMixin[CCToken] {
         node
     }
 
+    def args(self): List[Node] {
+        # TODO
+        expect('(')
+        expect(')')
+        []
+    }
+
     def atom(self): Node {
         val mark = mark()
         switch peek().type {
@@ -243,8 +275,19 @@ class CCParser: ParserMixin[CCToken] {
             case CCToken.tINT { intNode(mark, next().intValue) }
             case CCToken.tIDENT {
                 val name = next().stringValue
-                val var_ = locals.get(name, mark)
-                varNode(mark, var_)
+                if at('(') {
+                    val fcall = Node(mark, Node.Kind.funcall)
+                    fcall.args = args()
+                    fcall.func = if val f = getFuncOrNull(name) {
+                        f
+                    } else {
+                        throw CCError("Function '" + name + "' not found", [mark])
+                    }
+                    fcall
+                } else {
+                    val var_ = locals.get(name, mark)
+                    varNode(mark, var_)
+                }
             }
             else = errorKind("expression")
         }
@@ -274,6 +317,11 @@ class CCParser: ParserMixin[CCToken] {
         }
         val mark = mark()
         val name = if at(CCToken.tIDENT) { next().stringValue } else { "" }
+        while consume('(') {
+            # TODO: function parameters
+            expect(')')
+            type = Type.func(type)
+        }
         (mark, name, type)
     }
 

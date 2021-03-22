@@ -20,25 +20,39 @@ class CCCodegen {
     private var locals: List[Binaryen.Type] = []
     private var labelCount = 0
 
-    def emit(self, stmts: List[CCIR.Node]): Uint8Array {
+    def emit(self, funcs: List[CCIR.Func]): Uint8Array {
 
         m.setMemory(1, 1)
 
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(8))
 
-        locals = []
-        localSlotSP = newLocal(i32)
-
-        val body = stmts(stmts)
-
-        m.addFunction("main", Binaryen.createType([]), i32, locals, body)
-        m.addFunctionExport("main", "main")
+        for func in funcs {
+            func(func)
+        }
 
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
         m.emitBinary()
+    }
+
+    def func(self, func: CCIR.Func) {
+        locals = []
+        localSlotSP = newLocal(i32)
+
+        val body = stmt(func.body)
+        m.addFunction(
+            func.name, Binaryen.createType([]), type(func.type.returnType), locals, body)
+        m.addFunctionExport(func.name, func.name)
+    }
+
+    def type(self, type: CCIR.Type): Binaryen.Type {
+        when type.kind {
+            case int = i32
+            case ptr = i32
+            case func = i32
+        }
     }
 
     def newLocal(self, type: Binaryen.Type): Int {
@@ -135,6 +149,8 @@ class CCCodegen {
             case ne = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case lt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case le = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case funcall = m.call(
+                expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
             case addr = addr(expr.arg)
             case assign; case var_; case deref = m.i32.load(0, 0, addr(expr))
             else = throw CCError("TODO expr " + expr.kind, [expr.mark])

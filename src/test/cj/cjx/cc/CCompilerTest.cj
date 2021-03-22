@@ -5,6 +5,10 @@ import cjx.cc.CCompiler
 class CCompilerTest {
 
     def assertCode(source: String, code: Int) {
+        Assert.equal(CCompiler.compileAndRunMain("int main() " + source), code)
+    }
+
+    def assert2(source: String, code: Int) {
         Assert.equal(CCompiler.compileAndRunMain(source), code)
     }
 
@@ -85,5 +89,10 @@ class CCompilerTest {
         assertCode("{ int x=3; int y=5; *(&x+1)=7; return y; }", 7)
         assertCode("{ int x=3; int y=5; *(&y-1)=7; return x; }", 7)
         assertCode("{ int x=3; return (&x+2)-&x+3; }", 5)
+    }
+
+    @test
+    def funcs() {
+        assert2("int foo() { return 5; } int main() { return foo(); }", 5)
     }
 }
