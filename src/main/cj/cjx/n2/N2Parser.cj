@@ -120,18 +120,12 @@ class N2Parser: ParserMixin[N2Token] {
     }
 
     def type(self): Type {
-        var type = switch peek().type {
-            case N2Token.kwINT { next(); Type.int }
-            case N2Token.kwVOID { next(); Type.void }
-            case N2Token.kwSTR { next(); Type.str }
-            case N2Token.kwVAR { next(); Type.var_ }
-            else = errorKind("type")
+        val expr = expr()
+        if expr.kind == Expr.kTYPE {
+            expr.ty
+        } else {
+            throw N2Error("Expected type literal", [expr.mark])
         }
-        while consume('[') {
-            expect(']')
-            type = Type.array(type)
-        }
-        type
     }
 
     def atDelim(self): Bool = switch peek().type {
