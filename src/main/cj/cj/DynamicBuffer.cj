@@ -108,7 +108,7 @@ native class DynamicBuffer: Repr, Eq, BufferLike, DataViewMixin {
     }
 
     def addInt8(self, value: Int) { val i = size(); resize(i + 1); view.setInt8(i, value) }
-    def addUint8(self, value: Int) { val i = size(); resize(i + 1); view.setUint8(i, value) }
+    def addUint8(self, value: Int) { val i = size(); resize(i + 1); IO.debug(view); view.setUint8(i, value) }
     def addInt16(self, value: Int) { val i = size(); resize(i + 2); view.setInt16(i, value) }
     def addUint16(self, value: Int) { val i = size(); resize(i + 2); view.setUint16(i, value) }
     def addInt32(self, value: Int) { val i = size(); resize(i + 4); view.setInt32(i, value) }

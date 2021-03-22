@@ -12,6 +12,7 @@ class Test06DynamicBuffer {
         {
             val buf = DynamicBuffer.ofU8s(5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
             val buf2 = DynamicBuffer.ofU8s(1, 2)
+            IO.debug(buf2)
             buf2.addUint8(3)
             Assert.equal(buf2, DynamicBuffer.ofU8s(1, 2, 3))
             Assert.equal(buf2.capacity(), 8)

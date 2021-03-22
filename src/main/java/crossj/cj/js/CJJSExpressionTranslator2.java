@@ -124,7 +124,7 @@ final class CJJSExpressionTranslator2 {
                 var op = CJJSOps.OPS.getOrNull(key);
                 if (op != null) {
                     var ctx = new CJJSOps.Context(key, binding, e, args, owner, reifiedMethodRef, llmethod,
-                            requestMethod, requestNative);
+                            requestMethod, requestNative, varFactory);
                     var blob = op.apply(ctx);
                     if (blob != null) {
                         return blob;
@@ -619,7 +619,19 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitIsSet(CJIRIsSet e, Void a) {
-                throw CJError.of("TODO translate IsSet", e.getMark());
+                if (e.getOwner().isPresent()) {
+                    var owner = translate(e.getOwner().get());
+                    return new CJJSBlob2(owner.getPrep(), out -> {
+                        out.append("(");
+                        owner.emitBody(out);
+                        out.append("[" + e.getField().getIndex() + "]!==undefined)");
+                    }, false);
+                } else {
+                    var owner = e.getOwnerType();
+                    var field = e.getField();
+                    var varName = CJJSTranslator2.getStaticFieldVarName(owner, field);
+                    return CJJSBlob2.simplestr("(" + varName + "!==null)", false);
+                }
             }
         }, null);
     }

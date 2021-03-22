@@ -349,10 +349,25 @@ public final class CJJSTranslator2 {
         out.append("}\n");
     }
 
+    static String getStaticFieldRootName(CJIRClassType owner, CJIRField field) {
+        return owner.repr().replace(".", "$") + "$" + field.getName();
+    }
+
+    static String getStaticFieldVarName(CJIRClassType owner, CJIRField field) {
+        return "FV$" + getStaticFieldRootName(owner, field);
+    }
+
+    static String getStaticFieldGetterName(CJIRClassType owner, CJIRField field) {
+        return owner.repr().replace(".", "$") + "$__get_" + field.getName();
+    }
+
+    static String getStaticFieldSetterName(CJIRClassType owner, CJIRField field) {
+        return owner.repr().replace(".", "$") + "$__set_" + field.getName();
+    }
+
     private void emitStaticField(CJIRClassType owner, CJIRField field) {
-        var rootName = owner.repr().replace(".", "$") + "$" + field.getName();
-        var fieldVarName = "FV$" + rootName;
-        var getterName = owner.repr().replace(".", "$") + "$__get_" + field.getName();
+        var fieldVarName = getStaticFieldVarName(owner, field);
+        var getterName = getStaticFieldGetterName(owner, field);
         out.addMark(field.getMark());
         var cinit = field.getExpression().isPresent() ? getConstOrNull(field.getExpression().get()) : null;
         if (cinit != null) {
@@ -379,7 +394,7 @@ public final class CJJSTranslator2 {
         }
 
         if (field.isMutable()) {
-            var setterName = owner.repr().replace(".", "$") + "$__set_" + field.getName();
+            var setterName = getStaticFieldSetterName(owner, field);
             out.append("function " + setterName + "(x){" + fieldVarName + "=x}\n");
 
             if (field.getType().repr().equals("cj.Int")) {

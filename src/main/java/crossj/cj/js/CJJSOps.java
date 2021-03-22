@@ -31,7 +31,8 @@ public final class CJJSOps {
             "setFloat32", "setFloat64", "setBigInt64", "setBigUint64");
 
     private static List<Pair<String, List<String>>> grandfatheredNativeMethods = List.of(
-            Pair.of("cj.DataView", dataViewMethods), Pair.of("cj.DynamicBuffer", dynamicBufferMethods),
+            Pair.of("cj.DataView", dataViewMethods),
+            // Pair.of("cj.DynamicBuffer", dynamicBufferMethods),
             Pair.of("cj.Range", List.of("of", "inclusive", "upto", "withStep", "iter")));
 
     private static List<String> nativeTruthyTypes = List.of("cj.Bool", "cj.Int", "cj.Double", "cj.String", "cj.BigInt");
@@ -118,8 +119,7 @@ public final class CJJSOps {
                 } else {
                     return null;
                 }
-            }),
-            mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
+            }), mkpair("cj.String.toString", ctx -> ctx.args.get(0)),
             mkpair("cj.String.default", ctx -> CJJSBlob2.simplestr("''", true)),
             mkpair("cj.String.toBool", ctx -> translateOp("(!!", ")", "", ctx.args)),
             mkpair("cj.String.charAt", ctx -> ensureDefined(ctx, translateParts(ctx.args, "", ".codePointAt(", ")"))),
@@ -206,16 +206,15 @@ public final class CJJSOps {
 
             mkpair("cj.ArrayBuffer.__new", ctx -> translateParts(ctx.args, "new ArrayBuffer(", ")")),
 
-            mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
-            mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
+            // mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
+            // mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
 
             mkpair("cj.IO.debug", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.printlnstr", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.eprintlnstr", ctx -> translateCall(ctx.mark, "console.error", ctx.args)),
             mkpair("cj.IO.panicstr", ctx -> translateCall(ctx.mark, "new Error", ctx.args)),
 
-            mkpair("cj.Argv.__new",
-                    ctx -> CJJSBlob2.simplestr("(typeof process===undefined?[]:process.argv)", false)),
+            mkpair("cj.Argv.__new", ctx -> CJJSBlob2.simplestr("(typeof process===undefined?[]:process.argv)", false)),
 
             mkpair("cj.FS.__get_sep", ctx -> CJJSBlob2.simplestr("require('path').sep", false)),
             mkpair("cj.FS.join", ctx -> translateParts(ctx.args, "require('path').join(...", ")")),
@@ -304,15 +303,15 @@ public final class CJJSOps {
         for (var type : nativeRandomAccess) {
             OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
             OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
-            OPS.put(type + ".__getitem", ctx -> translateParts(ctx.args, "", "[", "]"));
-            OPS.put(type + ".__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")"));
+            OPS.put(type + ".__getitem", ctx -> getitem(ctx, ctx.args.get(0), ctx.args.get(1)));
+            OPS.put(type + ".__setitem", ctx -> setitem(ctx, ctx.args.get(0), ctx.args.get(1), ctx.args.get(2)));
         }
 
         for (var type : nativeSliceableTypes) {
             OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
             OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
-            OPS.put(type + ".__getitem", ctx -> translateParts(ctx.args, "", "[", "]"));
-            OPS.put(type + ".__setitem", ctx -> translateParts(ctx.args, "(", "[", "]=", ")"));
+            OPS.put(type + ".__getitem", ctx -> getitem(ctx, ctx.args.get(0), ctx.args.get(1)));
+            OPS.put(type + ".__setitem", ctx -> setitem(ctx, ctx.args.get(0), ctx.args.get(1), ctx.args.get(2)));
             OPS.put(type + ".__sliceTo", ctx -> translateParts(ctx.args, "", ".slice(0,", ")"));
             OPS.put(type + ".__sliceFrom", ctx -> translateParts(ctx.args, "", ".slice(", ")"));
             OPS.put(type + ".__slice", ctx -> translateParts(ctx.args, "", ".slice(", ",", ")"));
@@ -387,10 +386,11 @@ public final class CJJSOps {
         // private final CJJSReifiedMethod llmethod;
         private final Consumer<CJJSLLMethod> requestMethod;
         private final BiConsumer<String, CJMark> requestNative;
+        private final CJJSTempVarFactory varFactory;
 
         public Context(String key, CJJSTypeBinding binding, CJIRMethodCall e, List<CJJSBlob2> args, CJIRClassType owner,
                 CJIRReifiedMethodRef reifiedMethodRef, CJJSLLMethod llmethod, Consumer<CJJSLLMethod> requestMethod,
-                BiConsumer<String, CJMark> requestNative) {
+                BiConsumer<String, CJMark> requestNative, CJJSTempVarFactory varFactory) {
             // this.key = key;
             this.mark = e.getMark();
             this.binding = binding;
@@ -401,6 +401,7 @@ public final class CJJSOps {
             // this.llmethod = llmethod;
             this.requestMethod = requestMethod;
             this.requestNative = requestNative;
+            this.varFactory = varFactory;
         }
 
         void requestJS(String fileName) {
@@ -431,6 +432,39 @@ public final class CJJSOps {
 
     static CJJSBlob2 translateParts(List<CJJSBlob2> args, String... parts) {
         return CJJSExpressionTranslator2.translateParts(args, parts);
+    }
+
+    static CJJSBlob2 getitem(Context ctx, CJJSBlob2 owner0, CJJSBlob2 index0) {
+        ctx.requestJS("a.getitem.js");
+        var needToPure = owner0.isSimple() && !index0.isSimple();
+        var owner = needToPure ? owner0.toPure(ctx.varFactory::newName) : owner0;
+        var index = needToPure ? index0.toPure(ctx.varFactory::newName) : index0;
+        var prep = CJJSExpressionTranslator2.joinPreps(List.of(owner.getPrep(), index.getPrep()));
+        return new CJJSBlob2(prep, out -> {
+            out.append("getitem(");
+            owner.emitBody(out);
+            out.append(",");
+            index.emitBody(out);
+            out.append(")");
+        }, false);
+    }
+
+    static CJJSBlob2 setitem(Context ctx, CJJSBlob2 owner0, CJJSBlob2 index0, CJJSBlob2 valex0) {
+        ctx.requestJS("a.setitem.js");
+        var needToPure = !List.of(owner0, index0, valex0).all(e -> e.isSimple());
+        var owner = needToPure ? owner0.toPure(ctx.varFactory::newName) : owner0;
+        var index = needToPure ? index0.toPure(ctx.varFactory::newName) : index0;
+        var valex = needToPure ? valex0.toPure(ctx.varFactory::newName) : valex0;
+        var prep = CJJSExpressionTranslator2.joinPreps(List.of(owner.getPrep(), index.getPrep(), valex.getPrep()));
+        return new CJJSBlob2(prep, out -> {
+            out.append("setitem(");
+            owner.emitBody(out);
+            out.append(",");
+            index.emitBody(out);
+            out.append(",");
+            valex.emitBody(out);
+            out.append(")");
+        }, false);
     }
 
     static CJJSBlob2 ensureDefined(Context ctx, CJJSBlob2 inner) {
