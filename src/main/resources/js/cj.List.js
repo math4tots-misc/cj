@@ -63,12 +63,12 @@ class MC$cj$List {
         self[j] = tmp;
     }
     M$__slice(self, start, end) {
-        start = this.checkedIndex(self, start);
+        start = this.checkedIndex2(self, start);
         end = this.checkedIndex2(self, end);
         return self.slice(start, end);
     }
     M$__sliceFrom(self, start) {
-        start = this.checkedIndex(self, start);
+        start = this.checkedIndex2(self, start);
         return self.slice(start);
     }
     M$__sliceTo(self, end) {

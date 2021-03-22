@@ -1,0 +1,2 @@
+
+void print(var x) = js!(void, "console.log(", x, ")")

@@ -946,7 +946,7 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var type = a.get();
                 if (!type.isFunctionType()) {
-                    throw CJError.of("Expected " + type + " but got a lambda expression", e.getMark());
+                    throw CJError.of("Expected " + type.repr() + " but got a lambda expression", e.getMark());
                 }
                 var fnType = (CJIRClassType) type;
                 var fnTypeArgs = fnType.getArgs();
