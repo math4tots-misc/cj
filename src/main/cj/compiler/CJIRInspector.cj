@@ -1,12 +1,13 @@
 package compiler
 
+import compiler.CJError
 import cj.StringBuilder
 import compiler.CJIR
 
 class CJIRInspector {
     val sb: StringBuilder = Default()
     var depth = 0
-    var showExprs = false
+    var showExprs = true
 
     private def line(self, line: String) {
         sb.add("  " * depth + line + "\n")
@@ -103,8 +104,20 @@ class CJIRInspector {
                         "" + p.type
                     })) + "):"
                     line(synthetic + method.name + tparams + params + method.returnType)
+                    if showExprs {
+                        if val body = method.body {
+                            nest(() -> _inspectExpr(body))
+                        }
+                    }
                 }
             })
+        }
+    }
+
+    def _inspectExpr(self, expr: CJIR.Expr) {
+        when expr.data {
+            case unit = line("()")
+            else = throw CJError("TODO inspectExpr " + tag_name!(expr.data), [expr.mark])
         }
     }
 

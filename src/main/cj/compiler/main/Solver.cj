@@ -9,7 +9,10 @@ import compiler.solver.CJSolver
 class Solver {
     def main() {
         val argv = Argv()
-        val solver = CJSolver(["src/main/cj"])
+        val solver = CJSolver([
+            "src/main/cj2",
+            "src/main/cj",
+        ])
         for filename in argv {
             val data = FS.readFile(filename)
             IO.println("Adding " + filename)

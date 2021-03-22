@@ -17,16 +17,16 @@ class CJExprSolver {
 
     def solveExprEx(self, astExpr: CJAst.Expr, expt: Type?): Expr {
         # TODO
-        Expr(astExpr.mark, solver.unitType, ED.unit)
-        # val expr = solveExprExUnchecked(astExpr, expt)
-        # if val et = expt {
-        #     # TODO: Implicits
-        #     val at = expr.type
-        #     if at != et and at != solver.noreturnType and et != solver.unitType {
-        #         throw CJError("TODO solveExprEx at = " + at + ", et = " + et, [expr.mark])
-        #     }
-        # }
-        # expr
+        # Expr(astExpr.mark, solver.unitType, ED.unit)
+        val expr = solveExprExUnchecked(astExpr, expt)
+        if val et = expt {
+            # TODO: Implicits
+            val at = expr.type
+            if at != et and at != solver.noreturnType and et != solver.unitType {
+                throw CJError("TODO solveExprEx at = " + at + ", et = " + et, [expr.mark])
+            }
+        }
+        expr
     }
 
     private def solveExprExUnchecked(self, astExpr: CJAst.Expr, expt: Type?): Expr {
@@ -41,8 +41,8 @@ class CJExprSolver {
             case bigint(x) = Expr(mark, solver.bigintType, ED.bigint(x))
 
             case block(..) = throw CJError("TODO solveExpr block", [mark])
-            case call(..) = throw CJError("TODO solveExpr call", [mark])
-            case callname(..) = throw CJError("TODO solveExpr callname", [mark])
+            case call(ownerType, methodName, ..) = throw CJError("TODO solveExpr call " + ownerType + ", " + methodName, [mark])
+            case callname(name, ..) = throw CJError("TODO solveExpr callname " + name, [mark])
             case decl(..) = throw CJError("TODO solveExpr decl", [mark])
             case getvar(..) = throw CJError("TODO solveExpr getvar", [mark])
             case setvar(..) = throw CJError("TODO solveExpr setvar", [mark])

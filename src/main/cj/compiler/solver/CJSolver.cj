@@ -352,6 +352,12 @@ class CJSolver:
             item.native_ or astMethod.body.isPresent())
         annotateMethod(method, astMethod.annotations)
         item.addMethod(method)
+        if val astBody = astMethod.body {
+            todo(tlMethodBody, "methodBody", item.name + "." + method.name, () -> {
+                val esolver = CJExprSolver(self, methodScope, null(returnType))
+                method.body = null(esolver.solveExprEx(astBody, null(returnType)))
+            })
+        }
     }
 
     private def createClassMallocMethod(self, scope: CJScope, cls: CJIR.ClassDef) {
