@@ -24,6 +24,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             @Override
             public Void visitMain(CJIRRunModeMain m, Void a) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
+                out.addMark(CJMark.of("<start>", 1, 1));
                 out.append(mainClass + "." + translateMethodName("main") + "();\n");
                 return null;
             }
@@ -31,6 +32,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             private void handleWWW(CJIRRunModeWWWBase m) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
                 out.append("window.onload = () => {");
+                out.addMark(CJMark.of("<start>", 1, 1));
                 out.append(mainClass + "." + translateMethodName("main") + "();");
                 out.append("}\n");
             }

@@ -379,42 +379,21 @@ class N2Parser: ParserMixin[N2Token] {
                     } else {
                         val name = id()
                         if at('(') {
-                            when expr.type {
-                                case array(itemType) {
-                                    val rootName = "list." + name
-                                    if val func = program.getFuncOrNull(rootName) {
-                                        val args = argsWithParams(func.params, [expr])
-                                        expr = Expr.callf(mark, func, args)
-                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                        val args = [expr]
-                                        args.addAll(args())
-                                        val templArgs = inferTemplateArgs(
-                                            mark, ft.templateParams, ft.tpats, args)
-                                        val func = instantiateFunc(
-                                            mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
-                                        expr = Expr.callf(mark, func, args)
-                                    } else {
-                                        error("Function " + rootName + " not found")
-                                    }
-                                }
-                                case struct_(struct_) {
-                                    val rootName = struct_.name + "." + name
-                                    if val func = program.getFuncOrNull(rootName) {
-                                        val args = argsWithParams(func.params, [expr])
-                                        expr = Expr.callf(mark, func, args)
-                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                        val args = [expr]
-                                        args.addAll(args())
-                                        val templArgs = inferTemplateArgs(
-                                            mark, ft.templateParams, ft.tpats, args)
-                                        val func = instantiateFunc(
-                                            mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
-                                        expr = Expr.callf(mark, func, args)
-                                    } else {
-                                        error("Function " + rootName + " not found")
-                                    }
-                                }
-                                else = error("" + expr.type + " values do not have methods")
+                            val rootTypeName = expr.type.rootName
+                            val rootName = rootTypeName + "." + name
+                            if val func = program.getFuncOrNull(rootName) {
+                                val args = argsWithParams(func.params, [expr])
+                                expr = Expr.callf(mark, func, args)
+                            } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                val args = [expr]
+                                args.addAll(args())
+                                val templArgs = inferTemplateArgs(
+                                    mark, ft.templateParams, ft.tpats, args)
+                                val func = instantiateFunc(
+                                    mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                                expr = Expr.callf(mark, func, args)
+                            } else {
+                                error("Function " + rootName + " not found")
                             }
                         } else {
                             when expr.type {
@@ -542,6 +521,18 @@ class N2Parser: ParserMixin[N2Token] {
         } else { null }
     }
 
+    private def getSelfFuncOrNull(self, name: String): Func? {
+        if val selfVar = locals.getOrNull("self") {
+            program.getFuncOrNull(selfVar.type.rootName + "." + name)
+        } else { null }
+    }
+
+    private def getSelfFuncTemplateOrNull(self, name: String): FuncTemplate? {
+        if val selfVar = locals.getOrNull("self") {
+            program.getFuncTemplateOrNull(selfVar.type.rootName + "." + name)
+        } else { null }
+    }
+
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
@@ -575,8 +566,12 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getfield(mark, Expr.getvar(mark, selfVar), struct_, fieldVar)
                 } else if val type = templateArgs.getOrNull(name) {
                     Expr.type(mark, type)
+                } else if val func = getSelfFuncOrNull(name) {
+                    Expr.getfunc(mark, func)
                 } else if val func = program.getFuncOrNull(name) {
                     Expr.getfunc(mark, func)
+                } else if val funcTemplate = getSelfFuncTemplateOrNull(name) {
+                    Expr.getfuncTemplate(mark, funcTemplate)
                 } else if val funcTemplate = program.getFuncTemplateOrNull(name) {
                     Expr.getfuncTemplate(mark, funcTemplate)
                 } else if val structTemplate = program.getStructTemplateOrNull(name) {

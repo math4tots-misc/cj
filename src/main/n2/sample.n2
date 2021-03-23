@@ -22,12 +22,10 @@ int main() {
     print("foo.b = " + repr(foo.b))
     print("foo = " + repr(foo))
     print(foo)
-    print("len(str) = " + repr(len!("Hello")))
+    print("str.len() = " + repr("Hello".len()))
     print2[str]("using print2")
     print("sum = " + repr(foo.sum()))
     print("list = " + repr([1, 2, 3]))
-    print("len(list) = " + repr(len!([1, 2, 3])))
-    // print("len(list) = " + repr(len([1, 2, 3])))
     print("list.len() = " + repr([1, 2, 3].len()))
 
     auto n = null.(null[int])

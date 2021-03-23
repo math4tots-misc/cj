@@ -450,16 +450,6 @@ class N2IR {
                     checkMinArgc(mark, args, 2)
                     js(mark, evalType(args[0]), args[1:])
                 }
-                case "len!" {
-                    checkArgc(mark, args, 1)
-                    val arg = args[0]
-                    when arg.type {
-                        case str = unop(mark, kSTR_LEN, Type.int, arg)
-                        case array(..) = unop(mark, kARRAY_LEN, Type.int, arg)
-                        else = throw N2Error(
-                            "len! cannot be applied to values of type " + arg.type, [mark])
-                    }
-                }
                 else = throw N2Error("Unrecognized macro '" + macroName + "'", [mark])
             }
         }
