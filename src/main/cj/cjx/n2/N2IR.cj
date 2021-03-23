@@ -169,15 +169,14 @@ class N2IR {
             kSTR_LEN
             kSTR_ADD
 
-            kARRAY_LEN
-
             kGETVAR
             kSETVAR
             kDECLVAR
 
             kARRAY
-            kGETITEM
-            kSETITEM
+            kARRAY_LEN
+            kARRAY_GET
+            kARRAY_SET
 
             kNEWARRAY
 
@@ -402,7 +401,7 @@ class N2IR {
         def getitem(mark: Mark, owner: Expr, index: Expr): Expr {
             when owner.type {
                 case array(itemType) {
-                    val self = Self(mark, kGETITEM, itemType)
+                    val self = Self(mark, kARRAY_GET, itemType)
                     self.lhs = owner
                     self.rhs = index
                     self

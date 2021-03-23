@@ -19,12 +19,10 @@ class N2Parser: ParserMixin[N2Token] {
     def typeOfToken(token: N2Token): Int = token.type
     def nameOfType(type: Int): String = N2Token.typeRepr(type)
 
-    def parseAll(sources: List[List[N2Token]]): Program {
+    def parseAll(tokens: List[N2Token]): Program {
         val program = Program()
         for pass in [0, 1, 2] {
-            for tokens in sources {
-                parseEx(pass, program, tokens)
-            }
+            parseEx(pass, program, tokens)
         }
         program
     }
