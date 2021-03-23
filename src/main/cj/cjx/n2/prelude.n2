@@ -1,4 +1,6 @@
 
-void print(var x) = js!(void, "console.log(", x, ")")
+void print(var x) = js!(void, "console.log(''+", x, ")")
 
 bool __is(var a, var b) = js!(bool, a, "===", b)
+
+str repr(var x) = js!(str, "JSON.stringify(", x, ")")

@@ -19,6 +19,7 @@ class N2Codegen {
         val self = Self(program)
         out.inlineSourceMap = true
         out.str("(function(){\n'use strict';\n")
+        out.str(include_str!("prelude.js"))
         for func in program.funcs {
             func(func)
         }
@@ -129,8 +130,8 @@ class N2Codegen {
         val params = struct_.fields.map(v -> trflname(v.name))
         val sname = trsname(struct_)
         out.addMark(struct_.mark)
-        out.str("class " + sname + "{\n")
-        out.str("constructor(" + ",".join(params) + "){")
+        out.str("class " + sname + " extends Base{\n")
+        out.str("constructor(" + ",".join(params) + "){super();")
         for param in params { out.str("this." + param + "=" + param + ";") }
         out.str("}\n")
         out.str("}\n")
@@ -160,6 +161,8 @@ class N2Codegen {
             case N2IR.Expr.kINT_LT = join("(", expr(expr.lhs), "<", expr(expr.rhs), ")")
             case N2IR.Expr.kINT_LE = join("(", expr(expr.lhs), "<=", expr(expr.rhs), ")")
             case N2IR.Expr.kSTR = Blob.pure(expr.stringValue.repr())
+            case N2IR.Expr.kSTR_LEN = join(expr(expr.arg), ".length")
+            case N2IR.Expr.kSTR_ADD = join("(", expr(expr.lhs), "+", expr(expr.rhs), ")")
             case N2IR.Expr.kGETVAR = Blob.pure(trvname(expr.var_))
             case N2IR.Expr.kSETVAR = join("(", trvname(expr.var_), "=", expr(expr.arg), ")")
             case N2IR.Expr.kDECLVAR = Blob(

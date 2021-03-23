@@ -12,7 +12,10 @@ int main() {
     int a = 2
     auto b = 7
     print(a + b + 7)
-    print(foo.a)
-    print(foo.b)
+    print("foo.a = " + repr(foo.a))
+    print("foo.b = " + repr(foo.b))
+    print("foo = " + repr(foo))
+    print(foo)
+    print("len = " + repr(len!("Hello")))
     return 0
 }

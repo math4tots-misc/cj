@@ -111,6 +111,7 @@ class N2IR {
         def isVoid(self): Bool = tag!(self) == tag!(Type, void)
         def isVar(self): Bool = tag!(self) == tag!(Type, var_)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
+        def isStr(self): Bool = tag!(self) == tag!(Type, str)
         def isMeta(self): Bool = tag!(self) == tag!(Type, type)
         def isArray(self): Bool = tag!(self) == tag!(Type, array)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
@@ -165,6 +166,10 @@ class N2IR {
             kINT_LE
 
             kSTR
+            kSTR_LEN
+            kSTR_ADD
+
+            kARRAY_LEN
 
             kGETVAR
             kSETVAR
@@ -324,11 +329,28 @@ class N2IR {
             }
         }
 
+        def checkArgc(mark: Mark, args: List[Expr], argc: Int) {
+            if args.size() != argc {
+                throw N2Error(
+                    "Expected " + argc + " args but got " + args.size(), [mark])
+            }
+        }
+
         def macro(mark: Mark, macroName: String, args: List[Expr]): Self {
             switch macroName {
                 case "js!" {
                     checkMinArgc(mark, args, 2)
                     js(mark, evalType(args[0]), args[1:])
+                }
+                case "len!" {
+                    checkArgc(mark, args, 1)
+                    val arg = args[0]
+                    when arg.type {
+                        case str = unop(mark, kSTR_LEN, Type.int, arg)
+                        case array(..) = unop(mark, kARRAY_LEN, Type.int, arg)
+                        else = throw N2Error(
+                            "len! cannot be applied to values of type " + arg.type, [mark])
+                    }
                 }
                 else = throw N2Error("Unrecognized macro '" + macroName + "'", [mark])
             }
@@ -442,6 +464,8 @@ class N2IR {
         def add(mark: Mark, lhs: Expr, rhs: Expr): Self {
             if lhs.type.isInt() and rhs.type.isInt() {
                 return binop(mark, kINT_ADD, Type.int, lhs, rhs)
+            } else if lhs.type.isStr() and rhs.type.isStr() {
+                return binop(mark, kSTR_ADD, Type.str, lhs, rhs)
             }
             throw N2Error(
                 "Invalid args to binary '+' (" + lhs.type + "," + rhs.type + ")", [mark])
