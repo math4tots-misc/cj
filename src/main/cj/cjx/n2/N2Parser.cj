@@ -338,6 +338,12 @@ class N2Parser: ParserMixin[N2Token] {
                                 val struct_ = instantiateStruct(expr.mark, templ, iexprs)
                                 expr = Expr.type(mark, Type.struct_(struct_))
                             }
+                            case Expr.kBOUNDFUNCTEMP {
+                                val templ = expr.funcTemplate
+                                val func = instantiateFunc(expr.mark, templ, iexprs)
+                                val args = argsWithParams(func.params, [expr.arg])
+                                expr = Expr.callf(mark, func, args)
+                            }
                             else = throw N2Error("Expected template but got " + expr, [expr.mark])
                         }
                     }
@@ -352,6 +358,21 @@ class N2Parser: ParserMixin[N2Token] {
                         case Expr.kGETFUNCTEMP {
                             val ft = expr.funcTemplate
                             val args = args()
+                            val templArgs = inferTemplateArgs(mark, ft.templateParams, ft.tpats, args)
+                            val func = instantiateFunc(
+                                mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                            expr = Expr.callf(mark, func, args)
+                        }
+                        case Expr.kBOUNDFUNC {
+                            val func = expr.func
+                            val receiver = expr.arg
+                            val args = argsWithParams(func.params, [receiver])
+                            expr = Expr.callf(mark, func, args)
+                        }
+                        case Expr.kBOUNDFUNCTEMP {
+                            val ft = expr.funcTemplate
+                            val args = [expr.arg]
+                            args.addAll(args())
                             val templArgs = inferTemplateArgs(mark, ft.templateParams, ft.tpats, args)
                             val func = instantiateFunc(
                                 mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
@@ -378,34 +399,61 @@ class N2Parser: ParserMixin[N2Token] {
                         expr = expr.icast(type)
                     } else {
                         val name = id()
-                        if at('(') {
+                        if expr.type.isMeta() {
+                            switch expr.kind {
+                                case Expr.kGETSTRUCTTEMP {
+                                    val rootName = expr.structTemplate.name + "." + name
+                                    if val func = program.getFuncOrNull(rootName) {
+                                        expr = Expr.getfunc(mark, func)
+                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                        expr = Expr.getfuncTemplate(mark, ft)
+                                    } else {
+                                        error("Method " + rootName + " not found")
+                                    }
+                                }
+                                case Expr.kTYPE {
+                                    when expr.ty {
+                                        case struct_(struct_) {
+                                            if struct_.templateArgs {
+                                                throw N2Error(
+                                                    "Struct template args are not allowed " +
+                                                    "when accessing members (" +
+                                                    struct_.name + "." + name + ")", [expr.mark])
+                                            }
+                                            val rootName = struct_.name + "." + name
+                                            if val func = program.getFuncOrNull(rootName) {
+                                                expr = Expr.getfunc(mark, func)
+                                            } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                                expr = Expr.getfuncTemplate(mark, ft)
+                                            } else {
+                                                error("Method " + rootName + " not found")
+                                            }
+                                        }
+                                        else = error(
+                                            "Could not get member (" + expr.ty + "->" + name + ")")
+                                    }
+                                }
+                                else = error("Could not get member (" + name + ")")
+                            }
+                        } else {
                             val rootTypeName = expr.type.rootName
                             val rootName = rootTypeName + "." + name
                             if val func = program.getFuncOrNull(rootName) {
-                                val args = argsWithParams(func.params, [expr])
-                                expr = Expr.callf(mark, func, args)
+                                expr = Expr.boundfunc(mark, func, expr)
                             } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                val args = [expr]
-                                args.addAll(args())
-                                val templArgs = inferTemplateArgs(
-                                    mark, ft.templateParams, ft.tpats, args)
-                                val func = instantiateFunc(
-                                    mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
-                                expr = Expr.callf(mark, func, args)
+                                expr = Expr.boundfuncTemplate(mark, ft, expr)
                             } else {
-                                error("Function " + rootName + " not found")
-                            }
-                        } else {
-                            when expr.type {
-                                case struct_(struct_) {
-                                    if val var_ = struct_.getFieldOrNull(name) {
-                                        expr = Expr.getfield(mark, expr, struct_, var_)
-                                    } else {
-                                        error(
-                                            "Field " + name + " not found in struct " + struct_.name)
+                                when expr.type {
+                                    case struct_(struct_) {
+                                        if val var_ = struct_.getFieldOrNull(name) {
+                                            expr = Expr.getfield(mark, expr, struct_, var_)
+                                        } else {
+                                            error("Field " + name +
+                                                " not found in struct " + struct_.name)
+                                        }
                                     }
+                                    else = error("" + expr.type + " values do not have fields")
                                 }
-                                else = error("" + expr.type + " values do not have fields")
                             }
                         }
                     }

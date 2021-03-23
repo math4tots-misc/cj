@@ -33,5 +33,8 @@ int main() {
     auto bar = Bar[str]("Hello bar")
     print(bar)
     print("bar.t = " + bar.t)
+
+    auto map = Map[int, int].empty[int, int]()
+    print(map)
     return 0
 }

@@ -270,6 +270,8 @@ class N2IR {
 
             kGETFUNC
             kGETFUNCTEMP
+            kBOUNDFUNC
+            kBOUNDFUNCTEMP
             kGETSTRUCTTEMP
             kCALL
             kNEWSTRUCT
@@ -369,6 +371,18 @@ class N2IR {
         def getfuncTemplate(mark: Mark, funcTemplate: FuncTemplate): Self {
             val self = Self(mark, kGETFUNCTEMP, Type.meta)
             self.funcTemplate = funcTemplate
+            self
+        }
+
+        def boundfunc(mark: Mark, func: Func, expr: Expr): Self {
+            val self = unop(mark, kBOUNDFUNC, Type.meta, expr)
+            self.func = func
+            self
+        }
+
+        def boundfuncTemplate(mark: Mark, ft: FuncTemplate, expr: Expr): Self {
+            val self = unop(mark, kBOUNDFUNCTEMP, Type.meta, expr)
+            self.funcTemplate = ft
             self
         }
 
@@ -507,13 +521,16 @@ class N2IR {
 
         def array(mark: Mark, var args: List[Expr], itemType: Type?): Self {
             if not args and itemType.isEmpty() {
-                throw N2Error("Could not infer type of array", [mark])
+                val self = Self(mark, kARRAY, Type.meta)
+                self.args = []
+                self
+            } else {
+                val itype = if val t = itemType { t } else { args[0].type }
+                args = args.map(a -> icast(a, itype))
+                val self = Self(mark, kARRAY, Type.array(itype))
+                self.args = args
+                self
             }
-            val itype = if val t = itemType { t } else { args[0].type }
-            args = args.map(a -> icast(a, itype))
-            val self = Self(mark, kARRAY, Type.array(itype))
-            self.args = args
-            self
         }
 
         def getitem(mark: Mark, owner: Expr, index: Expr): Expr {
@@ -532,6 +549,10 @@ class N2IR {
         def icast(expr: Expr, type: Type): Expr {
             if type.isNull() and expr.kind == kNULL and expr.type.isMeta() {
                 return typednull(expr.mark, type)
+            }
+            if type.isArray() and expr.kind == kARRAY and expr.type.isMeta() {
+                Assert.that(expr.args.isEmpty())
+                return icast(array(expr.mark, expr.args, null(type.itemType)), type)
             }
             if expr.type.isMeta() {
                 throw N2Error("Expected expression, but got type", [expr.mark])

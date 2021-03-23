@@ -22,3 +22,6 @@ template[K, V] struct Map {
     null[Tuple2[K, V]][] entries
     int size
 }
+
+template[K, V]
+Map[K, V] Map.empty() = Map[K, V]([], 0)
