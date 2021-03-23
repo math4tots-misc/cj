@@ -759,8 +759,9 @@ class N2Parser: ParserMixin[N2Token] {
     def tpat(self): TPat {
         val mark = mark()
         val name = id()
-        val args = if at('[') { parseJoin('[', ']', ',', () -> tpat()) } else { [] }
-        var tpat = if args { TPat(mark, name, args) } else {
+        val bracketPresent = at('[')
+        val args = if bracketPresent { parseJoin('[', ']', ',', () -> tpat()) } else { [] }
+        var tpat = if args or not bracketPresent { TPat(mark, name, args) } else {
             TPat(mark, "list", [TPat(mark, name, [])])
         }
         while at('[') {

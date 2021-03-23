@@ -41,12 +41,12 @@ template[T] T list.get(T[] self, int i) = js!(T, self, "[", __checkIndex(self, i
 template[T] str list.str(T[] self) = self.repr()
 template[T] str list.repr(T[] self) {
     auto sb = StringBuilder.new()
-    sb.add[str]("[")
+    sb.add("[")
     for (int i = 0; i < self.len(); i++) {
-        if (i) sb.add[str](", ")
-        sb.add[str](get(i).repr())
+        if (i) sb.add(", ")
+        sb.add(get(i).repr())
     }
-    sb.add[str]("]")
+    sb.add("]")
     sb.str()
 }
 
