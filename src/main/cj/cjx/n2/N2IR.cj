@@ -11,8 +11,9 @@ class N2IR {
         val constMap: Map[String, Int] = MapOf()
         val structs: List[Struct] = []
         val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
-            "int": (Default(), Type.int),
             "void": (Default(), Type.void),
+            "bool": (Default(), Type.bool),
+            "int": (Default(), Type.int),
             "str": (Default(), Type.str),
             "var": (Default(), Type.var_),
         )
@@ -36,14 +37,18 @@ class N2IR {
         }
 
         def addStruct(self, struct_: Struct) {
-            if val (mark, type) = typeMap.getOrNull(struct_.name) {
-                throw N2Error("Duplicate type definition", [struct_.mark, mark])
-            }
             structs.add(struct_)
-            typeMap[struct_.name] = (struct_.mark, Type.struct_(struct_))
+            addTypedef(struct_.mark, Type.struct_(struct_), struct_.name)
         }
 
         def getStruct(self, name: String): Struct = get!(typeMap[name].f1, struct_, 0)
+
+        def addTypedef(self, mark: Mark, type: Type, name: String) {
+            if val (oldMark, type) = typeMap.getOrNull(name) {
+                throw N2Error("Duplicate type definition '" + name + "'", [mark, oldMark])
+            }
+            typeMap[name] = (mark, type)
+        }
 
         def getTypeOrNull(self, typeName: String): Type? = (
             typeMap.getOrNull(typeName).map(p -> p.f1))
@@ -94,6 +99,7 @@ class N2IR {
     union Type: Repr, Eq {
         case unreachable
         case void
+        case bool
         case int
         case str
         case type
@@ -177,6 +183,8 @@ class N2IR {
             kCALL
             kNEWSTRUCT
             kGETFIELD
+
+            kTYPEDEF
 
             kRETURN
 
@@ -526,7 +534,7 @@ class N2IR {
             block
         }
 
-        def nop(mark: Mark): Self = block(mark, [])
+        def nop(mark: Mark): Self = seq(mark, [])
 
         def repr(self): String {
             val kindstr = kindNames[kind]

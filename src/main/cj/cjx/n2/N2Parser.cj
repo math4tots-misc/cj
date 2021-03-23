@@ -63,6 +63,11 @@ class N2Parser: ParserMixin[N2Token] {
                 val value = expect(N2Token.tINT).intValue
                 expectDelim()
                 if pass == 0 { program.addConst(name, value) }
+            } else if consume(N2Token.kwTYPEDEF) {
+                val type = type()
+                val name = id()
+                if pass < 1 { program.addTypedef(mark, type, name) }
+                expectDelim()
             } else if at(N2Token.kwSTRUCT) {
                 struct_()
             } else if pass < 1 {
@@ -276,8 +281,12 @@ class N2Parser: ParserMixin[N2Token] {
                 expect('=')
                 pi
             } else {
+                val pi = nextIndex
                 nextIndex++
-                nextIndex - 1
+                if pi >= params.size() {
+                    throw N2Error("Too many positional arguments", [pmark])
+                }
+                pi
             }
             val paramName = params[paramIndex].name
             if args[paramIndex].isPresent() {

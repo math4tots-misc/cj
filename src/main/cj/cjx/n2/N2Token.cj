@@ -16,6 +16,7 @@ class N2Token: Repr {
         tLE
         tGE
 
+        kwTYPEDEF
         kwAUTO
         kwRETURN
         kwIF
