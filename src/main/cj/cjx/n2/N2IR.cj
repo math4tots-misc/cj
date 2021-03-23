@@ -5,11 +5,13 @@ import cjx.n2.N2Error
 import cjx.parser.Mark
 
 class N2IR {
+
     class Program {
         val funcs: List[Func] = []
         val funcMap: Map[String, Int] = MapOf()
         val constMap: Map[String, Int] = MapOf()
         val structs: List[Struct] = []
+        val funcTemplateMap: Map[String, FuncTemplate] = MapOf()
         val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
             "void": (Default(), Type.void),
             "bool": (Default(), Type.bool),
@@ -36,6 +38,19 @@ class N2IR {
             funcMap.getOrNull(funcName).map(i -> funcs[i])
         }
 
+        def addFuncTemplate(self, ft: FuncTemplate) {
+            if ft.name in funcTemplateMap {
+                throw N2Error(
+                    "Duplicate function template definition",
+                    [ft.mark, funcTemplateMap[ft.name].mark])
+            }
+            funcTemplateMap[ft.name] = ft
+        }
+
+        def getFuncTemplateOrNull(self, name: String): FuncTemplate? {
+            funcTemplateMap.getOrNull(name)
+        }
+
         def addStruct(self, struct_: Struct) {
             structs.add(struct_)
             addTypedef(struct_.mark, Type.struct_(struct_), struct_.name)
@@ -58,6 +73,14 @@ class N2IR {
         }
 
         def getConstOrNull(self, name: String): Int? = constMap.getOrNull(name)
+    }
+
+    class FuncTemplate {
+        val mark: Mark
+        val name: String
+        val params: List[String]
+        val i: Int
+        def __get_argc(self): Int = params.size()
     }
 
     class Var {
@@ -102,7 +125,7 @@ class N2IR {
         case bool
         case int
         case str
-        case type
+        case meta
         case var_
         case struct_(Struct)
         case array(Type)
@@ -112,12 +135,12 @@ class N2IR {
         def isVar(self): Bool = tag!(self) == tag!(Type, var_)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def isStr(self): Bool = tag!(self) == tag!(Type, str)
-        def isMeta(self): Bool = tag!(self) == tag!(Type, type)
+        def isMeta(self): Bool = tag!(self) == tag!(Type, meta)
         def isArray(self): Bool = tag!(self) == tag!(Type, array)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def repr(self): String = when self {
-            case struct_(s) = "struct(" + s.name + ")"
-            case array(t) = "array(" + t + ")"
+            case struct_(s) = s.name
+            case array(t) = "array(" + t.repr() + ")"
             else = tag_name!(self)
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and switch tag!(self) {
@@ -184,6 +207,7 @@ class N2IR {
             kWHILE
 
             kGETFUNC
+            kGETFUNCTEMP
             kCALL
             kNEWSTRUCT
             kGETFIELD
@@ -224,6 +248,7 @@ class N2IR {
 
         # getfunc/call/array/js/struct
         var func: Func = ?
+        var funcTemplate: FuncTemplate = ?
         def __get_args(self): List[Expr] = stmts
         def __set_args(self, value: List[Expr]) { stmts = value }
 
@@ -274,6 +299,12 @@ class N2IR {
         def getfunc(mark: Mark, func: Func): Self {
             val self = Self(mark, kGETFUNC, func.type)
             self.func = func
+            self
+        }
+
+        def getfuncTemplate(mark: Mark, funcTemplate: FuncTemplate): Self {
+            val self = Self(mark, kGETFUNCTEMP, Type.meta)
+            self.funcTemplate = funcTemplate
             self
         }
 
@@ -363,7 +394,7 @@ class N2IR {
         }
 
         def type(mark: Mark, type: Type): Self {
-            val self = Self(mark, kTYPE, Type.type)
+            val self = Self(mark, kTYPE, Type.meta)
             self.ty = type
             self
         }

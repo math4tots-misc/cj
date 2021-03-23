@@ -1,10 +1,12 @@
 package cjx.n2
 
+import cj.Range
 import cjx.n2.N2Locals
 import cjx.n2.N2Lexer
 import cjx.n2.N2IR.Expr
 import cjx.n2.N2IR.Type
 import cjx.n2.N2IR.Func
+import cjx.n2.N2IR.FuncTemplate
 import cjx.n2.N2IR.Program
 import cjx.n2.N2IR.Var
 import cjx.n2.N2IR.Struct
@@ -42,6 +44,7 @@ class N2Parser: ParserMixin[N2Token] {
 
     # function-level
     var locals: N2Locals = N2Locals()
+    var templateArgs: Map[String, Type] = MapOf()
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: N2Token): Mark = token.toMark()
@@ -68,12 +71,21 @@ class N2Parser: ParserMixin[N2Token] {
                 expectDelim()
             } else if at(N2Token.kwSTRUCT) {
                 struct_()
+            } else if consume(N2Token.kwTEMPLATE) {
+                val name = id()
+                val params = parseJoin('[', ']', ',', () -> id())
+                skipDelims()
+                if pass < 1 {
+                    val ft = FuncTemplate(mark, name, params, i)
+                    program.addFuncTemplate(ft)
+                }
+                skipToDelimiter()
             } else if pass < 1 {
                 skipToDelimiter()
             } else {
                 val type = type()
                 val name = id()
-                func(mark, type, name)
+                func(mark, type, name, false)
             }
             skipDelims()
         }
@@ -119,7 +131,39 @@ class N2Parser: ParserMixin[N2Token] {
         }
     }
 
-    def func(self, mark: Mark, returnType: Type, name: String) {
+    def instantiatedFuncName(self, ft: FuncTemplate, typeArgs: List[Type]): String {
+        ft.name + "[" + ",".join(typeArgs.map(ta -> ta.repr())) + "]"
+    }
+
+    def instantiateFunc(self, imark: Mark, ft: FuncTemplate, iexprs: List[Expr]): Func {
+        if iexprs.size() != ft.params.size() {
+            throw N2Error(
+                "Expected " + ft.params.size() + " args but got " + iexprs.size(),
+                [imark])
+        }
+        val typeArgs = iexprs.map(e -> asTypeLiteral(e))
+        val name = instantiatedFuncName(ft, typeArgs)
+        if val func = program.getFuncOrNull(name) { return func }
+
+        val savedI = i
+        val savedArgs = templateArgs
+
+        i = ft.i
+        templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
+            ft.params[i], typeArgs[i])).toList())
+
+        val tmark = mark()
+        val returnType = type()
+        expect(',')
+        func(tmark, returnType, name, true)
+
+        i = savedI
+        templateArgs = savedArgs
+
+        program.getFuncOrNull(name).get()
+    }
+
+    def func(self, mark: Mark, returnType: Type, name: String, instantiatingTemplate: Bool) {
         locals = N2Locals()
         val nparams = params().size()
         val func = Func(mark, returnType, name, nparams, locals.list)
@@ -127,6 +171,7 @@ class N2Parser: ParserMixin[N2Token] {
             program.addFunc(func)
             skipToDelimiter()
         } else {
+            if instantiatingTemplate { program.addFunc(func) }
             if at('=') or at('{') {
                 val body = if consume('=') { expr() } else { block() }
                 func.body = body.icast(returnType)
@@ -155,14 +200,15 @@ class N2Parser: ParserMixin[N2Token] {
         }
     }
 
-    def type(self): Type {
-        val expr = expr()
+    def asTypeLiteral(expr: Expr): Type {
         if expr.kind == Expr.kTYPE {
             expr.ty
         } else {
             throw N2Error("Expected type literal", [expr.mark])
         }
     }
+
+    def type(self): Type = asTypeLiteral(expr())
 
     def atDelim(self): Bool = switch peek().type {
         case ';'; case '\n'; case N2Token.tEOF; case '}' = true
@@ -211,16 +257,22 @@ class N2Parser: ParserMixin[N2Token] {
                 case N2Token.tGE  { next(); expr = Expr.le(mark, exprpr(tokprec), expr) }
                 case '>'          { next(); expr = Expr.lt(mark, exprpr(tokprec), expr) }
                 case '[' {
-                    next()
-                    if consume(']') {
+                    val iexprs = parseJoin('[', ']', ',', () -> expr())
+                    if iexprs.isEmpty() {
                         if expr.kind != Expr.kTYPE {
                             throw N2Error("Expected type", [expr.mark])
                         }
                         expr = Expr.type(mark, Type.array(expr.ty))
                     } else {
-                        val iexpr = expr()
-                        expect(']')
-                        expr = Expr.getitem(mark, expr, iexpr)
+                        switch expr.kind {
+                            case Expr.kGETFUNCTEMP {
+                                val templ = expr.funcTemplate
+                                val func = instantiateFunc(expr.mark, templ, iexprs)
+                                val args = argsWithParams(func.params)
+                                expr = Expr.callf(mark, func, args)
+                            }
+                            else = throw N2Error("Expected template", [expr.mark])
+                        }
                     }
                 }
                 case '(' {
@@ -329,8 +381,12 @@ class N2Parser: ParserMixin[N2Token] {
                 val name = next().stringValue
                 if val var_ = locals.getOrNull(name) {
                     Expr.getvar(mark, var_)
+                } else if val type = templateArgs.getOrNull(name) {
+                    Expr.type(mark, type)
                 } else if val func = program.getFuncOrNull(name) {
                     Expr.getfunc(mark, func)
+                } else if val funcTemplate = program.getFuncTemplateOrNull(name) {
+                    Expr.getfuncTemplate(mark, funcTemplate)
                 } else if val value = program.getConstOrNull(name) {
                     Expr.int(mark, value)
                 } else if val type = program.getTypeOrNull(name) {

@@ -17,5 +17,6 @@ int main() {
     print("foo = " + repr(foo))
     print(foo)
     print("len = " + repr(len!("Hello")))
+    print2[str]("using print2")
     return 0
 }

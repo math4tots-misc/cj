@@ -32,7 +32,8 @@ class N2Codegen {
     }
 
     private def trsname(struct_: N2IR.Struct): String = "S" + struct_.name
-    private def trfnname(functionName: String): String = "F" + functionName
+    private def trfnname(functionName: String): String = (
+        "F" + functionName.replace(".", "$D").replace("[", "$L").replace("]", "$R"))
     private def trvname(var_: N2IR.Var): String = "V" + var_.index + var_.name
     private def trflname(fieldName: String): String = "F" + fieldName
 
