@@ -35,6 +35,10 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
         return annotation.isTest();
     }
 
+    public boolean isSlowTest() {
+        return annotation.isSlowTest();
+    }
+
     public boolean isGeneric() {
         return annotation.isGeneric();
     }

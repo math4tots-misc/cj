@@ -50,7 +50,8 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 int itemCount = 0;
                 out.addMark(CJMark.of("<test>", 1, 1));
                 for (var item : items) {
-                    var testMethods = item.getMethods().filter(meth -> meth.isTest());
+                    var testMethods = item.getMethods()
+                            .filter(meth -> meth.isTest() && (m.slowTestsEnabled() || !meth.isSlowTest()));
                     if (testMethods.isEmpty()) {
                         continue;
                     }
@@ -347,7 +348,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         } else {
             var metaClassName = translateItemMetaClassName(item.getFullName());
             out.addMark(method.getMark());
-            out.append(metaClassName + ".prototype." + methodName  + "=" + prefix + "function");
+            out.append(metaClassName + ".prototype." + methodName + "=" + prefix + "function");
         }
         out.append("(" + Str.join(",", allArgNames) + "){");
         // inAsyncContext = method.isAsync();

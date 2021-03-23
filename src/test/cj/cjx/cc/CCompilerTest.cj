@@ -13,8 +13,12 @@ class CCompilerTest {
     }
 
     @test
-    def returnCodes0() {
+    def returnCodes0A() {
         assertCode("{return 0;}", 0)
+    }
+
+    @slowTest
+    def returnCodes0() {
         assertCode("{return -3;}", -3)
         assertCode("{return 5+7;}", 12)
         assertCode("{return 5-7;}", -2)
@@ -28,7 +32,7 @@ class CCompilerTest {
         assertCode("{return - - +10;}", 10)
     }
 
-    @test
+    @slowTest
     def returnCodes1() {
         assertCode("{return 0==1;}", 0)
         assertCode("{return 42==42;}", 1)
@@ -50,7 +54,7 @@ class CCompilerTest {
         assertCode("{return 1>=2;}", 0)
     }
 
-    @test
+    @slowTest
     def returnCodes2() {
         assertCode("{int a=3; return a;}", 3)
         assertCode("{int a=3; int z=5; return a+z;}", 8)
@@ -61,7 +65,7 @@ class CCompilerTest {
         assertCode("{ ;;; return 5; }", 5)
     }
 
-    @test
+    @slowTest
     def ifStmt() {
         assertCode("{ if (0) return 2; return 3; }", 3)
         assertCode("{ if (1-1) return 2; return 3; }", 3)
@@ -71,14 +75,14 @@ class CCompilerTest {
         assertCode("{ if (1) { 1; 2; return 3; } else { return 4; } }", 3)
     }
 
-    @test
+    @slowTest
     def forStmt() {
         assertCode("{ int i=0, j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }", 55)
         assertCode("{ for (;;) {return 3;} return 5; }", 3)
         assertCode("{ int i=0; while(i<10) { i=i+1; } return i; }", 10)
     }
 
-    @test
+    @slowTest
     def addr() {
         assertCode("{ int x=3; return *&x; }", 3)
         assertCode("{ int x=3; int *y=&x; int **z=&y; return **z; }", 3)
@@ -91,7 +95,7 @@ class CCompilerTest {
         assertCode("{ int x=3; return (&x+2)-&x+3; }", 5)
     }
 
-    @test
+    @slowTest
     def funcs() {
         assert2("int foo() { return 5; } int main() { return foo(); }", 5)
         assert2("int add(int a, int b) { return a + b; } int main() { return add(3, 17); }", 20)

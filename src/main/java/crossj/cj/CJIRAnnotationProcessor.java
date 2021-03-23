@@ -26,6 +26,7 @@ public final class CJIRAnnotationProcessor {
 
     private boolean nullable = false;
     private boolean test = false;
+    private boolean slowTest = false;
     private boolean generic = false;
     private boolean genericSelf = false;
     private boolean variadic = false;
@@ -131,6 +132,10 @@ public final class CJIRAnnotationProcessor {
         return test;
     }
 
+    public boolean isSlowTest() {
+        return slowTest;
+    }
+
     public boolean isGeneric() {
         return generic;
     }
@@ -167,6 +172,11 @@ public final class CJIRAnnotationProcessor {
             case "test":
                 expectArgc(0, expression);
                 test = true;
+                break;
+            case "slowTest":
+                expectArgc(0, expression);
+                test = true;
+                slowTest = true;
                 break;
             case "generic":
                 expectArgc(0, expression);

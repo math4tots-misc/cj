@@ -11,8 +11,12 @@ class NCCompilerTest {
     }
 
     @test
-    def sample1() {
+    def sample0() {
         assertCode("int main() = 0", 0)
+    }
+
+    @slowTest
+    def sample1() {
         assertCode("int main() = 24", 24)
         assertCode("int main() = 5 + 7", 12)
         assertCode("int main() = 5 - 7", -2)
@@ -75,7 +79,7 @@ class NCCompilerTest {
         assertCode("int main() { if (1) { 1; 2; return 3; } else { return 4; } }", 3)
     }
 
-    @test
+    @slowTest
     def samples2() {
         assertCode("int main() { if (1) { 1\n2\nreturn 3 } else { return 4 } }", 3)
         assertCode("int main() { int i=0; int j=0; for (i=0; i<=10; i=i+1) j=i+j; j}", 55)

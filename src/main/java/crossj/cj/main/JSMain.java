@@ -42,7 +42,11 @@ public final class JSMain {
                     break;
                 case "-t":
                 case "--test":
-                    runMode = new CJIRRunModeTest();
+                    runMode = new CJIRRunModeTest(false);
+                    sourceRoots.add(FS.join("src", "test", "cj"));
+                    break;
+                case "--all-tests":
+                    runMode = new CJIRRunModeTest(true);
                     sourceRoots.add(FS.join("src", "test", "cj"));
                     break;
                 case "-o":
