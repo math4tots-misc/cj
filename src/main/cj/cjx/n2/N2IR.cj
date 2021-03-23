@@ -78,9 +78,9 @@ class N2IR {
     class FuncTemplate {
         val mark: Mark
         val name: String
-        val params: List[String]
+        val templateParams: List[String]
+        val tpats: List[TPat]
         val i: Int
-        def __get_argc(self): Int = params.size()
     }
 
     class Var {
@@ -117,6 +117,14 @@ class N2IR {
         def __get_params(self): List[Var] = locals[:nparams]
         def __get_type(self): Type = Type.func(returnType, params.map(p -> p.type))
         def __get_nonParamLocals(self): List[Var] = locals[nparams:]
+    }
+
+    ## Type Pattern
+    ## Used to match against expressions to infer template args
+    class TPat {
+        val mark: Mark
+        val name: String
+        val args: List[TPat]
     }
 
     union Type: Repr, Eq {

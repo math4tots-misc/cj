@@ -5,8 +5,8 @@ bool __is(var a, var b) = js!(bool, a, "===", b)
 
 str repr(var x) = js!(str, "JSON.stringify(", x, ")")
 
-template print2[T] void,(T t) {
+template[T] void print2(T t) {
     js!(void, "console.log(''+", t, ")")
 }
 
-template len[T] int,(T[] t) = js!(int, t, ".length")
+template[T] int len(T[] t) = js!(int, t, ".length")

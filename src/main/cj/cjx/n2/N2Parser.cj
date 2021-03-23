@@ -10,6 +10,7 @@ import cjx.n2.N2IR.FuncTemplate
 import cjx.n2.N2IR.Program
 import cjx.n2.N2IR.Var
 import cjx.n2.N2IR.Struct
+import cjx.n2.N2IR.TPat
 import cjx.n2.N2Error
 import cjx.parser.Mark
 import cjx.n2.N2Token
@@ -77,11 +78,14 @@ class N2Parser: ParserMixin[N2Token] {
             } else if at(N2Token.kwSTRUCT) {
                 struct_()
             } else if consume(N2Token.kwTEMPLATE) {
-                val name = qid()
                 val params = parseJoin('[', ']', ',', () -> id())
                 skipDelims()
                 if pass < 1 {
-                    val ft = FuncTemplate(mark, name, params, i)
+                    val fti = i
+                    tpat() # return type
+                    val name = qid()
+                    val tpats = parseJoin('(', ')', ',', () -> { val pat = tpat(); id(); pat })
+                    val ft = FuncTemplate(mark, name, params, tpats, fti)
                     program.addFuncTemplate(ft)
                 }
                 skipToDelimiter()
@@ -141,9 +145,9 @@ class N2Parser: ParserMixin[N2Token] {
     }
 
     def instantiateFunc(self, imark: Mark, ft: FuncTemplate, iexprs: List[Expr]): Func {
-        if iexprs.size() != ft.params.size() {
+        if iexprs.size() != ft.templateParams.size() {
             throw N2Error(
-                "Expected " + ft.params.size() + " args but got " + iexprs.size(),
+                "Expected " + ft.templateParams.size() + " args but got " + iexprs.size(),
                 [imark])
         }
         val typeArgs = iexprs.map(e -> asTypeLiteral(e))
@@ -156,12 +160,12 @@ class N2Parser: ParserMixin[N2Token] {
 
         i = ft.i
         templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
-            ft.params[i], typeArgs[i])).toList())
+            ft.templateParams[i], typeArgs[i])).toList())
         locals = N2Locals()
 
         val tmark = mark()
         val returnType = type()
-        expect(',')
+        Assert.that(name.startsWith(qid() + "[")) # skip given function name
         func(tmark, returnType, name, true)
 
         i = savedI
@@ -541,5 +545,21 @@ class N2Parser: ParserMixin[N2Token] {
             skipDelims()
         }
         Expr.block(mark, exprs)
+    }
+
+    def tpat(self): TPat {
+        val mark = mark()
+        val name = id()
+        val args = if at('[') { parseJoin('[', ']', ',', () -> tpat()) } else { [] }
+        var tpat = if args { TPat(mark, name, args) } else {
+            TPat(mark, "list", [TPat(mark, name, [])])
+        }
+        while at('[') {
+            val amark = mark()
+            expect('[')
+            expect(']')
+            tpat = TPat(amark, "list", [tpat])
+        }
+        tpat
     }
 }
