@@ -177,6 +177,19 @@ class N2Codegen {
                 }),
                 out -> out.str("undefined"),
                 true)
+            case N2IR.Expr.kARRAY {
+                val args = expr.args.map(arg -> expr(arg))
+                val prep = joinPrep(args)
+                Blob(prep, out -> {
+                    out.str("[")
+                    for i = 0; i < args.size(); i++ {
+                        if i { out.str(",") }
+                        args[i].body.call(out)
+                    }
+                    out.str("]")
+                }, false)
+            }
+            case N2IR.Expr.kARRAY_LEN = join("(", expr(expr.arg), ".length)")
             case N2IR.Expr.kIF {
                 val cond = expr(expr.cond)
                 val then = expr(expr.then)
