@@ -34,7 +34,7 @@ int main() {
     print(bar)
     print("bar.t = " + bar.t)
 
-    auto map = Map[int, int].empty[int, int]()
+    auto map = Map.empty[int, int]()
     print(map)
     return 0
 }
