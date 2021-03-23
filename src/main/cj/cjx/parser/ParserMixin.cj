@@ -18,6 +18,8 @@ trait ParserMixin[Token] {
     def peek(self): Token { Assert(i < tokens.size()); tokens[i] }
     def next(self): Token { val tok = peek(); i++; tok }
     def at(self, type: Int): Bool = type == typeOfToken(peek())
+    def atOffset(self, type: Int, offset: Int): Bool = (
+        i + offset < tokens.size() and typeOfToken(tokens[i + offset]) == type)
     def assert(self, type: Int) { if not at(type) { errorType(type) } }
     def consume(self, type: Int): Bool = if at(type) { next(); true } else { false }
     def expect(self, type: Int): Token = { assert(type); next() }

@@ -7,6 +7,7 @@ import cjx.n2.N2IR.Type
 import cjx.n2.N2IR.Func
 import cjx.n2.N2IR.Program
 import cjx.n2.N2IR.Var
+import cjx.n2.N2IR.Struct
 import cjx.n2.N2Error
 import cjx.parser.Mark
 import cjx.n2.N2Token
@@ -62,6 +63,8 @@ class N2Parser: ParserMixin[N2Token] {
                 val value = expect(N2Token.tINT).intValue
                 expectDelim()
                 if pass == 0 { program.addConst(name, value) }
+            } else if at(N2Token.kwSTRUCT) {
+                struct_()
             } else if pass < 1 {
                 skipToDelimiter()
             } else {
@@ -78,10 +81,40 @@ class N2Parser: ParserMixin[N2Token] {
         val mark = mark()
         val type = type()
         val name = id()
-        locals.add(mark, type, name)
+        val init = if consume('=') { null(expr()) } else { null }
+        locals.add(mark, type, name, init)
     }
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
+
+    def struct_(self) {
+        val mark = mark()
+        expect(N2Token.kwSTRUCT)
+        val name = id()
+        switch pass {
+            case 0 {
+                val struct_ = Struct(mark, name)
+                program.addStruct(struct_)
+                skipToDelimiter()
+            }
+            case 1 {
+                val struct_ = program.getStruct(name)
+                expect('{')
+                skipDelims()
+                while not consume('}') {
+                    val imark = mark()
+                    val type = type()
+                    val name = id()
+                    val index = struct_.fields.size()
+                    # TOOD: restrict the sorts of expressions allowed here
+                    val init = if consume('=') { null(expr()) } else { null }
+                    struct_.addField(Var(mark, type, name, index, init))
+                    skipDelims()
+                }
+            }
+            else = skipToDelimiter()
+        }
+    }
 
     def func(self, mark: Mark, returnType: Type, name: String) {
         locals = N2Locals()
@@ -162,7 +195,6 @@ class N2Parser: ParserMixin[N2Token] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '('          { val args = args(); expr = Expr.call(mark, expr, args) }
                 case '='          { next(); expr = Expr.assign(mark, expr, exprpr(tokprec - 1)) }
                 case '+'          { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
                 case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
@@ -188,6 +220,40 @@ class N2Parser: ParserMixin[N2Token] {
                         expr = Expr.getitem(mark, expr, iexpr)
                     }
                 }
+                case '(' {
+                    switch expr.kind {
+                        case Expr.kGETFUNC {
+                            val func = expr.func
+                            val args = argsWithParams(func.params)
+                            expr = Expr.callf(mark, func, args)
+                        }
+                        case Expr.kTYPE {
+                            when expr.ty {
+                                case struct_(struct_) {
+                                    val args = argsWithParams(struct_.fields)
+                                    expr = Expr.newstruct(mark, struct_, args)
+                                }
+                                else = error("" + expr.ty + " is not a callable type")
+                            }
+                        }
+                        else = error(expr.kindName + " is not callable")
+                    }
+                }
+                case '.' {
+                    next()
+                    val fieldName = id()
+                    when expr.type {
+                        case struct_(struct_) {
+                            if val var_ = struct_.getFieldOrNull(fieldName) {
+                                expr = Expr.getfield(mark, expr, struct_, var_)
+                            } else {
+                                error(
+                                    "Field " + fieldName + " not found in struct " + struct_.name)
+                            }
+                        }
+                        else = error("" + expr.type + " values do not have fields")
+                    }
+                }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -196,6 +262,54 @@ class N2Parser: ParserMixin[N2Token] {
     }
 
     def args(self): List[Expr] = parseJoin('(', ')', ',', () -> expr())
+
+    def argsWithParams(self, params: List[Var]): List[Expr] {
+        val mark = mark()
+        var nextIndex = 0
+        val args: List[Expr?] = List.ofSize(params.size(), i -> null)
+        expect('(')
+        while not consume(')') {
+            val pmark = mark()
+            val paramIndex = if at(N2Token.tID) and atOffset(':', 1) {
+                val paramName = id()
+                val pi = findParamIndexFromName(mark, params, paramName)
+                expect(':')
+                pi
+            } else {
+                nextIndex++
+                nextIndex - 1
+            }
+            val paramName = params[paramIndex].name
+            if args[paramIndex].isPresent() {
+                throw N2Error("Argument for '" + paramName + "' already specified", [pmark])
+            }
+            val arg = expr()
+            args[paramIndex] = null(arg.icast(params[paramIndex].type))
+            if not consume(',') {
+                assert(')')
+            }
+        }
+        for i = 0; i < args.size(); i++ {
+            val param = params[i]
+            if args[i].isEmpty() {
+                if val df = param.init {
+                    args[i] = null(df)
+                } else {
+                    throw N2Error("Argument for '" + param.name + "' is not specified", [mark])
+                }
+            }
+        }
+        args.map(a -> a.get())
+    }
+
+    private def findParamIndexFromName(self, mark: Mark, params: List[Var], name: String): Int {
+        for i = 0; i < params.size(); i++ {
+            if params[i].name == name {
+                return i
+            }
+        }
+        throw N2Error("Parameter for with name '" + name + "' not found", [mark])
+    }
 
     def atom(self): Expr {
         val mark = mark()
@@ -212,8 +326,10 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getfunc(mark, func)
                 } else if val value = program.getConstOrNull(name) {
                     Expr.int(mark, value)
+                } else if val type = program.getTypeOrNull(name) {
+                    Expr.type(mark, type)
                 } else {
-                    throw N2Error("Variable '" + name + "' not found", [mark])
+                    throw N2Error("Name '" + name + "' not found", [mark])
                 }
             }
             case N2Token.tINT = Expr.int(mark, next().intValue)
@@ -286,6 +402,16 @@ class N2Parser: ParserMixin[N2Token] {
                     ])),
                 ])
             }
+            case N2Token.kwAUTO {
+                next()
+                val name = id()
+                expect('=')
+                val init = expr()
+                val vartype = init.type
+                val var_ = locals.add(mark, vartype, name, null(init))
+                expectDelim()
+                Expr.declvar(mark, var_)
+            }
             else {
                 val expr = expr()
                 if expr.kind == Expr.kTYPE {
@@ -303,9 +429,9 @@ class N2Parser: ParserMixin[N2Token] {
         val exprs: List[Expr] = []
         while repeat {
             val name = id()
-            val var_ = locals.add(mark, type, name)
-            exprs.add(Expr.declvar(mark, var_,
-                if consume('=') { null(expr()) } else { null }))
+            val init = if consume('=') { null(expr()) } else { null }
+            val var_ = locals.add(mark, type, name, init)
+            exprs.add(Expr.declvar(mark, var_))
             repeat = consume(',')
         }
         expectDelim()

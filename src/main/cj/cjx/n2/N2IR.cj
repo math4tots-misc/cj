@@ -5,12 +5,14 @@ import cjx.n2.N2Error
 import cjx.parser.Mark
 
 class N2IR {
-    static val ptrSize = 4
-
     class Program {
         val funcs: List[Func] = []
         val funcMap: Map[String, Int] = MapOf()
         val constMap: Map[String, Int] = MapOf()
+        val structs: List[Struct] = []
+        val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
+            "int": (Default(), Type.int),
+        )
 
         def addFunc(self, func: Func) {
             if func.name in funcMap {
@@ -30,6 +32,19 @@ class N2IR {
             funcMap.getOrNull(funcName).map(i -> funcs[i])
         }
 
+        def addStruct(self, struct_: Struct) {
+            if val (mark, type) = typeMap.getOrNull(struct_.name) {
+                throw N2Error("Duplicate type definition", [struct_.mark, mark])
+            }
+            structs.add(struct_)
+            typeMap[struct_.name] = (struct_.mark, Type.struct_(struct_))
+        }
+
+        def getStruct(self, name: String): Struct = get!(typeMap[name].f1, struct_, 0)
+
+        def getTypeOrNull(self, typeName: String): Type? = (
+            typeMap.getOrNull(typeName).map(p -> p.f1))
+
         def addConst(self, name: String, value: Int) {
             constMap[name] = value
         }
@@ -42,6 +57,23 @@ class N2IR {
         val type: Type
         val name: String
         val index: Int
+        var init: Expr?
+    }
+
+    class Struct {
+        val mark: Mark
+        val name: String
+        val fields: List[Var] = []
+        val fieldMap: Map[String, Var] = MapOf()
+        def addField(self, field: Var) {
+            if val oldField = fieldMap.getOrNull(field.name) {
+                throw N2Error(
+                    "Duplicate field definition " + field.name, [field.mark, oldField.mark])
+            }
+            fields.add(field)
+            fieldMap[field.name] = field
+        }
+        def getFieldOrNull(self, name: String): Var? = fieldMap.getOrNull(name)
     }
 
     class Func {
@@ -63,15 +95,18 @@ class N2IR {
         case str
         case type
         case var_
+        case struct_(Struct)
         case array(Type)
         case func(Type, List[Type])
         def isUnreachable(self): Bool = tag!(self) == tag!(Type, unreachable)
         def isVoid(self): Bool = tag!(self) == tag!(Type, void)
+        def isVar(self): Bool = tag!(self) == tag!(Type, var_)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def isMeta(self): Bool = tag!(self) == tag!(Type, type)
         def isArray(self): Bool = tag!(self) == tag!(Type, array)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def repr(self): String = when self {
+            case struct_(s) = "struct(" + s.name + ")"
             case array(t) = "array(" + t + ")"
             else = tag_name!(self)
         }
@@ -137,6 +172,8 @@ class N2IR {
 
             kGETFUNC
             kCALL
+            kNEWSTRUCT
+            kGETFIELD
 
             kRETURN
 
@@ -170,17 +207,21 @@ class N2IR {
         var then: Expr = ?
         var els: Expr = ?
 
-        # getfunc/call/array/js
+        # getfunc/call/array/js/struct
         var func: Func = ?
         def __get_args(self): List[Expr] = stmts
         def __set_args(self, value: List[Expr]) { stmts = value }
 
-        # type/meta
+        # type/meta/struct
         var ty: Type = ?
+        def __get_struct_(self): Struct = get!(ty, struct_, 0)
+        def __set_struct_(self, s: Struct) { ty = Type.struct_(s) }
 
         # block
         var stmts: List[Expr] = ?
         var newScope: Bool = ?
+
+        def __get_kindName(self): String = kindNames[kind]
 
         def int(mark: Mark, value: Int): Self {
             val self = Self(mark, kINT, Type.int)
@@ -206,10 +247,10 @@ class N2IR {
             self
         }
 
-        def declvar(mark: Mark, var_: Var, valexpr: Expr?): Self {
+        def declvar(mark: Mark, var_: Var): Self {
             val self = Self(mark, kDECLVAR, Type.void)
-            if val e = valexpr {
-                self.arg = icast(e, var_.type)
+            if val init = var_.init {
+                var_.init = null(icast(init, var_.type))
             }
             self.var_ = var_
             self
@@ -221,14 +262,25 @@ class N2IR {
             self
         }
 
-        def call(mark: Mark, fexpr: Expr, args: List[Expr]): Self {
-            if fexpr.kind == kGETFUNC {
-                val self = Self(mark, kCALL, fexpr.func.returnType)
-                self.func = fexpr.func
-                self.args = args
-                return self
-            }
-            throw N2Error(kindNames[fexpr.kind] + " is not callable", [mark])
+        def callf(mark: Mark, func: Func, args: List[Expr]): Self {
+            val self = Self(mark, kCALL, func.returnType)
+            self.func = func
+            self.args = args
+            self
+        }
+
+        def newstruct(mark: Mark, struct_: Struct, args: List[Expr]): Self {
+            val self = Self(mark, kNEWSTRUCT, Type.struct_(struct_))
+            self.struct_ = struct_
+            self.args = args
+            self
+        }
+
+        def getfield(mark: Mark, owner: Expr, struct_: Struct, field: Var): Self {
+            val self = unop(mark, kGETFIELD, field.type, owner)
+            self.var_ = field
+            self.struct_ = struct_
+            self
         }
 
         def js(mark: Mark, type: Type, args: List[Expr]): Expr {
@@ -336,6 +388,9 @@ class N2IR {
             }
             if type.isVoid() { # cast to void
                 return block(expr.mark, [expr, nop(expr.mark)])
+            }
+            if type.isVar() and not expr.type.isVoid() {
+                return expr
             }
             throw N2Error("Expected " + type + " but got " + expr.type, [expr.mark])
         }
@@ -458,6 +513,9 @@ class N2IR {
         }
 
         def seq(mark: Mark, stmts: List[Expr]): Self {
+            if stmts.size() == 1 {
+                return stmts[0]
+            }
             val type = if stmts { stmts.last().type } else { Type.void }
             val block = Expr(mark, kBLOCK, type)
             block.stmts = stmts
@@ -472,6 +530,7 @@ class N2IR {
             switch kind {
                 case kBLOCK = "block(" + type + "," + ",".join(stmts.map(s -> s.repr())) + ")"
                 case kIF = "if_(" + type + "," + cond + "," + then + "," + els + ")"
+                case kGETFUNC = "getfunc(" + func.name + ")"
                 else = kindstr
             }
         }

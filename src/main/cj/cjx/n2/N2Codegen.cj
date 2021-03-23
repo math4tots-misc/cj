@@ -22,13 +22,18 @@ class N2Codegen {
         for func in program.funcs {
             func(func)
         }
-        out.str("return " + trfname(entryFunctionName) + "();")
+        for struct_ in program.structs {
+            struct_(struct_)
+        }
+        out.str("return " + trfnname(entryFunctionName) + "();")
         out.str("})()")
         out.getSource()
     }
 
-    private def trfname(functionName: String): String = "F" + functionName
+    private def trsname(struct_: N2IR.Struct): String = "S" + struct_.name
+    private def trfnname(functionName: String): String = "F" + functionName
     private def trvname(var_: N2IR.Var): String = "V" + var_.index + var_.name
+    private def trflname(fieldName: String): String = "F" + fieldName
 
     class Blob {
         def simple(bodyString: String): Self = Self(null, out -> out.str(bodyString), false)
@@ -120,15 +125,26 @@ class N2Codegen {
 
     @variadic def join(self, list: List[Emittable]): Blob = joinList(list)
 
+    def struct_(self, struct_: N2IR.Struct) {
+        val params = struct_.fields.map(v -> trflname(v.name))
+        val sname = trsname(struct_)
+        out.addMark(struct_.mark)
+        out.str("class " + sname + "{\n")
+        out.str("constructor(" + ",".join(params) + "){")
+        for param in params { out.str("this." + param + "=" + param + ";") }
+        out.str("}\n")
+        out.str("}\n")
+    }
+
     def func(self, func: N2IR.Func) {
         tempVarCount = 0
-        val fname = trfname(func.name)
+        val fname = trfnname(func.name)
         val params = func.params.map(v -> trvname(v))
         val body = expr(func.body)
         out.addMark(func.mark)
         out.str("function " + fname + "(" + ",".join(params) + "){")
         body.set(out, "return ")
-        out.str("}")
+        out.str("}\n")
     }
 
     def expr(self, expr: N2IR.Expr): Blob {
@@ -149,8 +165,8 @@ class N2Codegen {
             case N2IR.Expr.kDECLVAR = Blob(
                 null(out -> {
                     val varname = trvname(expr.var_)
-                    if is_set!(expr, arg) {
-                        expr(expr.arg).set(out, "let " + varname)
+                    if val init = expr.var_.init {
+                        expr(init).set(out, "let " + varname + "=")
                     } else {
                         out.str("let " + varname + ";")
                     }
@@ -183,7 +199,8 @@ class N2Codegen {
                 }
             }
             case N2IR.Expr.kCALL {
-                val fname = trfname(expr.func.name)
+                Assert.equal(expr.func.nparams, expr.args.size())
+                val fname = trfnname(expr.func.name)
                 val args = prepArgs(expr.args.map(arg -> expr(arg)))
                 val prep = joinPrep(args)
                 Blob(prep, out -> {
@@ -193,6 +210,28 @@ class N2Codegen {
                         args[i].body.call(out)
                     }
                     out.str(")")
+                }, false)
+            }
+            case N2IR.Expr.kNEWSTRUCT {
+                val struct_ = expr.struct_
+                Assert.equal(struct_.fields.size(), expr.args.size())
+                val sname = trsname(struct_)
+                val args = prepArgs(expr.args.map(arg -> expr(arg)))
+                val prep = joinPrep(args)
+                Blob(prep, out -> {
+                    out.str("new " + sname + "(")
+                    for i = 0; i < args.size(); i++ {
+                        if i { out.str(",") }
+                        args[i].body.call(out)
+                    }
+                    out.str(")")
+                }, false)
+            }
+            case N2IR.Expr.kGETFIELD {
+                val inner = expr(expr.arg)
+                Blob(inner.prep, out -> {
+                    inner.body.call(out)
+                    out.str("." + trflname(expr.var_.name))
                 }, false)
             }
             case N2IR.Expr.kRETURN {

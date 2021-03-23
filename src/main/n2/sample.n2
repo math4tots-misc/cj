@@ -1,7 +1,18 @@
 
 
+struct Foo {
+    int a
+    int b
+}
+
 int main() {
+    auto foo = Foo(a: 3, b: 5)
     print("Hello world!")
     print(2 + 3)
+    int a = 2
+    auto b = 7
+    print(a + b + 7)
+    print(foo.a)
+    print(foo.b)
     return 0
 }

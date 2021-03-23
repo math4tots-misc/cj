@@ -24,8 +24,8 @@ class N2Lexer {
             b.add(N2Token.keywordString(type), m -> symtok(m, type))
         }
 
-        b.add("[a-z_][a-zA-Z_0-9]*!", m -> tok(m, N2Token.tMACROID, s -> s))
-        b.add("[a-z_][a-zA-Z_0-9]*", m -> tok(m, N2Token.tID, s -> s))
+        b.add("[a-zA-Z_][a-zA-Z_0-9]*!", m -> tok(m, N2Token.tMACROID, s -> s))
+        b.add("[a-zA-Z_][a-zA-Z_0-9]*", m -> tok(m, N2Token.tID, s -> s))
 
         # single character symbol tokens
         b.add(
