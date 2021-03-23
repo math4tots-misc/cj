@@ -6,7 +6,7 @@ struct Foo {
 }
 
 int main() {
-    auto foo = Foo(a: 3, b: 5)
+    auto foo = Foo(a = 3, b = 5)
     print("Hello world!")
     print(2 + 3)
     int a = 2

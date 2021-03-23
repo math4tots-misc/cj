@@ -270,10 +270,10 @@ class N2Parser: ParserMixin[N2Token] {
         expect('(')
         while not consume(')') {
             val pmark = mark()
-            val paramIndex = if at(N2Token.tID) and atOffset(':', 1) {
+            val paramIndex = if at(N2Token.tID) and atOffset('=', 1) {
                 val paramName = id()
                 val pi = findParamIndexFromName(mark, params, paramName)
-                expect(':')
+                expect('=')
                 pi
             } else {
                 nextIndex++
