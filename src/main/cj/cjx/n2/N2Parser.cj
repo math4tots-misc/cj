@@ -334,10 +334,6 @@ class N2Parser: ParserMixin[N2Token] {
             }
             case N2Token.tINT = Expr.int(mark, next().intValue)
             case N2Token.tSTRING = Expr.str(mark, next().stringValue)
-            case N2Token.kwINT { next(); Expr.type(mark, Type.int) }
-            case N2Token.kwVOID { next(); Expr.type(mark, Type.void) }
-            case N2Token.kwSTR { next(); Expr.type(mark, Type.str) }
-            case N2Token.kwVAR { next(); Expr.type(mark, Type.var_) }
             case N2Token.tMACROID {
                 val name = next().stringValue
                 val args = args()

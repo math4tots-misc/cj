@@ -16,10 +16,6 @@ class N2Token: Repr {
         tLE
         tGE
 
-        kwINT
-        kwVOID
-        kwSTR
-        kwVAR
         kwAUTO
         kwRETURN
         kwIF

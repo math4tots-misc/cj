@@ -12,6 +12,9 @@ class N2IR {
         val structs: List[Struct] = []
         val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
             "int": (Default(), Type.int),
+            "void": (Default(), Type.void),
+            "str": (Default(), Type.str),
+            "var": (Default(), Type.var_),
         )
 
         def addFunc(self, func: Func) {
