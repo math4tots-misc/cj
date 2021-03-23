@@ -27,6 +27,8 @@ int main() {
     print("sum = " + repr(foo.sum()))
     print("list = " + repr([1, 2, 3]))
     print("len(list) = " + repr(len!([1, 2, 3])))
+    // print("len(list) = " + repr(len([1, 2, 3])))
+    print("list.len() = " + repr([1, 2, 3].len()))
 
     auto bar = Bar[str]("Hello bar")
     print(bar)

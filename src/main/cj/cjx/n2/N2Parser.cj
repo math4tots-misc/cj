@@ -79,7 +79,7 @@ class N2Parser: ParserMixin[N2Token] {
             } else if at(N2Token.kwSTRUCT) {
                 next()
                 val name = id()
-                struct_(mark, name, false)
+                struct_(mark, name, name, null)
             } else if consume(N2Token.kwTEMPLATE) {
                 val params = parseJoin('[', ']', ',', () -> id())
                 skipDelims()
@@ -121,16 +121,16 @@ class N2Parser: ParserMixin[N2Token] {
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
-    def struct_(self, mark: Mark, name: String, instantiatingTemplate: Bool) {
+    def struct_(self, mark: Mark, name: String, rootName: String, templateArgs: List[Type]?) {
         switch pass {
             case 0 {
-                val struct_ = Struct(mark, name)
+                val struct_ = Struct(mark, name, rootName, [])
                 program.addStruct(struct_)
                 skipToDelimiter()
             }
             case 1; case 2 {
-                if instantiatingTemplate {
-                    val struct_ = Struct(mark, name)
+                if val tas = templateArgs {
+                    val struct_ = Struct(mark, name, rootName, tas)
                     program.addStruct(struct_)
                 } else if pass > 1 {
                     skipToDelimiter()
@@ -178,8 +178,9 @@ class N2Parser: ParserMixin[N2Token] {
 
         val tmark = mark()
         expect(N2Token.kwSTRUCT)
-        Assert.that(name.startsWith(qid() + "[")) # skip root struct name
-        struct_(tmark, name, true)
+        val rootName = id()
+        Assert.that(name.startsWith(rootName + "["))
+        struct_(tmark, name, rootName, null(typeArgs))
 
         i = savedI
         templateArgs = savedArgs
@@ -347,6 +348,14 @@ class N2Parser: ParserMixin[N2Token] {
                             val args = argsWithParams(func.params, [])
                             expr = Expr.callf(mark, func, args)
                         }
+                        case Expr.kGETFUNCTEMP {
+                            val ft = expr.funcTemplate
+                            val args = args()
+                            val templArgs = inferTemplateArgs(mark, ft.templateParams, ft.tpats, args)
+                            val func = instantiateFunc(
+                                mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                            expr = Expr.callf(mark, func, args)
+                        }
                         case Expr.kTYPE {
                             when expr.ty {
                                 case struct_(struct_) {
@@ -365,21 +374,37 @@ class N2Parser: ParserMixin[N2Token] {
                     if at('(') {
                         when expr.type {
                             case array(itemType) {
-                                val baseName = "list." + name
-                                if val func = program.getFuncOrNull(baseName) {
+                                val rootName = "list." + name
+                                if val func = program.getFuncOrNull(rootName) {
                                     val args = argsWithParams(func.params, [expr])
                                     expr = Expr.callf(mark, func, args)
+                                } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                    val args = [expr]
+                                    args.addAll(args())
+                                    val templArgs = inferTemplateArgs(
+                                        mark, ft.templateParams, ft.tpats, args)
+                                    val func = instantiateFunc(
+                                        mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                                    expr = Expr.callf(mark, func, args)
                                 } else {
-                                    error("Function " + baseName + " not found")
+                                    error("Function " + rootName + " not found")
                                 }
                             }
                             case struct_(struct_) {
-                                val baseName = struct_.name + "." + name
-                                if val func = program.getFuncOrNull(baseName) {
+                                val rootName = struct_.name + "." + name
+                                if val func = program.getFuncOrNull(rootName) {
                                     val args = argsWithParams(func.params, [expr])
                                     expr = Expr.callf(mark, func, args)
+                                } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                    val args = [expr]
+                                    args.addAll(args())
+                                    val templArgs = inferTemplateArgs(
+                                        mark, ft.templateParams, ft.tpats, args)
+                                    val func = instantiateFunc(
+                                        mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                                    expr = Expr.callf(mark, func, args)
                                 } else {
-                                    error("Function " + baseName + " not found")
+                                    error("Function " + rootName + " not found")
                                 }
                             }
                             else = error("" + expr.type + " values do not have methods")
@@ -403,6 +428,42 @@ class N2Parser: ParserMixin[N2Token] {
             tokprec = precof(peek().type)
         }
         expr
+    }
+
+    def inferTemplateArgs(
+            self,
+            mark: Mark,
+            tparams: List[String],
+            tpats: List[TPat],
+            args: List[Expr]): List[Type] {
+        if tpats.size() != args.size() {
+            throw N2Error("Expected " + tpats.size() + " args but got " + args.size(), [mark])
+        }
+        val varnames = Set(tparams)
+        val map: Map[String, Type] = MapOf()
+        val stack: List[Tuple[TPat, Type]] = []
+        for i = tpats.size() - 1; i >= 0; i-- {
+            stack.add((tpats[i], args[i].type))
+        }
+        while map.size() < tparams.size() and stack {
+            val (tpat, etype) = stack.pop()
+            if tpat.name in varnames and tpat.args.isEmpty() {
+                map[tpat.name] = etype
+            } else if tpat.name == etype.rootName and tpat.args.size() == etype.args.size() {
+                val exprargs = etype.args
+                for i = tpat.args.size() - 1; i >= 0; i-- {
+                    stack.add((tpat.args[i], exprargs[i]))
+                }
+            }
+        }
+        if map.size() < tparams.size() {
+            throw N2Error("Could not infer template args", [mark])
+        }
+        val out: List[Type] = []
+        for i = 0; i < tparams.size(); i++ {
+            out.add(map[tparams[i]])
+        }
+        out
     }
 
     def args(self): List[Expr] = parseJoin('(', ')', ',', () -> expr())

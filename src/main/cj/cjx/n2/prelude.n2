@@ -9,4 +9,4 @@ template[T] void print2(T t) {
     js!(void, "console.log(''+", t, ")")
 }
 
-template[T] int len(T[] t) = js!(int, t, ".length")
+template[T] int list.len(T[] t) = js!(int, t, ".length")

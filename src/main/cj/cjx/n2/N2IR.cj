@@ -124,6 +124,8 @@ class N2IR {
     class Struct {
         val mark: Mark
         val name: String
+        val rootName: String
+        val templateArgs: List[Type]
         val fields: List[Var] = []
         val fieldMap: Map[String, Var] = MapOf()
         def addField(self, field: Var) {
@@ -190,6 +192,18 @@ class N2IR {
                 else = throw Error("FUBAR")
             }
             else = true
+        }
+        def __get_rootName(self): String = when self {
+            case array(inner) = "list"
+            case func(..) = "func"
+            case struct_(st) = st.rootName
+            else name() = name
+        }
+        def __get_args(self): List[Type] = when self {
+            case struct_(st) = st.templateArgs
+            case array(inner) = [inner]
+            case func(..) = [] # TODO
+            else() = []
         }
         def __get_itemType(self): Type = get!(self, array, 0)
         def common(mark: Mark, a: Self, b: Self): Self {
