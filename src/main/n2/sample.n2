@@ -30,6 +30,8 @@ int main() {
     // print("len(list) = " + repr(len([1, 2, 3])))
     print("list.len() = " + repr([1, 2, 3].len()))
 
+    auto n = null.(null[int])
+
     auto bar = Bar[str]("Hello bar")
     print(bar)
     print("bar.t = " + bar.t)

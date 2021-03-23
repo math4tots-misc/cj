@@ -122,15 +122,16 @@ class N2Parser: ParserMixin[N2Token] {
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
     def struct_(self, mark: Mark, name: String, rootName: String, templateArgs: List[Type]?) {
+        val native_ = consume(N2Token.kwNATIVE)
         switch pass {
             case 0 {
-                val struct_ = Struct(mark, name, rootName, [])
+                val struct_ = Struct(mark, name, native_, rootName, [])
                 program.addStruct(struct_)
                 skipToDelimiter()
             }
             case 1; case 2 {
                 if val tas = templateArgs {
-                    val struct_ = Struct(mark, name, rootName, tas)
+                    val struct_ = Struct(mark, name, native_, rootName, tas)
                     program.addStruct(struct_)
                 } else if pass > 1 {
                     skipToDelimiter()
@@ -370,56 +371,63 @@ class N2Parser: ParserMixin[N2Token] {
                 }
                 case '.' {
                     next()
-                    val name = id()
-                    if at('(') {
-                        when expr.type {
-                            case array(itemType) {
-                                val rootName = "list." + name
-                                if val func = program.getFuncOrNull(rootName) {
-                                    val args = argsWithParams(func.params, [expr])
-                                    expr = Expr.callf(mark, func, args)
-                                } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                    val args = [expr]
-                                    args.addAll(args())
-                                    val templArgs = inferTemplateArgs(
-                                        mark, ft.templateParams, ft.tpats, args)
-                                    val func = instantiateFunc(
-                                        mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
-                                    expr = Expr.callf(mark, func, args)
-                                } else {
-                                    error("Function " + rootName + " not found")
-                                }
-                            }
-                            case struct_(struct_) {
-                                val rootName = struct_.name + "." + name
-                                if val func = program.getFuncOrNull(rootName) {
-                                    val args = argsWithParams(func.params, [expr])
-                                    expr = Expr.callf(mark, func, args)
-                                } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                    val args = [expr]
-                                    args.addAll(args())
-                                    val templArgs = inferTemplateArgs(
-                                        mark, ft.templateParams, ft.tpats, args)
-                                    val func = instantiateFunc(
-                                        mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
-                                    expr = Expr.callf(mark, func, args)
-                                } else {
-                                    error("Function " + rootName + " not found")
-                                }
-                            }
-                            else = error("" + expr.type + " values do not have methods")
-                        }
+                    if consume('(') {
+                        # type assertion
+                        val type = type()
+                        expect(')')
+                        expr = expr.icast(type)
                     } else {
-                        when expr.type {
-                            case struct_(struct_) {
-                                if val var_ = struct_.getFieldOrNull(name) {
-                                    expr = Expr.getfield(mark, expr, struct_, var_)
-                                } else {
-                                    error(
-                                        "Field " + name + " not found in struct " + struct_.name)
+                        val name = id()
+                        if at('(') {
+                            when expr.type {
+                                case array(itemType) {
+                                    val rootName = "list." + name
+                                    if val func = program.getFuncOrNull(rootName) {
+                                        val args = argsWithParams(func.params, [expr])
+                                        expr = Expr.callf(mark, func, args)
+                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                        val args = [expr]
+                                        args.addAll(args())
+                                        val templArgs = inferTemplateArgs(
+                                            mark, ft.templateParams, ft.tpats, args)
+                                        val func = instantiateFunc(
+                                            mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                                        expr = Expr.callf(mark, func, args)
+                                    } else {
+                                        error("Function " + rootName + " not found")
+                                    }
                                 }
+                                case struct_(struct_) {
+                                    val rootName = struct_.name + "." + name
+                                    if val func = program.getFuncOrNull(rootName) {
+                                        val args = argsWithParams(func.params, [expr])
+                                        expr = Expr.callf(mark, func, args)
+                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                                        val args = [expr]
+                                        args.addAll(args())
+                                        val templArgs = inferTemplateArgs(
+                                            mark, ft.templateParams, ft.tpats, args)
+                                        val func = instantiateFunc(
+                                            mark, ft, templArgs.map(arg -> Expr.type(mark, arg)))
+                                        expr = Expr.callf(mark, func, args)
+                                    } else {
+                                        error("Function " + rootName + " not found")
+                                    }
+                                }
+                                else = error("" + expr.type + " values do not have methods")
                             }
-                            else = error("" + expr.type + " values do not have fields")
+                        } else {
+                            when expr.type {
+                                case struct_(struct_) {
+                                    if val var_ = struct_.getFieldOrNull(name) {
+                                        expr = Expr.getfield(mark, expr, struct_, var_)
+                                    } else {
+                                        error(
+                                            "Field " + name + " not found in struct " + struct_.name)
+                                    }
+                                }
+                                else = error("" + expr.type + " values do not have fields")
+                            }
                         }
                     }
                 }

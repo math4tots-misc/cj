@@ -124,6 +124,7 @@ class N2IR {
     class Struct {
         val mark: Mark
         val name: String
+        val native_: Bool
         val rootName: String
         val templateArgs: List[Type]
         val fields: List[Var] = []

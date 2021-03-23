@@ -27,6 +27,7 @@ class N2Token: Repr {
         kwWHILE
         kwCONST
         kwSTRUCT
+        kwNATIVE
     }
 
     static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")

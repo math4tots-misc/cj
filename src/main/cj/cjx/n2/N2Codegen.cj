@@ -134,6 +134,8 @@ class N2Codegen {
     @variadic def join(self, list: List[Emittable]): Blob = joinList(list)
 
     def struct_(self, struct_: N2IR.Struct) {
+        if struct_.native_ { return () }
+
         val params = struct_.fields.map(v -> trflname(v.name))
         val sname = trsname(struct_)
         out.addMark(struct_.mark)
@@ -172,6 +174,8 @@ class N2Codegen {
             case N2IR.Expr.kSTR_ADD = join("(", expr(expr.lhs), "+", expr(expr.rhs), ")")
             case N2IR.Expr.kGETVAR = Blob.pure(trvname(expr.var_))
             case N2IR.Expr.kSETVAR = join("(", trvname(expr.var_), "=", expr(expr.arg), ")")
+            case N2IR.Expr.kNULL = Blob.pure("null")
+            case N2IR.Expr.kNULLWRAP = expr(expr.arg)
             case N2IR.Expr.kDECLVAR = Blob(
                 null(out -> {
                     val varname = trvname(expr.var_)
