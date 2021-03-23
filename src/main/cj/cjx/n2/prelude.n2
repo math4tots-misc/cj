@@ -8,3 +8,5 @@ str repr(var x) = js!(str, "JSON.stringify(", x, ")")
 template print2[T] void,(T t) {
     js!(void, "console.log(''+", t, ")")
 }
+
+template len[T] int,(T[] t) = js!(int, t, ".length")

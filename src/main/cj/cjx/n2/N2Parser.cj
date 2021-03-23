@@ -53,6 +53,11 @@ class N2Parser: ParserMixin[N2Token] {
     def errorAtMark(self, message: String, mark: Mark): NoReturn = throw N2Error(
         message, [mark])
     def id(self): String = expect(N2Token.tID).stringValue
+    def qid(self): String {
+        var name = id()
+        while consume('.') { name = name + "." + id() }
+        name
+    }
 
     def file(self): Program {
         skipDelims()
@@ -72,7 +77,7 @@ class N2Parser: ParserMixin[N2Token] {
             } else if at(N2Token.kwSTRUCT) {
                 struct_()
             } else if consume(N2Token.kwTEMPLATE) {
-                val name = id()
+                val name = qid()
                 val params = parseJoin('[', ']', ',', () -> id())
                 skipDelims()
                 if pass < 1 {
@@ -84,7 +89,7 @@ class N2Parser: ParserMixin[N2Token] {
                 skipToDelimiter()
             } else {
                 val type = type()
-                val name = id()
+                val name = qid()
                 func(mark, type, name, false)
             }
             skipDelims()
@@ -147,10 +152,12 @@ class N2Parser: ParserMixin[N2Token] {
 
         val savedI = i
         val savedArgs = templateArgs
+        val savedLocals = locals
 
         i = ft.i
         templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
             ft.params[i], typeArgs[i])).toList())
+        locals = N2Locals()
 
         val tmark = mark()
         val returnType = type()
@@ -159,6 +166,7 @@ class N2Parser: ParserMixin[N2Token] {
 
         i = savedI
         templateArgs = savedArgs
+        locals = savedLocals
 
         program.getFuncOrNull(name).get()
     }
@@ -268,7 +276,7 @@ class N2Parser: ParserMixin[N2Token] {
                             case Expr.kGETFUNCTEMP {
                                 val templ = expr.funcTemplate
                                 val func = instantiateFunc(expr.mark, templ, iexprs)
-                                val args = argsWithParams(func.params)
+                                val args = argsWithParams(func.params, [])
                                 expr = Expr.callf(mark, func, args)
                             }
                             else = throw N2Error("Expected template", [expr.mark])
@@ -279,13 +287,13 @@ class N2Parser: ParserMixin[N2Token] {
                     switch expr.kind {
                         case Expr.kGETFUNC {
                             val func = expr.func
-                            val args = argsWithParams(func.params)
+                            val args = argsWithParams(func.params, [])
                             expr = Expr.callf(mark, func, args)
                         }
                         case Expr.kTYPE {
                             when expr.ty {
                                 case struct_(struct_) {
-                                    val args = argsWithParams(struct_.fields)
+                                    val args = argsWithParams(struct_.fields, [])
                                     expr = Expr.newstruct(mark, struct_, args)
                                 }
                                 else = error("" + expr.ty + " is not a callable type")
@@ -296,17 +304,41 @@ class N2Parser: ParserMixin[N2Token] {
                 }
                 case '.' {
                     next()
-                    val fieldName = id()
-                    when expr.type {
-                        case struct_(struct_) {
-                            if val var_ = struct_.getFieldOrNull(fieldName) {
-                                expr = Expr.getfield(mark, expr, struct_, var_)
-                            } else {
-                                error(
-                                    "Field " + fieldName + " not found in struct " + struct_.name)
+                    val name = id()
+                    if at('(') {
+                        when expr.type {
+                            case array(itemType) {
+                                val baseName = "list." + name
+                                if val func = program.getFuncOrNull(baseName) {
+                                    val args = argsWithParams(func.params, [expr])
+                                    expr = Expr.callf(mark, func, args)
+                                } else {
+                                    error("Function " + baseName + " not found")
+                                }
                             }
+                            case struct_(struct_) {
+                                val baseName = struct_.name + "." + name
+                                if val func = program.getFuncOrNull(baseName) {
+                                    val args = argsWithParams(func.params, [expr])
+                                    expr = Expr.callf(mark, func, args)
+                                } else {
+                                    error("Function " + baseName + " not found")
+                                }
+                            }
+                            else = error("" + expr.type + " values do not have methods")
                         }
-                        else = error("" + expr.type + " values do not have fields")
+                    } else {
+                        when expr.type {
+                            case struct_(struct_) {
+                                if val var_ = struct_.getFieldOrNull(name) {
+                                    expr = Expr.getfield(mark, expr, struct_, var_)
+                                } else {
+                                    error(
+                                        "Field " + name + " not found in struct " + struct_.name)
+                                }
+                            }
+                            else = error("" + expr.type + " values do not have fields")
+                        }
                     }
                 }
                 else = error("Unhandled operator " + peek().repr())
@@ -318,10 +350,11 @@ class N2Parser: ParserMixin[N2Token] {
 
     def args(self): List[Expr] = parseJoin('(', ')', ',', () -> expr())
 
-    def argsWithParams(self, params: List[Var]): List[Expr] {
+    def argsWithParams(self, params: List[Var], givenArgs: List[Expr]): List[Expr] {
         val mark = mark()
         var nextIndex = 0
-        val args: List[Expr?] = List.ofSize(params.size(), i -> null)
+        val args: List[Expr?] = givenArgs.map(arg -> null(arg))
+        while args.size() < params.size() { args.add(null) }
         expect('(')
         while not consume(')') {
             val pmark = mark()
@@ -376,6 +409,7 @@ class N2Parser: ParserMixin[N2Token] {
             case '(' { next(); val e = expr(); expect(')'); e }
             case '+' { next(); val e = exprpr(unaryPrec); Expr.pos(mark, e) }
             case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
+            case '[' = Expr.array(mark, parseJoin('[', ']', ',', () -> expr()), null)
             case '{' = block()
             case N2Token.tID {
                 val name = next().stringValue

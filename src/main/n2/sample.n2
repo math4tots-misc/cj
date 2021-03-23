@@ -5,6 +5,8 @@ struct Foo {
     int b
 }
 
+int Foo.sum(Foo self) = self.a + self.b
+
 int main() {
     auto foo = Foo(a = 3, b = 5)
     print("Hello world!")
@@ -18,5 +20,6 @@ int main() {
     print(foo)
     print("len = " + repr(len!("Hello")))
     print2[str]("using print2")
+    print("sum = " + repr(foo.sum()))
     return 0
 }

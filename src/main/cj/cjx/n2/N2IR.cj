@@ -312,6 +312,14 @@ class N2IR {
             val self = Self(mark, kCALL, func.returnType)
             self.func = func
             self.args = args
+            if args.size() != func.nparams {
+                throw N2Error(
+                    "Expected " + func.params.size() + " args but got " + args.size(), [mark])
+            }
+            val params = func.params
+            for i = 0; i < args.size(); i++ {
+                args[i] = args[i].icast(params[i].type)
+            }
             self
         }
 
