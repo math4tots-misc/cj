@@ -453,6 +453,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                     var tmpvar = ctx.newTempVarName();
                     return CJJSBlob.withPrep(out -> {
                         out.append("let " + tmpvar + "=" + (e.isAnd() ? "false" : "true") + ";");
+                        left.emitPrep(out);
                         out.append("if(" + (e.isAnd() ? "" : "!") + "(");
                         left.emitMain(out);
                         out.append(")){");

@@ -1275,6 +1275,23 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     return new CJIRJSBlob(e, type, parts);
                 }
+                case "json!": {
+                    var jsonobjtype = ctx.getTypeWithArgs("cj.JSON", List.of(), e.getMark());
+                    var parts = List.<Object>of();
+                    parts.add("{");
+                    for (int i = 0; i < e.getArgs().size(); i++) {
+                        if (i > 0) {
+                            parts.add(",");
+                        }
+                        var pair = solveExprForPair(e.getArgs().get(i));
+                        var key = solveExprForNameOrStringLiteral(pair.get1());
+                        var value = evalExpressionWithType(pair.get2(), jsonobjtype);
+                        parts.add(key + ":");
+                        parts.add(value);
+                    }
+                    parts.add("}");
+                    return new CJIRJSBlob(e, jsonobjtype, parts);
+                }
                 case "jsobj!": {
                     var jsobjtype = ctx.getTypeWithArgs("www.JSObject", List.of(), e.getMark());
                     var parts = List.<Object>of();

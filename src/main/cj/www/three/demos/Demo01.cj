@@ -24,7 +24,7 @@ class Demo01 {
         document.field("body").call("appendChild", renderer.field("domElement"))
 
         val geometry = three.field("BoxGeometry").new()
-        val material = three.field("MeshBasicMaterial").new(JSON.object("color": 0x00ff00))
+        val material = three.field("MeshBasicMaterial").new(jsobj!("color": 0x00ff00))
         cube = three.field("Mesh").new(geometry, material)
         scene.call("add", cube)
         camera.field("position").setField("z", 5)
