@@ -262,12 +262,8 @@ class N2Parser: ParserMixin[N2Token] {
         }
     }
 
-    def asTypeLiteral(expr: Expr): Type {
-        if expr.kind == Expr.kTYPE {
-            expr.ty
-        } else {
-            throw N2Error("Expected type literal", [expr.mark])
-        }
+    def asTypeLiteral(self, expr: Expr): Type {
+        Expr.evalType(program, expr)
     }
 
     def type(self): Type = asTypeLiteral(expr())
@@ -289,12 +285,18 @@ class N2Parser: ParserMixin[N2Token] {
     }
 
     def precof(type: Int): Int = switch type {
-        case '('; case '['; case '.' = 140
+        case '('; case '['; case '.'
+        case N2Token.tINCR; case N2Token.tDECR = 140
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
-        case '<'; case '>'; case N2Token.tLE; case N2Token.tGE = 80
-        case N2Token.tEQ; case N2Token.tNE = 70
-        case '=' = 50
+        case '<'; case '>'; case N2Token.tLE; case N2Token.tGE = 90
+        case N2Token.tEQ; case N2Token.tNE = 80
+        case '&' = 70
+        case '^' = 60
+        case '|' = 50
+        case N2Token.tAND = 40
+        case N2Token.tOR = 30
+        case '=' = 20
         else = -1
     }
 
@@ -306,25 +308,27 @@ class N2Parser: ParserMixin[N2Token] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '='          { next(); expr = Expr.assign(mark, expr, exprpr(tokprec - 1)) }
-                case '+'          { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
-                case '-'          { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
-                case '*'          { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
-                case '/'          { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
-                case '%'          { next(); expr = Expr.rem(mark, expr, exprpr(tokprec)) }
-                case N2Token.tEQ  { next(); expr = Expr.eq(mark, expr, exprpr(tokprec)) }
-                case N2Token.tNE  { next(); expr = Expr.ne(mark, expr, exprpr(tokprec)) }
-                case N2Token.tLE  { next(); expr = Expr.le(mark, expr, exprpr(tokprec)) }
-                case '<'          { next(); expr = Expr.lt(mark, expr, exprpr(tokprec)) }
-                case N2Token.tGE  { next(); expr = Expr.le(mark, exprpr(tokprec), expr) }
-                case '>'          { next(); expr = Expr.lt(mark, exprpr(tokprec), expr) }
+                case '='           { next(); expr = Expr.assign(mark, expr, exprpr(tokprec - 1)) }
+                case '+'           { next(); expr = Expr.add(mark, expr, exprpr(tokprec)) }
+                case '-'           { next(); expr = Expr.sub(mark, expr, exprpr(tokprec)) }
+                case '*'           { next(); expr = Expr.mul(mark, expr, exprpr(tokprec)) }
+                case '/'           { next(); expr = Expr.div(mark, expr, exprpr(tokprec)) }
+                case '%'           { next(); expr = Expr.rem(mark, expr, exprpr(tokprec)) }
+                case N2Token.tEQ   { next(); expr = Expr.eq(mark, expr, exprpr(tokprec)) }
+                case N2Token.tNE   { next(); expr = Expr.ne(mark, expr, exprpr(tokprec)) }
+                case N2Token.tLE   { next(); expr = Expr.le(mark, expr, exprpr(tokprec)) }
+                case '<'           { next(); expr = Expr.lt(mark, expr, exprpr(tokprec)) }
+                case N2Token.tGE   { next(); expr = Expr.le(mark, exprpr(tokprec), expr) }
+                case '>'           { next(); expr = Expr.lt(mark, exprpr(tokprec), expr) }
+                case N2Token.tAND  { next(); expr = Expr.and_(mark, expr, exprpr(tokprec)) }
+                case N2Token.tOR   { next(); expr = Expr.or_(mark, expr, exprpr(tokprec)) }
+                case N2Token.tINCR { next(); expr = Expr.incr(mark, expr) }
+                case N2Token.tDECR { next(); expr = Expr.decr(mark, expr) }
                 case '[' {
                     val iexprs = parseJoin('[', ']', ',', () -> expr())
                     if iexprs.isEmpty() {
-                        if expr.kind != Expr.kTYPE {
-                            throw N2Error("Expected type", [expr.mark])
-                        }
-                        expr = Expr.type(mark, Type.array(expr.ty))
+                        val itemType = asTypeLiteral(expr)
+                        expr = Expr.type(mark, Type.list(itemType))
                     } else {
                         switch expr.kind {
                             case Expr.kGETFUNCTEMP {
@@ -404,9 +408,9 @@ class N2Parser: ParserMixin[N2Token] {
                                 case Expr.kGETSTRUCTTEMP {
                                     val rootName = expr.structTemplate.name + "." + name
                                     if val func = program.getFuncOrNull(rootName) {
-                                        expr = Expr.getfunc(mark, func)
+                                        expr = Expr.getfunc(mark, func, rootName)
                                     } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                        expr = Expr.getfuncTemplate(mark, ft)
+                                        expr = Expr.getfuncTemplate(mark, ft, rootName)
                                     } else {
                                         error("Method " + rootName + " not found")
                                     }
@@ -422,9 +426,9 @@ class N2Parser: ParserMixin[N2Token] {
                                             }
                                             val rootName = struct_.name + "." + name
                                             if val func = program.getFuncOrNull(rootName) {
-                                                expr = Expr.getfunc(mark, func)
+                                                expr = Expr.getfunc(mark, func, rootName)
                                             } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                                expr = Expr.getfuncTemplate(mark, ft)
+                                                expr = Expr.getfuncTemplate(mark, ft, rootName)
                                             } else {
                                                 error("Method " + rootName + " not found")
                                             }
@@ -439,9 +443,9 @@ class N2Parser: ParserMixin[N2Token] {
                             val rootTypeName = expr.type.rootName
                             val rootName = rootTypeName + "." + name
                             if val func = program.getFuncOrNull(rootName) {
-                                expr = Expr.boundfunc(mark, func, expr)
+                                expr = Expr.boundfunc(mark, func, expr, rootName)
                             } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                expr = Expr.boundfuncTemplate(mark, ft, expr)
+                                expr = Expr.boundfuncTemplate(mark, ft, expr, rootName)
                             } else {
                                 when expr.type {
                                     case struct_(struct_) {
@@ -452,7 +456,7 @@ class N2Parser: ParserMixin[N2Token] {
                                                 " not found in struct " + struct_.name)
                                         }
                                     }
-                                    else = error("" + expr.type + " values do not have fields")
+                                    else = error("Member '" + name + "' not found in " + expr.type)
                                 }
                             }
                         }
@@ -492,6 +496,8 @@ class N2Parser: ParserMixin[N2Token] {
             }
         }
         if map.size() < tparams.size() {
+            IO.println("args = " + args + ", tpats = " + tpats)
+            IO.println("map = (" + map + "), tparams = (" + tparams + ")")
             throw N2Error("Could not infer template args", [mark])
         }
         val out: List[Type] = []
@@ -505,7 +511,7 @@ class N2Parser: ParserMixin[N2Token] {
 
     def argsWithParams(self, params: List[Var], givenArgs: List[Expr]): List[Expr] {
         val mark = mark()
-        var nextIndex = 0
+        var nextIndex = givenArgs.size()
         val args: List[Expr?] = givenArgs.map(arg -> null(arg))
         while args.size() < params.size() { args.add(null) }
         expect('(')
@@ -569,15 +575,19 @@ class N2Parser: ParserMixin[N2Token] {
         } else { null }
     }
 
-    private def getSelfFuncOrNull(self, name: String): Func? {
+    private def getSelfFuncOrNull(self, name: String): Tuple[Var, Func]? {
         if val selfVar = locals.getOrNull("self") {
-            program.getFuncOrNull(selfVar.type.rootName + "." + name)
+            if val func = program.getFuncOrNull(selfVar.type.rootName + "." + name) {
+                null((selfVar, func))
+            } else { null }
         } else { null }
     }
 
-    private def getSelfFuncTemplateOrNull(self, name: String): FuncTemplate? {
+    private def getSelfFuncTemplateOrNull(self, name: String): Tuple[Var, FuncTemplate]? {
         if val selfVar = locals.getOrNull("self") {
-            program.getFuncTemplateOrNull(selfVar.type.rootName + "." + name)
+            if val ft = program.getFuncTemplateOrNull(selfVar.type.rootName + "." + name) {
+                null((selfVar, ft))
+            } else { null }
         } else { null }
     }
 
@@ -587,7 +597,7 @@ class N2Parser: ParserMixin[N2Token] {
             case '(' { next(); val e = expr(); expect(')'); e }
             case '+' { next(); val e = exprpr(unaryPrec); Expr.pos(mark, e) }
             case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
-            case '[' = Expr.array(mark, parseJoin('[', ']', ',', () -> expr()), null)
+            case '[' = Expr.list(mark, parseJoin('[', ']', ',', () -> expr()), null)
             case '{' = block()
             case N2Token.kwNULL {
                 next()
@@ -614,14 +624,14 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getfield(mark, Expr.getvar(mark, selfVar), struct_, fieldVar)
                 } else if val type = templateArgs.getOrNull(name) {
                     Expr.type(mark, type)
-                } else if val func = getSelfFuncOrNull(name) {
-                    Expr.getfunc(mark, func)
+                } else if val (selfVar, func) = getSelfFuncOrNull(name) {
+                    Expr.boundfunc(mark, func, Expr.getvar(mark, selfVar), name)
                 } else if val func = program.getFuncOrNull(name) {
-                    Expr.getfunc(mark, func)
-                } else if val funcTemplate = getSelfFuncTemplateOrNull(name) {
-                    Expr.getfuncTemplate(mark, funcTemplate)
+                    Expr.getfunc(mark, func, name)
+                } else if val (selfVar, funcTemplate) = getSelfFuncTemplateOrNull(name) {
+                    Expr.boundfuncTemplate(mark, funcTemplate, Expr.getvar(mark, selfVar), name)
                 } else if val funcTemplate = program.getFuncTemplateOrNull(name) {
-                    Expr.getfuncTemplate(mark, funcTemplate)
+                    Expr.getfuncTemplate(mark, funcTemplate, name)
                 } else if val structTemplate = program.getStructTemplateOrNull(name) {
                     Expr.getstructTemplate(mark, structTemplate)
                 } else if val value = program.getConstOrNull(name) {
@@ -637,7 +647,7 @@ class N2Parser: ParserMixin[N2Token] {
             case N2Token.tMACROID {
                 val name = next().stringValue
                 val args = args()
-                Expr.macro(mark, name, args)
+                Expr.macro(mark, program, name, args)
             }
             else = errorKind("expression")
         }

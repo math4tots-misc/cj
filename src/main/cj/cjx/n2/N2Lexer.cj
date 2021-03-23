@@ -36,6 +36,10 @@ class N2Lexer {
         b.add("!=", m -> symtok(m, N2Token.tNE))
         b.add("<=", m -> symtok(m, N2Token.tLE))
         b.add(">=", m -> symtok(m, N2Token.tGE))
+        b.add("\\|\\|", m -> symtok(m, N2Token.tOR))
+        b.add("&&", m -> symtok(m, N2Token.tAND))
+        b.add("\\+\\+", m -> symtok(m, N2Token.tINCR))
+        b.add("--", m -> symtok(m, N2Token.tDECR))
 
         # newline
         b.add("\n\\s*", m -> chartok(m))

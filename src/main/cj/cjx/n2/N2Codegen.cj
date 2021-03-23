@@ -169,9 +169,14 @@ class N2Codegen {
             case N2IR.Expr.kINT_NE = join("(", expr(expr.lhs), "!==", expr(expr.rhs), ")")
             case N2IR.Expr.kINT_LT = join("(", expr(expr.lhs), "<", expr(expr.rhs), ")")
             case N2IR.Expr.kINT_LE = join("(", expr(expr.lhs), "<=", expr(expr.rhs), ")")
+            case N2IR.Expr.kINT_TO_BOOL = join("(!!", expr(expr.arg), ")")
+            case N2IR.Expr.kINTVAR_INCR = join(trvname(expr.var_), "++")
+            case N2IR.Expr.kINTVAR_DECR = join(trvname(expr.var_), "--")
             case N2IR.Expr.kSTR = Blob.pure(expr.stringValue.repr())
             case N2IR.Expr.kSTR_LEN = join(expr(expr.arg), ".length")
             case N2IR.Expr.kSTR_ADD = join("(", expr(expr.lhs), "+", expr(expr.rhs), ")")
+            case N2IR.Expr.kLOGICAL_AND = join("(", expr(expr.lhs), "&&", expr(expr.rhs), ")")
+            case N2IR.Expr.kLOGICAL_OR = join("(", expr(expr.lhs), "||", expr(expr.rhs), ")")
             case N2IR.Expr.kGETVAR = Blob.pure(trvname(expr.var_))
             case N2IR.Expr.kSETVAR = join("(", trvname(expr.var_), "=", expr(expr.arg), ")")
             case N2IR.Expr.kNULL = Blob.pure("null")
@@ -224,6 +229,30 @@ class N2Codegen {
                         true,
                     )
                 }
+            }
+            case N2IR.Expr.kWHILE {
+                val cond = expr(expr.cond)
+                val then = expr(expr.then)
+                Blob(
+                    null(out -> {
+                        if cond.simple {
+                            out.str("while(")
+                            cond.body.call(out)
+                            out.str("){")
+                            then.drop(out)
+                            out.str("}")
+                        } else {
+                            out.str("while(1){")
+                            cond.prep.get().call(out)
+                            out.str("if(!(")
+                            cond.body.call(out)
+                            out.str("))break;")
+                            then.drop(out)
+                            out.str("}")
+                        }
+                    }),
+                    out -> out.str("undefined"),
+                    true)
             }
             case N2IR.Expr.kCALL {
                 Assert.equal(expr.func.nparams, expr.args.size())

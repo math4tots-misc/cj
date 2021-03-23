@@ -36,5 +36,10 @@ int main() {
 
     auto map = Map.empty[int, int]()
     print(map)
+
+    {
+        auto list = ["hello", "world"]
+        print("list.len() = " + list.str())
+    }
     return 0
 }

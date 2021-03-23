@@ -13,3 +13,4 @@ class Base {
         return JSON.stringify(this);
     }
 }
+function panic(message) { throw new Error(message) }

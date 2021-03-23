@@ -1,6 +1,8 @@
 
 void print(var x) = js!(void, "console.log(''+", x, ")")
 
+unreachable panic(str s) = js!(unreachable, "panic(", s, ")")
+
 bool __is(var a, var b) = js!(bool, a, "===", b)
 
 str repr(var x) = js!(str, "JSON.stringify(", x, ")")
@@ -9,19 +11,68 @@ template[T] void print2(T t) {
     js!(void, "console.log(''+", t, ")")
 }
 
+int __checkIndex(var xs, int i) {
+    int len = js!(int, xs, ".length")
+    if (i < 0) i = i + len
+    if (i < 0 || i >= len) panic("Index out of bounds (i = " + repr(i) + ", len = " + repr(len) + ")")
+    i
+}
+
+// ============================================================
+//     int
+// ============================================================
+str int.str(int self) = self.repr()
+str int.repr(int self) = js!(str, "''+", self)
+
+// ============================================================
+//     str
+// ============================================================
 int str.len(str s) = js!(int, s, ".length")
+str str.str(str s) = s
+str str.repr(str s) = js!(str, "JSON.stringify(", s, ")")
+int str.get(str s, int i) = js!(int, s, ".charCodeAt(", i, ")")
 
-template[T] int list.len(T[] t) = js!(int, t, ".length")
+// ============================================================
+//     list
+// ============================================================
+template[T] int list.len(T[] self) = js!(int, self, ".length")
+template[T] void list.add(T[] self, T t) = js!(void, self, ".push(", t, ")")
+template[T] T list.get(T[] self, int i) = js!(T, self, "[", __checkIndex(self, i), "]")
+template[T] str list.str(T[] self) = self.repr()
+template[T] str list.repr(T[] self) {
+    auto sb = StringBuilder.new()
+    sb.add[str]("[")
+    for (int i = 0; i < self.len(); i++) {
+        if (i) sb.add[str](", ")
+        sb.add[str](get(i).repr())
+    }
+    sb.add[str]("]")
+    sb.str()
+}
 
+// ============================================================
+//     StringBuilder
+// ============================================================
+struct StringBuilder native {}
+StringBuilder StringBuilder.new() = js!(StringBuilder, "[]")
+template[T] void StringBuilder.add(StringBuilder self, T t) = js!(
+    void, self, ".push(", t.str(), ")")
+str StringBuilder.str(StringBuilder self) = js!(str, self, ".join('')")
+
+// ============================================================
+//     Tuple
+// ============================================================
 template[T0, T1] struct Tuple2 {
     T0 f0
     T1 f1
 }
 
+// ============================================================
+//     Map
+// ============================================================
 template[K, V] struct Map {
     null[Tuple2[K, V]][] entries
     int size
 }
-
 template[K, V]
 Map[K, V] Map.empty() = Map[K, V]([], 0)

@@ -14,6 +14,7 @@ class N2IR {
         val funcTemplateMap: Map[String, FuncTemplate] = MapOf()
         val structTemplateMap: Map[String, StructTemplate] = MapOf()
         val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
+            "unreachable": (Default(), Type.unreachable),
             "void": (Default(), Type.void),
             "bool": (Default(), Type.bool),
             "int": (Default(), Type.int),
@@ -154,10 +155,11 @@ class N2IR {
 
     ## Type Pattern
     ## Used to match against expressions to infer template args
-    class TPat {
+    class TPat: Repr {
         val mark: Mark
         val name: String
         val args: List[TPat]
+        def repr(self): String = if args { name + args } else { name }
     }
 
     union Type: Repr, Eq {
@@ -170,21 +172,22 @@ class N2IR {
         case var_
         case null_(Type)
         case struct_(Struct)
-        case array(Type)
+        case list(Type)
         case func(Type, List[Type])
         def isUnreachable(self): Bool = tag!(self) == tag!(Type, unreachable)
         def isVoid(self): Bool = tag!(self) == tag!(Type, void)
+        def isBool(self): Bool = tag!(self) == tag!(Type, bool)
         def isVar(self): Bool = tag!(self) == tag!(Type, var_)
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def isStr(self): Bool = tag!(self) == tag!(Type, str)
         def isMeta(self): Bool = tag!(self) == tag!(Type, meta)
         def isNull(self): Bool = tag!(self) == tag!(Type, null_)
-        def isArray(self): Bool = tag!(self) == tag!(Type, array)
+        def isArray(self): Bool = tag!(self) == tag!(Type, list)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def repr(self): String = when self {
             case struct_(s) = s.name
             case null_(t) = "null(" + t.repr() + ")"
-            case array(t) = "array(" + t.repr() + ")"
+            case list(t) = "list(" + t.repr() + ")"
             case func(rtype, argtypes) = "func(" + rtype.repr() + "," + argtypes + ")"
             else() = tag_name!(self)
         }
@@ -200,7 +203,7 @@ class N2IR {
         }
         def __get_rootName(self): String = when self {
             case null_(t) = "null_"
-            case array(inner) = "list"
+            case list(inner) = "list"
             case func(rtype, argtypes) = "func" + argtypes.size()
             case struct_(st) = st.rootName
             else name() = name
@@ -208,11 +211,11 @@ class N2IR {
         def __get_args(self): List[Type] = when self {
             case null_(t) = [t]
             case struct_(st) = st.templateArgs
-            case array(inner) = [inner]
+            case list(inner) = [inner]
             case func(rtype, argtypes) = [rtype] + argtypes
             else() = []
         }
-        def __get_itemType(self): Type = get!(self, array, 0)
+        def __get_itemType(self): Type = get!(self, list, 0)
         def common(mark: Mark, a: Self, b: Self): Self {
             if a.isVoid() or b.isVoid() {
                 void
@@ -246,6 +249,10 @@ class N2IR {
             kINT_NE
             kINT_LT
             kINT_LE
+            kINT_TO_BOOL
+
+            kINTVAR_INCR
+            kINTVAR_DECR
 
             kSTR
             kSTR_LEN
@@ -259,6 +266,9 @@ class N2IR {
             kARRAY_LEN
             kARRAY_GET
             kARRAY_SET
+
+            kLOGICAL_AND
+            kLOGICAL_OR
 
             kNEWARRAY
 
@@ -311,12 +321,13 @@ class N2IR {
         var then: Expr = ?
         var els: Expr = ?
 
-        # getfunc/call/array/js/struct
+        # getfunc/call/list/js/struct
         var func: Func = ?
         var funcTemplate: FuncTemplate = ?
         var structTemplate: StructTemplate = ?
         def __get_args(self): List[Expr] = stmts
         def __set_args(self, value: List[Expr]) { stmts = value }
+        var refName: String = ?
 
         # type/meta/struct
         var ty: Type = ?
@@ -362,27 +373,31 @@ class N2IR {
             self
         }
 
-        def getfunc(mark: Mark, func: Func): Self {
+        def getfunc(mark: Mark, func: Func, refName: String): Self {
             val self = Self(mark, kGETFUNC, func.type)
             self.func = func
+            self.refName = refName
             self
         }
 
-        def getfuncTemplate(mark: Mark, funcTemplate: FuncTemplate): Self {
+        def getfuncTemplate(mark: Mark, funcTemplate: FuncTemplate, refName: String): Self {
             val self = Self(mark, kGETFUNCTEMP, Type.meta)
             self.funcTemplate = funcTemplate
+            self.refName = refName
             self
         }
 
-        def boundfunc(mark: Mark, func: Func, expr: Expr): Self {
+        def boundfunc(mark: Mark, func: Func, expr: Expr, refName: String): Self {
             val self = unop(mark, kBOUNDFUNC, Type.meta, expr)
             self.func = func
+            self.refName = refName
             self
         }
 
-        def boundfuncTemplate(mark: Mark, ft: FuncTemplate, expr: Expr): Self {
+        def boundfuncTemplate(mark: Mark, ft: FuncTemplate, expr: Expr, refName: String): Self {
             val self = unop(mark, kBOUNDFUNCTEMP, Type.meta, expr)
             self.funcTemplate = ft
+            self.refName = refName
             self
         }
 
@@ -427,15 +442,21 @@ class N2IR {
             self
         }
 
-        def evalType(expr: Expr): Type {
-            if expr.kind != kTYPE {
-                throw N2Error("Expected type", [expr.mark])
+        def evalType(program: Program, expr: Expr): Type {
+            switch expr.kind {
+                case kTYPE { return expr.ty }
+                case kGETFUNC; case kGETFUNCTEMP; case kBOUNDFUNC; case kBOUNDFUNCTEMP {
+                    if val type = program.getTypeOrNull(expr.refName) {
+                        return type
+                    }
+                }
+                else = ()
             }
-            expr.ty
+            throw N2Error("Expected type but got " + expr, [expr.mark])
         }
 
-        def evalNumericType(expr: Expr): Type {
-            val type = evalType(expr)
+        def evalNumericType(program: Program, expr: Expr): Type {
+            val type = evalType(program, expr)
             when type {
                 case int = type
                 else {
@@ -458,11 +479,11 @@ class N2IR {
             }
         }
 
-        def macro(mark: Mark, macroName: String, args: List[Expr]): Self {
+        def macro(mark: Mark, program: Program, macroName: String, args: List[Expr]): Self {
             switch macroName {
                 case "js!" {
                     checkMinArgc(mark, args, 2)
-                    js(mark, evalType(args[0]), args[1:])
+                    js(mark, evalType(program, args[0]), args[1:])
                 }
                 else = throw N2Error("Unrecognized macro '" + macroName + "'", [mark])
             }
@@ -500,13 +521,10 @@ class N2IR {
             Self(mark, kNULL, type)
         }
 
-        def if_(mark: Mark, cond: Expr, then: Expr, els: Expr): Self {
-            if not cond.type.isInt() {
-                throw N2Error("'if' condition should be an int, but got " + cond.type, [mark])
-            }
-            val type = Type.common(mark, cond.type, els.type)
+        def if_(mark: Mark, var cond: Expr, then: Expr, els: Expr): Self {
+            val type = Type.common(mark, then.type, els.type)
             val self = Self(mark, kIF, type)
-            self.cond = icast(cond, Type.int)
+            self.cond = icast(cond, Type.bool)
             self.then = icast(then, type)
             self.els = icast(els, type)
             self
@@ -519,7 +537,7 @@ class N2IR {
             self
         }
 
-        def array(mark: Mark, var args: List[Expr], itemType: Type?): Self {
+        def list(mark: Mark, var args: List[Expr], itemType: Type?): Self {
             if not args and itemType.isEmpty() {
                 val self = Self(mark, kARRAY, Type.meta)
                 self.args = []
@@ -527,7 +545,7 @@ class N2IR {
             } else {
                 val itype = if val t = itemType { t } else { args[0].type }
                 args = args.map(a -> icast(a, itype))
-                val self = Self(mark, kARRAY, Type.array(itype))
+                val self = Self(mark, kARRAY, Type.list(itype))
                 self.args = args
                 self
             }
@@ -535,7 +553,7 @@ class N2IR {
 
         def getitem(mark: Mark, owner: Expr, index: Expr): Expr {
             when owner.type {
-                case array(itemType) {
+                case list(itemType) {
                     val self = Self(mark, kARRAY_GET, itemType)
                     self.lhs = owner
                     self.rhs = index
@@ -546,13 +564,16 @@ class N2IR {
         }
 
         ## implicit cast
-        def icast(expr: Expr, type: Type): Expr {
+        def icast(var expr: Expr, type: Type): Expr {
+            if type.isBool() and expr.type.isInt() {
+                expr = unop(expr.mark, kINT_TO_BOOL, Type.bool, expr)
+            }
             if type.isNull() and expr.kind == kNULL and expr.type.isMeta() {
                 return typednull(expr.mark, type)
             }
             if type.isArray() and expr.kind == kARRAY and expr.type.isMeta() {
                 Assert.that(expr.args.isEmpty())
-                return icast(array(expr.mark, expr.args, null(type.itemType)), type)
+                return icast(list(expr.mark, expr.args, null(type.itemType)), type)
             }
             if expr.type.isMeta() {
                 throw N2Error("Expected expression, but got type", [expr.mark])
@@ -603,6 +624,34 @@ class N2IR {
             }
             throw N2Error(
                 "Invalid args to unary '-' (" + arg.type + ")", [mark])
+        }
+
+        def incr(mark: Mark, expr: Expr): Self {
+            if not expr.type.isInt() {
+                throw N2Error("Only int types can be incremented but got " + expr.type, [mark])
+            }
+            switch expr.kind {
+                case kGETVAR {
+                    val self = Self(mark, kINTVAR_INCR, Type.int)
+                    self.var_ = expr.var_
+                    return self
+                }
+            }
+            throw N2Error(expr.kindName + " expressions cannot be incremented", [mark])
+        }
+
+        def decr(mark: Mark, expr: Expr): Self {
+            if not expr.type.isInt() {
+                throw N2Error("Only int types can be decremented but got " + expr.type, [mark])
+            }
+            switch expr.kind {
+                case kGETVAR {
+                    val self = Self(mark, kINTVAR_DECR, Type.int)
+                    self.var_ = expr.var_
+                    return self
+                }
+            }
+            throw N2Error(expr.kindName + " expressions cannot be decremented", [mark])
         }
 
         def add(mark: Mark, lhs: Expr, rhs: Expr): Self {
@@ -677,6 +726,18 @@ class N2IR {
             }
             throw N2Error(
                 "Invalid args to binary '<=' (" + lhs.type + "," + rhs.type + ")", [mark])
+        }
+
+        def and_(mark: Mark, var lhs: Expr, var rhs: Expr): Self {
+            lhs = icast(lhs, Type.bool)
+            rhs = icast(rhs, Type.bool)
+            return binop(mark, kLOGICAL_AND, Type.bool, lhs, rhs)
+        }
+
+        def or_(mark: Mark, var lhs: Expr, var rhs: Expr): Self {
+            lhs = icast(lhs, Type.bool)
+            rhs = icast(rhs, Type.bool)
+            return binop(mark, kLOGICAL_OR, Type.bool, lhs, rhs)
         }
 
         def ret(mark: Mark, expr: Expr): Self {

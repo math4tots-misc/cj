@@ -15,6 +15,10 @@ class N2Token: Repr {
         tNE
         tLE
         tGE
+        tOR
+        tAND
+        tINCR
+        tDECR
 
         kwTYPEDEF
         kwTEMPLATE
