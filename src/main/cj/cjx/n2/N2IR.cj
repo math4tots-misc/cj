@@ -12,6 +12,7 @@ class N2IR {
         val constMap: Map[String, Int] = MapOf()
         val structs: List[Struct] = []
         val funcTemplateMap: Map[String, FuncTemplate] = MapOf()
+        val structTemplateMap: Map[String, StructTemplate] = MapOf()
         val typeMap: Map[String, Tuple[Mark, Type]] = MapOf(
             "void": (Default(), Type.void),
             "bool": (Default(), Type.bool),
@@ -51,9 +52,31 @@ class N2IR {
             funcTemplateMap.getOrNull(name)
         }
 
+        def addStructTemplate(self, st: StructTemplate) {
+            if st.name in structTemplateMap {
+                throw N2Error(
+                    "Duplicate struct template definition",
+                    [st.mark, structTemplateMap[st.name].mark])
+            }
+            structTemplateMap[st.name] = st
+        }
+
+        def getStructTemplateOrNull(self, name: String): StructTemplate? {
+            structTemplateMap.getOrNull(name)
+        }
+
         def addStruct(self, struct_: Struct) {
             structs.add(struct_)
             addTypedef(struct_.mark, Type.struct_(struct_), struct_.name)
+        }
+
+        def getStructOrNull(self, name: String): Struct? = {
+            if val (mark, type) = typeMap.getOrNull(name) {
+                when type {
+                    case struct_(struct_) = null(struct_)
+                    else = null
+                }
+            } else { null }
         }
 
         def getStruct(self, name: String): Struct = get!(typeMap[name].f1, struct_, 0)
@@ -80,6 +103,13 @@ class N2IR {
         val name: String
         val templateParams: List[String]
         val tpats: List[TPat]
+        val i: Int
+    }
+
+    class StructTemplate {
+        val mark: Mark
+        val name: String
+        val templateParams: List[String]
         val i: Int
     }
 
@@ -216,6 +246,7 @@ class N2IR {
 
             kGETFUNC
             kGETFUNCTEMP
+            kGETSTRUCTTEMP
             kCALL
             kNEWSTRUCT
             kGETFIELD
@@ -257,6 +288,7 @@ class N2IR {
         # getfunc/call/array/js/struct
         var func: Func = ?
         var funcTemplate: FuncTemplate = ?
+        var structTemplate: StructTemplate = ?
         def __get_args(self): List[Expr] = stmts
         def __set_args(self, value: List[Expr]) { stmts = value }
 
@@ -313,6 +345,12 @@ class N2IR {
         def getfuncTemplate(mark: Mark, funcTemplate: FuncTemplate): Self {
             val self = Self(mark, kGETFUNCTEMP, Type.meta)
             self.funcTemplate = funcTemplate
+            self
+        }
+
+        def getstructTemplate(mark: Mark, structTemplate: StructTemplate): Self {
+            val self = Self(mark, kGETSTRUCTTEMP, Type.meta)
+            self.structTemplate = structTemplate
             self
         }
 

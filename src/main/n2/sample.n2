@@ -7,6 +7,10 @@ struct Foo {
 
 int Foo.sum(Foo self) = self.a + self.b
 
+template[T] struct Bar {
+    T t
+}
+
 int main() {
     auto foo = Foo(a = 3, b = 5)
     print("Hello world!")
@@ -23,5 +27,9 @@ int main() {
     print("sum = " + repr(foo.sum()))
     print("list = " + repr([1, 2, 3]))
     print("len(list) = " + repr(len!([1, 2, 3])))
+
+    auto bar = Bar[str]("Hello bar")
+    print(bar)
+    print("bar.t = " + bar.t)
     return 0
 }

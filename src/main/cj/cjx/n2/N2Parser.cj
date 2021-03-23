@@ -7,6 +7,7 @@ import cjx.n2.N2IR.Expr
 import cjx.n2.N2IR.Type
 import cjx.n2.N2IR.Func
 import cjx.n2.N2IR.FuncTemplate
+import cjx.n2.N2IR.StructTemplate
 import cjx.n2.N2IR.Program
 import cjx.n2.N2IR.Var
 import cjx.n2.N2IR.Struct
@@ -76,17 +77,26 @@ class N2Parser: ParserMixin[N2Token] {
                 if pass < 1 { program.addTypedef(mark, type, name) }
                 expectDelim()
             } else if at(N2Token.kwSTRUCT) {
-                struct_()
+                next()
+                val name = id()
+                struct_(mark, name, false)
             } else if consume(N2Token.kwTEMPLATE) {
                 val params = parseJoin('[', ']', ',', () -> id())
                 skipDelims()
                 if pass < 1 {
-                    val fti = i
-                    tpat() # return type
-                    val name = qid()
-                    val tpats = parseJoin('(', ')', ',', () -> { val pat = tpat(); id(); pat })
-                    val ft = FuncTemplate(mark, name, params, tpats, fti)
-                    program.addFuncTemplate(ft)
+                    val ti = i
+                    if consume(N2Token.kwSTRUCT) {
+                        val name = id()
+                        val st = StructTemplate(mark, name, params, ti)
+                        program.addStructTemplate(st)
+                    } else {
+                        tpat() # return type
+                        val name = qid()
+                        val tpats = parseJoin(
+                            '(', ')', ',', () -> { val pat = tpat(); id(); pat })
+                        val ft = FuncTemplate(mark, name, params, tpats, ti)
+                        program.addFuncTemplate(ft)
+                    }
                 }
                 skipToDelimiter()
             } else if pass < 1 {
@@ -111,17 +121,21 @@ class N2Parser: ParserMixin[N2Token] {
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
-    def struct_(self) {
-        val mark = mark()
-        expect(N2Token.kwSTRUCT)
-        val name = id()
+    def struct_(self, mark: Mark, name: String, instantiatingTemplate: Bool) {
         switch pass {
             case 0 {
                 val struct_ = Struct(mark, name)
                 program.addStruct(struct_)
                 skipToDelimiter()
             }
-            case 1 {
+            case 1; case 2 {
+                if instantiatingTemplate {
+                    val struct_ = Struct(mark, name)
+                    program.addStruct(struct_)
+                } else if pass > 1 {
+                    skipToDelimiter()
+                    return ()
+                }
                 val struct_ = program.getStruct(name)
                 expect('{')
                 skipDelims()
@@ -136,8 +150,42 @@ class N2Parser: ParserMixin[N2Token] {
                     skipDelims()
                 }
             }
-            else = skipToDelimiter()
         }
+    }
+
+    def instantiatedStructName(self, st: StructTemplate, typeArgs: List[Type]): String {
+        st.name + "[" + ",".join(typeArgs.map(ta -> ta.repr())) + "]"
+    }
+
+    def instantiateStruct(self, imark: Mark, st: StructTemplate, iexprs: List[Expr]): Struct {
+        if iexprs.size() != st.templateParams.size() {
+            throw N2Error(
+                "Expected " + st.templateParams.size() + " args but got " + iexprs.size(),
+                [imark])
+        }
+        val typeArgs = iexprs.map(e -> asTypeLiteral(e))
+        val name = instantiatedStructName(st, typeArgs)
+        if val struct_ = program.getStructOrNull(name) { return struct_ }
+
+        val savedI = i
+        val savedArgs = templateArgs
+        val savedLocals = locals
+
+        i = st.i
+        templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
+            st.templateParams[i], typeArgs[i])).toList())
+        locals = N2Locals()
+
+        val tmark = mark()
+        expect(N2Token.kwSTRUCT)
+        Assert.that(name.startsWith(qid() + "[")) # skip root struct name
+        struct_(tmark, name, true)
+
+        i = savedI
+        templateArgs = savedArgs
+        locals = savedLocals
+
+        program.getStruct(name)
     }
 
     def instantiatedFuncName(self, ft: FuncTemplate, typeArgs: List[Type]): String {
@@ -165,7 +213,7 @@ class N2Parser: ParserMixin[N2Token] {
 
         val tmark = mark()
         val returnType = type()
-        Assert.that(name.startsWith(qid() + "[")) # skip given function name
+        Assert.that(name.startsWith(qid() + "[")) # skip root function name
         func(tmark, returnType, name, true)
 
         i = savedI
@@ -283,7 +331,12 @@ class N2Parser: ParserMixin[N2Token] {
                                 val args = argsWithParams(func.params, [])
                                 expr = Expr.callf(mark, func, args)
                             }
-                            else = throw N2Error("Expected template", [expr.mark])
+                            case Expr.kGETSTRUCTTEMP {
+                                val templ = expr.structTemplate
+                                val struct_ = instantiateStruct(expr.mark, templ, iexprs)
+                                expr = Expr.type(mark, Type.struct_(struct_))
+                            }
+                            else = throw N2Error("Expected template but got " + expr, [expr.mark])
                         }
                     }
                 }
@@ -425,6 +478,8 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getfunc(mark, func)
                 } else if val funcTemplate = program.getFuncTemplateOrNull(name) {
                     Expr.getfuncTemplate(mark, funcTemplate)
+                } else if val structTemplate = program.getStructTemplateOrNull(name) {
+                    Expr.getstructTemplate(mark, structTemplate)
                 } else if val value = program.getConstOrNull(name) {
                     Expr.int(mark, value)
                 } else if val type = program.getTypeOrNull(name) {
