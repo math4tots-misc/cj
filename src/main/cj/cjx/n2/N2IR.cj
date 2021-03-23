@@ -167,6 +167,7 @@ class N2IR {
         case str
         case meta
         case var_
+        case null_(Type)
         case struct_(Struct)
         case array(Type)
         case func(Type, List[Type])
@@ -176,12 +177,15 @@ class N2IR {
         def isInt(self): Bool = tag!(self) == tag!(Type, int)
         def isStr(self): Bool = tag!(self) == tag!(Type, str)
         def isMeta(self): Bool = tag!(self) == tag!(Type, meta)
+        def isNull(self): Bool = tag!(self) == tag!(Type, null_)
         def isArray(self): Bool = tag!(self) == tag!(Type, array)
         def isFunc(self): Bool = tag!(self) == tag!(Type, func)
         def repr(self): String = when self {
             case struct_(s) = s.name
+            case null_(t) = "null(" + t.repr() + ")"
             case array(t) = "array(" + t.repr() + ")"
-            else = tag_name!(self)
+            case func(rtype, argtypes) = "func(" + rtype.repr() + "," + argtypes + ")"
+            else() = tag_name!(self)
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and switch tag!(self) {
             case tag!(Self, func) = when self {
@@ -194,15 +198,17 @@ class N2IR {
             else = true
         }
         def __get_rootName(self): String = when self {
+            case null_(t) = "null_"
             case array(inner) = "list"
-            case func(..) = "func"
+            case func(rtype, argtypes) = "func" + argtypes.size()
             case struct_(st) = st.rootName
             else name() = name
         }
         def __get_args(self): List[Type] = when self {
+            case null_(t) = [t]
             case struct_(st) = st.templateArgs
             case array(inner) = [inner]
-            case func(..) = [] # TODO
+            case func(rtype, argtypes) = [rtype] + argtypes
             else() = []
         }
         def __get_itemType(self): Type = get!(self, array, 0)
@@ -254,6 +260,9 @@ class N2IR {
             kARRAY_SET
 
             kNEWARRAY
+
+            kNULL
+            kNULLWRAP
 
             kIF
             kWHILE
@@ -467,6 +476,25 @@ class N2IR {
             self
         }
 
+        def nullwrap(mark: Mark, expr: Expr): Self {
+            if tag!(expr.type) == tag!(Type, null_) {
+                throw N2Error("null type cannot be nested", [mark])
+            }
+            if tag!(expr.type) == tag!(Type, meta) {
+                throw N2Error("a concretely typed value is expected here", [mark])
+            }
+            val type = Type.null_(expr.type)
+            unop(mark, kNULLWRAP, type, expr)
+        }
+
+        def nullexpr(mark: Mark): Self {
+            Self(mark, kNULL, Type.meta)
+        }
+
+        def typednull(mark: Mark, type: Type): Self {
+            Self(mark, kNULL, type)
+        }
+
         def if_(mark: Mark, cond: Expr, then: Expr, els: Expr): Self {
             if not cond.type.isInt() {
                 throw N2Error("'if' condition should be an int, but got " + cond.type, [mark])
@@ -511,6 +539,9 @@ class N2IR {
 
         ## implicit cast
         def icast(expr: Expr, type: Type): Expr {
+            if type.isNull() and expr.kind == kNULL and expr.type.isMeta() {
+                return typednull(expr.mark, type)
+            }
             if expr.type.isMeta() {
                 throw N2Error("Expected expression, but got type", [expr.mark])
             }
@@ -522,6 +553,9 @@ class N2IR {
             }
             if type.isVar() and not expr.type.isVoid() {
                 return expr
+            }
+            if type.isNull() and not expr.type.isNull() {
+                return icast(nullwrap(expr.mark, expr), type)
             }
             throw N2Error("Expected " + type + " but got " + expr.type, [expr.mark])
         }

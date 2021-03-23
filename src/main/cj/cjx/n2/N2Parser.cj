@@ -521,6 +521,19 @@ class N2Parser: ParserMixin[N2Token] {
         throw N2Error("Parameter for with name '" + name + "' not found", [mark])
     }
 
+    private def getSelfFieldOrNull(self, name: String): Tuple[Var, Struct, Var]? {
+        if val selfVar = locals.getOrNull("self") {
+            when selfVar.type {
+                case struct_(struct_) {
+                    if val fieldVar = struct_.getFieldOrNull(name) {
+                        null((selfVar, struct_, fieldVar))
+                    } else { null }
+                }
+                else = null
+            }
+        } else { null }
+    }
+
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
@@ -529,10 +542,29 @@ class N2Parser: ParserMixin[N2Token] {
             case '-' { next(); val e = exprpr(unaryPrec); Expr.neg(mark, e) }
             case '[' = Expr.array(mark, parseJoin('[', ']', ',', () -> expr()), null)
             case '{' = block()
+            case N2Token.kwNULL {
+                next()
+                if consume('[') {
+                    val innerType = type()
+                    expect(']')
+                    if tag!(innerType) == tag!(Type, null_) {
+                        throw N2Error("null type cannot be nested", [mark])
+                    }
+                    Expr.type(mark, Type.null_(innerType))
+                } else if consume('(') {
+                    val inner = expr()
+                    expect(')')
+                    Expr.nullwrap(mark, inner)
+                } else {
+                    Expr.nullexpr(mark)
+                }
+            }
             case N2Token.tID {
                 val name = next().stringValue
                 if val var_ = locals.getOrNull(name) {
                     Expr.getvar(mark, var_)
+                } else if val (selfVar, struct_, fieldVar) = getSelfFieldOrNull(name) {
+                    Expr.getfield(mark, Expr.getvar(mark, selfVar), struct_, fieldVar)
                 } else if val type = templateArgs.getOrNull(name) {
                     Expr.type(mark, type)
                 } else if val func = program.getFuncOrNull(name) {

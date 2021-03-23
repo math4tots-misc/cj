@@ -10,3 +10,14 @@ template[T] void print2(T t) {
 }
 
 template[T] int list.len(T[] t) = js!(int, t, ".length")
+
+
+template [T0, T1] struct Tuple2 {
+    T0 f0
+    T1 f1
+}
+
+template[K, V] struct Map {
+    null[Tuple2[K, V]][] entries
+    int size
+}
