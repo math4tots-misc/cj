@@ -18,20 +18,20 @@ int main() {
     int a = 2
     auto b = 7
     print(a + b + 7)
-    print("foo.a = " + repr(foo.a))
-    print("foo.b = " + repr(foo.b))
+    print("foo.a = " + foo.a.str())
+    print("foo.b = " + foo.b.str())
     print("foo = " + repr(foo))
-    print(foo)
-    print("str.len() = " + repr("Hello".len()))
+    inspect(foo)
+    print("str.len() = " + "Hello".len().str())
     print2[str]("using print2")
-    print("sum = " + repr(foo.sum()))
-    print("list = " + repr([1, 2, 3]))
-    print("list.len() = " + repr([1, 2, 3].len()))
+    print("sum = " + foo.sum().str())
+    print("list = " + [1, 2, 3].str())
+    print("list.len() = " + [1, 2, 3].len().str())
 
     auto n = null.(null[int])
 
     auto bar = Bar[str]("Hello bar")
-    print(bar)
+    inspect(bar)
     print("bar.t = " + bar.t)
 
     auto map = Map.empty[int, int]()

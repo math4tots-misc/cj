@@ -1,5 +1,7 @@
 
-void print(var x) = js!(void, "console.log(''+", x, ")")
+void inspect(var x) = js!(void, "console.log(''+", x, ")")
+
+template[T] void print(T t) = js!(void, "console.log(''+", t.str(), ")")
 
 unreachable panic(str s) = js!(unreachable, "panic(", s, ")")
 
@@ -71,8 +73,10 @@ template[T0, T1] struct Tuple2 {
 //     Map
 // ============================================================
 template[K, V] struct Map {
-    null[Tuple2[K, V]][] entries
-    int size
+    null[Tuple2[K, V]][] _entries
+    int _size
 }
 template[K, V]
 Map[K, V] Map.empty() = Map[K, V]([], 0)
+template[K, V] str Map.str(Map[K, V] self) = repr()
+template[K, V] str Map.repr(Map[K, V] self) = "Map()"

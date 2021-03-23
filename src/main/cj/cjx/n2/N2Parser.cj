@@ -252,10 +252,15 @@ class N2Parser: ParserMixin[N2Token] {
     def skipOne(self) {
         var repeat = true
         var depth = 0
+        val markStack = [mark()]
         while repeat {
+            val mark = mark()
             switch next().type {
-                case '('; case '['; case '{' { depth++ }
-                case ')'; case ']'; case '}' { depth-- }
+                case '('; case '['; case '{' { depth++; markStack.add(mark) }
+                case ')'; case ']'; case '}' { depth--; markStack.pop() }
+                case N2Token.tEOF {
+                    throw N2Error("Unclosed grouping symbol", [markStack.last()])
+                }
                 else = ()
             }
             repeat = depth > 0
@@ -452,11 +457,11 @@ class N2Parser: ParserMixin[N2Token] {
                                         if val var_ = struct_.getFieldOrNull(name) {
                                             expr = Expr.getfield(mark, expr, struct_, var_)
                                         } else {
-                                            error("Field " + name +
-                                                " not found in struct " + struct_.name)
+                                            error("Member " + name +
+                                                " not found for struct " + struct_.name)
                                         }
                                     }
-                                    else = error("Member '" + name + "' not found in " + expr.type)
+                                    else = error("Member '" + name + "' not found for " + expr.type)
                                 }
                             }
                         }
@@ -622,14 +627,14 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getvar(mark, var_)
                 } else if val (selfVar, struct_, fieldVar) = getSelfFieldOrNull(name) {
                     Expr.getfield(mark, Expr.getvar(mark, selfVar), struct_, fieldVar)
-                } else if val type = templateArgs.getOrNull(name) {
-                    Expr.type(mark, type)
                 } else if val (selfVar, func) = getSelfFuncOrNull(name) {
                     Expr.boundfunc(mark, func, Expr.getvar(mark, selfVar), name)
-                } else if val func = program.getFuncOrNull(name) {
-                    Expr.getfunc(mark, func, name)
                 } else if val (selfVar, funcTemplate) = getSelfFuncTemplateOrNull(name) {
                     Expr.boundfuncTemplate(mark, funcTemplate, Expr.getvar(mark, selfVar), name)
+                } else if val type = templateArgs.getOrNull(name) {
+                    Expr.type(mark, type)
+                } else if val func = program.getFuncOrNull(name) {
+                    Expr.getfunc(mark, func, name)
                 } else if val funcTemplate = program.getFuncTemplateOrNull(name) {
                     Expr.getfuncTemplate(mark, funcTemplate, name)
                 } else if val structTemplate = program.getStructTemplateOrNull(name) {
