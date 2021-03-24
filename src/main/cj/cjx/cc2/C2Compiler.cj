@@ -1,0 +1,72 @@
+package cjx.cc2
+
+import www.wa.WebAssembly
+import cj.Uint8Array
+import cjx.cc2.C2Codegen
+import cj.Error
+import cj.Argv
+import cjx.cc2.C2Preprocessor
+import cj.FS
+import cjx.cc2.C2IR
+import cjx.cc2.C2Token
+import cjx.cc2.C2Lexer
+import cjx.cc2.C2Parser
+
+class C2Compiler {
+    val preprocessor: C2Preprocessor = C2Preprocessor()
+    var includePrelude = true
+
+    def lex(self, filepath: String, contents: String): List[C2Token] {
+        val rawTokens: List[C2Token] = []
+        if includePrelude {
+            rawTokens.addAll(C2Lexer.lex("<prelude>", include_str!("__prelude.c")))
+            Assert.equal(rawTokens.last().type, C2Token.tEOF)
+            rawTokens.pop()
+        }
+        rawTokens.addAll(C2Lexer.lex(filepath, FS.readFile(filepath)))
+        preprocessor.process(rawTokens)
+    }
+
+    def parse(self, filepath: String, contents: String): C2IR.TranslationUnit {
+        val tokens = lex(filepath, contents)
+        C2Parser.parse(tokens)
+    }
+
+    def translate(self, filepath: String, contents: String): Uint8Array {
+        val tu = parse(filepath, contents)
+        val codegen = C2Codegen()
+        codegen.emit(tu)
+    }
+
+    def run(self, filepath: String, contents: String): Int {
+        val binary = translate(filepath, contents)
+        val module = WebAssembly.Module(binary)
+        val instance = WebAssembly.Instance(module, jsobj!())
+        instance.exports.call("main").unsafeCast()
+    }
+
+    def main() {
+        val self = Self()
+        var mode = ""
+        var outFile = ""
+        var filepath = ""
+        for arg in Argv() {
+            switch mode {
+                case "-j" { outFile = arg; mode = "" }
+                case "" = switch arg {
+                    case "-j" { mode = "-j" }
+                    else { filepath = arg }
+                }
+            }
+        }
+        switch mode {
+            case "" = ()
+            case "-j" { throw Error("-j expects an output js file path") }
+        }
+        if not filepath {
+            throw Error("input filepath must be specified")
+        }
+        val exitCode = run(filepath, FS.readFile(filepath))
+        IO.println("exitCode = " + exitCode)
+    }
+}

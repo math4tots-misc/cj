@@ -126,7 +126,8 @@ class Regex {
                     lastMatchEnd,
                     lastMatchPatternIndex,
                     startLine,
-                    startColumn))
+                    startColumn,
+                    filename))
             }
         }
     }
@@ -303,6 +304,9 @@ class Regex {
 
         ## Column number of the start of this match
         val column: Int
+
+        ## filename of the input (if provided)
+        val filename: String
 
         def __get_matchText(self: Self): String = self.originalString[self.start:self.end]
 
