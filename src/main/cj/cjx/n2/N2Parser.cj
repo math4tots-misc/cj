@@ -710,19 +710,19 @@ class N2Parser: ParserMixin[N2Token] {
         } else { null }
     }
 
-    private def getSelfFuncOrNull(self, name: String): Tuple[Var, Func]? {
+    private def findSelfFuncOrNull(self, mark: Mark, methodName: String): Expr? {
         if val selfVar = locals.getOrNull("self") {
-            if val func = program.getFuncOrNull(selfVar.type.rootName + "." + name) {
-                null((selfVar, func))
-            } else { null }
-        } else { null }
-    }
-
-    private def getSelfFuncTemplateOrNull(self, name: String): Tuple[Var, FuncTemplate]? {
-        if val selfVar = locals.getOrNull("self") {
-            if val ft = program.getFuncTemplateOrNull(selfVar.type.rootName + "." + name) {
-                null((selfVar, ft))
-            } else { null }
+            val receiver = Expr.getvar(mark, selfVar)
+            val ownerType = receiver.type
+            val rootTypeName = ownerType.rootName
+            val allTraits = allTraitsOf(ownerType)
+            findfuncOrNull(
+                mark,
+                null(receiver),
+                rootTypeName,
+                methodName,
+                methodName, # refName
+                allTraits)
         } else { null }
     }
 
@@ -757,10 +757,8 @@ class N2Parser: ParserMixin[N2Token] {
                     Expr.getvar(mark, var_)
                 } else if val (selfVar, struct_, fieldVar) = getSelfFieldOrNull(name) {
                     Expr.getfield(mark, Expr.getvar(mark, selfVar), struct_, fieldVar)
-                } else if val (selfVar, func) = getSelfFuncOrNull(name) {
-                    Expr.boundfunc(mark, func, Expr.getvar(mark, selfVar), name)
-                } else if val (selfVar, funcTemplate) = getSelfFuncTemplateOrNull(name) {
-                    Expr.boundfuncTemplate(mark, funcTemplate, Expr.getvar(mark, selfVar), name)
+                } else if val e = findSelfFuncOrNull(mark, name) {
+                    e
                 } else if val type = templateArgs.getOrNull(name) {
                     Expr.type(mark, type)
                 } else if val func = program.getFuncOrNull(name) {

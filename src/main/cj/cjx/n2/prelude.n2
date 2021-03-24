@@ -25,6 +25,8 @@ int __checkIndex(var xs, int i) {
 // ============================================================
 trait any
 str any.json(var self) = js!(str, "JSON.stringify(", self, ")")
+str any.str(var self) = repr()
+str any.repr(var self) = json()
 
 // ============================================================
 //     int
@@ -82,7 +84,6 @@ template[K, V] struct Map {
     null[Tuple2[K, V]][] _entries
     int _size
 }
-template[K, V]
-Map[K, V] Map.empty() = Map[K, V]([], 0)
+template[K, V] Map[K, V] Map.empty() = Map[K, V]([], 0)
 template[K, V] str Map.str(Map[K, V] self) = repr()
 template[K, V] str Map.repr(Map[K, V] self) = "Map()"
