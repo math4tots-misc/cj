@@ -31,6 +31,7 @@ class N2Token: Repr {
         kwWHILE
         kwCONST
         kwSTRUCT
+        kwTRAIT
         kwNATIVE
     }
 

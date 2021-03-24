@@ -34,10 +34,12 @@ public abstract class CJIRTraitOrClassType {
     public final String repr() {
         var sb = new StringBuilder();
         sb.append(getItem().getFullName());
-        if (getArgs().size() > 0) {
+        var args = getArgs();
+        if (args.size() > 0) {
             sb.append("[");
-            for (var arg : getArgs()) {
-                sb.append(arg.repr());
+            for (int i = 0; i < args.size(); i++) {
+                if (i > 0) { sb.append(","); }
+                sb.append(args.get(i).repr());
             }
             sb.append("]");
         }

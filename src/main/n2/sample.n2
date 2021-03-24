@@ -20,7 +20,7 @@ int main() {
     print(a + b + 7)
     print("foo.a = " + foo.a.str())
     print("foo.b = " + foo.b.str())
-    print("foo = " + repr(foo))
+    print("foo = " + foo.json())
     inspect(foo)
     print("str.len() = " + "Hello".len().str())
     print2[str]("using print2")

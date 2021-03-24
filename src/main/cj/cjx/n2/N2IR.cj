@@ -1,5 +1,6 @@
 package cjx.n2
 
+import cj.Deque
 import cj.Error
 import cjx.n2.N2Error
 import cjx.parser.Mark
@@ -21,6 +22,8 @@ class N2IR {
             "str": (Default(), Type.str),
             "var": (Default(), Type.var_),
         )
+        val traits: List[Trait] = []
+        val traitMap: Map[String, Trait] = MapOf()
 
         def addFunc(self, func: Func) {
             if func.name in funcMap {
@@ -97,6 +100,13 @@ class N2IR {
         }
 
         def getConstOrNull(self, name: String): Int? = constMap.getOrNull(name)
+
+        def addTrait(self, trait_: Trait) {
+            traits.add(trait_)
+            traitMap[trait_.name] = trait_
+        }
+
+        def getTraitOrNull(self, name: String): Trait? = traitMap.getOrNull(name)
     }
 
     class FuncTemplate {
@@ -107,11 +117,38 @@ class N2IR {
         val i: Int
     }
 
-    class StructTemplate {
+    trait AllTraitsMixin {
+        def __get_traits(self): List[Trait]
+        def __set__allTraits(self, traits: List[Trait]?)
+        def __get__allTraits(self): List[Trait]?
+        def __get_allTraits(self): List[Trait] {
+            if _allTraits.isEmpty() {
+                val allTraits: List[Trait] = []
+                val queue = Deque[Trait].fromList(traits)
+                val seen = queue.map(t -> t.name).toSet()
+                while queue {
+                    val subtrait = queue.popleft()
+                    allTraits.add(subtrait)
+                    for child in subtrait.traits {
+                        if child.name not in seen {
+                            queue.add(child)
+                            seen.add(child.name)
+                        }
+                    }
+                }
+                _allTraits = null(allTraits)
+            }
+            _allTraits.get()
+        }
+    }
+
+    class StructTemplate : AllTraitsMixin {
         val mark: Mark
         val name: String
         val templateParams: List[String]
         val i: Int
+        val traits: List[Trait] = []
+        var _allTraits: List[Trait]? = null
     }
 
     class Var {
@@ -122,14 +159,22 @@ class N2IR {
         var init: Expr?
     }
 
-    class Struct {
+    class Trait {
+        val mark: Mark
+        val name: String
+        val traits: List[Trait] = []
+    }
+
+    class Struct : AllTraitsMixin {
         val mark: Mark
         val name: String
         val native_: Bool
         val rootName: String
         val templateArgs: List[Type]
+        val traits: List[Trait] = []
         val fields: List[Var] = []
         val fieldMap: Map[String, Var] = MapOf()
+        var _allTraits: List[Trait]? = null
         def addField(self, field: Var) {
             if val oldField = fieldMap.getOrNull(field.name) {
                 throw N2Error(

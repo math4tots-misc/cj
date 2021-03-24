@@ -11,12 +11,29 @@ import cjx.n2.N2IR.StructTemplate
 import cjx.n2.N2IR.Program
 import cjx.n2.N2IR.Var
 import cjx.n2.N2IR.Struct
+import cjx.n2.N2IR.Trait
 import cjx.n2.N2IR.TPat
 import cjx.n2.N2Error
 import cjx.parser.Mark
 import cjx.n2.N2Token
 import cjx.parser.ParserMixin
 
+##
+## Parser
+##
+## Description of passes
+##
+##   Pass 0:
+##     structs are initialized but no fields are parsed.
+##     traits are initialized, but subtraits are not parsed.
+##     struct and function templates are initalized.
+##   Pass 1:
+##     struct fields and traits are parsed
+##     trait subtraits are parsed
+##     function prototypes are parsed
+##   Pass 2:
+##     function bodies are parsed
+##
 class N2Parser: ParserMixin[N2Token] {
     static val unaryPrec: Int = precof('*') + 5
 
@@ -25,9 +42,9 @@ class N2Parser: ParserMixin[N2Token] {
 
     def parseAll(tokens: List[N2Token]): Program {
         val program = Program()
-        for pass in [0, 1, 2] {
-            parseEx(pass, program, tokens)
-        }
+        parseEx(0, program, tokens)
+        parseEx(1, program, tokens)
+        parseEx(2, program, tokens)
         program
     }
 
@@ -76,6 +93,10 @@ class N2Parser: ParserMixin[N2Token] {
                 val name = id()
                 if pass < 1 { program.addTypedef(mark, type, name) }
                 expectDelim()
+            } else if at(N2Token.kwTRAIT) {
+                next()
+                val name = id()
+                trait_(mark, name)
             } else if at(N2Token.kwSTRUCT) {
                 next()
                 val name = id()
@@ -97,6 +118,11 @@ class N2Parser: ParserMixin[N2Token] {
                         val ft = FuncTemplate(mark, name, params, tpats, ti)
                         program.addFuncTemplate(ft)
                     }
+                } else if pass < 2 and consume(N2Token.kwSTRUCT) {
+                    val name = id()
+                    val st = program.getStructTemplateOrNull(name).get()
+                    if at('(') { st.traits.addAll(traitdecls()) }
+                    st.traits.add(program.getTraitOrNull("any").get())
                 }
                 skipToDelimiter()
             } else if pass < 1 {
@@ -121,6 +147,41 @@ class N2Parser: ParserMixin[N2Token] {
 
     def params(self): List[Var] = parseJoin('(', ')', ',', () -> param())
 
+    def trait_(self, mark: Mark, name: String) {
+        switch pass {
+            case 0 {
+                val trait_ = Trait(mark, name)
+                program.addTrait(trait_)
+                skipToDelimiter()
+            }
+            case 1 {
+                val trait_ = program.getTraitOrNull(name).get()
+                if at('(') { trait_.traits.addAll(traitdecls()) }
+            }
+            case 2 = ()
+        }
+    }
+
+    def traitexpr(self): Trait {
+        val mark = mark()
+        val name = qid()
+        if val trait_ = program.getTraitOrNull(name) {
+            trait_
+        } else {
+            throw N2Error("Trait " + name + " not found", [mark])
+        }
+    }
+
+    def traitdecls(self): List[Trait] {
+        expect('(')
+        val traits: List[Trait] = []
+        while not consume(')') {
+            traits.add(traitexpr())
+            if not consume(',') { assert(')') }
+        }
+        traits
+    }
+
     def struct_(self, mark: Mark, name: String, rootName: String, templateArgs: List[Type]?) {
         val native_ = consume(N2Token.kwNATIVE)
         switch pass {
@@ -138,6 +199,8 @@ class N2Parser: ParserMixin[N2Token] {
                     return ()
                 }
                 val struct_ = program.getStruct(name)
+                if at('(') { struct_.traits.addAll(traitdecls()) }
+                struct_.traits.add(program.getTraitOrNull("any").get())
                 expect('{')
                 skipDelims()
                 while not consume('}') {
@@ -307,6 +370,70 @@ class N2Parser: ParserMixin[N2Token] {
 
     def expr(self): Expr = exprpr(0)
 
+    def findfunc(
+            self,
+            mark: Mark,
+            receiver: Expr?,
+            typeName: String,
+            methodName: String,
+            refName: String,
+            allTraits: List[Trait]): Expr {
+        if val e = findfuncOrNull(mark, receiver, typeName, methodName, refName, allTraits) {
+            e
+        } else {
+            val rootName = typeName + "." + methodName
+            throw N2Error("Method " + rootName + " not found ", [mark])
+        }
+    }
+
+    def findfuncOrNull(
+            self,
+            mark: Mark,
+            receiver: Expr?,
+            typeName: String,
+            methodName: String,
+            refName: String,
+            allTraits: List[Trait]): Expr? {
+        val rootName = typeName + "." + methodName
+        if val func = program.getFuncOrNull(rootName) {
+            return null(func2expr(mark, receiver, func, refName))
+        } else if val ft = program.getFuncTemplateOrNull(rootName) {
+            return null(funcTemplate2expr(mark, receiver, ft, refName))
+        }
+        for trait_ in allTraits {
+            val rootName = trait_.name + "." + methodName
+            if val func = program.getFuncOrNull(rootName) {
+                return null(func2expr(mark, receiver, func, refName))
+            } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                return null(funcTemplate2expr(mark, receiver, ft, refName))
+            }
+        }
+        null
+    }
+
+    def func2expr(self, mark: Mark, receiver: Expr?, func: Func, refName: String): Expr {
+        if val r = receiver {
+            Expr.boundfunc(mark, func, r, refName)
+        } else {
+            Expr.getfunc(mark, func, refName)
+        }
+    }
+
+    def funcTemplate2expr(self, mark: Mark, receiver: Expr?, ft: FuncTemplate, refName: String): Expr {
+        if val r = receiver {
+            Expr.boundfuncTemplate(mark, ft, r, refName)
+        } else {
+            Expr.getfuncTemplate(mark, ft, refName)
+        }
+    }
+
+    def allTraitsOf(self, type: Type): List[Trait] {
+        when type {
+            case struct_(struct_) = struct_.allTraits
+            else = [program.getTraitOrNull("any").get()]
+        }
+    }
+
     def exprpr(self, precedence: Int): Expr {
         var expr = atom()
         var tokprec = precof(peek().type)
@@ -411,14 +538,15 @@ class N2Parser: ParserMixin[N2Token] {
                         if expr.type.isMeta() {
                             switch expr.kind {
                                 case Expr.kGETSTRUCTTEMP {
-                                    val rootName = expr.structTemplate.name + "." + name
-                                    if val func = program.getFuncOrNull(rootName) {
-                                        expr = Expr.getfunc(mark, func, rootName)
-                                    } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                        expr = Expr.getfuncTemplate(mark, ft, rootName)
-                                    } else {
-                                        error("Method " + rootName + " not found")
-                                    }
+                                    val structTemplate = expr.structTemplate
+                                    val refName = structTemplate.name + "." + name
+                                    expr = findfunc(
+                                        mark,
+                                        null,
+                                        structTemplate.name,
+                                        name,
+                                        refName,
+                                        structTemplate.traits)
                                 }
                                 case Expr.kTYPE {
                                     when expr.ty {
@@ -429,14 +557,14 @@ class N2Parser: ParserMixin[N2Token] {
                                                     "when accessing members (" +
                                                     struct_.name + "." + name + ")", [expr.mark])
                                             }
-                                            val rootName = struct_.name + "." + name
-                                            if val func = program.getFuncOrNull(rootName) {
-                                                expr = Expr.getfunc(mark, func, rootName)
-                                            } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                                expr = Expr.getfuncTemplate(mark, ft, rootName)
-                                            } else {
-                                                error("Method " + rootName + " not found")
-                                            }
+                                            val refName = struct_.name + "." + name
+                                            expr = findfunc(
+                                                mark,
+                                                null,
+                                                struct_.name,
+                                                name,
+                                                refName,
+                                                struct_.traits)
                                         }
                                         else = error(
                                             "Could not get member (" + expr.ty + "->" + name + ")")
@@ -446,11 +574,15 @@ class N2Parser: ParserMixin[N2Token] {
                             }
                         } else {
                             val rootTypeName = expr.type.rootName
-                            val rootName = rootTypeName + "." + name
-                            if val func = program.getFuncOrNull(rootName) {
-                                expr = Expr.boundfunc(mark, func, expr, rootName)
-                            } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                                expr = Expr.boundfuncTemplate(mark, ft, expr, rootName)
+                            val refName = rootTypeName + "." + name
+                            if val e = findfuncOrNull(
+                                    mark,
+                                    null(expr),
+                                    rootTypeName,
+                                    name,
+                                    refName,
+                                    allTraitsOf(expr.type)) {
+                                expr = e
                             } else {
                                 when expr.type {
                                     case struct_(struct_) {
@@ -501,9 +633,7 @@ class N2Parser: ParserMixin[N2Token] {
             }
         }
         if map.size() < tparams.size() {
-            IO.println("args = " + args + ", tpats = " + tpats)
-            IO.println("map = (" + map + "), tparams = (" + tparams + ")")
-            throw N2Error("Could not infer template args", [mark])
+            throw N2Error("Could not infer template args (" + map + ", " + tparams + ")", [mark])
         }
         val out: List[Type] = []
         for i = 0; i < tparams.size(); i++ {
