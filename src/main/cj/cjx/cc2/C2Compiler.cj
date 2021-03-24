@@ -23,7 +23,7 @@ class C2Compiler {
             Assert.equal(rawTokens.last().type, C2Token.tEOF)
             rawTokens.pop()
         }
-        rawTokens.addAll(C2Lexer.lex(filepath, FS.readFile(filepath)))
+        rawTokens.addAll(C2Lexer.lex(filepath, contents))
         preprocessor.process(rawTokens)
     }
 
