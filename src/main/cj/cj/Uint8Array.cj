@@ -1,12 +1,13 @@
 package cj
 
+import cj.NativeArrayLike
 import cj.ArrayBufferOrView
 import cj.ArrayBuffer
 import cj.ArrayBufferView
 import cj.Collection
 
 ## In Javascript, wraps Uint8Array
-native class Uint8Array : Collection[Int], Default, Repr, Default, ArrayBufferView {
+native class Uint8Array : NativeArrayLike[Int], Default, Repr, Default, ArrayBufferView {
 
     @implicit(List, fromList)
     @implicit(ArrayBufferOrView, _jsctor)
@@ -17,13 +18,13 @@ native class Uint8Array : Collection[Int], Default, Repr, Default, ArrayBufferVi
     }
 
     def(conv: Convertible): Self = conv.x
-    def fromParts(buffer: ArrayBuffer, byteOffset: Int, byteLength: Int): Self
-    def withSize(n: Int): Self
-    def fromIterable[C: Iterable[Int]](c: C): Self
-    def iter(self: Self): Iterator[Int]
-    def size(self: Self): Int
-    def __getitem(self: Self, i: Int): Int
-    def __setitem(self: Self, i: Int, v: Int)
-    def default(): Self
-    def repr(self): String
+    def fromParts(buffer: ArrayBuffer, byteOffset: Int, byteLength: Int): Self = js!(
+        Self, "new Uint8Array(", buffer, ",", byteOffset, ",", byteLength, ")")
+    def withSize(n: Int): Self = js!(Self, "new Uint8Array(", n, ")")
+    def fromIterable[C: Iterable[Int]](c: C): Self = js!(
+        Self, "new Uint8Array(", c.iter(), ")")
+    def map(self: Self, f: Fn[Int, Int]): Self = fromIterable(iter().map(f))
+    def clone(self: Self): Self = js!(Self, "new Uint8Array(", self, ")")
+    def default(): Self = js!(Self, "new Uint8Array()")
+    def repr(self: Self): String = "Uint8Array(" + toList() + ")"
 }

@@ -1,38 +1,19 @@
 package cj
 
+import cj.NativeArrayLike
 import cj.Error
 import cj.Math
 import cj.StringBuilder
 import cj.Approximate
-import cj.Collection
 
 native class List[T?] :
-        Collection[T],
+        NativeArrayLike[T],
         ToBool,
         Default,
         Eq if T : Eq,
         Hash if T : Hash,
         Approximate if T : Approximate,
         Repr if T : Repr {
-
-    @generic private def checkedIndex(self, var i: Int): Int {
-        if i < 0 {
-            i += size()
-        }
-        if i < 0 or i >= size() {
-            IO.panic("Index out of bounds (i = " + i + ", len = " + size() + ")")
-        }
-        i
-    }
-    @generic private def checkedIndex2(self, var i: Int): Int {
-        if i < 0 {
-            i += size()
-        }
-        if i < 0 or i > size() {
-            IO.panic("Index out of bounds (i = " + i + ", len = " + size() + ")")
-        }
-        i
-    }
 
     @generic def empty(): Self = []
     @variadic @generic def of(self): Self = self
@@ -50,8 +31,6 @@ native class List[T?] :
         ret.addAll(other)
         ret
     }
-    @generic def __getitem(self: Self, i: Int): T = js!(T, self, "[", checkedIndex(i), "]")
-    @generic def __setitem(self: Self, i: Int, t: T) = js!(T, self, "[", checkedIndex(i), "]=", t)
     @generic def removeIndex(self: Self, i: Int): T = js!(
         T, self, ".splice(", checkedIndex(i), ",1)[0]")
     @generic def insert(self: Self, i: Int, t: T) = js!(
@@ -65,12 +44,6 @@ native class List[T?] :
         self[i] = self[j]
         self[j] = tmp
     }
-    @generic def __slice(self, start: Int, end: Int): Self = (
-        js!(Self, self, ".slice(", checkedIndex2(start), ",", checkedIndex2(end), ")"))
-    @generic def __sliceFrom(self, start: Int): Self = (
-        js!(Self, self, ".slice(", checkedIndex2(start), ")"))
-    @generic def __sliceTo(self, end: Int): Self = (
-        js!(Self, self, ".slice(0,", checkedIndex2(end), ")"))
 
     @generic def __mul(self: Self, n: Int): Self {
         val ret: Self = []

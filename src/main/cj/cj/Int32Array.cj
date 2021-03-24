@@ -1,12 +1,12 @@
 package cj
 
+import cj.NativeArrayLike
 import cj.ArrayBufferOrView
 import cj.ArrayBuffer
 import cj.ArrayBufferView
-import cj.Collection
 
 ## In Javascript, wraps Int32Array
-native class Int32Array : Collection[Int], Default, Repr, Default, ArrayBufferView {
+native class Int32Array : NativeArrayLike[Int], Default, Repr, Default, ArrayBufferView {
 
     @implicit(List, fromList)
     @implicit(ArrayBufferOrView, _jsctor)
@@ -17,12 +17,11 @@ native class Int32Array : Collection[Int], Default, Repr, Default, ArrayBufferVi
     }
 
     def(conv: Convertible): Self = conv.x
-    def withSize(n: Int): Self
-    def fromIterable[C: Iterable[Int]](c: C): Self
-    def iter(self: Self): Iterator[Int]
-    def size(self: Self): Int
-    def __getitem(self: Self, i: Int): Int
-    def __setitem(self: Self, i: Int, v: Int)
-    def default(): Self
-    def repr(self): String
+    def withSize(n: Int): Self = js!(Self, "new Int32Array(", n, ")")
+    def fromIterable[C: Iterable[Int]](c: C): Self = js!(
+        Self, "new Int32Array(", c.iter(), ")")
+    def map(self: Self, f: Fn[Int, Int]): Self = fromIterable(iter().map(f))
+    def clone(self: Self): Self = js!(Self, "new Int32Array(", self, ")")
+    def default(): Self = js!(Self, "new Int32Array()")
+    def repr(self: Self): String = "Int32Array(" + toList() + ")"
 }
