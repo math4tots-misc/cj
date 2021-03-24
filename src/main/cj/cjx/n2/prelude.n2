@@ -72,6 +72,11 @@ template[T0, T1] struct Tuple2 {
     T0 f0
     T1 f1
 }
+template[T0, T1, T2] struct Tuple3 {
+    T0 f0
+    T1 f1
+    T2 f2
+}
 
 // ============================================================
 //     Map
@@ -83,3 +88,22 @@ template[K, V] struct Map {
 template[K, V] Map[K, V] Map.empty() = Map[K, V]([], 0)
 template[K, V] str Map.str(Map[K, V] self) = repr()
 template[K, V] str Map.repr(Map[K, V] self) = "Map()"
+template[K, V] int Map.size(Map[K, V] self) = _size
+int Map._getIndex(int hash, int size) = (hash % size + size) % size
+template[K, V]
+void Map._insertNoRehash(Map[K, V] self, Tuple3[int, K, V] triple) {
+    auto hash = triple.f0
+    auto key = triple.f1
+    auto list = _entries
+    auto index = _getIndex(hash, _size)
+    auto bucket = list[index]
+    for (i = 0; i < bucket.size(); i++) {
+        auto entry = bucket[i]
+        if (entry.f0 == hash && entry.f1 == key) {
+            bucket[i] = triple
+            return ()
+        }
+    }
+    _size = _size + 1
+    bucket.add(triple)
+}
