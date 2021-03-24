@@ -12,7 +12,7 @@ template[T] void print2(T t) {
 int __checkIndex(var xs, int i) {
     int len = js!(int, xs, ".length")
     if (i < 0) i = i + len
-    if (i < 0 || i >= len) panic("Index out of bounds (i = " + repr(i) + ", len = " + repr(len) + ")")
+    if (i < 0 || i >= len) panic("Index out of bounds (i = " + i.repr() + ", len = " + len.repr() + ")")
     i
 }
 
