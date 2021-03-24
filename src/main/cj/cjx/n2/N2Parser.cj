@@ -37,6 +37,7 @@ import cjx.parser.ParserMixin
 ##
 class N2Parser: ParserMixin[N2Token] {
     static val unaryPrec: Int = precof('*') + 5
+    static val emptyLocal: N2Locals = N2Locals()
 
     def typeOfToken(token: N2Token): Int = token.type
     def nameOfType(type: Int): String = N2Token.typeRepr(type)
@@ -63,7 +64,6 @@ class N2Parser: ParserMixin[N2Token] {
     val program: Program
 
     # function-level
-    var locals: N2Locals = N2Locals()
     var _eb: N2ExprBuilder? = null
     var templateArgs: Map[String, Type] = MapOf()
 
@@ -83,9 +83,10 @@ class N2Parser: ParserMixin[N2Token] {
     def unsetEB(self) { _eb = null }
     def __set_eb(self, eb: N2ExprBuilder) { _eb = null(eb) }
     def __get_eb(self): N2ExprBuilder = _eb.get()
+    def __get_locals(self): N2Locals = eb.locals
 
     def file(self): Program {
-        eb = N2ExprBuilder(program)
+        eb = N2ExprBuilder(program, null)
         skipDelims()
         while not at(N2Token.tEOF) {
             val mark = mark()
@@ -240,12 +241,12 @@ class N2Parser: ParserMixin[N2Token] {
 
         val savedI = i
         val savedArgs = templateArgs
-        val savedLocals = locals
+        val savedEB = eb
 
         i = st.i
         templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
             st.templateParams[i], typeArgs[i])).toList())
-        locals = N2Locals()
+        eb = N2ExprBuilder(program, null(N2Locals()))
 
         val tmark = mark()
         expect(N2Token.kwSTRUCT)
@@ -255,7 +256,7 @@ class N2Parser: ParserMixin[N2Token] {
 
         i = savedI
         templateArgs = savedArgs
-        locals = savedLocals
+        eb = savedEB
 
         program.getStruct(name)
     }
@@ -276,12 +277,12 @@ class N2Parser: ParserMixin[N2Token] {
 
         val savedI = i
         val savedArgs = templateArgs
-        val savedLocals = locals
+        val savedEB = eb
 
         i = ft.i
         templateArgs = Map(Range.upto(iexprs.size()).map(i -> (
             ft.templateParams[i], typeArgs[i])).toList())
-        locals = N2Locals()
+        eb = N2ExprBuilder(program, null(N2Locals()))
 
         val tmark = mark()
         val returnType = type()
@@ -290,13 +291,15 @@ class N2Parser: ParserMixin[N2Token] {
 
         i = savedI
         templateArgs = savedArgs
-        locals = savedLocals
+        eb = savedEB
 
         program.getFuncOrNull(name).get()
     }
 
     def func(self, mark: Mark, returnType: Type, name: String, instantiatingTemplate: Bool) {
-        locals = N2Locals()
+        val savedEB = eb
+        eb = N2ExprBuilder(program, null(N2Locals()))
+
         val nparams = params().size()
         val func = Func(mark, returnType, name, nparams, locals.list)
         if pass < 2 {
@@ -310,6 +313,8 @@ class N2Parser: ParserMixin[N2Token] {
                 program.updateFunc(func)
             }
         }
+
+        eb = savedEB
         expectDelim()
     }
 
@@ -376,70 +381,6 @@ class N2Parser: ParserMixin[N2Token] {
     }
 
     def expr(self): Expr = exprpr(0)
-
-    def findfunc(
-            self,
-            mark: Mark,
-            receiver: Expr?,
-            typeName: String,
-            methodName: String,
-            refName: String,
-            allTraits: List[Trait]): Expr {
-        if val e = findfuncOrNull(mark, receiver, typeName, methodName, refName, allTraits) {
-            e
-        } else {
-            val rootName = typeName + "." + methodName
-            throw N2Error("Method " + rootName + " not found ", [mark])
-        }
-    }
-
-    def findfuncOrNull(
-            self,
-            mark: Mark,
-            receiver: Expr?,
-            typeName: String,
-            methodName: String,
-            refName: String,
-            allTraits: List[Trait]): Expr? {
-        val rootName = typeName + "." + methodName
-        if val func = program.getFuncOrNull(rootName) {
-            return null(func2expr(mark, receiver, func, refName))
-        } else if val ft = program.getFuncTemplateOrNull(rootName) {
-            return null(funcTemplate2expr(mark, receiver, ft, refName))
-        }
-        for trait_ in allTraits {
-            val rootName = trait_.name + "." + methodName
-            if val func = program.getFuncOrNull(rootName) {
-                return null(func2expr(mark, receiver, func, refName))
-            } else if val ft = program.getFuncTemplateOrNull(rootName) {
-                return null(funcTemplate2expr(mark, receiver, ft, refName))
-            }
-        }
-        null
-    }
-
-    def func2expr(self, mark: Mark, receiver: Expr?, func: Func, refName: String): Expr {
-        if val r = receiver {
-            eb.boundfunc(mark, func, r, refName)
-        } else {
-            eb.getfunc(mark, func, refName)
-        }
-    }
-
-    def funcTemplate2expr(self, mark: Mark, receiver: Expr?, ft: FuncTemplate, refName: String): Expr {
-        if val r = receiver {
-            eb.boundfuncTemplate(mark, ft, r, refName)
-        } else {
-            eb.getfuncTemplate(mark, ft, refName)
-        }
-    }
-
-    def allTraitsOf(self, type: Type): List[Trait] {
-        when type {
-            case struct_(struct_) = struct_.allTraits
-            else = [program.getTraitOrNull("any").get()]
-        }
-    }
 
     def exprpr(self, precedence: Int): Expr {
         var expr = atom()
@@ -547,7 +488,7 @@ class N2Parser: ParserMixin[N2Token] {
                                 case Expr.kGETSTRUCTTEMP {
                                     val structTemplate = expr.structTemplate
                                     val refName = structTemplate.name + "." + name
-                                    expr = findfunc(
+                                    expr = eb.findfunc(
                                         mark,
                                         null,
                                         structTemplate.name,
@@ -565,7 +506,7 @@ class N2Parser: ParserMixin[N2Token] {
                                                     struct_.name + "." + name + ")", [expr.mark])
                                             }
                                             val refName = struct_.name + "." + name
-                                            expr = findfunc(
+                                            expr = eb.findfunc(
                                                 mark,
                                                 null,
                                                 struct_.name,
@@ -582,13 +523,13 @@ class N2Parser: ParserMixin[N2Token] {
                         } else {
                             val rootTypeName = expr.type.rootName
                             val refName = rootTypeName + "." + name
-                            if val e = findfuncOrNull(
+                            if val e = eb.findfuncOrNull(
                                     mark,
                                     null(expr),
                                     rootTypeName,
                                     name,
                                     refName,
-                                    allTraitsOf(expr.type)) {
+                                    eb.allTraitsOf(expr.type)) {
                                 expr = e
                             } else {
                                 when expr.type {
@@ -704,35 +645,6 @@ class N2Parser: ParserMixin[N2Token] {
         throw N2Error("Parameter for with name '" + name + "' not found", [mark])
     }
 
-    private def getSelfFieldOrNull(self, name: String): Tuple[Var, Struct, Var]? {
-        if val selfVar = locals.getOrNull("self") {
-            when selfVar.type {
-                case struct_(struct_) {
-                    if val fieldVar = struct_.getFieldOrNull(name) {
-                        null((selfVar, struct_, fieldVar))
-                    } else { null }
-                }
-                else = null
-            }
-        } else { null }
-    }
-
-    private def findSelfFuncOrNull(self, mark: Mark, methodName: String): Expr? {
-        if val selfVar = locals.getOrNull("self") {
-            val receiver = eb.getvar(mark, selfVar)
-            val ownerType = receiver.type
-            val rootTypeName = ownerType.rootName
-            val allTraits = allTraitsOf(ownerType)
-            findfuncOrNull(
-                mark,
-                null(receiver),
-                rootTypeName,
-                methodName,
-                methodName, # refName
-                allTraits)
-        } else { null }
-    }
-
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
@@ -760,11 +672,11 @@ class N2Parser: ParserMixin[N2Token] {
             }
             case N2Token.tID {
                 val name = next().stringValue
-                if val var_ = locals.getOrNull(name) {
+                if val var_ = eb.getLocalOrNull(name) {
                     eb.getvar(mark, var_)
-                } else if val (selfVar, struct_, fieldVar) = getSelfFieldOrNull(name) {
+                } else if val (selfVar, struct_, fieldVar) = eb.getSelfFieldOrNull(name) {
                     eb.getfield(mark, eb.getvar(mark, selfVar), struct_, fieldVar)
-                } else if val e = findSelfFuncOrNull(mark, name) {
+                } else if val e = eb.findSelfFuncOrNull(mark, name) {
                     e
                 } else if val type = templateArgs.getOrNull(name) {
                     eb.type(mark, type)

@@ -16,6 +16,110 @@ import cjx.n2.N2IR.TPat
 
 class N2ExprBuilder {
     val program: Program
+    val _locals: N2Locals?
+
+    def __get_locals(self): N2Locals = _locals.get()
+
+    def getLocalOrNull(self, name: String): Var? {
+        if val locals = _locals { locals.getOrNull(name) } else { null }
+    }
+
+    def getSelfFieldOrNull(self, name: String): Tuple[Var, Struct, Var]? {
+        if val locals = _locals {
+            if val selfVar = locals.getOrNull("self") {
+                when selfVar.type {
+                    case struct_(struct_) {
+                        if val fieldVar = struct_.getFieldOrNull(name) {
+                            null((selfVar, struct_, fieldVar))
+                        } else { null }
+                    }
+                    else = null
+                }
+            } else { null }
+        } else { null }
+    }
+
+    def findSelfFuncOrNull(self, mark: Mark, methodName: String): Expr? {
+        if val locals = _locals {
+            if val selfVar = locals.getOrNull("self") {
+                val receiver = getvar(mark, selfVar)
+                val ownerType = receiver.type
+                val rootTypeName = ownerType.rootName
+                val allTraits = allTraitsOf(ownerType)
+                findfuncOrNull(
+                    mark,
+                    null(receiver),
+                    rootTypeName,
+                    methodName,
+                    methodName, # refName
+                    allTraits)
+            } else { null }
+        } else { null }
+    }
+
+    def findfunc(
+            self,
+            mark: Mark,
+            receiver: Expr?,
+            typeName: String,
+            methodName: String,
+            refName: String,
+            allTraits: List[Trait]): Expr {
+        if val e = findfuncOrNull(mark, receiver, typeName, methodName, refName, allTraits) {
+            e
+        } else {
+            val rootName = typeName + "." + methodName
+            throw N2Error("Method " + rootName + " not found ", [mark])
+        }
+    }
+
+    def findfuncOrNull(
+            self,
+            mark: Mark,
+            receiver: Expr?,
+            typeName: String,
+            methodName: String,
+            refName: String,
+            allTraits: List[Trait]): Expr? {
+        val rootName = typeName + "." + methodName
+        if val func = program.getFuncOrNull(rootName) {
+            return null(func2expr(mark, receiver, func, refName))
+        } else if val ft = program.getFuncTemplateOrNull(rootName) {
+            return null(funcTemplate2expr(mark, receiver, ft, refName))
+        }
+        for trait_ in allTraits {
+            val rootName = trait_.name + "." + methodName
+            if val func = program.getFuncOrNull(rootName) {
+                return null(func2expr(mark, receiver, func, refName))
+            } else if val ft = program.getFuncTemplateOrNull(rootName) {
+                return null(funcTemplate2expr(mark, receiver, ft, refName))
+            }
+        }
+        null
+    }
+
+    def func2expr(self, mark: Mark, receiver: Expr?, func: Func, refName: String): Expr {
+        if val r = receiver {
+            boundfunc(mark, func, r, refName)
+        } else {
+            getfunc(mark, func, refName)
+        }
+    }
+
+    def funcTemplate2expr(self, mark: Mark, receiver: Expr?, ft: FuncTemplate, refName: String): Expr {
+        if val r = receiver {
+            boundfuncTemplate(mark, ft, r, refName)
+        } else {
+            getfuncTemplate(mark, ft, refName)
+        }
+    }
+
+    def allTraitsOf(self, type: Type): List[Trait] {
+        when type {
+            case struct_(struct_) = struct_.allTraits
+            else = [program.getTraitOrNull("any").get()]
+        }
+    }
 
     def int(self, mark: Mark, value: Int): Expr {
         val ret = Expr(mark, Expr.kINT, Type.int)

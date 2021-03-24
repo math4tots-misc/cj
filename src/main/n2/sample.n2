@@ -21,7 +21,6 @@ int main() {
     print("foo.a = " + foo.a.str())
     print("foo.b = " + foo.b.str())
     print("foo = " + foo.json())
-    inspect(foo)
     print("str.len() = " + "Hello".len().str())
     print2[str]("using print2")
     print("sum = " + foo.sum().str())
@@ -31,7 +30,7 @@ int main() {
     auto n = null.(null[int])
 
     auto bar = Bar[str]("Hello bar")
-    inspect(bar)
+    print("bar = " + bar.json())
     print("bar.t = " + bar.t)
 
     auto map = Map.empty[int, int]()

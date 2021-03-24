@@ -1,13 +1,9 @@
 
-void inspect(var x) = js!(void, "console.log(''+", x, ")")
-
 template[T] void print(T t) = js!(void, "console.log(''+", t.str(), ")")
 
 unreachable panic(str s) = js!(unreachable, "panic(", s, ")")
 
 bool __is(var a, var b) = js!(bool, a, "===", b)
-
-str repr(var x) = js!(str, "JSON.stringify(", x, ")")
 
 template[T] void print2(T t) {
     js!(void, "console.log(''+", t, ")")
