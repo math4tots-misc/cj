@@ -42,7 +42,7 @@ class C2Codegen {
 
         m.validate()
         if optimize { m.optimize() }
-        # IO.println(m.emitText())
+        IO.println(m.emitText())
         (m.emitBinary(), C2MemDesc(
             initMemPageCount,
             maxMemPageCount,
@@ -110,6 +110,8 @@ class C2Codegen {
             m.addFunctionImport(func.name, "c", func.name, paramTypes, returnType)
             return ()
         }
+
+        IO.println(func.body)
 
         locals = func.params.map(p -> type(p.type))
         localSlotSP = newLocal(i32)
@@ -223,7 +225,8 @@ class C2Codegen {
     }
 
     def deref(self, expr: C2IR.Expr): Binaryen.Expression {
-        _getderef(expr.mark, expr.type, 0, expr(expr))
+        Assert(expr.type.isPtr())
+        _getderef(expr.mark, expr.type.base, 0, expr(expr))
     }
 
     def _getderef(
@@ -237,8 +240,8 @@ class C2Codegen {
             case char = m.i32.load8_s(offset, 0, addrExpr)
             case array(..) {
                 # array values cannot be stored in a register, so
-                # instead in these case we just return a pointer to the array
-                m.i32.add(m.i32.const(offset), addrExpr)
+                # instead in these cases we just return the address as is
+                if offset { m.i32.add(m.i32.const(offset), addrExpr) } else { addrExpr }
             }
             else = throw MError("TODO _getderef " + valtype, [mark])
         }

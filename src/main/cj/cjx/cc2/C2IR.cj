@@ -189,6 +189,7 @@ class C2IR {
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")
+            if is_set!(self, type) { sb.str(",\"type\":\"" + type + "\"") }
             if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
             if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
             if is_set!(self, arg) { sb.str(",\"arg\":" + arg.repr()) }
