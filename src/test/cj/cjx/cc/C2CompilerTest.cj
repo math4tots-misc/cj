@@ -144,4 +144,20 @@ class C2CompilerTest {
         assertStmt("int x[2][3]; int *y=x; y[4]=4; return x[1][1];", 4)
         assertStmt("int x[2][3]; int *y=x; y[5]=5; return x[1][2];", 5)
     }
+
+    @test
+    def sizeof() {
+        assertStmt("int x; return sizeof(x);", 4)
+        assertStmt("int x; return sizeof x;", 4)
+        assertStmt("int *x; return sizeof(x);", 4)
+        assertStmt("int x[4]; return sizeof(x);", 4 * 4)
+        assertStmt("int x[3][4]; return sizeof(x);", 48)
+        assertStmt("int x[3][4]; return sizeof(*x);", 16)
+        assertStmt("int x[3][4]; return sizeof(**x);", 4)
+        assertStmt("int x[3][4]; return sizeof(**x) + 1;", 5)
+        assertStmt("int x[3][4]; return sizeof **x + 1;", 5)
+        assertStmt("int x[3][4]; return sizeof(**x + 1);", 4)
+        assertStmt("int x=1; return sizeof(x=2);", 4)
+        assertStmt("int x=1; sizeof(x=2); return x;", 1)
+    }
 }

@@ -230,6 +230,8 @@ class C2Parser : ParserMixin[C2Token] {
 
     def expr(self): Expr = exprpr(0)
 
+    def unary(self): Expr = exprpr(unaryPrec)
+
     def exprpr(self, precedence: Int): Expr {
         var expr = atom()
         var tokprec = precof(peek().type)
@@ -287,7 +289,7 @@ class C2Parser : ParserMixin[C2Token] {
             case '-'; case '+'; case '&'; case '*'
             case C2Token.tINCR; case C2Token.tDECR {
                 val type = next().type
-                eb.preop(mark, type, exprpr(unaryPrec))
+                eb.preop(mark, type, unary())
             }
             case '(' {
                 next()
@@ -304,6 +306,11 @@ class C2Parser : ParserMixin[C2Token] {
                 } else {
                     throw MError("Variable '" + name + "' not found", [mark])
                 }
+            }
+            case C2Token.kwSIZEOF {
+                next()
+                val expr = unary()
+                eb.int(mark, expr.type.size())
             }
             else = errorKind("expression")
         }
