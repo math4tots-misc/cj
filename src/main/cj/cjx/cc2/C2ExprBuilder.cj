@@ -86,6 +86,23 @@ class C2ExprBuilder {
         expr
     }
 
+    def icastptr(self, expr: Expr): Expr {
+        addType(expr)
+        when expr.type {
+            case ptr(..) = expr
+            else = throw MError(
+                "Expected a pointer but got " + expr.type, [expr.mark])
+        }
+    }
+
+    def icastvalptr(self, var expr: Expr): Expr {
+        expr = icastptr(expr)
+        if expr.type.targetType.isVoid() {
+            throw MError("Expected a non-void pointer but got " + expr.type, [expr.mark])
+        }
+        expr
+    }
+
     def castTruthy(self, expr: Expr): Expr {
         addType(expr)
         when expr.type {
@@ -100,6 +117,29 @@ class C2ExprBuilder {
         val ret = Expr(mark, Expr.Kind.int)
         ret.intValue = value
         ret.type = Type.int
+        ret
+    }
+
+    def deref(self, mark: Mark, var expr: Expr): Expr {
+        expr = icastvalptr(expr)
+        val ret = Expr(mark, Expr.Kind.deref)
+        ret.type = expr.type.targetType
+        ret.arg = expr
+        ret
+    }
+
+    def addr(self, mark: Mark, expr: Expr): Expr {
+        when expr.kind {
+            case getvar = addrvar(mark, expr.var_)
+            case deref = expr.arg
+            else = throw MError("" + expr.kind + " is not an l-value", [expr.mark])
+        }
+    }
+
+    def addrvar(self, mark: Mark, var_: Var): Expr {
+        val ret = Expr(mark, Expr.Kind.addrvar)
+        ret.var_ = var_
+        ret.type = Type.ptrOf(var_.type)
         ret
     }
 
@@ -118,15 +158,33 @@ class C2ExprBuilder {
         ret
     }
 
-    def binop(self, mark: Mark, type: Int, lhs: Expr, rhs: Expr): Expr {
+    def setderef(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
+        Assert(lhs.kind == Expr.Kind.deref)
+        val ret = Expr(mark, Expr.Kind.setderef)
+        ret.type = rhs.type
+        ret.lhs = lhs.arg
+        ret.rhs = rhs
+        ret
+    }
+
+    def binop(self, mark: Mark, type: Int, var lhs: Expr, var rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
+
+        # ======================================================================
+        # assignment
+        # ======================================================================
         if type == '=' {
             return when lhs.kind {
                 case getvar = setvar(mark, lhs.var_, rhs)
+                case deref = setderef(mark, lhs, rhs)
                 else = throw MError("" + lhs.kind + " is not assignable", [mark])
             }
         }
+
+        # ======================================================================
+        # arithmetic
+        # ======================================================================
         if lhs.type.isInt() and rhs.type.isInt() {
             switch type {
                 case '+'           { return genBinop(mark, Expr.Kind.intAdd, Type.int, lhs, rhs) }
@@ -143,11 +201,42 @@ class C2ExprBuilder {
                 else = ()
             }
         }
-        throw MError("TODO eb.binop " + C2Token.typeRepr(type), [mark])
+
+        # ======================================================================
+        # pointer ops
+        # ======================================================================
+        if type == '+' and lhs.type.isInt() and rhs.type.isPtr() {
+            # transform int + ptr to ptr + int
+            val tmp = rhs
+            rhs = lhs
+            lhs = tmp
+        }
+        if lhs.type.isPtr() and rhs.type.isInt() {
+            switch type {
+                case '+' { return genBinop(mark, Expr.Kind.ptrAdd, lhs.type, lhs, rhs) }
+                case '-' { return genBinop(mark, Expr.Kind.ptrSub, lhs.type, lhs, rhs) }
+                else = ()
+            }
+        }
+        if lhs.type.isPtr() and lhs.type == rhs.type {
+            switch type {
+                case '-' { return genBinop(mark, Expr.Kind.ptrDiff, Type.int, lhs, rhs) }
+                else = ()
+            }
+        }
+
+        throw MError(
+            "TODO eb.binop " + C2Token.typeRepr(type) + "(" + lhs.type + ", " + rhs.type + ")",
+            [mark])
     }
 
     def preop(self, mark: Mark, type: Int, arg: Expr): Expr {
         addType(arg)
+        switch type {
+            case '&' { return addr(mark, arg) }
+            case '*' { return deref(mark, arg) }
+            else = ()
+        }
         if arg.type.isInt() {
             switch type {
                 case '-' { return genUnop(mark, Expr.Kind.intNeg, Type.int, arg) }

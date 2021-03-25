@@ -29,6 +29,8 @@ class C2Lexer {
         b.add("!=", m -> symtok(m, C2Token.tNE))
         b.add("<=", m -> symtok(m, C2Token.tLE))
         b.add(">=", m -> symtok(m, C2Token.tGE))
+        b.add("\\+\\+", m -> symtok(m, C2Token.tINCR))
+        b.add("--", m -> symtok(m, C2Token.tDECR))
 
         # whitespace
         b.add("\\s+", m -> [])

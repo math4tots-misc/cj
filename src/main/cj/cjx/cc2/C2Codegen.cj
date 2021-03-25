@@ -60,6 +60,16 @@ class C2Codegen {
         # optimizer figure out the best way to recycle locals.
     }
 
+    ## Store the given expression in a new temporary variable and an expression
+    ## assigning to that
+    def withLocalSet[R](self, expr: C2IR.Expr, f: Fn[Int, Binaryen.Expression, R]): R {
+        val type = type(expr.type)
+        val bexpr = expr(expr)
+        val local = newLocal(type)
+        val assign = m.local.set(local, bexpr)
+        f.call(local, assign)
+    }
+
     def type(self, type: C2IR.Type): Binaryen.Type {
         when type {
             case void = i32
@@ -174,13 +184,7 @@ class C2Codegen {
     def dropsetvar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
         val vartype = type(var_.type)
         val offset = getLocalOffset(var_)
-        if vartype == i32 {
-            m.i32.store(offset, 0, localStackPtr, expr(expr))
-        } else if vartype == i64 {
-            m.i64.store(offset, 0, localStackPtr, expr(expr))
-        } else {
-            throw MError("TODO dropsetvar " + js!(String, "''+", vartype), [mark])
-        }
+        _setderef(mark, vartype, offset, localStackPtr, expr(expr))
     }
 
     def teevar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
@@ -190,18 +194,70 @@ class C2Codegen {
     def getvar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
         val vartype = type(var_.type)
         val offset = getLocalOffset(var_)
-        if vartype == i32 {
-            m.i32.load(offset, 0, localStackPtr)
-        } else if vartype == i64 {
-            m.i64.load(offset, 0, localStackPtr)
+        _getderef(mark, vartype, offset, localStackPtr)
+    }
+
+    def addrvar(self, var_: C2IR.Var): Binaryen.Expression {
+        val offset = getLocalOffset(var_)
+        m.i32.add(m.i32.const(offset), localStackPtr)
+    }
+
+    def deref(self, expr: C2IR.Expr): Binaryen.Expression {
+        val valtype = type(expr.type)
+        _getderef(expr.mark, valtype, 0, expr(expr))
+    }
+
+    def _getderef(
+            self,
+            mark: Mark,
+            valtype: Binaryen.Type,
+            offset: Int,
+            addrExpr: Binaryen.Expression): Binaryen.Expression {
+        if valtype == i32 {
+            m.i32.load(offset, 0, addrExpr)
+        } else if valtype == i64 {
+            m.i64.load(offset, 0, addrExpr)
         } else {
-            throw MError("TODO getvar " + js!(String, "''+", vartype), [mark])
+            throw MError("TODO _getderef " + js!(String, "''+", valtype), [mark])
         }
+    }
+
+    def _setderef(
+            self,
+            mark: Mark,
+            valtype: Binaryen.Type,
+            offset: Int,
+            addrExpr: Binaryen.Expression,
+            valExpr: Binaryen.Expression): Binaryen.Expression {
+        if valtype == i32 {
+            m.i32.store(offset, 0, addrExpr, valExpr)
+        } else if valtype == i64 {
+            m.i64.store(offset, 0, addrExpr, valExpr)
+        } else {
+            throw MError("TODO _setderef " + js!(String, "''+", valtype), [mark])
+        }
+    }
+
+    def dropsetderef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
+        val valtype = type(valExpr.type)
+        _setderef(mark, valtype, 0, expr(addrExpr), expr(valExpr))
+    }
+
+    def teederef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
+        val valtype = type(valExpr.type)
+        withLocalSet(valExpr, (local, assignExpr) -> {
+            m.block(null, [
+                assignExpr,
+                _setderef(mark, valtype, 0, expr(addrExpr), m.local.get(local, valtype)),
+                m.local.get(local, valtype)
+            ], auto)
+        })
     }
 
     def dropexpr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case setvar = dropsetvar(expr.mark, expr.var_, expr.arg)
+            case setderef = dropsetderef(expr.mark, expr.lhs, expr.rhs)
             else = m.drop(expr(expr))
         }
     }
@@ -219,8 +275,26 @@ class C2Codegen {
             case intNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case addrvar = addrvar(expr.var_)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
+            case deref = deref(expr.arg)
+            case setderef = teederef(expr.mark, expr.lhs, expr.rhs)
+            case ptrAdd = m.i32.add(
+                expr(expr.lhs),
+                m.i32.mul(
+                    m.i32.const(sizeOfType(expr.lhs.type.targetType)),
+                    expr(expr.rhs)))
+            case ptrSub = m.i32.sub(
+                expr(expr.lhs),
+                m.i32.mul(
+                    m.i32.const(sizeOfType(expr.lhs.type.targetType)),
+                    expr(expr.rhs)))
+            case ptrDiff = m.i32.div_s(
+                m.i32.sub(
+                    expr(expr.lhs),
+                    expr(expr.rhs)),
+                m.i32.const(sizeOfType(expr.lhs.type.targetType)))
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }

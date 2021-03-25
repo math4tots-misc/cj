@@ -48,11 +48,13 @@ class C2IR {
             case ptr(p) = p == get!(other, ptr, 0)
             case func(f) = f == get!(other, func, 0)
             case struct_(s) = throw Error("TODO struct type equality")
-            else = false
+            else() = true
         }
+        def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
         def __get_returnType(self): Type = get!(self, func, 0).returnType
         def __get_params(self): List[Var] = get!(self, func, 0).params
         def __get_paramTypes(self): List[Type] = params.map(v -> v.type)
+        def __get_targetType(self): Type = get!(self, ptr, 0).target
     }
     class Var: Repr {
         val mark: Mark
@@ -102,7 +104,7 @@ class C2IR {
             sb.toString()
         }
     }
-    class Expr {
+    class Expr: Repr {
         union Kind: Repr, Hash {
             case int
             case intNeg
@@ -115,8 +117,17 @@ class C2IR {
             case intNe
             case intLt
             case intLe
+
+            case addrvar     # address of a variable
             case getvar
             case setvar
+
+            case deref       # dereference a pointer
+            case setderef    # assign to a dereferenced address
+            case ptrAdd      # add an int to a pointer
+            case ptrSub      # subtract an int from a pointer
+            case ptrDiff     # subtract two pointers
+
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)

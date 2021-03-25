@@ -12,6 +12,8 @@ class C2Token {
         tNE
         tLE
         tGE
+        tDECR
+        tINCR
 
         kwVOID
         kwINT

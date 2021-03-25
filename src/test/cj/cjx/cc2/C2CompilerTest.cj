@@ -85,4 +85,17 @@ class C2CompilerTest {
         assertStmt("{ for (;;) {return 3;} return 5; }", 3)
         assertStmt("{ int i=0; while(i<10) { i=i+1; } return i; }", 10)
     }
+
+    @test
+    def addr() {
+        assertStmt("{ int x=3; return *&x; }", 3)
+        assertStmt("{ int x=3; int *y=&x; int **z=&y; return **z; }", 3)
+        assertStmt("{ int x=3; int y=5; return *(&x+1); }", 5)
+        assertStmt("{ int x=3; int y=5; return *(&y-1); }", 3)
+        assertStmt("{ int x=3; int y=5; return *(&x-(-1)); }", 5)
+        assertStmt("{ int x=3; int *y=&x; *y=5; return x; }", 5)
+        assertStmt("{ int x=3; int y=5; *(&x+1)=7; return y; }", 7)
+        assertStmt("{ int x=3; int y=5; *(&y-1)=7; return x; }", 7)
+        assertStmt("{ int x=3; return (&x+2)-&x+3; }", 5)
+    }
 }
