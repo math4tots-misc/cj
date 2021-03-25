@@ -160,6 +160,7 @@ class C2Parser : ParserMixin[C2Token] {
     def stmt(self): Stmt {
         val mark = mark()
         switch peek().type {
+            case '{' = block()
             case ';' { while consume(';') {}; eb.nop(mark) }
             case C2Token.kwRETURN {
                 next()
@@ -167,7 +168,15 @@ class C2Parser : ParserMixin[C2Token] {
                 expect(';')
                 ret
             }
-            case '{' = block()
+            case C2Token.kwIF {
+                next()
+                expect('(')
+                val cond = expr()
+                expect(')')
+                val then = stmt()
+                val els = if consume(C2Token.kwELSE) { stmt() } else { eb.nop(mark) }
+                eb.if_(mark, cond, then, els)
+            }
             else = {
                 val ret = eb.exprStmt(mark, expr())
                 expect(';')
@@ -182,15 +191,10 @@ class C2Parser : ParserMixin[C2Token] {
         expect('{')
         locals.scoped(() -> {
             while not consume('}') {
-                val stmt = if atDeclaration() { declaration() } else { stmt() }
-                when stmt.kind {
-                    case nop = ()
-                    case block = stmts.addAll(stmt.stmts)
-                    else = stmts.add(stmt)
-                }
+                stmts.add(if atDeclaration() { declaration() } else { stmt() })
             }
         })
-        if stmts.size() == 1 { stmts[0] } else { eb.block(mark, stmts) }
+        eb.block(mark, stmts)
     }
 
     # ========================================================================

@@ -151,6 +151,7 @@ class C2Codegen {
             case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
             case ret = m.block(null, [restoreSP(), m.return_(expr(stmt.expr))], auto)
             case expr = dropexpr(stmt.expr)
+            case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             else = throw MError("TODO codegen stmt " + stmt.kind, [stmt.mark])
         }
     }

@@ -76,6 +76,8 @@ class C2IR {
             case block
             case expr
             case ret
+            case if_
+            case while_
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
@@ -84,12 +86,18 @@ class C2IR {
         val kind: Kind
         var stmts: List[Stmt] = ?
         var expr: Expr = ?
+        var cond: Expr = ?
+        var then: Stmt = ?
+        var els: Stmt = ?
 
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")
             if is_set!(self, stmts) { sb.str(",\"stmts\":" + stmts.repr()) }
             if is_set!(self, expr) { sb.str(",\"expr\":" + expr.repr()) }
+            if is_set!(self, cond) { sb.str(",\"cond\":" + cond.repr()) }
+            if is_set!(self, then) { sb.str(",\"then\":" + then.repr()) }
+            if is_set!(self, els) { sb.str(",\"els\":" + els.repr()) }
             sb.str("}")
             sb.toString()
         }

@@ -68,4 +68,14 @@ class C2CompilerTest {
         assertStmt("{ {1; {2;} return 3;} }", 3)
         assertStmt("{ ;;; return 5; }", 5)
     }
+
+    @test
+    def if_() {
+        assertStmt("{ if (0) return 2; return 3; }", 3)
+        assertStmt("{ if (1-1) return 2; return 3; }", 3)
+        assertStmt("{ if (1) return 2; return 3; }", 2)
+        assertStmt("{ if (2-1) return 2; return 3; }", 2)
+        assertStmt("{ if (0) { 1; 2; return 3; } else { return 4; } }", 4)
+        assertStmt("{ if (1) { 1; 2; return 3; } else { return 4; } }", 3)
+    }
 }

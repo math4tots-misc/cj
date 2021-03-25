@@ -29,8 +29,47 @@ class C2ExprBuilder {
     }
 
     def block(self, mark: Mark, stmts: List[Stmt]): Stmt {
-        val ret = Stmt(mark, Stmt.Kind.block)
-        ret.stmts = stmts
+        val newStmts: List[Stmt] = []
+        for stmt in stmts {
+            when stmt.kind {
+                case nop = ()
+                case block = newStmts.addAll(stmt.stmts)
+                else = newStmts.add(stmt)
+            }
+        }
+        switch newStmts.size() {
+            case 0 = nop(mark)
+            case 1 = newStmts[0]
+            else {
+                val ret = Stmt(mark, Stmt.Kind.block)
+                ret.stmts = newStmts
+                ret
+            }
+        }
+    }
+
+    def if_(self, mark: Mark, cond: Expr, then: Stmt, els: Stmt): Stmt {
+        val ret = Stmt(mark, Stmt.Kind.if_)
+        ret.cond = castTruthy(cond)
+        ret.then = then
+        ret.els = els
+        ret
+    }
+
+    def for_(self, mark: Mark, init: Stmt, cond: Expr, incr: Expr, then: Stmt): Stmt {
+        block(mark, [
+            init,
+            while_(mark, cond, block(mark, [
+                then,
+                exprStmt(mark, incr),
+            ])),
+        ])
+    }
+
+    def while_(self, mark: Mark, cond: Expr, then: Stmt): Stmt {
+        val ret = Stmt(mark, Stmt.Kind.while_)
+        ret.cond = castTruthy(cond)
+        ret.then = then
         ret
     }
 
@@ -45,6 +84,16 @@ class C2ExprBuilder {
             throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
         }
         expr
+    }
+
+    def castTruthy(self, expr: Expr): Expr {
+        addType(expr)
+        when expr.type {
+            case int
+            case ptr(p) = expr
+            else = throw MError(
+                "Expected truthy value but got " + expr.type, [expr.mark])
+        }
     }
 
     def int(self, mark: Mark, value: Int): Expr {
