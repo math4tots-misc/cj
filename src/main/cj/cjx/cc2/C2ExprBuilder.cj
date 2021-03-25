@@ -14,6 +14,8 @@ class C2ExprBuilder {
     # Statements
     # ========================================================================
 
+    def nop(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.nop)
+
     def exprStmt(self, mark: Mark, expr: Expr): Stmt {
         val ret = Stmt(mark, Stmt.Kind.expr)
         ret.expr = expr
@@ -36,6 +38,15 @@ class C2ExprBuilder {
     # Expressions
     # ========================================================================
 
+    ## Implicit cast an expression to a given type
+    def icast(self, expr: Expr, type: Type): Expr {
+        addType(expr)
+        if expr.type != type {
+            throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
+        }
+        expr
+    }
+
     def int(self, mark: Mark, value: Int): Expr {
         val ret = Expr(mark, Expr.Kind.int)
         ret.intValue = value
@@ -50,9 +61,23 @@ class C2ExprBuilder {
         ret
     }
 
+    def setvar(self, mark: Mark, var_: Var, arg: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.setvar)
+        ret.var_ = var_
+        ret.arg = arg
+        ret.type = var_.type
+        ret
+    }
+
     def binop(self, mark: Mark, type: Int, lhs: Expr, rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
+        if type == '=' {
+            return when lhs.kind {
+                case getvar = setvar(mark, lhs.var_, rhs)
+                else = throw MError("" + lhs.kind + " is not assignable", [mark])
+            }
+        }
         if lhs.type.isInt() and rhs.type.isInt() {
             switch type {
                 case '+'           { return genBinop(mark, Expr.Kind.intAdd, Type.int, lhs, rhs) }

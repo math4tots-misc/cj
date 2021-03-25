@@ -23,6 +23,8 @@ native class Binaryen {
         def __get_i64(self): ModuleI64 = js!(ModuleI64, self, ".i64")
         def return_(self, value: Expression): Expression = js!(
             Expression, self, ".return(", value, ")")
+        def unreachable(self): Expression = js!(Expression, self, ".unreachable()")
+        def nop(self): Expression = js!(Expression, self, ".nop()")
         def drop(self, value: Expression): Expression = js!(
             Expression, self, ".drop(", value, ")")
         def if_(self, cond: Expression, ifTrue: Expression, ifFalse: Expression): Expression = js!(

@@ -1,5 +1,7 @@
 package cjx.cc2
 
+import cj.StringBuilder
+import cj.Error
 import cjx.parser.Mark
 
 class C2IR {
@@ -13,13 +15,17 @@ class C2IR {
         }
         def getFuncOrNull(self, name: String): Func? = funcMap.getOrNull(name)
     }
-    union Type: Repr {
+    union Type: Repr, Eq {
         class Func {
             val returnType: Type
             val params: List[Var]
+            def __get_paramTypes(self): List[Type] = params.map(p -> p.type)
+            def __eq(self, other: Self): Bool = (
+                returnType == other.returnType and paramTypes == other.paramTypes)
         }
         class Ptr {
             val target: Type
+            def __eq(self, other: Self): Bool = target == other.target
         }
         class Struct {
         }
@@ -38,6 +44,12 @@ class C2IR {
             case struct_(s) = "struct()"
             else name() = name
         }
+        def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and when self {
+            case ptr(p) = p == get!(other, ptr, 0)
+            case func(f) = f == get!(other, func, 0)
+            case struct_(s) = throw Error("TODO struct type equality")
+            else = false
+        }
         def __get_returnType(self): Type = get!(self, func, 0).returnType
         def __get_params(self): List[Var] = get!(self, func, 0).params
         def __get_paramTypes(self): List[Type] = params.map(v -> v.type)
@@ -53,13 +65,14 @@ class C2IR {
     class Func {
         val mark: Mark
         val name: String
-        val type: Type
+        val type: Type.Func
         var body: Stmt = ?
         var locals: List[Var] = ?
         def __get_params(self): List[Var] = locals[:type.params.size()]
     }
-    class Stmt {
+    class Stmt: Repr {
         union Kind: Repr, Hash {
+            case nop
             case block
             case expr
             case ret
@@ -71,6 +84,15 @@ class C2IR {
         val kind: Kind
         var stmts: List[Stmt] = ?
         var expr: Expr = ?
+
+        def repr(self): String {
+            val sb = StringBuilder()
+            sb.str("{\"kind\":\"" + kind + "\"")
+            if is_set!(self, stmts) { sb.str(",\"stmts\":" + stmts.repr()) }
+            if is_set!(self, expr) { sb.str(",\"expr\":" + expr.repr()) }
+            sb.str("}")
+            sb.toString()
+        }
     }
     class Expr {
         union Kind: Repr, Hash {
@@ -86,6 +108,7 @@ class C2IR {
             case intLt
             case intLe
             case getvar
+            case setvar
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
@@ -98,5 +121,16 @@ class C2IR {
         var arg: Expr = ?
         var lhs: Expr = ?
         var rhs: Expr = ?
+        def repr(self): String {
+            val sb = StringBuilder()
+            sb.str("{\"kind\":\"" + kind + "\"")
+            if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
+            if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
+            if is_set!(self, arg) { sb.str(",\"arg\":" + arg.repr()) }
+            if is_set!(self, lhs) { sb.str(",\"lhs\":" + lhs.repr()) }
+            if is_set!(self, rhs) { sb.str(",\"rhs\":" + rhs.repr()) }
+            sb.str("}")
+            sb.toString()
+        }
     }
 }

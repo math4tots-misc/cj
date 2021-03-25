@@ -1,5 +1,6 @@
 package cjx.cc2
 
+import cjx.parser.Mark
 import cj.Error
 import cjx.parser.MError
 import cj.Uint8Array
@@ -7,7 +8,7 @@ import cjx.cc2.C2IR
 import cjx.binaryen.Binaryen
 
 class C2Codegen {
-    private static val optimize = false
+    private static val optimize = true
     private static val none: Binaryen.Type = Binaryen.none
     private static val i32: Binaryen.Type = Binaryen.i32
     private static val i64: Binaryen.Type = Binaryen.i64
@@ -18,8 +19,9 @@ class C2Codegen {
 
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
-    private var localSlotSP = 0
+    private var localSlotSP = 0 # index of wasm local variable pointing to start of local stack
     private var locals: List[Binaryen.Type] = []
+    private var cLocalOffsets: List[Int] = []
 
     def emit(self, tu: C2IR.TranslationUnit): Uint8Array {
         m.setMemory(1, 1)
@@ -68,27 +70,71 @@ class C2Codegen {
         }
     }
 
+    def sizeOfType(self, type: C2IR.Type): Int {
+        when type {
+            case void = 4
+            case int = 4
+            case ptr(..) = 4
+            case func(..) = 4
+            case struct_(..) = throw Error("TODO codegen sizeOfType struct")
+        }
+    }
+
+    def getLocalOffset(self, var_: C2IR.Var): Int = cLocalOffsets[var_.index]
+
+    def __get_localStackPtr(self): Binaryen.Expression = m.local.get(localSlotSP, i32)
+
+    def restoreSP(self): Binaryen.Expression {
+        m.global.set("SP", m.local.get(localSlotSP, i32))
+    }
+
     def func(self, func: C2IR.Func) {
         locals = []
         localSlotSP = newLocal(i32)
+        Assert.equal(localSlotSP, 0)
+
+        cLocalOffsets = []
+        var nextCLocalOffset = 0
+        val cLocals = func.locals
+        var cLocalsByteSize = 0
+        for i = 0; i < cLocals.size(); i++ {
+            val var_ = cLocals[i]
+            Assert.equal(i, var_.index)
+            Assert.equal(i, cLocalOffsets.size())
+            cLocalOffsets.add(cLocalsByteSize)
+            cLocalsByteSize += sizeOfType(var_.type)
+        }
 
         val stmts: List[Binaryen.Expression] = []
+
+        # allocate space for C local variables on the stack
+        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
+        stmts.add(m.global.set("SP",
+            m.i32.add(m.global.get("SP", i32), m.i32.const(cLocalsByteSize))))
 
         val params = func.params
         for i = 0; i < params.size(); i++ {
             val param = params[i]
             val ptype = type(param.type)
-            val spptr = m.local.get(localSlotSP, i32)
             stmts.add(if ptype == i32 {
-                m.i32.store(param.index, 0, spptr, m.local.get(i, ptype))
+                m.i32.store(getLocalOffset(param), 0, localStackPtr, m.local.get(i, ptype))
             } else if ptype == i64 {
-                m.i64.store(param.index, 0, spptr, m.local.get(i, ptype))
+                m.i64.store(getLocalOffset(param), 0, localStackPtr, m.local.get(i, ptype))
             } else {
                 throw Error("TODO")
             })
         }
 
         stmts.add(stmt(func.body))
+        if func.name == "main" or func.type.returnType.isVoid() {
+            # main function has an implicit "return 0"
+            # functions that return void also have an implicit return at the end
+            # (we translate void to i32 for convenience, so we still just return 0)
+            stmts.add(restoreSP())
+            stmts.add(m.return_(m.i32.const(0)))
+        } else {
+            stmts.add(m.unreachable())
+        }
         val body = m.block(null, stmts, auto)
         m.addFunction(
             func.name,
@@ -101,15 +147,48 @@ class C2Codegen {
 
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
         when stmt.kind {
-            case block {
-                val out: List[Binaryen.Expression] = []
-                for s in stmt.stmts {
-                    out.add(stmt(s))
-                }
-                m.block(null, out, auto)
-            }
-            case ret = m.return_(expr(stmt.expr))
+            case nop = m.nop()
+            case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
+            case ret = m.block(null, [restoreSP(), m.return_(expr(stmt.expr))], auto)
+            case expr = dropexpr(stmt.expr)
             else = throw MError("TODO codegen stmt " + stmt.kind, [stmt.mark])
+        }
+    }
+
+    def nop(self): Binaryen.Expression = m.nop()
+
+    def dropsetvar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
+        val vartype = type(var_.type)
+        val offset = getLocalOffset(var_)
+        if vartype == i32 {
+            m.i32.store(offset, 0, localStackPtr, expr(expr))
+        } else if vartype == i64 {
+            m.i64.store(offset, 0, localStackPtr, expr(expr))
+        } else {
+            throw MError("TODO dropsetvar " + js!(String, "''+", vartype), [mark])
+        }
+    }
+
+    def teevar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
+        m.block(null, [dropsetvar(mark, var_, expr), getvar(mark, var_)], auto)
+    }
+
+    def getvar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
+        val vartype = type(var_.type)
+        val offset = getLocalOffset(var_)
+        if vartype == i32 {
+            m.i32.load(offset, 0, localStackPtr)
+        } else if vartype == i64 {
+            m.i64.load(offset, 0, localStackPtr)
+        } else {
+            throw MError("TODO getvar " + js!(String, "''+", vartype), [mark])
+        }
+    }
+
+    def dropexpr(self, expr: C2IR.Expr): Binaryen.Expression {
+        when expr.kind {
+            case setvar = dropsetvar(expr.mark, expr.var_, expr.arg)
+            else = m.drop(expr(expr))
         }
     }
 
@@ -126,6 +205,8 @@ class C2Codegen {
             case intNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case getvar = getvar(expr.mark, expr.var_)
+            case setvar = teevar(expr.mark, expr.var_, expr.arg)
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }

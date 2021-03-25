@@ -61,7 +61,10 @@ class C2Parser : ParserMixin[C2Token] {
 
         var baseType = declspec()
         val (mark, name, funcType) = declarator(baseType)
-        val func = Func(mark, name, funcType)
+        val func = when funcType {
+            case func(ft) = Func(mark, name, ft)
+            else = throw MError("Expected function type", [mark])
+        }
         for param in funcType.params {
             locals.add(param.mark, param.type, param.name)
         }
@@ -157,6 +160,7 @@ class C2Parser : ParserMixin[C2Token] {
     def stmt(self): Stmt {
         val mark = mark()
         switch peek().type {
+            case ';' { while consume(';') {}; eb.nop(mark) }
             case C2Token.kwRETURN {
                 next()
                 val ret = eb.ret(mark, expr())
@@ -179,10 +183,14 @@ class C2Parser : ParserMixin[C2Token] {
         locals.scoped(() -> {
             while not consume('}') {
                 val stmt = if atDeclaration() { declaration() } else { stmt() }
-                stmts.add(stmt)
+                when stmt.kind {
+                    case nop = ()
+                    case block = stmts.addAll(stmt.stmts)
+                    else = stmts.add(stmt)
+                }
             }
         })
-        eb.block(mark, stmts)
+        if stmts.size() == 1 { stmts[0] } else { eb.block(mark, stmts) }
     }
 
     # ========================================================================
@@ -230,6 +238,14 @@ class C2Parser : ParserMixin[C2Token] {
                 val inner = expr()
                 expect(')')
                 inner
+            }
+            case C2Token.tIDENT {
+                val name = next().stringValue
+                if val var_ = locals.getOrNull(name) {
+                    eb.getvar(mark, var_)
+                } else {
+                    throw MError("Variable '" + name + "' not found", [mark])
+                }
             }
             else = errorKind("expression")
         }
