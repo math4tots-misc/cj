@@ -6,6 +6,7 @@ import cjx.cc2.C2IR.Expr
 import cjx.cc2.C2IR.Stmt
 import cjx.cc2.C2IR.Var
 import cjx.cc2.C2IR.Type
+import cjx.cc2.C2IR.Func
 import cjx.parser.Mark
 
 class C2ExprBuilder {
@@ -80,10 +81,14 @@ class C2ExprBuilder {
     ## Implicit cast an expression to a given type
     def icast(self, expr: Expr, type: Type): Expr {
         addType(expr)
-        if expr.type != type {
-            throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
+        if expr.type == type {
+            return expr
         }
-        expr
+        if expr.type.intPtrConvertible() and type.intPtrConvertible() {
+            # TODO: Consider warning... for now, just allow
+            return expr
+        }
+        throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
     }
 
     def icastptr(self, expr: Expr): Expr {
@@ -120,6 +125,13 @@ class C2ExprBuilder {
         ret
     }
 
+    def char(self, mark: Mark, value: Int): Expr {
+        val ret = Expr(mark, Expr.Kind.char)
+        ret.intValue = value
+        ret.type = Type.char
+        ret
+    }
+
     def deref(self, mark: Mark, var expr: Expr): Expr {
         expr = icastvalptr(expr)
         val ret = Expr(mark, Expr.Kind.deref)
@@ -133,6 +145,25 @@ class C2ExprBuilder {
             case getvar = addrvar(mark, expr.var_)
             case deref = expr.arg
             else = throw MError("" + expr.kind + " is not an l-value", [expr.mark])
+        }
+    }
+
+    def func(self, mark: Mark, func: Func): Expr {
+        val ret = Expr(mark, Expr.Kind.func)
+        ret.func = func
+        ret.type = Type.func(func.type)
+        ret
+    }
+
+    def call(self, mark: Mark, fexpr: Expr, args: List[Expr]): Expr {
+        when fexpr.kind {
+            case func {
+                val ret = Expr(mark, Expr.Kind.funcall)
+                ret.func = fexpr.func
+                ret.args = args
+                ret
+            }
+            else = throw MError("" + fexpr.type + " is not callable", [mark])
         }
     }
 
@@ -176,8 +207,8 @@ class C2ExprBuilder {
         # ======================================================================
         if type == '=' {
             return when lhs.kind {
-                case getvar = setvar(mark, lhs.var_, rhs)
-                case deref = setderef(mark, lhs, rhs)
+                case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
+                case deref = setderef(mark, lhs, icast(rhs, lhs.type))
                 else = throw MError("" + lhs.kind + " is not assignable", [mark])
             }
         }
@@ -245,6 +276,25 @@ class C2ExprBuilder {
             }
         }
         throw MError("TODO eb.preop " + C2Token.typeRepr(type), [mark])
+    }
+
+    def postop(self, mark: Mark, type: Int, arg: Expr): Expr {
+        addType(arg)
+        if type == C2Token.tINCR {
+            when arg.type {
+                case int; case ptr(..) = return genUnop(
+                    mark, Expr.Kind.postIncr, arg.type, addr(mark, arg))
+                else = ()
+            }
+        }
+        if type == C2Token.tDECR {
+            when arg.type {
+                case int; case ptr(..) = return genUnop(
+                    mark, Expr.Kind.postDecr, arg.type, addr(mark, arg))
+                else = ()
+            }
+        }
+        throw MError("TODO eb.postop " + C2Token.typeRepr(type) + " (" + arg.type + ")", [mark])
     }
 
     private def genUnop(self, mark: Mark, kind: Expr.Kind, type: Type, arg: Expr): Expr {

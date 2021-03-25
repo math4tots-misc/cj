@@ -40,6 +40,10 @@ class C2IR {
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
+        def intPtrConvertible(self): Bool = when self {
+            case void; case char; case int; case ptr(..) = true
+            else = false
+        }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.target + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
@@ -120,6 +124,14 @@ class C2IR {
             case intLt
             case intLe
 
+            case char
+
+            case postIncr
+            case postDecr
+
+            case func        # function reference
+            case funcall     # direct function call
+
             case addrvar     # address of a variable
             case getvar
             case setvar
@@ -139,9 +151,11 @@ class C2IR {
         var type: Type = ?
         var intValue: Int = ?
         var var_: Var = ?
+        var func: Func = ?
         var arg: Expr = ?
         var lhs: Expr = ?
         var rhs: Expr = ?
+        var args: List[Expr] = ?
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")

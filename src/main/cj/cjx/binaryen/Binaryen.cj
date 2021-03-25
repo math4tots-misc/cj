@@ -119,6 +119,18 @@ native class Binaryen {
             Expression, self, ".store(", offset, ",", align, ",", ptr, ",", v, ")")
     }
     trait IntOps : MemOps {
+        def load8_s(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
+            Expression, self, ".load8_s(", offset, ",", align, ",", ptr, ")")
+        def load8_u(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
+            Expression, self, ".load8_u(", offset, ",", align, ",", ptr, ")")
+        def load16_s(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
+            Expression, self, ".load16_s(", offset, ",", align, ",", ptr, ")")
+        def load16_u(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
+            Expression, self, ".load16_u(", offset, ",", align, ",", ptr, ")")
+        def store8(self, offset: Int, align: Int, ptr: Expression, v: Expression): Expression = js!(
+            Expression, self, ".store8(", offset, ",", align, ",", ptr, ",", v, ")")
+        def store16(self, offset: Int, align: Int, ptr: Expression, v: Expression): Expression = js!(
+            Expression, self, ".store16(", offset, ",", align, ",", ptr, ",", v, ")")
         def const(self, value: Int): Expression = js!(
             Expression, self, ".const(", value, ")")
         def clz(self, value: Expression): Expression = js!(

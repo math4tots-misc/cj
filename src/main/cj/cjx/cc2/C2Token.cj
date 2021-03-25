@@ -2,10 +2,11 @@ package cjx.cc2
 
 import cj.Error
 
-class C2Token {
+class C2Token: Repr {
     enum {
         tEOF = 200
         tINT
+        tCHAR
         tIDENT
 
         tEQ
@@ -16,7 +17,12 @@ class C2Token {
         tINCR
 
         kwVOID
+        kwUNSIGNED
         kwINT
+        kwCHAR
+        kwLONG
+        kwSHORT
+        kwDOUBLE
         kwRETURN
         kwIF
         kwELSE

@@ -42,6 +42,7 @@ class C2Parser : ParserMixin[C2Token] {
     def __get_locals(self): C2Locals = _locals.get()
 
     def precof(type: Int): Int = switch type {
+        case '.'; case '('; case C2Token.tINCR; case C2Token.tDECR = 150
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
@@ -68,8 +69,12 @@ class C2Parser : ParserMixin[C2Token] {
         for param in funcType.params {
             locals.add(param.mark, param.type, param.name)
         }
-        func.body = block()
+
         func.locals = locals.list
+        if not consume(';') {
+            func.body = block()
+        }
+
         translationUnit.addFunc(func)
 
         _locals = null
@@ -82,6 +87,7 @@ class C2Parser : ParserMixin[C2Token] {
     def atDeclaration(self): Bool {
         switch peek().type {
             case C2Token.kwVOID
+            case C2Token.kwCHAR
             case C2Token.kwINT = true
             else = false
         }
@@ -118,7 +124,8 @@ class C2Parser : ParserMixin[C2Token] {
         switch peek().type {
             case C2Token.kwVOID { next(); Type.void }
             case C2Token.kwINT { next(); Type.int }
-            else = throw MError("Expected declaration", [mark])
+            case C2Token.kwCHAR { next(); Type.char }
+            else = errorKind("declaration")
         }
     }
 
@@ -242,6 +249,12 @@ class C2Parser : ParserMixin[C2Token] {
                     val type = next().type
                     expr = eb.binop(mark, type, expr, exprpr(tokprec - 1))
                 }
+                case C2Token.tINCR; case C2Token.tDECR {
+                    # postfix operators
+                    val type = next().type
+                    expr = eb.postop(mark, type, expr)
+                }
+                case '(' { expr = eb.call(mark, expr, args()) }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)
@@ -249,10 +262,21 @@ class C2Parser : ParserMixin[C2Token] {
         expr
     }
 
+    def args(self): List[Expr] {
+        val args: List[Expr] = []
+        expect('(')
+        while not consume(')') {
+            args.add(expr())
+            if not consume(',') { assert(')') }
+        }
+        args
+    }
+
     def atom(self): Expr {
         val mark = mark()
         switch peek().type {
             case C2Token.tINT = eb.int(mark, next().intValue)
+            case C2Token.tCHAR = eb.char(mark, next().intValue)
             case '-'; case '+'; case '&'; case '*'
             case C2Token.tINCR; case C2Token.tDECR {
                 val type = next().type
@@ -268,6 +292,8 @@ class C2Parser : ParserMixin[C2Token] {
                 val name = next().stringValue
                 if val var_ = locals.getOrNull(name) {
                     eb.getvar(mark, var_)
+                } else if val func = translationUnit.getFuncOrNull(name) {
+                    eb.func(mark, func)
                 } else {
                     throw MError("Variable '" + name + "' not found", [mark])
                 }

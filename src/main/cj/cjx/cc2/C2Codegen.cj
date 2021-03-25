@@ -123,6 +123,13 @@ class C2Codegen {
     }
 
     def func(self, func: C2IR.Func) {
+        if not is_set!(func, body) {
+            val returnType = type(func.type.returnType)
+            val paramTypes = Binaryen.createType(func.type.paramTypes.map(t -> type(t)))
+            m.addFunctionImport(func.name, "c", func.name, paramTypes, returnType)
+            return ()
+        }
+
         locals = []
         localSlotSP = newLocal(i32)
         Assert.equal(localSlotSP, 0)
@@ -233,13 +240,10 @@ class C2Codegen {
             valtype: C2IR.Type,
             offset: Int,
             addrExpr: Binaryen.Expression): Binaryen.Expression {
-        val btype = type(valtype)
-        if btype == i32 {
-            m.i32.load(offset, 0, addrExpr)
-        } else if btype == i64 {
-            m.i64.load(offset, 0, addrExpr)
-        } else {
-            throw MError("TODO _getderef " + js!(String, "''+", btype), [mark])
+        when valtype {
+            case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
+            case char = m.i32.load8_s(offset, 0, addrExpr)
+            else = throw MError("TODO _getderef " + valtype, [mark])
         }
     }
 
@@ -250,13 +254,10 @@ class C2Codegen {
             offset: Int,
             addrExpr: Binaryen.Expression,
             valExpr: Binaryen.Expression): Binaryen.Expression {
-        val btype = type(valtype)
-        if btype == i32 {
-            m.i32.store(offset, 0, addrExpr, valExpr)
-        } else if btype == i64 {
-            m.i64.store(offset, 0, addrExpr, valExpr)
-        } else {
-            throw MError("TODO _setderef " + js!(String, "''+", btype), [mark])
+        when valtype {
+            case void; case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
+            case char = m.i32.store8(offset, 0, addrExpr, valExpr)
+            else = throw MError("TODO _setderef " + valtype, [mark])
         }
     }
 
@@ -296,6 +297,8 @@ class C2Codegen {
             case intNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case funcall = m.call(
+                expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
             case addrvar = addrvar(expr.var_)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
@@ -316,7 +319,58 @@ class C2Codegen {
                     expr(expr.lhs),
                     expr(expr.rhs)),
                 m.i32.const(packedSizeOfType(expr.lhs.type.targetType)))
+            case postIncr; case postDecr {
+                val sign = if expr.kind == C2IR.Expr.Kind.postIncr { 1 } else { -1 }
+                val mark = expr.mark
+                val incrAmount = sign * incrAmount(expr.type)
+                val bvaltype = type(expr.type)
+                val ptrLocalVar = newLocal(i32)
+                val valLocalVar = newLocal(bvaltype)
+                m.block(null, [
+                    m.local.set(ptrLocalVar, expr(expr.arg)),
+                    m.local.set(
+                        valLocalVar,
+                        _getderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32))),
+                    _setderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32),
+                        tadd(
+                            bvaltype,
+                            m.local.get(valLocalVar, bvaltype),
+                            tconst(bvaltype, incrAmount)
+                        )),
+                    m.local.get(valLocalVar, bvaltype),
+                ], auto)
+            }
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
+    }
+
+    def tconst(self, type: Binaryen.Type, value: Int): Binaryen.Expression {
+        if type == i32 {
+            m.i32.const(value)
+        } else if type == i64 {
+            m.i64.const(value)
+        } else {
+            throw MError("TODO tconst " + js!(String, "''+", type), [])
+        }
+    }
+
+    def tadd(
+            self,
+            type: Binaryen.Type,
+            lhs: Binaryen.Expression,
+            rhs: Binaryen.Expression): Binaryen.Expression {
+        if type == i32 {
+            m.i32.add(lhs, rhs)
+        } else if type == i64 {
+            m.i64.add(lhs, rhs)
+        } else {
+            throw MError("TODO tadd " + js!(String, "''+", type), [])
+        }
+    }
+
+    def incrAmount(self, type: C2IR.Type): Int = when type {
+        case int = 1
+        case ptr(t) = packedSizeOfType(t.target)
+        else = throw MError("TODO incrAmount " + type, [])
     }
 }
