@@ -177,7 +177,11 @@ class C2Codegen {
         when stmt.kind {
             case nop = m.nop()
             case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
-            case ret = m.block(null, [restoreSP(), m.return_(expr(stmt.expr))], auto)
+            case ret = withLocalSet(stmt.expr, (localRetVar, assign) -> m.block(null, [
+                assign,
+                restoreSP(),
+                m.return_(m.local.get(localRetVar, type(stmt.expr.type))),
+            ], auto))
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             case while_ {

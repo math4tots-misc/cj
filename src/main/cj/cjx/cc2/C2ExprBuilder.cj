@@ -84,9 +84,10 @@ class C2ExprBuilder {
         if expr.type == type {
             return expr
         }
-        if type.isPtr() and expr.type.isArray() and type.base == expr.type.base {
+        if type.isPtr() and expr.type.isArray() {
             # Arrays may decay to pointers
-            return arrayToPtr(expr)
+            # TODO: check that this conversion is valid
+            return arrayToPtrEx(expr, type)
         }
         if expr.type.intPtrConvertible() and type.intPtrConvertible() {
             # TODO: Consider warning... for now, just allow
@@ -99,6 +100,13 @@ class C2ExprBuilder {
     def arrayToPtr(self, arrExpr: Expr): Expr {
         val ret = genUnop(
             arrExpr.mark, Expr.Kind.arrayToPtr, arrExpr.type.base.ptrOf(), arrExpr)
+        ret
+    }
+
+    ## Decay an array to an arbitrary pointer
+    def arrayToPtrEx(self, arrExpr: Expr, ptrType: Type): Expr {
+        val ret = genUnop(
+            arrExpr.mark, Expr.Kind.arrayToPtr, ptrType, arrExpr)
         ret
     }
 
