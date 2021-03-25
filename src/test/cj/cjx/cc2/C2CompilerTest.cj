@@ -20,6 +20,10 @@ class C2CompilerTest {
         Assert.equal(compiler.run("<string>", "int main(){" + stmts + "}"), code)
     }
 
+    def assertFns(fns: String, code: Int) {
+        Assert.equal(compiler.run("<string>", fns), code)
+    }
+
     @test
     def sample0() {
         assertExpr("5", 5)
@@ -97,5 +101,11 @@ class C2CompilerTest {
         assertStmt("{ int x=3; int y=5; *(&x+1)=7; return y; }", 7)
         assertStmt("{ int x=3; int y=5; *(&y-1)=7; return x; }", 7)
         assertStmt("{ int x=3; return (&x+2)-&x+3; }", 5)
+    }
+
+    @test
+    def func() {
+        assertFns("int foo() { return 5; } int main() { return foo(); }", 5)
+        assertFns("int add(int a, int b) { return a + b; } int main() { return add(3, 17); }", 20)
     }
 }

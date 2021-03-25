@@ -20,15 +20,23 @@ class C2RT {
     def newImportObject(self, memDesc: C2MemDesc): JSObject {
         val mem = newMemory(memDesc)
 
-        val puts: Fn[Int, Int] = start -> {
+        val getstr: Fn[Int, String] = start -> {
             val u8arr = Uint8Array(mem.buffer)
             var end = start
             while end < u8arr.size() and u8arr[end] != 0 {
                 end++
             }
             val strarr = Uint8Array.fromParts(mem.buffer, start, end - start)
-            val str = String.fromUTF8(strarr)
-            IO.println(str)
+            String.fromUTF8(strarr)
+        }
+
+        val puts: Fn[Int, Int] = start -> {
+            IO.println(getstr.call(start))
+            1
+        }
+
+        val __puti: Fn[Int, Int] = i -> {
+            IO.println(i)
             1
         }
 
@@ -38,6 +46,7 @@ class C2RT {
             ),
             c: jsobj!(
                 puts: puts,
+                __puti: __puti,
             )
         )
     }

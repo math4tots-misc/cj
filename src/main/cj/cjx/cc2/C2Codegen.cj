@@ -10,7 +10,7 @@ import cjx.cc2.C2IR
 import cjx.binaryen.Binaryen
 
 class C2Codegen {
-    private static val optimize = true
+    private static val optimize = false
     private static val none: Binaryen.Type = Binaryen.none
     private static val i32: Binaryen.Type = Binaryen.i32
     private static val i64: Binaryen.Type = Binaryen.i64
@@ -24,7 +24,7 @@ class C2Codegen {
 
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
-    private var localSlotSP = 0 # index of wasm local variable pointing to start of local stack
+    private var localSlotSP = -1 # index of wasm local variable pointing to start of local stack
     private var locals: List[Binaryen.Type] = []
     private var cLocalOffsets: List[Int] = []
     private val initData: DynamicBuffer = DynamicBuffer([])
@@ -130,9 +130,9 @@ class C2Codegen {
             return ()
         }
 
-        locals = []
+        locals = func.params.map(p -> type(p.type))
         localSlotSP = newLocal(i32)
-        Assert.equal(localSlotSP, 0)
+        Assert.equal(localSlotSP, func.params.size())
 
         cLocalOffsets = []
         var nextCLocalOffset = 0
@@ -157,12 +157,12 @@ class C2Codegen {
         for i = 0; i < params.size(); i++ {
             val param = params[i]
             val ptype = type(param.type)
-            _setderef(
+            stmts.add(_setderef(
                 param.mark,
                 param.type,
                 getLocalOffset(param),
                 localStackPtr,
-                m.local.get(i, ptype))
+                m.local.get(i, ptype)))
         }
 
         stmts.add(stmt(func.body))

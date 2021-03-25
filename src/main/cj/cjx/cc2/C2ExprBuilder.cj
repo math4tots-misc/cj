@@ -161,6 +161,7 @@ class C2ExprBuilder {
                 val ret = Expr(mark, Expr.Kind.funcall)
                 ret.func = fexpr.func
                 ret.args = args
+                ret.type = fexpr.func.type.returnType
                 ret
             }
             else = throw MError("" + fexpr.type + " is not callable", [mark])
