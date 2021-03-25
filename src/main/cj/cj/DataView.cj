@@ -86,17 +86,14 @@ native class DataView: ArrayBufferView, DataViewMixin {
     def setUTF8(self, start: Int, string: String) {
         setBuffer(start, js!(ArrayBuffer, "new TextEncoder().encode(", string, ").buffer"))
     }
-    def setBuffer[B: BufferLike](self, start: Int, buffer: B) {
-        self[start:start + buffer.byteLength].set(buffer, 0)
-    }
+    def setBuffer[B: BufferLike](self, start: Int, buffer: B) = set(buffer, start)
 
     def __slice(self, start: Int, end: Int): Self = fromParts(
         buffer, byteOffset + start, end - start, endian)
     def __sliceFrom(self, start: Int): Self = self[start:size()]
     def __sliceTo(self, end: Int): Self = self[0:end]
 
-    def set[B: BufferLike](self, other: B, offset: Int) = buffer.set(
-        other, byteOffset + offset)
+    def set[B: BufferLike](self, other: B, offset: Int) = asUint8Array().set(other, offset)
 
     def toArrayBuffer(self): ArrayBuffer {
         val buf = ArrayBuffer(byteLength)

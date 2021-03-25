@@ -1,5 +1,7 @@
 package cjx.cc2
 
+import cj.DynamicBuffer
+import cjx.cc2.C2MemDesc
 import cjx.parser.Mark
 import cj.Error
 import cjx.parser.MError
@@ -16,18 +18,23 @@ class C2Codegen {
     private static val f64: Binaryen.Type = Binaryen.f64
     private static val unreachable: Binaryen.Type = Binaryen.unreachable
     private static val auto: Binaryen.Type = Binaryen.auto
+    private static val stackSize = 4096
+    private static val initMemPageCount = 1
+    private static val maxMemPageCount = 4096
 
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
     private var localSlotSP = 0 # index of wasm local variable pointing to start of local stack
     private var locals: List[Binaryen.Type] = []
     private var cLocalOffsets: List[Int] = []
+    private val initData: DynamicBuffer = DynamicBuffer([])
 
-    def emit(self, tu: C2IR.TranslationUnit): Uint8Array {
-        m.setMemory(1, 1)
+    def emit(self, tu: C2IR.TranslationUnit): Tuple[Uint8Array, C2MemDesc] {
+        m.addMemoryImport("0", "js", "memory")
+        m.setMemory(initMemPageCount, maxMemPageCount)
 
         # initialize the stack pointer
-        m.addGlobal("SP", i32, true, m.i32.const(8))
+        m.addGlobal("SP", i32, true, m.i32.const(stackSize))
 
         for func in tu.funcs {
             func(func)
@@ -36,7 +43,11 @@ class C2Codegen {
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
-        m.emitBinary()
+        (m.emitBinary(), C2MemDesc(
+            initMemPageCount,
+            maxMemPageCount,
+            stackSize,        # initialized data offset
+            initData.toDataView()))
     }
 
     def newLabel(self): String {
@@ -73,6 +84,7 @@ class C2Codegen {
     def type(self, type: C2IR.Type): Binaryen.Type {
         when type {
             case void = i32
+            case char = i32
             case int = i32
             case ptr(..) = i32
             case func(..) = i32
@@ -80,13 +92,25 @@ class C2Codegen {
         }
     }
 
-    def sizeOfType(self, type: C2IR.Type): Int {
+    def standaloneSizeOfType(self, type: C2IR.Type): Int {
         when type {
             case void = 4
+            case char = 4
             case int = 4
             case ptr(..) = 4
             case func(..) = 4
-            case struct_(..) = throw Error("TODO codegen sizeOfType struct")
+            case struct_(..) = throw Error("TODO codegen standaloneSizeOfType struct")
+        }
+    }
+
+    def packedSizeOfType(self, type: C2IR.Type): Int {
+        when type {
+            case void = 4
+            case char = 1
+            case int = 4
+            case ptr(..) = 4
+            case func(..) = 4
+            case struct_(..) = throw Error("TODO codegen packedSizeOfType struct")
         }
     }
 
@@ -112,27 +136,26 @@ class C2Codegen {
             Assert.equal(i, var_.index)
             Assert.equal(i, cLocalOffsets.size())
             cLocalOffsets.add(cLocalsByteSize)
-            cLocalsByteSize += sizeOfType(var_.type)
+            cLocalsByteSize += standaloneSizeOfType(var_.type)
         }
 
         val stmts: List[Binaryen.Expression] = []
 
         # allocate space for C local variables on the stack
-        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
         stmts.add(m.global.set("SP",
-            m.i32.add(m.global.get("SP", i32), m.i32.const(cLocalsByteSize))))
+            m.i32.sub(m.global.get("SP", i32), m.i32.const(cLocalsByteSize))))
+        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
 
         val params = func.params
         for i = 0; i < params.size(); i++ {
             val param = params[i]
             val ptype = type(param.type)
-            stmts.add(if ptype == i32 {
-                m.i32.store(getLocalOffset(param), 0, localStackPtr, m.local.get(i, ptype))
-            } else if ptype == i64 {
-                m.i64.store(getLocalOffset(param), 0, localStackPtr, m.local.get(i, ptype))
-            } else {
-                throw Error("TODO")
-            })
+            _setderef(
+                param.mark,
+                param.type,
+                getLocalOffset(param),
+                localStackPtr,
+                m.local.get(i, ptype))
         }
 
         stmts.add(stmt(func.body))
@@ -182,9 +205,8 @@ class C2Codegen {
     def nop(self): Binaryen.Expression = m.nop()
 
     def dropsetvar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
-        val vartype = type(var_.type)
         val offset = getLocalOffset(var_)
-        _setderef(mark, vartype, offset, localStackPtr, expr(expr))
+        _setderef(mark, var_.type, offset, localStackPtr, expr(expr))
     }
 
     def teevar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
@@ -192,9 +214,8 @@ class C2Codegen {
     }
 
     def getvar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
-        val vartype = type(var_.type)
         val offset = getLocalOffset(var_)
-        _getderef(mark, vartype, offset, localStackPtr)
+        _getderef(mark, var_.type, offset, localStackPtr)
     }
 
     def addrvar(self, var_: C2IR.Var): Binaryen.Expression {
@@ -203,53 +224,53 @@ class C2Codegen {
     }
 
     def deref(self, expr: C2IR.Expr): Binaryen.Expression {
-        val valtype = type(expr.type)
-        _getderef(expr.mark, valtype, 0, expr(expr))
+        _getderef(expr.mark, expr.type, 0, expr(expr))
     }
 
     def _getderef(
             self,
             mark: Mark,
-            valtype: Binaryen.Type,
+            valtype: C2IR.Type,
             offset: Int,
             addrExpr: Binaryen.Expression): Binaryen.Expression {
-        if valtype == i32 {
+        val btype = type(valtype)
+        if btype == i32 {
             m.i32.load(offset, 0, addrExpr)
-        } else if valtype == i64 {
+        } else if btype == i64 {
             m.i64.load(offset, 0, addrExpr)
         } else {
-            throw MError("TODO _getderef " + js!(String, "''+", valtype), [mark])
+            throw MError("TODO _getderef " + js!(String, "''+", btype), [mark])
         }
     }
 
     def _setderef(
             self,
             mark: Mark,
-            valtype: Binaryen.Type,
+            valtype: C2IR.Type,
             offset: Int,
             addrExpr: Binaryen.Expression,
             valExpr: Binaryen.Expression): Binaryen.Expression {
-        if valtype == i32 {
+        val btype = type(valtype)
+        if btype == i32 {
             m.i32.store(offset, 0, addrExpr, valExpr)
-        } else if valtype == i64 {
+        } else if btype == i64 {
             m.i64.store(offset, 0, addrExpr, valExpr)
         } else {
-            throw MError("TODO _setderef " + js!(String, "''+", valtype), [mark])
+            throw MError("TODO _setderef " + js!(String, "''+", btype), [mark])
         }
     }
 
     def dropsetderef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
-        val valtype = type(valExpr.type)
-        _setderef(mark, valtype, 0, expr(addrExpr), expr(valExpr))
+        _setderef(mark, valExpr.type, 0, expr(addrExpr), expr(valExpr))
     }
 
     def teederef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
-        val valtype = type(valExpr.type)
+        val valbtype = type(valExpr.type)
         withLocalSet(valExpr, (local, assignExpr) -> {
             m.block(null, [
                 assignExpr,
-                _setderef(mark, valtype, 0, expr(addrExpr), m.local.get(local, valtype)),
-                m.local.get(local, valtype)
+                _setderef(mark, valExpr.type, 0, expr(addrExpr), m.local.get(local, valbtype)),
+                m.local.get(local, valbtype)
             ], auto)
         })
     }
@@ -283,18 +304,18 @@ class C2Codegen {
             case ptrAdd = m.i32.add(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(sizeOfType(expr.lhs.type.targetType)),
+                    m.i32.const(packedSizeOfType(expr.lhs.type.targetType)),
                     expr(expr.rhs)))
             case ptrSub = m.i32.sub(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(sizeOfType(expr.lhs.type.targetType)),
+                    m.i32.const(packedSizeOfType(expr.lhs.type.targetType)),
                     expr(expr.rhs)))
             case ptrDiff = m.i32.div_s(
                 m.i32.sub(
                     expr(expr.lhs),
                     expr(expr.rhs)),
-                m.i32.const(sizeOfType(expr.lhs.type.targetType)))
+                m.i32.const(packedSizeOfType(expr.lhs.type.targetType)))
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }

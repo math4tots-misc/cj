@@ -30,11 +30,13 @@ class C2IR {
         class Struct {
         }
         case void
+        case char
         case int
         case ptr(Ptr)
         case func(Func)
         case struct_(Struct)
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
+        def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)

@@ -1,5 +1,6 @@
 package cj
 
+import cj.BufferLike
 import cj.NativeArrayLike
 import cj.ArrayBufferOrView
 import cj.ArrayBuffer
@@ -27,4 +28,7 @@ native class Uint8Array : NativeArrayLike[Int], Default, Repr, Default, ArrayBuf
     def clone(self: Self): Self = js!(Self, "new Uint8Array(", self, ")")
     def default(): Self = js!(Self, "new Uint8Array()")
     def repr(self: Self): String = "Uint8Array(" + toList() + ")"
+
+    def set[B: BufferLike](self, other: B, offset: Int) = js!(
+        Unit, self, ".set(", other.asUint8Array(), ",", offset, ")")
 }

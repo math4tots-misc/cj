@@ -1,5 +1,7 @@
 package cjx.cc2
 
+import cjx.cc2.C2RT
+import cjx.cc2.C2MemDesc
 import www.wa.WebAssembly
 import cj.Uint8Array
 import cjx.cc2.C2Codegen
@@ -32,16 +34,18 @@ class C2Compiler {
         C2Parser.parse(tokens)
     }
 
-    def translate(self, filepath: String, contents: String): Uint8Array {
+    def translate(self, filepath: String, contents: String): Tuple[Uint8Array, C2MemDesc] {
         val tu = parse(filepath, contents)
         val codegen = C2Codegen()
         codegen.emit(tu)
     }
 
     def run(self, filepath: String, contents: String): Int {
-        val binary = translate(filepath, contents)
+        val rt = C2RT()
+        val (binary, memDesc) = translate(filepath, contents)
+        val importObject = rt.newImportObject(memDesc)
         val module = WebAssembly.Module(binary)
-        val instance = WebAssembly.Instance(module, jsobj!())
+        val instance = WebAssembly.Instance(module, importObject)
         instance.exports.call("main").unsafeCast()
     }
 
