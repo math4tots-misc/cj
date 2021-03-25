@@ -71,6 +71,7 @@ class C2IR {
     class Expr {
         union Kind: Repr, Hash {
             case int
+            case intNeg
             case getvar
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
@@ -78,7 +79,9 @@ class C2IR {
         }
         val mark: Mark
         val kind: Kind
+        var type: Type = ?
         var intValue: Int = ?
         var var_: Var = ?
+        var arg: Expr = ?
     }
 }

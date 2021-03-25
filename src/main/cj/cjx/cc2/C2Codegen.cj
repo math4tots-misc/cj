@@ -116,6 +116,7 @@ class C2Codegen {
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case int = m.i32.const(expr.intValue)
+            case intNeg = m.i32.sub(m.i32.const(0), expr(expr.arg))
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }
