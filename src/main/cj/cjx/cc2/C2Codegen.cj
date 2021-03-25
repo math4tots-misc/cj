@@ -122,6 +122,10 @@ class C2Codegen {
             case intMul = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
             case intDiv = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
             case intRem = m.i32.rem_s(expr(expr.lhs), expr(expr.rhs))
+            case intEq = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
+            case intNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
+            case intLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
+            case intLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }

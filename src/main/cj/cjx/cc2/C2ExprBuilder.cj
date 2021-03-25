@@ -55,11 +55,17 @@ class C2ExprBuilder {
         addType(rhs)
         if lhs.type.isInt() and rhs.type.isInt() {
             switch type {
-                case '+' { return genBinop(mark, Expr.Kind.intAdd, Type.int, lhs, rhs) }
-                case '-' { return genBinop(mark, Expr.Kind.intSub, Type.int, lhs, rhs) }
-                case '*' { return genBinop(mark, Expr.Kind.intMul, Type.int, lhs, rhs) }
-                case '/' { return genBinop(mark, Expr.Kind.intDiv, Type.int, lhs, rhs) }
-                case '%' { return genBinop(mark, Expr.Kind.intRem, Type.int, lhs, rhs) }
+                case '+'           { return genBinop(mark, Expr.Kind.intAdd, Type.int, lhs, rhs) }
+                case '-'           { return genBinop(mark, Expr.Kind.intSub, Type.int, lhs, rhs) }
+                case '*'           { return genBinop(mark, Expr.Kind.intMul, Type.int, lhs, rhs) }
+                case '/'           { return genBinop(mark, Expr.Kind.intDiv, Type.int, lhs, rhs) }
+                case '%'           { return genBinop(mark, Expr.Kind.intRem, Type.int, lhs, rhs) }
+                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.intEq, Type.int, lhs, rhs) }
+                case C2Token.tNE   { return genBinop(mark, Expr.Kind.intNe, Type.int, lhs, rhs) }
+                case '<'           { return genBinop(mark, Expr.Kind.intLt, Type.int, lhs, rhs) }
+                case C2Token.tLE   { return genBinop(mark, Expr.Kind.intLe, Type.int, lhs, rhs) }
+                case '>'           { return genBinop(mark, Expr.Kind.intLt, Type.int, rhs, lhs) }
+                case C2Token.tGE   { return genBinop(mark, Expr.Kind.intLe, Type.int, rhs, lhs) }
                 else = ()
             }
         }

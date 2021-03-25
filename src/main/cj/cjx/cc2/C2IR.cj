@@ -81,6 +81,10 @@ class C2IR {
             case intMul
             case intDiv
             case intRem
+            case intEq
+            case intNe
+            case intLt
+            case intLe
             case getvar
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other

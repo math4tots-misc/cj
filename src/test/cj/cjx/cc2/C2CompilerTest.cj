@@ -12,19 +12,45 @@ class C2CompilerTest {
     def runIntExpr(expr: String): Int = compiler.run(
         "<string>", "int main(){return " + expr + ";}")
 
+    def assertCode(expr: String, code: Int) {
+        Assert.equal(runIntExpr(expr), code)
+    }
+
     @test
     def sample0() {
-        Assert.equal(runIntExpr("5"), 5)
-        Assert.equal(runIntExpr("-3"), -3)
-        Assert.equal(runIntExpr("5+7"), 12)
-        Assert.equal(runIntExpr("5-7"), -2)
-        Assert.equal(runIntExpr("5+(5-7)"), 3)
-        Assert.equal(runIntExpr("5*(5-7)"), -10)
-        Assert.equal(runIntExpr("5+6*7"), 47)
-        Assert.equal(runIntExpr("5*(9-6)"), 15)
-        Assert.equal(runIntExpr("(3+5)/2"), 4)
-        Assert.equal(runIntExpr("-10+20"), 10)
-        Assert.equal(runIntExpr("- -10"), 10)
-        Assert.equal(runIntExpr("- - +10"), 10)
+        assertCode("5", 5)
+        assertCode("-3", -3)
+        assertCode("5+7", 12)
+        assertCode("5-7", -2)
+        assertCode("5+(5-7)", 3)
+        assertCode("5*(5-7)", -10)
+        assertCode("5+6*7", 47)
+        assertCode("5*(9-6)", 15)
+        assertCode("(3+5)/2", 4)
+        assertCode("-10+20", 10)
+        assertCode("- -10", 10)
+        assertCode("- - +10", 10)
+    }
+
+    @test
+    def sample1() {
+        assertCode("0==1", 0)
+        assertCode("42==42", 1)
+        assertCode("0!=1", 1)
+        assertCode("42!=42", 0)
+
+        assertCode("0<1", 1)
+        assertCode("1<1", 0)
+        assertCode("2<1", 0)
+        assertCode("0<=1", 1)
+        assertCode("1<=1", 1)
+        assertCode("2<=1", 0)
+
+        assertCode("1>0", 1)
+        assertCode("1>1", 0)
+        assertCode("1>2", 0)
+        assertCode("1>=0", 1)
+        assertCode("1>=1", 1)
+        assertCode("1>=2", 0)
     }
 }

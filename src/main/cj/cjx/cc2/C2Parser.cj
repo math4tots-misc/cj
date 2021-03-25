@@ -163,6 +163,7 @@ class C2Parser : ParserMixin[C2Token] {
                 expect(';')
                 ret
             }
+            case '{' = block()
             else = {
                 val ret = eb.exprStmt(mark, expr())
                 expect(';')
