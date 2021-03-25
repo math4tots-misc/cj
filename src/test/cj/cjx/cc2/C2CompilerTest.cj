@@ -113,5 +113,8 @@ class C2CompilerTest {
     def array() {
         assertStmt("int x[2]; int *y=x; *y=3; return *x;", 3)
         assertStmt("int x[2]; int *y=&x; *y=3; return *x;", 3)
+        assertStmt("int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x;", 3)
+        assertStmt("int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+1);", 4)
+        assertStmt("int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+2);", 5)
     }
 }

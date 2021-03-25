@@ -250,22 +250,32 @@ class C2ExprBuilder {
         # ======================================================================
         # pointer ops
         # ======================================================================
-        if type == '+' and lhs.type.isInt() and rhs.type.isPtr() {
+        if type == '+' and lhs.type.isInt() and rhs.type.isPtrOrArray() {
             # transform int + ptr to ptr + int
             val tmp = rhs
             rhs = lhs
             lhs = tmp
         }
-        if lhs.type.isPtr() and rhs.type.isInt() {
+        if lhs.type.isPtrOrArray() and rhs.type.isInt() {
             switch type {
-                case '+' { return genBinop(mark, Expr.Kind.ptrAdd, lhs.type, lhs, rhs) }
-                case '-' { return genBinop(mark, Expr.Kind.ptrSub, lhs.type, lhs, rhs) }
+                case '+' {
+                    lhs = icastptr(lhs)
+                    return genBinop(mark, Expr.Kind.ptrAdd, lhs.type, lhs, rhs)
+                }
+                case '-' {
+                    lhs = icastptr(lhs)
+                    return genBinop(mark, Expr.Kind.ptrSub, lhs.type, lhs, rhs)
+                }
                 else = ()
             }
         }
-        if lhs.type.isPtr() and lhs.type == rhs.type {
+        if lhs.type.isPtrOrArray() and rhs.type.isPtrOrArray() and lhs.type.base == rhs.type.base {
             switch type {
-                case '-' { return genBinop(mark, Expr.Kind.ptrDiff, Type.int, lhs, rhs) }
+                case '-' {
+                    lhs = icastptr(lhs)
+                    rhs = icastptr(rhs)
+                    return genBinop(mark, Expr.Kind.ptrDiff, Type.int, lhs, rhs)
+                }
                 else = ()
             }
         }

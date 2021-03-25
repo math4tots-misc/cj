@@ -48,6 +48,7 @@ class C2IR {
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
+        def isPtrOrArray(self): Bool = isPtr() or isArray()
         def intPtrConvertible(self): Bool = when self {
             case void; case char; case int; case ptr(..) = true
             else = false
