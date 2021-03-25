@@ -50,6 +50,8 @@ class C2Codegen {
             initData.toDataView()))
     }
 
+    def alignTo(n: Int, align: Int): Int = (n + align - 1) // align * align
+
     def newLabel(self): String {
         val name = "l" + labelCount
         labelCount++
@@ -86,6 +88,7 @@ class C2Codegen {
             case void = i32
             case char = i32
             case int = i32
+            case array(..) = i32
             case ptr(..) = i32
             case func(..) = i32
             case struct_(..) = throw Error("TODO codegen type struct")
