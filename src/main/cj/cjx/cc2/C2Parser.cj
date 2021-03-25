@@ -176,10 +176,12 @@ class C2Parser : ParserMixin[C2Token] {
         val mark = mark()
         val stmts: List[Stmt] = []
         expect('{')
-        while not consume('}') {
-            val stmt = if atDeclaration() { declaration() } else { stmt() }
-            stmts.add(stmt)
-        }
+        locals.scoped(() -> {
+            while not consume('}') {
+                val stmt = if atDeclaration() { declaration() } else { stmt() }
+                stmts.add(stmt)
+            }
+        })
         eb.block(mark, stmts)
     }
 
