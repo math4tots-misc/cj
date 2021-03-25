@@ -24,8 +24,8 @@ class C2IR {
                 returnType == other.returnType and paramTypes == other.paramTypes)
         }
         class Ptr {
-            val target: Type
-            def __eq(self, other: Self): Bool = target == other.target
+            val base: Type
+            def __eq(self, other: Self): Bool = base == other.base
         }
         class Struct {
         }
@@ -45,7 +45,7 @@ class C2IR {
             else = false
         }
         def repr(self): String = when self {
-            case ptr(p) = "ptr(" + p.target + ")"
+            case ptr(p) = "ptr(" + p.base + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
             case struct_(s) = "struct()"
             else name() = name
@@ -60,7 +60,7 @@ class C2IR {
         def __get_returnType(self): Type = get!(self, func, 0).returnType
         def __get_params(self): List[Var] = get!(self, func, 0).params
         def __get_paramTypes(self): List[Type] = params.map(v -> v.type)
-        def __get_targetType(self): Type = get!(self, ptr, 0).target
+        def __get_base(self): Type = get!(self, ptr, 0).base
     }
     class Var: Repr {
         val mark: Mark

@@ -307,18 +307,18 @@ class C2Codegen {
             case ptrAdd = m.i32.add(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(packedSizeOfType(expr.lhs.type.targetType)),
+                    m.i32.const(packedSizeOfType(expr.lhs.type.base)),
                     expr(expr.rhs)))
             case ptrSub = m.i32.sub(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(packedSizeOfType(expr.lhs.type.targetType)),
+                    m.i32.const(packedSizeOfType(expr.lhs.type.base)),
                     expr(expr.rhs)))
             case ptrDiff = m.i32.div_s(
                 m.i32.sub(
                     expr(expr.lhs),
                     expr(expr.rhs)),
-                m.i32.const(packedSizeOfType(expr.lhs.type.targetType)))
+                m.i32.const(packedSizeOfType(expr.lhs.type.base)))
             case postIncr; case postDecr {
                 val sign = if expr.kind == C2IR.Expr.Kind.postIncr { 1 } else { -1 }
                 val mark = expr.mark
@@ -370,7 +370,7 @@ class C2Codegen {
 
     def incrAmount(self, type: C2IR.Type): Int = when type {
         case int = 1
-        case ptr(t) = packedSizeOfType(t.target)
+        case ptr(t) = packedSizeOfType(t.base)
         else = throw MError("TODO incrAmount " + type, [])
     }
 }

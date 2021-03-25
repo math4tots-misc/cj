@@ -102,7 +102,7 @@ class C2ExprBuilder {
 
     def icastvalptr(self, var expr: Expr): Expr {
         expr = icastptr(expr)
-        if expr.type.targetType.isVoid() {
+        if expr.type.base.isVoid() {
             throw MError("Expected a non-void pointer but got " + expr.type, [expr.mark])
         }
         expr
@@ -135,7 +135,7 @@ class C2ExprBuilder {
     def deref(self, mark: Mark, var expr: Expr): Expr {
         expr = icastvalptr(expr)
         val ret = Expr(mark, Expr.Kind.deref)
-        ret.type = expr.type.targetType
+        ret.type = expr.type.base
         ret.arg = expr
         ret
     }
