@@ -770,7 +770,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 } else {
                     return CJJSBlob.simple(out -> {
                         out.append("(" + paramstr + "{");
-                        if (e.getReturnType().isUnionType()) {
+                        if (e.getReturnType().isUnitType()) {
                             blob.emitDrop(out);
                         } else {
                             blob.emitSet(out, "return ");
