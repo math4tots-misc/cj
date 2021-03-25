@@ -42,7 +42,7 @@ class C2Parser : ParserMixin[C2Token] {
     def __get_locals(self): C2Locals = _locals.get()
 
     def precof(type: Int): Int = switch type {
-        case '.'; case '('; case C2Token.tINCR; case C2Token.tDECR = 150
+        case '.'; case '('; case '['; case C2Token.tINCR; case C2Token.tDECR = 150
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
@@ -203,7 +203,7 @@ class C2Parser : ParserMixin[C2Token] {
                 val els = if consume(C2Token.kwELSE) { stmt() } else { eb.nop(mark) }
                 eb.if_(mark, cond, then, els)
             }
-            else = {
+            else {
                 val expr = expr()
                 val ret = if expr.isPure() { eb.nop(mark) } else { eb.exprStmt(mark, expr) }
                 expect(';')
@@ -248,6 +248,13 @@ class C2Parser : ParserMixin[C2Token] {
                     # right associative binops
                     val type = next().type
                     expr = eb.binop(mark, type, expr, exprpr(tokprec - 1))
+                }
+                case '[' {
+                    # a[b] is alias for *(a+b)
+                    next()
+                    val indexExpr = expr()
+                    expect(']')
+                    expr = eb.preop(mark, '*', eb.binop(mark, '+', expr, indexExpr))
                 }
                 case C2Token.tINCR; case C2Token.tDECR {
                     # postfix operators

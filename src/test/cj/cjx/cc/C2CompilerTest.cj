@@ -128,4 +128,20 @@ class C2CompilerTest {
         assertStmt("int x[2][3]; int *y=x; *(y+4)=4; return *(*(x+1)+1);", 4)
         assertStmt("int x[2][3]; int *y=x; *(y+5)=5; return *(*(x+1)+2);", 5)
     }
+
+    @test
+    def subscr() {
+        assertStmt("int x[3]; *x=3; x[1]=4; x[2]=5; return *x;", 3)
+        assertStmt("int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+1);", 4)
+        assertStmt("int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+2);", 5)
+        assertStmt("int x[3]; *x=3; x[1]=4; x[2]=5; return *(x+2);", 5)
+        assertStmt("int x[3]; *x=3; x[1]=4; 2[x]=5; return *(x+2);", 5)
+
+        assertStmt("int x[2][3]; int *y=x; y[0]=0; return x[0][0];", 0)
+        assertStmt("int x[2][3]; int *y=x; y[1]=1; return x[0][1];", 1)
+        assertStmt("int x[2][3]; int *y=x; y[2]=2; return x[0][2];", 2)
+        assertStmt("int x[2][3]; int *y=x; y[3]=3; return x[1][0];", 3)
+        assertStmt("int x[2][3]; int *y=x; y[4]=4; return x[1][1];", 4)
+        assertStmt("int x[2][3]; int *y=x; y[5]=5; return x[1][2];", 5)
+    }
 }
