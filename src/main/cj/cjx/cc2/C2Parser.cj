@@ -131,7 +131,7 @@ class C2Parser : ParserMixin[C2Token] {
 
     def declarator(self, var type: Type): Tuple[Mark, String, Type] {
         while consume('*') {
-            type = Type.ptr(Type.Ptr(type))
+            type = type.ptrOf()
         }
         val mark = mark()
         val name = if at(C2Token.tIDENT) { next().stringValue } else { "" }
@@ -153,6 +153,10 @@ class C2Parser : ParserMixin[C2Token] {
                     if not consume(',') { assert(')') }
                 }
                 type = Type.func(Type.Func(type, params))
+            } else if consume('[') {
+                val len = expect(C2Token.tINT).intValue
+                expect(']')
+                type = type.arrayOf(len)
             } else {
                 repeat = false
             }

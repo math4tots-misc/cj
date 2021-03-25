@@ -15,6 +15,7 @@ class C2IR {
         }
         def getFuncOrNull(self, name: String): Func? = funcMap.getOrNull(name)
     }
+    @implicit(Type.Func, func)
     union Type: Repr, Eq {
         class Func {
             val returnType: Type
@@ -27,18 +28,25 @@ class C2IR {
             val base: Type
             def __eq(self, other: Self): Bool = base == other.base
         }
+        class Array {
+            val base: Type
+            val len: Int
+            def __eq(self, other: Self): Bool = base == other.base and len == other.len
+        }
         class Struct {
         }
         case void
         case char
         case int
         case ptr(Ptr)
+        case array(Array)
         case func(Func)
         case struct_(Struct)
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
+        def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def intPtrConvertible(self): Bool = when self {
             case void; case char; case int; case ptr(..) = true
@@ -46,30 +54,40 @@ class C2IR {
         }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
+            case array(a) = "array(" + a.base + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
             case struct_(s) = "struct()"
             else name() = name
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and when self {
             case ptr(p) = p == get!(other, ptr, 0)
+            case array(a) = a == get!(other, array, 0)
             case func(f) = f == get!(other, func, 0)
             case struct_(s) = throw Error("TODO struct type equality")
             else() = true
         }
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
+        def arrayOf(t: Type, len: Int): Type = Type.array(Array(t, len))
         def size(self): Int = when self {
             case char = 1
             case void; case int; case ptr(..); case func(..) = 4
+            case array(a) = a.len * a.base.size()
             case struct_(..) = IO.panic("TODO Type.size sruct")
         }
         def alignment(self): Int = when self {
+            case array(a) = a.base.alignment()
             case struct_(..) = IO.panic("TODO Type.alignment struct")
-            else = size()
+            case ptr(..); case func(..) = size()
+            else() = size()
         }
         def __get_returnType(self): Type = get!(self, func, 0).returnType
         def __get_params(self): List[Var] = get!(self, func, 0).params
         def __get_paramTypes(self): List[Type] = params.map(v -> v.type)
-        def __get_base(self): Type = get!(self, ptr, 0).base
+        def __get_base(self): Type = when self {
+            case ptr(p) = p.base
+            case array(a) = a.base
+            else = IO.panic("Type.base " + self)
+        }
     }
     class Var: Repr {
         val mark: Mark
@@ -137,6 +155,8 @@ class C2IR {
 
             case postIncr
             case postDecr
+
+            case arrayToPtr  # decay an array to a pointer
 
             case func        # function reference
             case funcall     # direct function call

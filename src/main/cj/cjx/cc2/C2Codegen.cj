@@ -231,6 +231,11 @@ class C2Codegen {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
             case char = m.i32.load8_s(offset, 0, addrExpr)
+            case array(..) {
+                # array values cannot be stored in a register, so
+                # instead in these case we just return a pointer to the array
+                m.i32.add(m.i32.const(offset), addrExpr)
+            }
             else = throw MError("TODO _getderef " + valtype, [mark])
         }
     }
@@ -292,6 +297,7 @@ class C2Codegen {
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
             case deref = deref(expr.arg)
             case setderef = teederef(expr.mark, expr.lhs, expr.rhs)
+            case arrayToPtr = expr(expr.arg)
             case ptrAdd = m.i32.add(
                 expr(expr.lhs),
                 m.i32.mul(

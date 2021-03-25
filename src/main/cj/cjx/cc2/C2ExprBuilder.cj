@@ -84,6 +84,10 @@ class C2ExprBuilder {
         if expr.type == type {
             return expr
         }
+        if type.isPtr() and expr.type.isArray() and type.base == expr.type.base {
+            # Arrays may decay to pointers
+            return arrayToPtr(expr)
+        }
         if expr.type.intPtrConvertible() and type.intPtrConvertible() {
             # TODO: Consider warning... for now, just allow
             return expr
@@ -91,10 +95,19 @@ class C2ExprBuilder {
         throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
     }
 
+    ## Decay an array to a pointer
+    def arrayToPtr(self, arrExpr: Expr): Expr {
+        val ret = genUnop(
+            arrExpr.mark, Expr.Kind.arrayToPtr, arrExpr.type.base.ptrOf(), arrExpr)
+        ret
+    }
+
+    ## Implicitly cast the given expression to some sort of pointer
     def icastptr(self, expr: Expr): Expr {
         addType(expr)
         when expr.type {
             case ptr(..) = expr
+            case array(..) = arrayToPtr(expr)
             else = throw MError(
                 "Expected a pointer but got " + expr.type, [expr.mark])
         }

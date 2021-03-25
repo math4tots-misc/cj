@@ -108,4 +108,10 @@ class C2CompilerTest {
         assertFns("int foo() { return 5; } int main() { return foo(); }", 5)
         assertFns("int add(int a, int b) { return a + b; } int main() { return add(3, 17); }", 20)
     }
+
+    @test
+    def array() {
+        assertStmt("int x[2]; int *y=x; *y=3; return *x;", 3)
+        assertStmt("int x[2]; int *y=&x; *y=3; return *x;", 3)
+    }
 }
