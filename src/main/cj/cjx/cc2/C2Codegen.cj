@@ -152,6 +152,19 @@ class C2Codegen {
             case ret = m.block(null, [restoreSP(), m.return_(expr(stmt.expr))], auto)
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
+            case while_ {
+                val breakLabel = newLabel()
+                val continueLabel = newLabel()
+                val cond = expr(stmt.cond)
+                val then = stmt(stmt.then)
+                m.block(null(breakLabel), [
+                    m.loop(null(continueLabel), m.block(null, [
+                        m.br_if(breakLabel, m.i32.eqz(cond)),
+                        then,
+                        m.br(continueLabel),
+                    ], none))
+                ], none)
+            }
             else = throw MError("TODO codegen stmt " + stmt.kind, [stmt.mark])
         }
     }

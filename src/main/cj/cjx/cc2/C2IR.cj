@@ -140,5 +140,11 @@ class C2IR {
             sb.str("}")
             sb.toString()
         }
+        ## Indicates that the expression has no visible side-effects.
+        ## If the result of the expression is not used, it may be discarded.
+        def isPure(self): Bool = when kind {
+            case int = true
+            else = false
+        }
     }
 }
