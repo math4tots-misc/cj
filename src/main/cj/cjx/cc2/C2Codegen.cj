@@ -42,7 +42,7 @@ class C2Codegen {
 
         m.validate()
         if optimize { m.optimize() }
-        IO.println(m.emitText())
+        # IO.println(m.emitText())
         (m.emitBinary(), C2MemDesc(
             initMemPageCount,
             maxMemPageCount,
@@ -111,7 +111,7 @@ class C2Codegen {
             return ()
         }
 
-        IO.println(func.body)
+        # IO.println(func.body)
 
         locals = func.params.map(p -> type(p.type))
         localSlotSP = newLocal(i32)

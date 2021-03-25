@@ -55,7 +55,7 @@ class C2IR {
         }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
-            case array(a) = "array(" + a.base + ")"
+            case array(a) = "array(" + a.base + "," + a.len + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
             case struct_(s) = "struct()"
             else name() = name

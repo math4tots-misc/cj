@@ -142,26 +142,22 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     def typeSuffix(self, var type: Type): Type {
-        var repeat = true
-        while repeat {
-            if consume('(') {
-                val params: List[Var] = []
-                while not consume(')') {
-                    val baseType = declspec()
-                    val (mark, paramName, paramType) = declarator(baseType)
-                    params.add(Var(mark, paramName, paramType, -1))
-                    if not consume(',') { assert(')') }
-                }
-                type = Type.func(Type.Func(type, params))
-            } else if consume('[') {
-                val len = expect(C2Token.tINT).intValue
-                expect(']')
-                type = type.arrayOf(len)
-            } else {
-                repeat = false
+        if consume('(') {
+            val params: List[Var] = []
+            while not consume(')') {
+                val baseType = declspec()
+                val (mark, paramName, paramType) = declarator(baseType)
+                params.add(Var(mark, paramName, paramType, -1))
+                if not consume(',') { assert(')') }
             }
+            Type.func(Type.Func(typeSuffix(type), params))
+        } else if consume('[') {
+            val len = expect(C2Token.tINT).intValue
+            expect(']')
+            typeSuffix(type).arrayOf(len)
+        } else {
+            type
         }
-        type
     }
 
     # ========================================================================
