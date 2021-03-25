@@ -57,6 +57,15 @@ class C2IR {
             else() = true
         }
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
+        def size(self): Int = when self {
+            case char = 1
+            case void; case int; case ptr(..); case func(..) = 4
+            case struct_(..) = IO.panic("TODO Type.size sruct")
+        }
+        def alignment(self): Int = when self {
+            case struct_(..) = IO.panic("TODO Type.alignment struct")
+            else = size()
+        }
         def __get_returnType(self): Type = get!(self, func, 0).returnType
         def __get_params(self): List[Var] = get!(self, func, 0).params
         def __get_paramTypes(self): List[Type] = params.map(v -> v.type)

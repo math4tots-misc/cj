@@ -92,28 +92,6 @@ class C2Codegen {
         }
     }
 
-    def standaloneSizeOfType(self, type: C2IR.Type): Int {
-        when type {
-            case void = 4
-            case char = 4
-            case int = 4
-            case ptr(..) = 4
-            case func(..) = 4
-            case struct_(..) = throw Error("TODO codegen standaloneSizeOfType struct")
-        }
-    }
-
-    def packedSizeOfType(self, type: C2IR.Type): Int {
-        when type {
-            case void = 4
-            case char = 1
-            case int = 4
-            case ptr(..) = 4
-            case func(..) = 4
-            case struct_(..) = throw Error("TODO codegen packedSizeOfType struct")
-        }
-    }
-
     def getLocalOffset(self, var_: C2IR.Var): Int = cLocalOffsets[var_.index]
 
     def __get_localStackPtr(self): Binaryen.Expression = m.local.get(localSlotSP, i32)
@@ -142,8 +120,15 @@ class C2Codegen {
             val var_ = cLocals[i]
             Assert.equal(i, var_.index)
             Assert.equal(i, cLocalOffsets.size())
+
+            val alignment = var_.type.alignment()
+            val size = var_.type.size()
+            if cLocalsByteSize % alignment != 0 {
+                cLocalsByteSize += alignment - cLocalsByteSize % alignment
+            }
+            Assert.equal(cLocalsByteSize % alignment, 0)
             cLocalOffsets.add(cLocalsByteSize)
-            cLocalsByteSize += standaloneSizeOfType(var_.type)
+            cLocalsByteSize += size
         }
 
         val stmts: List[Binaryen.Expression] = []
@@ -307,18 +292,18 @@ class C2Codegen {
             case ptrAdd = m.i32.add(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(packedSizeOfType(expr.lhs.type.base)),
+                    m.i32.const(expr.lhs.type.base.size()),
                     expr(expr.rhs)))
             case ptrSub = m.i32.sub(
                 expr(expr.lhs),
                 m.i32.mul(
-                    m.i32.const(packedSizeOfType(expr.lhs.type.base)),
+                    m.i32.const(expr.lhs.type.base.size()),
                     expr(expr.rhs)))
             case ptrDiff = m.i32.div_s(
                 m.i32.sub(
                     expr(expr.lhs),
                     expr(expr.rhs)),
-                m.i32.const(packedSizeOfType(expr.lhs.type.base)))
+                m.i32.const(expr.lhs.type.base.size()))
             case postIncr; case postDecr {
                 val sign = if expr.kind == C2IR.Expr.Kind.postIncr { 1 } else { -1 }
                 val mark = expr.mark
@@ -370,7 +355,7 @@ class C2Codegen {
 
     def incrAmount(self, type: C2IR.Type): Int = when type {
         case int = 1
-        case ptr(t) = packedSizeOfType(t.base)
+        case ptr(t) = t.base.size()
         else = throw MError("TODO incrAmount " + type, [])
     }
 }
