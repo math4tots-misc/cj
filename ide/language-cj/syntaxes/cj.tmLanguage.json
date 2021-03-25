@@ -67,7 +67,7 @@
 				},
 				{
 					"name": "keyword.control.cj",
-					"match": "\\b(throw|try|catch|finally|if|else|import|while|break|continue|new|package|return|and|or|is|not|in|then|switch|case|as|for|when|await)\\b"
+					"match": "\\b(throw|try|catch|finally|if|else|import|while|break|continue|new|package|return|and|or|is|not|in|switch|case|as|for|when|await)\\b"
 				},
 				{
 					"name": "keyword.operator.cj",
