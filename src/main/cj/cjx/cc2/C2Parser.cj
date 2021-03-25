@@ -218,7 +218,16 @@ class C2Parser : ParserMixin[C2Token] {
         val mark = mark()
         switch peek().type {
             case C2Token.tINT = eb.int(mark, next().intValue)
-            case '-' { next(); eb.preop(mark, '-', exprpr(unaryPrec)) }
+            case '-'; case '+' {
+                val type = next().type
+                eb.preop(mark, type, exprpr(unaryPrec))
+            }
+            case '(' {
+                next()
+                val inner = expr()
+                expect(')')
+                inner
+            }
             else = errorKind("expression")
         }
     }

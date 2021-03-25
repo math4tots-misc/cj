@@ -28,6 +28,10 @@ class C2IR {
         case ptr(Ptr)
         case func(Func)
         case struct_(Struct)
+        def isVoid(self): Bool = tag!(self) == tag!(Self, void)
+        def isInt(self): Bool = tag!(self) == tag!(Self, int)
+        def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
+        def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.target + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
@@ -72,6 +76,11 @@ class C2IR {
         union Kind: Repr, Hash {
             case int
             case intNeg
+            case intAdd
+            case intSub
+            case intMul
+            case intDiv
+            case intRem
             case getvar
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
@@ -83,5 +92,7 @@ class C2IR {
         var intValue: Int = ?
         var var_: Var = ?
         var arg: Expr = ?
+        var lhs: Expr = ?
+        var rhs: Expr = ?
     }
 }

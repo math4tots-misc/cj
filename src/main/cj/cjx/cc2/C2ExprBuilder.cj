@@ -53,29 +53,44 @@ class C2ExprBuilder {
     def binop(self, mark: Mark, type: Int, lhs: Expr, rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
-        switch type {
-            else = throw MError("TODO eb.binop " + C2Token.typeRepr(type), [mark])
+        if lhs.type.isInt() and rhs.type.isInt() {
+            switch type {
+                case '+' { return genBinop(mark, Expr.Kind.intAdd, Type.int, lhs, rhs) }
+                case '-' { return genBinop(mark, Expr.Kind.intSub, Type.int, lhs, rhs) }
+                case '*' { return genBinop(mark, Expr.Kind.intMul, Type.int, lhs, rhs) }
+                case '/' { return genBinop(mark, Expr.Kind.intDiv, Type.int, lhs, rhs) }
+                case '%' { return genBinop(mark, Expr.Kind.intRem, Type.int, lhs, rhs) }
+                else = ()
+            }
         }
+        throw MError("TODO eb.binop " + C2Token.typeRepr(type), [mark])
     }
 
     def preop(self, mark: Mark, type: Int, arg: Expr): Expr {
         addType(arg)
-        switch type {
-            case '-' {
-                when arg.type {
-                    case int = intNeg(mark, arg)
-                    else = throw MError(
-                        "unary '-' operator is not supported for " + arg.type, [mark])
-                }
+        if arg.type.isInt() {
+            switch type {
+                case '-' { return genUnop(mark, Expr.Kind.intNeg, Type.int, arg) }
+                case '+' { return arg }
+                else = ()
             }
-            else = throw MError("TODO eb.preop " + C2Token.typeRepr(type), [mark])
         }
+        throw MError("TODO eb.preop " + C2Token.typeRepr(type), [mark])
     }
 
-    def intNeg(self, mark: Mark, expr: Expr): Expr {
-        val ret = Expr(mark, Expr.Kind.intNeg)
-        ret.arg = expr
-        ret.type = Type.int
+    private def genUnop(self, mark: Mark, kind: Expr.Kind, type: Type, arg: Expr): Expr {
+        val ret = Expr(mark, kind)
+        ret.type = type
+        ret.arg = arg
+        ret
+    }
+
+    private def genBinop(
+            self, mark: Mark, kind: Expr.Kind, type: Type, lhs: Expr, rhs: Expr): Expr {
+        val ret = Expr(mark, kind)
+        ret.type = type
+        ret.lhs = lhs
+        ret.rhs = rhs
         ret
     }
 
