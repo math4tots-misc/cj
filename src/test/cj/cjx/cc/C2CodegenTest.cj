@@ -1,6 +1,6 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2Codegen
+import cjx.cc.C2Codegen
 
 class C2CodegenTest {
 

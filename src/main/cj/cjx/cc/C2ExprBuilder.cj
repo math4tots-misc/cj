@@ -1,12 +1,12 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2Token
+import cjx.cc.C2Token
 import cjx.parser.MError
-import cjx.cc2.C2IR.Expr
-import cjx.cc2.C2IR.Stmt
-import cjx.cc2.C2IR.Var
-import cjx.cc2.C2IR.Type
-import cjx.cc2.C2IR.Func
+import cjx.cc.C2IR.Expr
+import cjx.cc.C2IR.Stmt
+import cjx.cc.C2IR.Var
+import cjx.cc.C2IR.Type
+import cjx.cc.C2IR.Func
 import cjx.parser.Mark
 
 class C2ExprBuilder {

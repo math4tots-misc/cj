@@ -1,10 +1,10 @@
-package cjx.cc2
+package cjx.cc
 
 import cj.Uint8Array
 import www.JSObject
 import cj.DataView
 import www.wa.WebAssembly
-import cjx.cc2.C2MemDesc
+import cjx.cc.C2MemDesc
 
 ## Runtime
 class C2RT {

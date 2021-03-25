@@ -1,4 +1,4 @@
-package cjx.cc2
+package cjx.cc
 
 import cj.StringBuilder
 import cj.Error

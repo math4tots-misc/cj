@@ -1,6 +1,6 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2Token
+import cjx.cc.C2Token
 import cjx.parser.Mark
 import cjx.parser.MError
 import cjx.re.Lexer

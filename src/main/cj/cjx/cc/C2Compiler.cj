@@ -1,18 +1,18 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2RT
-import cjx.cc2.C2MemDesc
+import cjx.cc.C2RT
+import cjx.cc.C2MemDesc
 import www.wa.WebAssembly
 import cj.Uint8Array
-import cjx.cc2.C2Codegen
+import cjx.cc.C2Codegen
 import cj.Error
 import cj.Argv
-import cjx.cc2.C2Preprocessor
+import cjx.cc.C2Preprocessor
 import cj.FS
-import cjx.cc2.C2IR
-import cjx.cc2.C2Token
-import cjx.cc2.C2Lexer
-import cjx.cc2.C2Parser
+import cjx.cc.C2IR
+import cjx.cc.C2Token
+import cjx.cc.C2Lexer
+import cjx.cc.C2Parser
 
 class C2Compiler {
     val preprocessor: C2Preprocessor = C2Preprocessor()

@@ -1,12 +1,12 @@
-package cjx.cc2
+package cjx.cc
 
 import cj.DynamicBuffer
-import cjx.cc2.C2MemDesc
+import cjx.cc.C2MemDesc
 import cjx.parser.Mark
 import cj.Error
 import cjx.parser.MError
 import cj.Uint8Array
-import cjx.cc2.C2IR
+import cjx.cc.C2IR
 import cjx.binaryen.Binaryen
 
 class C2Codegen {

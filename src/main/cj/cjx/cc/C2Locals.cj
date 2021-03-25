@@ -1,9 +1,9 @@
-package cjx.cc2
+package cjx.cc
 
 import cjx.parser.MError
 import cjx.parser.Mark
-import cjx.cc2.C2IR.Var
-import cjx.cc2.C2IR.Type
+import cjx.cc.C2IR.Var
+import cjx.cc.C2IR.Type
 
 class C2Locals {
     val list: List[Var] = []

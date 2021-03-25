@@ -1,17 +1,17 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2ExprBuilder
+import cjx.cc.C2ExprBuilder
 import cjx.parser.Mark
-import cjx.cc2.C2Locals
+import cjx.cc.C2Locals
 import cjx.parser.MError
 import cjx.parser.ParserMixin
-import cjx.cc2.C2Token
-import cjx.cc2.C2IR.Func
-import cjx.cc2.C2IR.TranslationUnit
-import cjx.cc2.C2IR.Stmt
-import cjx.cc2.C2IR.Expr
-import cjx.cc2.C2IR.Type
-import cjx.cc2.C2IR.Var
+import cjx.cc.C2Token
+import cjx.cc.C2IR.Func
+import cjx.cc.C2IR.TranslationUnit
+import cjx.cc.C2IR.Stmt
+import cjx.cc.C2IR.Expr
+import cjx.cc.C2IR.Type
+import cjx.cc.C2IR.Var
 
 class C2Parser : ParserMixin[C2Token] {
     static private val assingPrec: Int = precof('=')

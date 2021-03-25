@@ -1,6 +1,6 @@
-package cjx.cc2
+package cjx.cc
 
-import cjx.cc2.C2Compiler
+import cjx.cc.C2Compiler
 
 class C2CompilerTest {
     static val compiler: C2Compiler = {
@@ -25,8 +25,12 @@ class C2CompilerTest {
     }
 
     @test
-    def sample0() {
+    def sample0A() {
         assertExpr("5", 5)
+    }
+
+    @test
+    def sample0() {
         assertExpr("-3", -3)
         assertExpr("5+7", 12)
         assertExpr("5-7", -2)
