@@ -36,14 +36,22 @@ public final class CJIRLocalContext extends CJIRContextBase {
         return method;
     }
 
-    private CJIRItem getTraitItem(String shortName, CJMark... marks) {
+    public String getFullItemName(String shortName, CJMark... marks) {
+        return getFullItemNameWithMap(item.getShortNameMap(), shortName, marks);
+    }
+
+    public static String getFullItemNameWithMap(Map<String, String> shortNameMap, String shortName, CJMark... marks) {
         var dotIndex = shortName.indexOf('.');
         var outerShortName = dotIndex == -1 ? shortName : shortName.substring(0, dotIndex);
-        var outerFullName = item.getShortNameMap().getOrNull(outerShortName);
+        var outerFullName = shortNameMap.getOrNull(outerShortName);
         if (outerFullName == null) {
-            throw CJError.of("Trait " + Repr.of(shortName) + " not found", marks);
+            throw CJError.of("Item " + Repr.of(shortName) + " not found", marks);
         }
-        var fullName = dotIndex == -1 ? outerFullName : (outerFullName + shortName.substring(dotIndex));
+        return dotIndex == -1 ? outerFullName : (outerFullName + shortName.substring(dotIndex));
+    }
+
+    private CJIRItem getTraitItem(String shortName, CJMark... marks) {
+        var fullName = getFullItemName(shortName, marks);
         var item = global.loadItem(fullName, marks);
         if (!item.getKind().isTraitKind()) {
             throw CJError.of(fullName + " is not a trait item", marks);
@@ -52,13 +60,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
     }
 
     private CJIRItem getTypeItem(String shortName, boolean hasTypeArgs, CJMark... marks) {
-        var dotIndex = shortName.indexOf('.');
-        var outerShortName = dotIndex == -1 ? shortName : shortName.substring(0, dotIndex);
-        var outerFullName = item.getShortNameMap().getOrNull(outerShortName);
-        if (outerFullName == null) {
-            throw CJError.of("Type " + Repr.of(shortName) + " not found", marks);
-        }
-        var fullName = dotIndex == -1 ? outerFullName : (outerFullName + shortName.substring(dotIndex));
+        var fullName = getFullItemName(shortName, marks);
         var item = global.loadItem(fullName, marks);
         if (item.isTrait() || (!hasTypeArgs && item.getTypeParameters().size() > 0)) {
             // if the item that the name refers to:

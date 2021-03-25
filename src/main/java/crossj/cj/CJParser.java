@@ -227,18 +227,28 @@ public final class CJParser {
         return list;
     }
 
+    private String parseAnnotationIdPart() {
+        switch (peek().type) {
+            case CJToken.INT:
+            case CJToken.DOUBLE:
+            case CJToken.TYPE_ID:
+                return next().text;
+            default:
+                return parseId();
+        }
+    }
+
+    private String parseAnnotationId() {
+        var name = parseAnnotationIdPart();
+        while (consume('.')) {
+            name += "." + parseAnnotationIdPart();
+        }
+        return name;
+    }
+
     private CJAstAnnotationExpression parseAnnotationExpression() {
         var mark = getMark();
-        String name;
-        switch (peek().type) {
-        case CJToken.INT:
-        case CJToken.DOUBLE:
-        case CJToken.TYPE_ID:
-            name = next().text;
-            break;
-        default:
-            name = parseId();
-        }
+        String name = parseAnnotationId();
         var args = List.<CJAstAnnotationExpression>of();
         if (consume('(')) {
             while (!consume(')')) {

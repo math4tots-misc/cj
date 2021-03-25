@@ -43,10 +43,8 @@ final class CJPass03 extends CJPassBaseEx {
         var implicitsTypeMap = item.getImplicitsTypeItemMap();
         var seen = Map.<CJIRItem, CJIRItem>of();
         for (var pair : traitItem.getUnprocessedImplicits()) {
-            var refItemFullName = traitItem.getShortNameMap().getOrNull(pair.get1());
-            if (refItemFullName == null) {
-                throw CJError.of("Name " + pair.get1() + " not found", item.getMark());
-            }
+            var refItemFullName = CJIRLocalContext.getFullItemNameWithMap(traitItem.getShortNameMap(), pair.get1(),
+                    item.getMark());
             var refItem = ctx.loadItem(refItemFullName, item.getMark());
             if (seen.containsKey(refItem)) {
                 // Duplicates, even through inheritance are not allowed.
