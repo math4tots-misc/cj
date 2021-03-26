@@ -35,7 +35,6 @@ class C2ExprBuilder {
         val newStmts: List[Stmt] = []
         for stmt in stmts {
             when stmt.kind {
-                case nop = ()
                 case block = newStmts.addAll(stmt.stmts)
                 else = newStmts.add(stmt)
             }
@@ -159,6 +158,28 @@ class C2ExprBuilder {
         val ret = Expr(mark, Expr.Kind.str)
         ret.bytesValue = value
         ret.type = Type.char.arrayOf(value.size() + 1)
+        ret
+    }
+
+    def stmtExpr(self, mark: Mark, stmt: Stmt): Expr {
+        val ret = Expr(mark, Expr.Kind.stmt)
+        ret.stmt = stmt
+        ret.arg = when stmt.kind {
+            case block {
+                val argstmt = stmt.stmts.pop()
+                when argstmt.kind {
+                    case expr = argstmt.expr
+                    else = throw MError(
+                        "The last statement of a block expression must be an expression",
+                        [mark])
+                }
+            }
+            case expr = stmt.expr
+            else = throw MError(
+                "statement expressions require a non-empty block statement but got " + stmt.kind,
+                [mark])
+        }
+        ret.type = ret.arg.type
         ret
     }
 

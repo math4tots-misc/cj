@@ -235,4 +235,13 @@ class C2CompilerTest {
         assertStmt("return \"\\xA5\"[0]; ", 165)
         assertStmt("return \"\\x00ff\"[0]; ", 255)
     }
+
+    @test
+    def stmtExpr() {
+        assertStmt("{ return ({ 0; }); }", 0)
+        assertStmt("{ return ({ 0; 1; 2; }); }", 2)
+        assertStmt("{ ({ 0; return 1; 2; }); return 3; }", 1)
+        assertStmt("{ return ({ 1; }) + ({ 2; }) + ({ 3; }); }", 6)
+        assertStmt("{ return ({ int x=3; x; }); }", 3)
+    }
 }

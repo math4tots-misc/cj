@@ -134,7 +134,6 @@ class C2Lexer {
                         ch = 16 * ch + Int.fromHex(s[i].toString())
                         i++
                     }
-                    IO.println("" + s + " -> " + ch + " -> " + ch.toChar())
                     (ch.toChar(), i)
                 } else {
                     (escChar, i + 1)

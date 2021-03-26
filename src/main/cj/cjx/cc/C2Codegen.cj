@@ -414,6 +414,7 @@ class C2Codegen {
                     expr.args.map(a -> expr(a)),
                     type(expr.func.type.returnType)))
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
+            case stmt = m.block(null, [stmt(expr.stmt), expr(expr.arg)], auto)
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)
             case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)

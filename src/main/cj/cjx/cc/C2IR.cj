@@ -204,6 +204,8 @@ class C2IR {
             case ptrSub      # subtract an int from a pointer
             case ptrDiff     # subtract two pointers
 
+            case stmt        # GNU extension, statement expressions
+
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
@@ -221,6 +223,7 @@ class C2IR {
         var lhs: Expr = ?
         var rhs: Expr = ?
         var args: List[Expr] = ?
+        var stmt: Stmt = ?
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")
@@ -228,9 +231,12 @@ class C2IR {
             if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
             if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
             if is_set!(self, gvar) { sb.str(",\"gvar\":\"" + gvar.name + "\"") }
+            if is_set!(self, func) { sb.str(",\"func\":\"" + func.name + "\"") }
             if is_set!(self, arg) { sb.str(",\"arg\":" + arg.repr()) }
             if is_set!(self, lhs) { sb.str(",\"lhs\":" + lhs.repr()) }
             if is_set!(self, rhs) { sb.str(",\"rhs\":" + rhs.repr()) }
+            if is_set!(self, args) { sb.str(",\"args\":" + args.repr()) }
+            if is_set!(self, stmt) { sb.str(",\"stmt\":" + stmt.repr()) }
             sb.str("}")
             sb.toString()
         }

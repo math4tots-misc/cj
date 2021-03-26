@@ -235,7 +235,7 @@ class C2Parser : ParserMixin[C2Token] {
             }
             else {
                 val expr = expr()
-                val ret = if expr.isPure() { eb.nop(mark) } else { eb.exprStmt(mark, expr) }
+                val ret = eb.exprStmt(mark, expr)
                 expect(';')
                 ret
             }
@@ -324,9 +324,15 @@ class C2Parser : ParserMixin[C2Token] {
             }
             case '(' {
                 next()
-                val inner = expr()
-                expect(')')
-                inner
+                if at('{') {
+                    val stmt = block()
+                    expect(')')
+                    eb.stmtExpr(mark, stmt)
+                } else {
+                    val inner = expr()
+                    expect(')')
+                    inner
+                }
             }
             case C2Token.tIDENT {
                 val name = next().stringValue
