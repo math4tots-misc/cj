@@ -154,6 +154,13 @@ class C2ExprBuilder {
         ret
     }
 
+    def str(self, mark: Mark, value: String): Expr {
+        val ret = Expr(mark, Expr.Kind.str)
+        ret.stringValue = value
+        ret.type = Type.char.arrayOf(value.sizeUTF8() + 1)
+        ret
+    }
+
     def deref(self, mark: Mark, var expr: Expr): Expr {
         expr = icastvalptr(expr)
         val ret = Expr(mark, Expr.Kind.deref)

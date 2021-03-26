@@ -30,7 +30,7 @@ class C2Codegen {
     private val initData: DynamicBuffer = DynamicBuffer([])
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
-    private var cStaticDataEnd: Int = -1
+    private val strlitCache: Map[String, Int] = MapOf()
 
     def emit(self, tu: C2IR.TranslationUnit): Tuple[Uint8Array, C2MemDesc] {
         m.addMemoryImport("0", "js", "memory")
@@ -44,7 +44,6 @@ class C2Codegen {
             cGlobalOffsets[gvar.name] = cGlobalsEnd
             cGlobalsEnd += gvar.type.size()
         }
-        cStaticDataEnd = cGlobalsEnd  # static data is allocated after the global data
 
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(stackSize))
@@ -53,6 +52,7 @@ class C2Codegen {
             func(func)
         }
 
+        val cStaticDataEnd = cGlobalsEnd + initData.byteLength
         val initMemPageCount = (cStaticDataEnd + wasmPageSize - 1) // wasmPageSize
         m.setMemory(initMemPageCount, maxMemPageCount)
 
@@ -62,8 +62,17 @@ class C2Codegen {
         (m.emitBinary(), C2MemDesc(
             initMemPageCount,
             maxMemPageCount,
-            stackSize,        # initialized data offset
+            cGlobalsEnd,        # initialized data offset
             initData.toDataView()))
+    }
+
+    def getCurrentInitDataEnd(self): Int = cGlobalsEnd + initData.size()
+
+    def alignInitData(self, alignment: Int) {
+        if getCurrentInitDataEnd() % alignment != 0 {
+            val addedByteLen = alignment - (getCurrentInitDataEnd() % alignment)
+            for i = 0; i < addedByteLen; i++ { initData.addUint8(0) }
+        }
     }
 
     def alignTo(n: Int, align: Int): Int = (n + align - 1) // align * align
@@ -318,9 +327,18 @@ class C2Codegen {
         }
     }
 
+    def strlit(self, mark: Mark, value: String): Int {
+        if value not in strlitCache {
+            strlitCache[value] = getCurrentInitDataEnd()
+            initData.addUTF8(value)
+            initData.addUint8(0)
+        }
+        strlitCache[value]
+    }
+
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
-            case int = m.i32.const(expr.intValue)
+            case int; case char = m.i32.const(expr.intValue)
             case intNeg; case charNeg = m.i32.sub(m.i32.const(0), expr(expr.arg))
             case intAdd; case charAdd = m.i32.add(expr(expr.lhs), expr(expr.rhs))
             case intSub; case charSub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
@@ -333,6 +351,7 @@ class C2Codegen {
             case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             case funcall = m.call(
                 expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
+            case str = m.i32.const(strlit(expr.mark, expr.stringValue))
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)
             case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)

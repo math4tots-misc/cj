@@ -178,6 +178,8 @@ class C2IR {
             case charLt
             case charLe
 
+            case str
+
             case postIncr
             case postDecr
 
@@ -208,6 +210,7 @@ class C2IR {
         val kind: Kind
         var type: Type = ?
         var intValue: Int = ?
+        var stringValue: String = ?
         var var_: Var = ?
         var gvar: GVar = ?
         var func: Func = ?

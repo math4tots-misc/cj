@@ -20,8 +20,8 @@ class C2Lexer {
 
         b.add("[a-zA-Z_][a-zA-Z_0-9]*", m -> tok(m, C2Token.tIDENT, s -> s))
 
-        b.add("'[^'\\\\]'", m -> tok(m, C2Token.tINT, s -> s[1].toInt()))
-        b.add("'\\\\[nt0']'", m -> tok(m, C2Token.tINT, s -> switch s[2] {
+        b.add("'[^'\\\\]'", m -> tok(m, C2Token.tCHAR, s -> s[1].toInt()))
+        b.add("'\\\\[nt0']'", m -> tok(m, C2Token.tCHAR, s -> switch s[2] {
                 case 'n' = '\n'
                 case 't' = '\t'
                 case '0' = '\0'
@@ -30,6 +30,8 @@ class C2Lexer {
                     "Unrecognized escape " + s, [Mark(m.filename, m.line, m.column)])
             }.toInt()
         ))
+
+        b.add("\"([^'\\\\]|\\\\[nt0'])*\"", m -> tok(m, C2Token.tSTR, s -> s.unrepr()))
 
         # single character symbol tokens
         b.add(

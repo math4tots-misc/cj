@@ -189,4 +189,17 @@ class C2CompilerTest {
                 "int main() { return sub_char(7, 3, 3); } ",
             1)
     }
+
+    @test
+    def strlit() {
+        assertStmt("return \"\"[0];", 0)
+        assertStmt("return sizeof(\"\");", 1)
+
+        assertStmt("return \"abc\"[0];", 97)
+        assertStmt("return \"abc\"[1];", 98)
+        assertStmt("return \"abc\"[2];", 99)
+        assertStmt("return \"abc\"[3];", 0)
+        assertStmt("return sizeof(\"abc\");", 4)
+        assertStmt("return sizeof(\"abcdef\");", 7)
+    }
 }

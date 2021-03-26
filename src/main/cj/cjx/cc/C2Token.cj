@@ -8,6 +8,7 @@ class C2Token: Repr {
         tINT
         tCHAR
         tIDENT
+        tSTR
 
         tEQ
         tNE
