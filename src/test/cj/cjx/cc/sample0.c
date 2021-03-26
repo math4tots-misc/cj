@@ -4,7 +4,7 @@ int foo(int rep) {
     if (rep) {
         return foo(rep - 1) + 1;
     } else {
-        assert(0);
+        assert(1);
         return 0;
     }
 }
