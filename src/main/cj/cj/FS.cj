@@ -8,6 +8,7 @@ import cj.DynamicBuffer
 
 native class FS {
     def __get_sep(): String = js!(String, "require('path').sep")
+    def cwd(): String = js!(String, "process.cwd()")
     @variadic def join(parts: List[String]): String = js!(String, "require('path').join(...", parts, ")")
     def normalize(path: String): String = js!(String, "require('path').normalize(", path, ")")
     def basename(path: String): String = js!(String, "require('path').basename(", path, ")")

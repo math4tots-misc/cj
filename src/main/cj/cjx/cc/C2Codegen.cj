@@ -31,8 +31,19 @@ class C2Codegen {
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
     private val strlitCache: Map[String, Int] = MapOf()
+    private var queuedDebugInfo: List[Tuple[Binaryen.Expression, Mark]] = []
+    private val debugFileCache: Map[String, Int] = MapOf()
 
     def emit(self, tu: C2IR.TranslationUnit): Tuple[Uint8Array, C2MemDesc] {
+        val (binary, sourceMap, memDesc) = emitEx(tu, null)
+        (binary, memDesc)
+    }
+
+    def emitEx(
+            self,
+            tu: C2IR.TranslationUnit,
+            sourceMapUrl: String?): Tuple[Uint8Array, String?, C2MemDesc] {
+        Binaryen.setDebugInfo(sourceMapUrl.isPresent())
         m.addMemoryImport("0", "js", "memory")
 
         # reserve space for global variables
@@ -59,7 +70,13 @@ class C2Codegen {
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
-        (m.emitBinary(), C2MemDesc(
+        val (binary, sourceMap) = if val url = sourceMapUrl {
+            val binaryWithSourceMap = m.emitBinaryWithSourceMap(url)
+            (binaryWithSourceMap.binary, null(binaryWithSourceMap.sourceMap))
+        } else {
+            (m.emitBinary(), null)
+        }
+        (binary, sourceMap, C2MemDesc(
             initMemPageCount,
             maxMemPageCount,
             cGlobalsEnd,        # initialized data offset
@@ -143,6 +160,7 @@ class C2Codegen {
         localSlotSP = newLocal(i32)
         Assert.equal(localSlotSP, func.params.size())
 
+        queuedDebugInfo = []
         cLocalOffsets = []
         var nextCLocalOffset = 0
         val cLocals = func.locals
@@ -189,13 +207,30 @@ class C2Codegen {
             stmts.add(m.unreachable())
         }
         val body = m.block(null, stmts, auto)
-        m.addFunction(
+        val binaryenFunc = m.addFunction(
             func.name,
             Binaryen.createType(func.type.paramTypes.map(t -> type(t))),
             type(func.type.returnType),
             locals,
             body)
+        queuedDebugInfo.add((body, func.mark))
+
+        for (bexpr, mark) in queuedDebugInfo {
+            val fileIndex = getDebugFileIndex(mark.filepath)
+            m.setDebugLocation(binaryenFunc, bexpr, fileIndex, mark.line, mark.column)
+        }
+        queuedDebugInfo = []
+
         m.addFunctionExport(func.name, func.name)
+    }
+
+    def getDebugFileIndex(self, filepath: String): Int {
+        if filepath not in debugFileCache {
+            val index = debugFileCache.size()
+            Assert.equal(m.addDebugInfoFileName(filepath), index)
+            debugFileCache[filepath] = debugFileCache.size()
+        }
+        debugFileCache[filepath]
     }
 
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
@@ -336,6 +371,8 @@ class C2Codegen {
         strlitCache[value]
     }
 
+    def addMark(self, expr: Binaryen.Expression, mark: Mark) { queuedDebugInfo.add((expr, mark)) }
+
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case int; case char = m.i32.const(expr.intValue)
@@ -349,8 +386,12 @@ class C2Codegen {
             case intNe; case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt; case charLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case funcall = m.call(
-                expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
+            case funcall {
+                val bexpr = m.call(
+                    expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
+                addMark(bexpr, expr.mark)
+                bexpr
+            }
             case str = m.i32.const(strlit(expr.mark, expr.stringValue))
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)

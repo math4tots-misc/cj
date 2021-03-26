@@ -40,8 +40,28 @@ class C2Compiler {
         codegen.emit(tu)
     }
 
+    def translateWithSourceMap(
+            self,
+            filepath: String,
+            contents: String,
+            sourceMapUrl: String): Tuple[Uint8Array, String, C2MemDesc] {
+        val tu = parse(filepath, contents)
+        val codegen = C2Codegen()
+        val (binary, sourceMap, memDesc) = codegen.emitEx(tu, null(sourceMapUrl))
+        (binary, sourceMap.get(), memDesc)
+    }
+
     def run(self, filepath: String, contents: String): Int {
         val rt = C2RT()
+
+        # val wasmPath = FS.normalize(FS.join(FS.cwd(), "target", "out.wasm"))
+        # val sourceMapPath = wasmPath + ".map"
+        # val sourceMapUrl = "file://" + sourceMapPath
+        # IO.println("soureMapUrl = " + sourceMapUrl)
+        # val (binary, sourceMap, memDesc) = translateWithSourceMap(filepath, contents, sourceMapUrl)
+        # FS.writeFile(sourceMapPath, sourceMap)
+        # FS.writeFileBytes(wasmPath, binary)
+
         val (binary, memDesc) = translate(filepath, contents)
         val importObject = rt.newImportObject(memDesc)
         val module = WebAssembly.Module(binary)

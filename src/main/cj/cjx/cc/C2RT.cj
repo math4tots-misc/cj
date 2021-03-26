@@ -40,6 +40,8 @@ class C2RT {
             1
         }
 
+        val assert: Fn[Int, Unit] = cond -> if not cond { IO.panic("Assertion failed") }
+
         jsobj!(
             js: jsobj!(
                 memory: mem,
@@ -47,6 +49,7 @@ class C2RT {
             c: jsobj!(
                 puts: puts,
                 __puti: __puti,
+                assert: assert,
             )
         )
     }

@@ -30,6 +30,11 @@ class C2CompilerTest {
     }
 
     @test
+    def sample0B() {
+        compiler.run("sample0.c", include_str!("sample0.c"))
+    }
+
+    @test
     def sample0() {
         assertExpr("-3", -3)
         assertExpr("5+7", 12)

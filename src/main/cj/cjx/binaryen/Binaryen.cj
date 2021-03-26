@@ -11,6 +11,9 @@ native class Binaryen {
     def __get_auto(): Type = js!(Type, "binaryen.auto")
     def __get_unreachable(): Type = js!(Type, "binaryen.unreachable")
 
+    def getDebugInfo(): Bool = js!(Bool, "binaryen.getDebugInfo()")
+    def setDebugInfo(on: Bool) = js!(Unit, "binaryen.setDebugInfo(", on, ")")
+
     def createType(types: List[Type]): Type = js!(Type, "binaryen.createType(", types, ")")
     def getExpressionType(e: Expression): Type = js!(Type, "binaryen.getExpressionType(", e, ")")
 
@@ -31,6 +34,8 @@ native class Binaryen {
             Expression, self, ".if(", cond, ",", ifTrue, ",", ifFalse, ")")
         def emitText(self): String = js!(String, self, ".emitText()")
         def emitBinary(self): Uint8Array = js!(Uint8Array, self, ".emitBinary()")
+        def emitBinaryWithSourceMap(self, sourceMapUrl: String): BinaryWithSourceMap = js!(
+            BinaryWithSourceMap, self, ".emitBinary(", sourceMapUrl, ")")
         def optimize(self) = js!(Unit, self, ".optimize()")
         def validate(self): Bool = js!(Bool, self, ".validate()")
         def dispose(self) = js!(Unit, self, ".dispose()")
@@ -74,6 +79,22 @@ native class Binaryen {
                 ",", externalBaseName,
                 ",", params,
                 ",", results, ")")
+        def addDebugInfoFileName(self, filename: String): Int = js!(
+            Int, self, ".addDebugInfoFileName(", filename, ")")
+        def setDebugLocation(
+            self,
+            func: Function,
+            expr: Expression,
+            fileIndex: Int,
+            lineNumber: Int,
+            columnNumber: Int) = js!(
+                Unit,
+                self,
+                ".setDebugLocation(", func,
+                ",", expr,
+                ",", fileIndex,
+                ",", lineNumber,
+                ",", columnNumber, ")")
 
         def call(self, name: String, operands: List[Expression], returnType: Type): Expression {
             js!(Expression, self, ".call(", name, ",", operands, ",", returnType, ")")
@@ -94,6 +115,10 @@ native class Binaryen {
         def br_if_with_value(self, label: String, cond: Expression, v: Expression): Expression {
             js!(Expression, self, ".br(", label, ",", cond, ",", v, ")")
         }
+    }
+    native class BinaryWithSourceMap {
+        def __get_binary(self): Uint8Array = js!(Uint8Array, self, ".binary")
+        def __get_sourceMap(self): String = js!(String, self, ".sourceMap")
     }
     native class ModuleMemory {
         def size(self): Expression = js!(Expression, self, ".size()")
