@@ -34,49 +34,20 @@ class C2Compiler {
         C2Parser.parse(tokens)
     }
 
-    def translate(self, filepath: String, contents: String): Tuple[Uint8Array, C2MemDesc] {
+    def translate(self, filepath: String, contents: String): C2Codegen.Result {
         val tu = parse(filepath, contents)
         val codegen = C2Codegen()
         codegen.emit(tu)
     }
 
-    def translateWithSourceMap(
-            self,
-            filepath: String,
-            contents: String,
-            sourceMapUrl: String): Tuple[Uint8Array, String, C2MemDesc] {
-        val tu = parse(filepath, contents)
-        val codegen = C2Codegen()
-        val (binary, sourceMap, memDesc) = codegen.emitEx(tu, null(sourceMapUrl))
-        (binary, sourceMap.get(), memDesc)
-    }
-
     def run(self, filepath: String, contents: String): Int {
         val rt = C2RT()
-
-        # val wasmPath = FS.normalize(FS.join(FS.cwd(), "target", "out.wasm"))
-        # val sourceMapPath = wasmPath + ".map"
-        # val sourceMapUrl = "file://" + sourceMapPath
-        # IO.println("soureMapUrl = " + sourceMapUrl)
-        # val (binary, sourceMap, memDesc) = translateWithSourceMap(filepath, contents, sourceMapUrl)
-        # FS.writeFile(sourceMapPath, sourceMap)
-        # FS.writeFileBytes(wasmPath, binary)
-
-        val (binary, memDesc) = translate(filepath, contents)
-        val importObject = rt.newImportObject(memDesc)
+        val cgr = translate(filepath, contents)
+        val binary = cgr.binary
+        val importObject = rt.newImportObject(cgr)
         val module = WebAssembly.Module(binary)
         val instance = WebAssembly.Instance(module, importObject)
         instance.exports.call("main").unsafeCast()
-    }
-
-    ## Try to run with the interpreter instead on real wasm.
-    ## Kinda works, but I can't figure out how to attach imported memory and functions
-    def run0(self, filepath: String, contents: String) {
-        val tu = parse(filepath, contents)
-        val codegen = C2Codegen()
-        val (module, memDesc) = codegen.emitEx0(tu, null)
-        module.setStart(module.getFunction("main"))
-        module.interpret()
     }
 
     def main() {

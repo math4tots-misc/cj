@@ -10,7 +10,6 @@ import cjx.cc.C2IR
 import cjx.binaryen.Binaryen
 
 class C2Codegen {
-    private static val optimize = false
     private static val none: Binaryen.Type = Binaryen.none
     private static val i32: Binaryen.Type = Binaryen.i32
     private static val i64: Binaryen.Type = Binaryen.i64
@@ -22,6 +21,8 @@ class C2Codegen {
     private static val maxMemPageCount = 8192
     private static val wasmPageSize = 65536
 
+    var enableStackTrace = true
+    var optimize = false
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
     private var localSlotSP = -1 # index of wasm local variable pointing to start of local stack
@@ -31,33 +32,16 @@ class C2Codegen {
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
     private val strlitCache: Map[String, Int] = MapOf()
-    private var queuedDebugInfo: List[Tuple[Binaryen.Expression, Mark]] = []
     private val debugFileCache: Map[String, Int] = MapOf()
+    private val debugFilepaths: List[String] = []
 
-    def emit(self, tu: C2IR.TranslationUnit): Tuple[Uint8Array, C2MemDesc] {
-        val (binary, sourceMap, memDesc) = emitEx(tu, null)
-        (binary, memDesc)
+    class Result {
+        val binary: Uint8Array
+        val memDesc: C2MemDesc
+        val filepaths: List[String]  # for debugging/stacktrace
     }
 
-    def emitEx(
-            self,
-            tu: C2IR.TranslationUnit,
-            sourceMapUrl: String?): Tuple[Uint8Array, String?, C2MemDesc] {
-        val (m, memDesc) = emitEx0(tu, sourceMapUrl)
-        val (binary, sourceMap) = if val url = sourceMapUrl {
-            val binaryWithSourceMap = m.emitBinaryWithSourceMap(url)
-            (binaryWithSourceMap.binary, null(binaryWithSourceMap.sourceMap))
-        } else {
-            (m.emitBinary(), null)
-        }
-        (binary, sourceMap, memDesc)
-    }
-
-    def emitEx0(
-            self,
-            tu: C2IR.TranslationUnit,
-            sourceMapUrl: String?): Tuple[Binaryen.Module, C2MemDesc] {
-        Binaryen.setDebugInfo(sourceMapUrl.isPresent())
+    def emit(self, tu: C2IR.TranslationUnit): Result {
         m.addMemoryImport("0", "js", "memory")
 
         # reserve space for global variables
@@ -73,6 +57,11 @@ class C2Codegen {
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(stackSize))
 
+        if enableStackTrace {
+            m.addFunctionImport("__push", "c", "__push", Binaryen.createType([i32, i32]), none)
+            m.addFunctionImport("__pop", "c", "__pop", Binaryen.createType([]), none)
+        }
+
         for func in tu.funcs {
             func(func)
         }
@@ -84,11 +73,14 @@ class C2Codegen {
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
-        (m, C2MemDesc(
-            initMemPageCount,
-            maxMemPageCount,
-            cGlobalsEnd,        # initialized data offset
-            initData.toDataView()))
+        Result(
+            m.emitBinary(),
+            C2MemDesc(
+                initMemPageCount,
+                maxMemPageCount,
+                cGlobalsEnd,        # initialized data offset
+                initData.toDataView()),
+            debugFilepaths)
     }
 
     def getCurrentInitDataEnd(self): Int = cGlobalsEnd + initData.size()
@@ -168,7 +160,6 @@ class C2Codegen {
         localSlotSP = newLocal(i32)
         Assert.equal(localSlotSP, func.params.size())
 
-        queuedDebugInfo = []
         cLocalOffsets = []
         var nextCLocalOffset = 0
         val cLocals = func.locals
@@ -221,22 +212,17 @@ class C2Codegen {
             type(func.type.returnType),
             locals,
             body)
-        queuedDebugInfo.add((body, func.mark))
-
-        for (bexpr, mark) in queuedDebugInfo {
-            val fileIndex = getDebugFileIndex(mark.filepath)
-            m.setDebugLocation(binaryenFunc, bexpr, fileIndex, mark.line, mark.column)
-        }
-        queuedDebugInfo = []
 
         m.addFunctionExport(func.name, func.name)
     }
 
     def getDebugFileIndex(self, filepath: String): Int {
         if filepath not in debugFileCache {
-            val index = debugFileCache.size()
+            val index = debugFilepaths.size()
+            Assert.equal(index, debugFileCache.size())
             Assert.equal(m.addDebugInfoFileName(filepath), index)
             debugFileCache[filepath] = debugFileCache.size()
+            debugFilepaths.add(filepath)
         }
         debugFileCache[filepath]
     }
@@ -379,7 +365,22 @@ class C2Codegen {
         strlitCache[value]
     }
 
-    def addMark(self, expr: Binaryen.Expression, mark: Mark) { queuedDebugInfo.add((expr, mark)) }
+    def withMark(self, mark: Mark, expr: Binaryen.Expression): Binaryen.Expression {
+        if enableStackTrace {
+            val exprType = Binaryen.getExpressionType(expr)
+            val localIndex = newLocal(exprType)
+            val fileIndex = getDebugFileIndex(mark.filepath)
+            # NOTE: C-void is mapped to Binaryen.i32
+            m.block(null, [
+                m.call("__push", [m.i32.const(fileIndex), m.i32.const(mark.line)], none),
+                m.local.set(localIndex, expr),
+                m.call("__pop", [], none),
+                m.local.get(localIndex, exprType),
+            ], auto)
+        } else {
+            expr
+        }
+    }
 
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
@@ -394,12 +395,12 @@ class C2Codegen {
             case intNe; case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt; case charLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case funcall {
-                val bexpr = m.call(
-                    expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
-                addMark(bexpr, expr.mark)
-                bexpr
-            }
+            case funcall = withMark(
+                expr.mark,
+                m.call(
+                    expr.func.name,
+                    expr.args.map(a -> expr(a)),
+                    type(expr.func.type.returnType)))
             case str = m.i32.const(strlit(expr.mark, expr.stringValue))
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)
