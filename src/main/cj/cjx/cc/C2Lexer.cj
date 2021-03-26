@@ -25,7 +25,7 @@ class C2Lexer {
         b.add("'[^'\\\\]'", m -> tok(m, C2Token.tCHAR, s -> s[1].toInt()))
         b.add("'\\\\.'", m -> tok(m, C2Token.tCHAR, s -> readEscapeChar(m, s, 2).f0))
 
-        b.add("\"([^'\\\\]|\\\\.)*\"", m -> tok(m, C2Token.tSTR, s -> {
+        b.add("\"([^'\"\\\\]|\\\\.)*\"", m -> tok(m, C2Token.tSTR, s -> {
             var escape = false
             val dbuf = DynamicBuffer(0)
             val sb = StringBuilder()

@@ -156,7 +156,7 @@ class C2Codegen {
             return ()
         }
 
-        # IO.println(func.body)
+        # IO.println(func.name + " -> " + func.body)
 
         locals = func.params.map(p -> type(p.type))
         localSlotSP = newLocal(i32)
