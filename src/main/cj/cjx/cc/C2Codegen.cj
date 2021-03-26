@@ -311,7 +311,7 @@ class C2Codegen {
             addrExpr: Binaryen.Expression): Binaryen.Expression {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
-            case char = m.i32.load8_s(offset, 0, addrExpr)
+            case char = m.i32.load8_u(offset, 0, addrExpr)
             case array(..) {
                 # array values cannot be stored in a register, so
                 # instead in these cases we just return the address as is

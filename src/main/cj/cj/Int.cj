@@ -44,6 +44,7 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     def _fromChar(c: Char): Int = js!(Int, c)
     def default(): Int = 0
     def hex(self): String = js!(String, self, ".toString(16).toUpperCase()")
+    def fromHex(hexString: String): Int = js!(Int, "parseInt(", hexString, ",16)")
 
     # For EuclideanDomain
     def __get_zero(): Self = 0

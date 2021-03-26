@@ -229,5 +229,10 @@ class C2CompilerTest {
         assertStmt("return \"\\20\"[0];", 16)
         assertStmt("return \"\\101\"[0];", 65)
         assertStmt("return \"\\1500\"[0];", 104)
+
+        assertStmt("return \"\\x00\"[0]; ", 0)
+        assertStmt("return \"\\x77\"[0]; ", 119)
+        # assertStmt("return \"\\xA5\"[0]; ", 165)
+        # assertStmt("return \"\\x00ff\"[0]; ", 255)
     }
 }
