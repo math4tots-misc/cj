@@ -44,6 +44,32 @@ public final class Str {
         return StrIter.of(string);
     }
 
+    public static String escape(String raw) {
+        var sb = Str.builder();
+        sb.c('"');
+        for (int i = 0; i < raw.length(); i++) {
+            char ch = raw.charAt(i);
+            if (ch >= 32 && ch < 127) {
+                sb.c(ch);
+            } else {
+                switch (ch) {
+                    case '\n': sb.s("\\n");
+                    case '\t': sb.s("\\t");
+                    case '\0': sb.s("\\0");
+                    default: {
+                        var hstr = hex(ch);
+                        while (hstr.length() < 4) {
+                            hstr = "0" + hstr;
+                        }
+                        sb.s("\\u" + hstr);
+                    }
+                }
+            }
+        }
+        sb.c('"');
+        return sb.build();
+    }
+
     public static String unescape(String escaped) {
         final int DEFAULT = 0;
         final int ESCAPE = 1;

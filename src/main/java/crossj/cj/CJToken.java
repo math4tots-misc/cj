@@ -303,22 +303,15 @@ public final class CJToken {
 
     public static int charLiteralToInt(String rawText, CJMark... marks) {
         switch (rawText) {
-            case "'\\''":
-                return (int) '\'';
-            case "'\\\"'":
-                return (int) '"';
-            case "'\\\\'":
-                return (int) '\\';
-            case "'\\n'":
-                return (int) '\n';
-            case "'\\t'":
-                return (int) '\t';
-            case "'\\r'":
-                return (int) '\r';
-            case "'\\f'":
-                return (int) '\f';
-            case "'\\0'":
-                return (int) '\0';
+            case "'\\\''": return (int) '\'';
+            case "'\\\"'": return (int) '"';
+            case "'\\\\'": return (int) '\\';
+            case "'\\n'": return (int) '\n';
+            case "'\\b'": return (int) '\b';
+            case "'\\t'": return (int) '\t';
+            case "'\\r'": return (int) '\r';
+            case "'\\f'": return (int) '\f';
+            case "'\\0'": return (int) '\0';
         }
         if (rawText.length() >= 3 && rawText.charAt(0) == '\'' && rawText.charAt(rawText.length() - 1) == '\'') {
             var codePoint = rawText.codePointAt(1);

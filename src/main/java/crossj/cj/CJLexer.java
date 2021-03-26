@@ -1,6 +1,8 @@
 package crossj.cj;
 
+import crossj.base.Assert;
 import crossj.base.List;
+import crossj.base.Str;
 import crossj.base.Try;
 import crossj.books.dragon.ch03.Lexer;
 import crossj.books.dragon.ch03.RegexMatcher;
@@ -25,6 +27,7 @@ public final class CJLexer {
         b.add("'\\\\.'", m -> tok(CJToken.CHAR, m));
         b.add("'[^'\\\\]'", m -> tok(CJToken.CHAR, m));
         b.add("\"(\\\\.|[^\"\\\\])*\"", m -> tok(CJToken.STRING, m));
+        b.add("r\"[^\"]*\"", m -> rawStr(CJToken.STRING, m));
 
         // single character symbol tokens
         b.add("\\(|\\)|\\{|\\}|\\[|\\]|\\+|\\*|/|-|%|~|\\.|^|&|\\||!|@|=|;|,|:|<|>|\\?", m -> chartok(m));
@@ -88,18 +91,18 @@ public final class CJLexer {
         var stack = List.<Integer>of();
         for (var token : rawTokens) {
             switch (token.type) {
-                case '(':
-                case '[':
-                case '{':
-                    stack.add(token.type);
-                    break;
-                case ')':
-                case ']':
-                case '}':
-                    if (stack.size() > 0) {
-                        stack.pop();
-                    }
-                    break;
+            case '(':
+            case '[':
+            case '{':
+                stack.add(token.type);
+                break;
+            case ')':
+            case ']':
+            case '}':
+                if (stack.size() > 0) {
+                    stack.pop();
+                }
+                break;
             }
             if (token.type != '\n' || stack.size() == 0 || stack.last() == '{') {
                 newTokens.add(token);
@@ -116,6 +119,14 @@ public final class CJLexer {
 
     private static Try<List<CJToken>> tok(int type, RegexMatcher m) {
         return Try.ok(List.of(CJToken.of(type, m.getMatchText(), m.getMatchLineNumber(), m.getMatchColumnNumber())));
+    }
+
+    private static Try<List<CJToken>> rawStr(int type, RegexMatcher m) {
+        var mtext = m.getMatchText();
+        Assert.that(mtext.startsWith("r\"") && mtext.endsWith("\""));
+        var inner = mtext.substring(2, mtext.length() - 1);
+        return Try.ok(List
+                .of(CJToken.of(type, Str.escape(inner), m.getMatchLineNumber(), m.getMatchColumnNumber())));
     }
 
     private static Try<List<CJToken>> symtok(int type, RegexMatcher m) {

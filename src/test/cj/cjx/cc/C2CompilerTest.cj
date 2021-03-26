@@ -206,5 +206,23 @@ class C2CompilerTest {
         assertStmt("return \"abc\"[3];", 0)
         assertStmt("return sizeof(\"abc\");", 4)
         assertStmt("return sizeof(\"abcdef\");", 7)
+
+        assertStmt("return \"\\a\"[0];", 7)
+        assertStmt("return \"\\b\"[0];", 8)
+        assertStmt("return \"\\t\"[0];", 9)
+        assertStmt("return \"\\n\"[0];", 10)
+        assertStmt("return \"\\v\"[0];", 11)
+        assertStmt("return \"\\f\"[0];", 12)
+        assertStmt("return \"\\r\"[0];", 13)
+        assertStmt("return \"\\e\"[0];", 27)
+
+        assertStmt("return \"\\j\"[0];", 106)
+        assertStmt("return \"\\k\"[0];", 107)
+        assertStmt("return \"\\l\"[0];", 108)
+
+        assertStmt("return \"\\ax\\ny\"[0];", 7)
+        assertStmt("return \"\\ax\\ny\"[1];", 120)
+        assertStmt("return \"\\ax\\ny\"[2];", 10)
+        assertStmt("return \"\\ax\\ny\"[3];", 121)
     }
 }
