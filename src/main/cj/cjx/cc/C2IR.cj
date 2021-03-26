@@ -167,6 +167,16 @@ class C2IR {
             case intLe
 
             case char
+            case charNeg
+            case charAdd
+            case charSub
+            case charMul
+            case charDiv
+            case charRem
+            case charEq
+            case charNe
+            case charLt
+            case charLe
 
             case postIncr
             case postDecr

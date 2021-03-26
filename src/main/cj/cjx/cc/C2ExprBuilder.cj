@@ -278,6 +278,22 @@ class C2ExprBuilder {
                 else = ()
             }
         }
+        if lhs.type.isChar() and rhs.type.isChar() {
+            switch type {
+                case '+'           { return genBinop(mark, Expr.Kind.charAdd, Type.char, lhs, rhs) }
+                case '-'           { return genBinop(mark, Expr.Kind.charSub, Type.char, lhs, rhs) }
+                case '*'           { return genBinop(mark, Expr.Kind.charMul, Type.char, lhs, rhs) }
+                case '/'           { return genBinop(mark, Expr.Kind.charDiv, Type.char, lhs, rhs) }
+                case '%'           { return genBinop(mark, Expr.Kind.charRem, Type.char, lhs, rhs) }
+                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.char, lhs, rhs) }
+                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.char, lhs, rhs) }
+                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.char, lhs, rhs) }
+                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.char, lhs, rhs) }
+                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.char, rhs, lhs) }
+                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.char, rhs, lhs) }
+                else = ()
+            }
+        }
 
         # ======================================================================
         # pointer ops

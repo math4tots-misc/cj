@@ -175,4 +175,18 @@ class C2CompilerTest {
         assertFns("int x; int main() { return sizeof(x); }", 4)
         assertFns("int x[4]; int main() { return sizeof(x); }", 16)
     }
+
+    @test
+    def char() {
+        assertFns("int main() { char x=1; return x; }", 1)
+        assertFns("int main() { char x=1; char y=2; return x; }", 1)
+        assertFns("int main() { char x=1; char y=2; return y; }", 2)
+
+        assertFns("int main() { char x; return sizeof(x); }", 1)
+        assertFns("int main() { char x[10]; return sizeof(x); }", 10)
+        assertFns(
+            "int sub_char(char a, char b, char c) { return a-b-c; }" +
+                "int main() { return sub_char(7, 3, 3); } ",
+            1)
+    }
 }
