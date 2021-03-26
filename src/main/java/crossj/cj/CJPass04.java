@@ -659,7 +659,7 @@ final class CJPass04 extends CJPassBaseEx {
                     var displayItemName = "cj.Tuple" + e.getExpressions().size();
                     var classType = (CJIRClassType) expectedType;
                     if (!classType.getItem().getFullName().equals(displayItemName)) {
-                        throw CJError.of("Expected " + classType + " but got a " + displayItemName, e.getMark());
+                        throw CJError.of("Expected " + classType.repr() + " but got a " + displayItemName, e.getMark());
                     }
                     var expressions = List.<CJIRExpression>of();
                     var argAsts = e.getExpressions();

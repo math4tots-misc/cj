@@ -54,6 +54,11 @@ native class Binaryen {
                 ".addMemoryImport(", internalName,
                 ",", externalModuleName,
                 ",", externalBaseName, ")")
+        def interpret(self) = js!(Unit, self, ".interpret()")
+        def setStart(self, start: Function) = js!(
+            Unit, self, ".setStart(", start, ")")
+        def getFunction(self, name: String): Function = js!(
+            Function, self, ".getFunction(", name, ")")
         def addFunction(
                 self,
                 name: String,

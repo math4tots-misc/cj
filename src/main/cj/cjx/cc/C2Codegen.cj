@@ -43,6 +43,20 @@ class C2Codegen {
             self,
             tu: C2IR.TranslationUnit,
             sourceMapUrl: String?): Tuple[Uint8Array, String?, C2MemDesc] {
+        val (m, memDesc) = emitEx0(tu, sourceMapUrl)
+        val (binary, sourceMap) = if val url = sourceMapUrl {
+            val binaryWithSourceMap = m.emitBinaryWithSourceMap(url)
+            (binaryWithSourceMap.binary, null(binaryWithSourceMap.sourceMap))
+        } else {
+            (m.emitBinary(), null)
+        }
+        (binary, sourceMap, memDesc)
+    }
+
+    def emitEx0(
+            self,
+            tu: C2IR.TranslationUnit,
+            sourceMapUrl: String?): Tuple[Binaryen.Module, C2MemDesc] {
         Binaryen.setDebugInfo(sourceMapUrl.isPresent())
         m.addMemoryImport("0", "js", "memory")
 
@@ -70,13 +84,7 @@ class C2Codegen {
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
-        val (binary, sourceMap) = if val url = sourceMapUrl {
-            val binaryWithSourceMap = m.emitBinaryWithSourceMap(url)
-            (binaryWithSourceMap.binary, null(binaryWithSourceMap.sourceMap))
-        } else {
-            (m.emitBinary(), null)
-        }
-        (binary, sourceMap, C2MemDesc(
+        (m, C2MemDesc(
             initMemPageCount,
             maxMemPageCount,
             cGlobalsEnd,        # initialized data offset

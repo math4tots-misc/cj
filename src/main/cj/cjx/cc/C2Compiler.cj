@@ -69,6 +69,16 @@ class C2Compiler {
         instance.exports.call("main").unsafeCast()
     }
 
+    ## Try to run with the interpreter instead on real wasm.
+    ## Kinda works, but I can't figure out how to attach imported memory and functions
+    def run0(self, filepath: String, contents: String) {
+        val tu = parse(filepath, contents)
+        val codegen = C2Codegen()
+        val (module, memDesc) = codegen.emitEx0(tu, null)
+        module.setStart(module.getFunction("main"))
+        module.interpret()
+    }
+
     def main() {
         val self = Self()
         var mode = ""
