@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.cc.C2Locals
 import cj.StringBuilder
 import cj.Error
 import cjx.parser.Mark
@@ -117,8 +118,8 @@ class C2IR {
         val name: String
         val type: Type.Func
         var body: Stmt = ?
-        var locals: List[Var] = ?
-        def __get_params(self): List[Var] = locals[:type.params.size()]
+        var locals: C2Locals = ?
+        def __get_params(self): List[Var] = locals.list[:type.params.size()]
     }
     class Stmt: Repr {
         union Kind: Repr, Hash {

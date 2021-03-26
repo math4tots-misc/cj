@@ -32,13 +32,14 @@ class C2Codegen {
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
     private val strlitCache: Map[String, Int] = MapOf()
-    private val debugFileCache: Map[String, Int] = MapOf()
-    private val debugFilepaths: List[String] = []
+    private val debugNameCache: Map[String, Int] = MapOf()
+    private val debugNames: List[String] = []
+    private var currentFunc: C2IR.Func? = null
 
     class Result {
         val binary: Uint8Array
         val memDesc: C2MemDesc
-        val filepaths: List[String]  # for debugging/stacktrace
+        val names: List[String]  # for debugging/stacktrace
     }
 
     def emit(self, tu: C2IR.TranslationUnit): Result {
@@ -58,7 +59,8 @@ class C2Codegen {
         m.addGlobal("SP", i32, true, m.i32.const(stackSize))
 
         if enableStackTrace {
-            m.addFunctionImport("__push", "c", "__push", Binaryen.createType([i32, i32]), none)
+            m.addFunctionImport(
+                "__push", "c", "__push", Binaryen.createType([i32, i32, i32]), none)
             m.addFunctionImport("__pop", "c", "__pop", Binaryen.createType([]), none)
         }
 
@@ -80,7 +82,7 @@ class C2Codegen {
                 maxMemPageCount,
                 cGlobalsEnd,        # initialized data offset
                 initData.toDataView()),
-            debugFilepaths)
+            debugNames)
     }
 
     def getCurrentInitDataEnd(self): Int = cGlobalsEnd + initData.size()
@@ -162,7 +164,7 @@ class C2Codegen {
 
         cLocalOffsets = []
         var nextCLocalOffset = 0
-        val cLocals = func.locals
+        val cLocals = func.locals.list
         var cLocalsByteSize = 0
         for i = 0; i < cLocals.size(); i++ {
             val var_ = cLocals[i]
@@ -177,6 +179,7 @@ class C2Codegen {
         }
 
         val stmts: List[Binaryen.Expression] = []
+        currentFunc = null(func)
 
         # allocate space for C local variables on the stack
         stmts.add(m.global.set("SP",
@@ -214,17 +217,17 @@ class C2Codegen {
             body)
 
         m.addFunctionExport(func.name, func.name)
+        currentFunc = null
     }
 
-    def getDebugFileIndex(self, filepath: String): Int {
-        if filepath not in debugFileCache {
-            val index = debugFilepaths.size()
-            Assert.equal(index, debugFileCache.size())
-            Assert.equal(m.addDebugInfoFileName(filepath), index)
-            debugFileCache[filepath] = debugFileCache.size()
-            debugFilepaths.add(filepath)
+    def getDebugNameIndex(self, filepath: String): Int {
+        if filepath not in debugNameCache {
+            val index = debugNames.size()
+            Assert.equal(index, debugNameCache.size())
+            debugNameCache[filepath] = debugNameCache.size()
+            debugNames.add(filepath)
         }
-        debugFileCache[filepath]
+        debugNameCache[filepath]
     }
 
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
@@ -367,12 +370,21 @@ class C2Codegen {
 
     def withMark(self, mark: Mark, expr: Binaryen.Expression): Binaryen.Expression {
         if enableStackTrace {
+            # NOTE: Unfortunately, if there are nested function calls, this will cause
+            # multiple entries in the stack trace for the same line.
+            # However, avoiding this would probably create a large number of local
+            # variables for each function call.
+            # For now, we just accept this tradeoff.
             val exprType = Binaryen.getExpressionType(expr)
             val localIndex = newLocal(exprType)
-            val fileIndex = getDebugFileIndex(mark.filepath)
+            val funcNameIndex = getDebugNameIndex(currentFunc.map(f -> f.name).getOr(""))
+            val fileNameIndex = getDebugNameIndex(mark.filepath)
             # NOTE: C-void is mapped to Binaryen.i32
             m.block(null, [
-                m.call("__push", [m.i32.const(fileIndex), m.i32.const(mark.line)], none),
+                m.call("__push", [
+                    m.i32.const(funcNameIndex),
+                    m.i32.const(fileNameIndex),
+                    m.i32.const(mark.line)], none),
                 m.local.set(localIndex, expr),
                 m.call("__pop", [], none),
                 m.local.get(localIndex, exprType),

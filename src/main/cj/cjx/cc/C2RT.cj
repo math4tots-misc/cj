@@ -42,17 +42,38 @@ class C2RT {
         }
 
         val stackTrace: List[Int] = []
-        val __push: Fn[Int, Int, Unit] = (fileIndex, lineNumber) -> {
-            stackTrace.add(fileIndex)
+        val __push: Fn[Int, Int, Int, Unit] = (funcNameIndex, fileNameIndex, lineNumber) -> {
+            stackTrace.add(funcNameIndex)
+            stackTrace.add(fileNameIndex)
             stackTrace.add(lineNumber)
         }
-        val __pop: Fn[Unit] = () -> stackTrace.pop()
+        val __pop: Fn[Unit] = () -> { stackTrace.pop(); stackTrace.pop(); stackTrace.pop() }
         val getStackTrace: Fn[String] = () -> {
+            var lastFileIndex = -1
+            var lastLine = -1
             val parts: List[String] = []
-            for i = 0; i < stackTrace.size(); i += 2 {
-                val filepath = cgr.filepaths[stackTrace[i]]
-                val line = stackTrace[i + 1]
-                parts.add("\n  at " + filepath + ":" + line)
+            for i = 0; i < stackTrace.size(); {
+                val funcNameIndex = stackTrace[i]
+                val fileNameIndex = stackTrace[i + 1]
+                val funcName = cgr.names[funcNameIndex]
+                val filepath = cgr.names[fileNameIndex]
+                val line = stackTrace[i + 2]
+                # NOTE: Due to the way we generate stack traces, we may see
+                # large number of duplicate stack trace entries.
+                # So here, we collapse consecutive duplicate
+                i += 3
+                var rep = 1
+                while (i + 3 < stackTrace.size() and
+                        stackTrace[i] == funcNameIndex and
+                        stackTrace[i + 1] == fileNameIndex and
+                        stackTrace[i + 2] == line) {
+                    i += 3
+                    rep++
+                }
+                parts.add("\n  in " + funcName + " (" + filepath + ":" + line + ")")
+                if rep > 1 {
+                    parts.add(" (x" + rep + ")")
+                }
             }
             "".join(parts)
         }

@@ -11,6 +11,7 @@ native class Nullable[T]: Iterable[T], ToBool, Default, Eq if T: Eq, Repr if T: 
     @generic def isEmpty(self: Self): Bool
     @generic def map[R](self: Self, f: Fn[T, R]): Nullable[R]
     @generic def get(self: Self): T
+    @generic def getOr(self, t: T): T = if val r = self { r } else { t }
     @generic def iter(self: Self): Iterator[T]
     @generic def toBool(self: Self): Bool
     @generic def default(): Self

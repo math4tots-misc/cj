@@ -81,23 +81,31 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     def func(self, baseType: Type) {
-        _locals = null(C2Locals())
 
         val (mark, name, funcType) = declarator(baseType)
-        val func = when funcType {
-            case func(ft) = Func(mark, name, ft)
-            else = throw MError("Expected function type", [mark])
-        }
-        for param in funcType.params {
-            locals.add(param.mark, param.type, param.name)
+        val func = if val f = translationUnit.getFuncOrNull(name) {
+            _locals = null(f.locals)
+            f
+        } else {
+            _locals = null(C2Locals())
+            val f = when funcType {
+                case func(ft) = Func(mark, name, ft)
+                else = throw MError("Expected function type", [mark])
+            }
+            for param in funcType.params {
+                locals.add(param.mark, param.type, param.name)
+            }
+            f.locals = locals
+            translationUnit.addFunc(f)
+            f
         }
 
-        func.locals = locals.list
         if not consume(';') {
+            if is_set!(func, body) {
+                throw MError("Duplicate function definition " + func.name, [mark, func.mark])
+            }
             func.body = block()
         }
-
-        translationUnit.addFunc(func)
 
         _locals = null
     }
