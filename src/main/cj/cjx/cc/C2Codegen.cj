@@ -31,7 +31,7 @@ class C2Codegen {
     private val initData: DynamicBuffer = DynamicBuffer([])
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
-    private val strlitCache: Map[String, Int] = MapOf()
+    private val strlitCache: Map[Uint8Array, Int] = MapOf()
     private val debugNameCache: Map[String, Int] = MapOf()
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
@@ -359,10 +359,10 @@ class C2Codegen {
         }
     }
 
-    def strlit(self, mark: Mark, value: String): Int {
+    def strlit(self, mark: Mark, value: Uint8Array): Int {
         if value not in strlitCache {
             strlitCache[value] = getCurrentInitDataEnd()
-            initData.addUTF8(value)
+            initData.addBuffer(value)
             initData.addUint8(0)
         }
         strlitCache[value]
@@ -413,7 +413,7 @@ class C2Codegen {
                     expr.func.name,
                     expr.args.map(a -> expr(a)),
                     type(expr.func.type.returnType)))
-            case str = m.i32.const(strlit(expr.mark, expr.stringValue))
+            case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)
             case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)

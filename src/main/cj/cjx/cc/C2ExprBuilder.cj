@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Uint8Array
 import cjx.cc.C2Token
 import cjx.parser.MError
 import cjx.cc.C2IR.Expr
@@ -154,10 +155,10 @@ class C2ExprBuilder {
         ret
     }
 
-    def str(self, mark: Mark, value: String): Expr {
+    def str(self, mark: Mark, value: Uint8Array): Expr {
         val ret = Expr(mark, Expr.Kind.str)
-        ret.stringValue = value
-        ret.type = Type.char.arrayOf(value.sizeUTF8() + 1)
+        ret.bytesValue = value
+        ret.type = Type.char.arrayOf(value.size() + 1)
         ret
     }
 

@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Uint8Array
 import cj.Error
 
 class C2Token: Repr {
@@ -46,15 +47,18 @@ class C2Token: Repr {
     @implicit(Unit, fromUnit)
     @implicit(Int, int)
     @implicit(String, string)
+    @implicit(Uint8Array, bytes)
     union Value : Repr {
         case none
         case int(Int)
         case string(String)
+        case bytes(Uint8Array)
         def fromUnit(u: Unit): Self = none
         def repr(self): String = when self {
             case none = "none"
             case string(s) = s.repr()
             case int(i) = i.repr()
+            case bytes(b) = b.repr()
         }
     }
 
@@ -66,6 +70,11 @@ class C2Token: Repr {
     def __get_stringValue(self): String = when value {
         case string(x) = x
         else = throw Error("Expected string value but got " + value)
+    }
+
+    def __get_bytesValue(self): Uint8Array = when value {
+        case bytes(x) = x
+        else = throw Error("Expected bytes value but got " + value)
     }
 
     def repr(self): String = (

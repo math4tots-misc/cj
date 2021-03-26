@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.DynamicBuffer
 import cj.StringBuilder
 import cjx.cc.C2Token
 import cjx.parser.Mark
@@ -22,28 +23,25 @@ class C2Lexer {
         b.add("[a-zA-Z_][a-zA-Z_0-9]*", m -> tok(m, C2Token.tIDENT, s -> s))
 
         b.add("'[^'\\\\]'", m -> tok(m, C2Token.tCHAR, s -> s[1].toInt()))
-        b.add("'\\\\.'", m -> tok(m, C2Token.tCHAR,
-            s -> readEscapeChar(m, s.toList(), 2).f0.toInt()))
+        b.add("'\\\\.'", m -> tok(m, C2Token.tCHAR, s -> readEscapeChar(m, s, 2).f0))
 
         b.add("\"([^'\\\\]|\\\\.)*\"", m -> tok(m, C2Token.tSTR, s -> {
             var escape = false
+            val dbuf = DynamicBuffer(0)
             val sb = StringBuilder()
-            val chars = s[1:-1].toList()
-            for i = 0; i < chars.size(); i++ {
-                if chars[i] == '\\' {
+            for i = 1; i + 1 < s.len(); {
+                if s[i] == '\\' {
                     i++
-                    val (ch, newI) = readEscapeChar(m, chars, i)
+                    val (ch, newI) = readEscapeChar(m, s, i)
                     Assert(newI > i)
-                    sb.char(ch)
-                    i = newI - 1 # account for automatic i++
+                    dbuf.addUint8(ch)
+                    i = newI
                 } else {
-                    sb.char(chars[i])
+                    dbuf.addUTF8(s[i].toString())
+                    i += s[i].size()
                 }
-                IO.println("  " + sb.toString().repr())
             }
-            val out = sb.toString()
-            IO.println("" + s.repr() + " -> " + out.repr())
-            out
+            dbuf.asUint8Array()
         }))
 
         # single character symbol tokens
@@ -88,8 +86,8 @@ class C2Lexer {
     private def symtok(m: Regex.MatchResult, type: Int): List[C2Token] = [
         C2Token(type, (), m.line, m.column, m.filename)]
 
-    private def readEscapeChar(m: Regex.MatchResult, chars: List[Char], var i: Int): Tuple[Char, Int] {
-        val escChar = chars[i]
+    private def readEscapeChar(m: Regex.MatchResult, s: String, var i: Int): Tuple[Int, Int] {
+        val escChar = s[i]
         val (c, newI) = switch escChar {
             case '0' = ('\0', i + 1)
             case '\'' = ('\'', i + 1)
@@ -114,29 +112,29 @@ class C2Lexer {
                     # octal
                     var ch = Int(escChar.toString())
                     i++
-                    if i < chars.size() and chars[i] >= '0' and chars[i] <= '7' {
-                        ch = 8 * ch + Int(chars[i].toString())
+                    if i < s.len() and s[i] >= '0' and s[i] <= '7' {
+                        ch = 8 * ch + Int(s[i].toString())
                         i++
-                        if i < chars.size() and chars[i] >= '0' and chars[i] <= '7' {
-                            ch = 8 * ch + Int(chars[i].toString())
+                        if i < s.len() and s[i] >= '0' and s[i] <= '7' {
+                            ch = 8 * ch + Int(s[i].toString())
                             i++
                         }
                     }
                     (ch.toChar(), i)
                 } else if escChar == 'x' {
                     i++
-                    if i >= chars.size() or not isHexDigit(chars[i]) {
+                    if i >= s.len() or not isHexDigit(s[i]) {
                         val mark = Mark(m.filename, m.line, m.column)
-                        val ec = if i >= chars.size() { "EOS" } else { chars[i].repr() }
+                        val ec = if i >= s.len() { "EOS" } else { s[i].repr() }
                         throw MError("Invalid hex escape " + ec, [mark])
                     }
-                    var ch = Int.fromHex(chars[i].toString())
+                    var ch = Int.fromHex(s[i].toString())
                     i++
-                    while i < chars.size() and isHexDigit(chars[i]) {
-                        ch = 16 * ch + Int.fromHex(chars[i].toString())
+                    while i < s.len() and isHexDigit(s[i]) {
+                        ch = 16 * ch + Int.fromHex(s[i].toString())
                         i++
                     }
-                    IO.println("" + chars + " -> " + ch + " -> " + ch.toChar())
+                    IO.println("" + s + " -> " + ch + " -> " + ch.toChar())
                     (ch.toChar(), i)
                 } else {
                     (escChar, i + 1)
@@ -145,7 +143,7 @@ class C2Lexer {
             # else = throw MError(
             #     "Unrecognized escape " + s, [Mark(m.filename, m.line, m.column)])
         }
-        (c, newI)
+        (c.toInt(), newI)
     }
 
     private def isHexDigit(ch: Char): Bool = (

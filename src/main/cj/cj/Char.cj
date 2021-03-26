@@ -1,5 +1,11 @@
 package cj
 
+## A proper unicode codepoint.
+##
+## NOTE: the ".size()" of a string does not always equal the number of Chars in that string.
+## This is because some Chars may require more than one char codes in the string.
+## You can use the '.size()' method on a Char to determine how much this should be.
+##
 native class Char: ToInt, ToChar, Hash, Repr, Default, Ord {
     def toInt(self: Self): Int = js!(Int, self)
     def toChar(self: Self): Char = self

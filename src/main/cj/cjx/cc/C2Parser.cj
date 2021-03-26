@@ -316,7 +316,7 @@ class C2Parser : ParserMixin[C2Token] {
         switch peek().type {
             case C2Token.tINT = eb.int(mark, next().intValue)
             case C2Token.tCHAR = eb.char(mark, next().intValue)
-            case C2Token.tSTR = eb.str(mark, next().stringValue)
+            case C2Token.tSTR = eb.str(mark, next().bytesValue)
             case '-'; case '+'; case '&'; case '*'
             case C2Token.tINCR; case C2Token.tDECR {
                 val type = next().type

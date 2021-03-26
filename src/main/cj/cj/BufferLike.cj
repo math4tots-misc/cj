@@ -1,10 +1,11 @@
 package cj
 
+import cj.Math
 import cj.Uint8Array
 import cj.ArrayBuffer
 
 ## trait for types that wrap an ArrayBuffer in some way
-trait BufferLike: Eq {
+trait BufferLike: Hash {
     def __get_buffer(self): ArrayBuffer
     def __get_byteOffset(self): Int
     def __get_byteLength(self): Int
@@ -24,6 +25,14 @@ trait BufferLike: Eq {
             }
         }
         true
+    }
+    def hash(self): Int {
+        var h = 1
+        val arr = Uint8Array.fromParts(buffer, byteOffset, byteLength)
+        for i = 0; i < arr.size(); i++ {
+            h = Math.combineHash(h, arr[i].hash())
+        }
+        h
     }
 
     def bytes(self): Iterator[Int] = asUint8Array().iter()

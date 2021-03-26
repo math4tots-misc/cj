@@ -232,7 +232,7 @@ class C2CompilerTest {
 
         assertStmt("return \"\\x00\"[0]; ", 0)
         assertStmt("return \"\\x77\"[0]; ", 119)
-        # assertStmt("return \"\\xA5\"[0]; ", 165)
-        # assertStmt("return \"\\x00ff\"[0]; ", 255)
+        assertStmt("return \"\\xA5\"[0]; ", 165)
+        assertStmt("return \"\\x00ff\"[0]; ", 255)
     }
 }

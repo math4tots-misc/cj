@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Uint8Array
 import cjx.cc.C2Locals
 import cj.StringBuilder
 import cj.Error
@@ -212,6 +213,7 @@ class C2IR {
         var type: Type = ?
         var intValue: Int = ?
         var stringValue: String = ?
+        var bytesValue: Uint8Array = ?
         var var_: Var = ?
         var gvar: GVar = ?
         var func: Func = ?

@@ -38,7 +38,8 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     ## Number of char codes in this string.
     ## NOTE: If the default encoding is UTF-16, this is neither the number of bytes
     ## nor the number of code points.
-    def size(self: Self): Int = js!(Int, self, ".length")
+    def size(self: Self): Int = js!(Int, self, ".length")  # deprecated, use len()
+    def len(self: Self): Int = js!(Int, self, ".length")
 
     def toBool(self: Self): Bool = js!(Bool, "!!", self)
 
