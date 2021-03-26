@@ -85,31 +85,49 @@ class C2Lexer {
     private def symtok(m: Regex.MatchResult, type: Int): List[C2Token] = [
         C2Token(type, (), m.line, m.column, m.filename)]
 
-    private def readEscapeChar(chars: List[Char], i: Int): Tuple[Char, Int] {
-        val c = switch chars[i] {
-            case '0' = '\0'
-            case '\'' = '\''
+    private def readEscapeChar(chars: List[Char], var i: Int): Tuple[Char, Int] {
+        val escChar = chars[i]
+        val (c, newI) = switch escChar {
+            case '0' = ('\0', i + 1)
+            case '\'' = ('\'', i + 1)
 
             # these overlap with JSON
-            case '"' = '"'
-            case 'b' = '\b'
-            case 'f' = '\f'
-            case 'r' = '\r'
-            case 't' = '\t'
-            case 'n' = '\n'
+            case '"' = ('"', i + 1)
+            case 'b' = ('\b', i + 1)
+            case 'f' = ('\f', i + 1)
+            case 'r' = ('\r', i + 1)
+            case 't' = ('\t', i + 1)
+            case 'n' = ('\n', i + 1)
 
             # additional escapes required by the C standard
-            case 'a' = (0x07).toChar()
-            case 'v' = (0x0B).toChar()
+            case 'a' = ((0x07).toChar(), i + 1)
+            case 'v' = ((0x0B).toChar(), i + 1)
 
             # GNU C extension
-            case 'e' = (0x1B).toChar()
+            case 'e' = ((0x1B).toChar(), i + 1)
 
-            else = chars[i]
+            else {
+                if escChar >= '0' and escChar <= '7' {
+                    # octal
+                    var ch = Int(escChar.toString())
+                    i++
+                    if i < chars.size() and chars[i] >= '0' and chars[i] <= '7' {
+                        ch = 8 * ch + Int(chars[i].toString())
+                        i++
+                        if i < chars.size() and chars[i] >= '0' and chars[i] <= '7' {
+                            ch = 8 * ch + Int(chars[i].toString())
+                            i++
+                        }
+                    }
+                    (ch.toChar(), i)
+                } else {
+                    (escChar, i + 1)
+                }
+            }
             # else = throw MError(
             #     "Unrecognized escape " + s, [Mark(m.filename, m.line, m.column)])
         }
-        (c, i + 1)
+        (c, newI)
     }
 
     def lex(filepath: String, string: String): List[C2Token] = lexer.lex(filepath, string)

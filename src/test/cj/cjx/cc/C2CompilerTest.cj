@@ -224,5 +224,10 @@ class C2CompilerTest {
         assertStmt("return \"\\ax\\ny\"[1];", 120)
         assertStmt("return \"\\ax\\ny\"[2];", 10)
         assertStmt("return \"\\ax\\ny\"[3];", 121)
+
+        assertStmt("return \"\\0\"[0];", 0)
+        assertStmt("return \"\\20\"[0];", 16)
+        assertStmt("return \"\\101\"[0];", 65)
+        assertStmt("return \"\\1500\"[0];", 104)
     }
 }
