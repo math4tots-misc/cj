@@ -12,6 +12,7 @@ import cjx.cc.C2IR.Stmt
 import cjx.cc.C2IR.Expr
 import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Var
+import cjx.cc.C2IR.GVar
 
 class C2Parser : ParserMixin[C2Token] {
     static private val assingPrec: Int = precof('=')
@@ -53,14 +54,35 @@ class C2Parser : ParserMixin[C2Token] {
 
     def translationUnit(self) {
         while not at(C2Token.tEOF) {
-            func()
+            val baseType = declspec()
+            if atFunc(baseType) {
+                func(baseType)
+            } else {
+                gvar(baseType)
+            }
         }
     }
 
-    def func(self) {
+    def gvar(self, baseType: Type) {
+        var first = true
+        while not consume(';') {
+            if not first { expect(',') }
+            first = false
+            val (mark, name, type) = declarator(baseType)
+            translationUnit.addGVar(GVar(mark, name, type))
+        }
+    }
+
+    def atFunc(self, baseType: Type): Bool {
+        val savedI = i
+        val ret = declarator(baseType).f2.isFunc()
+        i = savedI
+        ret
+    }
+
+    def func(self, baseType: Type) {
         _locals = null(C2Locals())
 
-        var baseType = declspec()
         val (mark, name, funcType) = declarator(baseType)
         val func = when funcType {
             case func(ft) = Func(mark, name, ft)
@@ -303,6 +325,8 @@ class C2Parser : ParserMixin[C2Token] {
                     eb.getvar(mark, var_)
                 } else if val func = translationUnit.getFuncOrNull(name) {
                     eb.func(mark, func)
+                } else if val gvar = translationUnit.getGVarOrNull(name) {
+                    eb.getgvar(mark, gvar)
                 } else {
                     throw MError("Variable '" + name + "' not found", [mark])
                 }

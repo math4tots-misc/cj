@@ -19,8 +19,8 @@ class C2Codegen {
     private static val unreachable: Binaryen.Type = Binaryen.unreachable
     private static val auto: Binaryen.Type = Binaryen.auto
     private static val stackSize = 4096
-    private static val initMemPageCount = 1
-    private static val maxMemPageCount = 4096
+    private static val maxMemPageCount = 8192
+    private static val wasmPageSize = 65536
 
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
@@ -28,10 +28,23 @@ class C2Codegen {
     private var locals: List[Binaryen.Type] = []
     private var cLocalOffsets: List[Int] = []
     private val initData: DynamicBuffer = DynamicBuffer([])
+    private val cGlobalOffsets: Map[String, Int] = MapOf()
+    private var cGlobalsEnd: Int = stackSize
+    private var cStaticDataEnd: Int = -1
 
     def emit(self, tu: C2IR.TranslationUnit): Tuple[Uint8Array, C2MemDesc] {
         m.addMemoryImport("0", "js", "memory")
-        m.setMemory(initMemPageCount, maxMemPageCount)
+
+        # reserve space for global variables
+        for gvar in tu.gvars {
+            Assert(gvar.name not in cGlobalOffsets)
+            val alignment = gvar.type.alignment()
+            cGlobalsEnd = alignTo(cGlobalsEnd, alignment)
+            Assert.equal(cGlobalsEnd % alignment, 0)
+            cGlobalOffsets[gvar.name] = cGlobalsEnd
+            cGlobalsEnd += gvar.type.size()
+        }
+        cStaticDataEnd = cGlobalsEnd  # static data is allocated after the global data
 
         # initialize the stack pointer
         m.addGlobal("SP", i32, true, m.i32.const(stackSize))
@@ -39,6 +52,9 @@ class C2Codegen {
         for func in tu.funcs {
             func(func)
         }
+
+        val initMemPageCount = (cStaticDataEnd + wasmPageSize - 1) // wasmPageSize
+        m.setMemory(initMemPageCount, maxMemPageCount)
 
         m.validate()
         if optimize { m.optimize() }
@@ -96,6 +112,7 @@ class C2Codegen {
     }
 
     def getLocalOffset(self, var_: C2IR.Var): Int = cLocalOffsets[var_.index]
+    def getGlobalOffset(self, gvar: C2IR.GVar): Int = cGlobalOffsets[gvar.name]
 
     def __get_localStackPtr(self): Binaryen.Expression = m.local.get(localSlotSP, i32)
 
@@ -127,13 +144,10 @@ class C2Codegen {
             Assert.equal(i, cLocalOffsets.size())
 
             val alignment = var_.type.alignment()
-            val size = var_.type.size()
-            if cLocalsByteSize % alignment != 0 {
-                cLocalsByteSize += alignment - cLocalsByteSize % alignment
-            }
+            cLocalsByteSize = alignTo(cLocalsByteSize, alignment)
             Assert.equal(cLocalsByteSize % alignment, 0)
             cLocalOffsets.add(cLocalsByteSize)
-            cLocalsByteSize += size
+            cLocalsByteSize += var_.type.size()
         }
 
         val stmts: List[Binaryen.Expression] = []
@@ -210,8 +224,17 @@ class C2Codegen {
         _setderef(mark, var_.type, offset, localStackPtr, expr(expr))
     }
 
+    def dropsetgvar(self, mark: Mark, gvar: C2IR.GVar, expr: C2IR.Expr): Binaryen.Expression {
+        val offset = getGlobalOffset(gvar)
+        _setderef(mark, gvar.type, offset, m.i32.const(0), expr(expr))
+    }
+
     def teevar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
         m.block(null, [dropsetvar(mark, var_, expr), getvar(mark, var_)], auto)
+    }
+
+    def teegvar(self, mark: Mark, gvar: C2IR.GVar, expr: C2IR.Expr): Binaryen.Expression {
+        m.block(null, [dropsetgvar(mark, gvar, expr), getgvar(mark, gvar)], auto)
     }
 
     def getvar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
@@ -219,9 +242,19 @@ class C2Codegen {
         _getderef(mark, var_.type, offset, localStackPtr)
     }
 
+    def getgvar(self, mark: Mark, gvar: C2IR.GVar): Binaryen.Expression {
+        val offset = getGlobalOffset(gvar)
+        _getderef(mark, gvar.type, offset, m.i32.const(0))
+    }
+
     def addrvar(self, var_: C2IR.Var): Binaryen.Expression {
         val offset = getLocalOffset(var_)
         m.i32.add(m.i32.const(offset), localStackPtr)
+    }
+
+    def addrgvar(self, gvar: C2IR.GVar): Binaryen.Expression {
+        val offset = getGlobalOffset(gvar)
+        m.i32.const(offset)
     }
 
     def deref(self, expr: C2IR.Expr): Binaryen.Expression {
@@ -279,6 +312,7 @@ class C2Codegen {
     def dropexpr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case setvar = dropsetvar(expr.mark, expr.var_, expr.arg)
+            case setgvar = dropsetgvar(expr.mark, expr.gvar, expr.arg)
             case setderef = dropsetderef(expr.mark, expr.lhs, expr.rhs)
             else = m.drop(expr(expr))
         }
@@ -300,6 +334,8 @@ class C2Codegen {
             case funcall = m.call(
                 expr.func.name, expr.args.map(a -> expr(a)), type(expr.func.type.returnType))
             case addrvar = addrvar(expr.var_)
+            case getgvar = getgvar(expr.mark, expr.gvar)
+            case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
             case deref = deref(expr.arg)

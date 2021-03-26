@@ -5,6 +5,7 @@ import cjx.parser.MError
 import cjx.cc.C2IR.Expr
 import cjx.cc.C2IR.Stmt
 import cjx.cc.C2IR.Var
+import cjx.cc.C2IR.GVar
 import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Func
 import cjx.parser.Mark
@@ -211,6 +212,28 @@ class C2ExprBuilder {
         ret
     }
 
+    def addrgvar(self, mark: Mark, gvar: GVar): Expr {
+        val ret = Expr(mark, Expr.Kind.addrgvar)
+        ret.gvar = gvar
+        ret.type = Type.ptrOf(gvar.type)
+        ret
+    }
+
+    def getgvar(self, mark: Mark, gvar: GVar): Expr {
+        val ret = Expr(mark, Expr.Kind.getgvar)
+        ret.gvar = gvar
+        ret.type = gvar.type
+        ret
+    }
+
+    def setgvar(self, mark: Mark, gvar: GVar, arg: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.setgvar)
+        ret.gvar = gvar
+        ret.arg = arg
+        ret.type = gvar.type
+        ret
+    }
+
     def setderef(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
         Assert(lhs.kind == Expr.Kind.deref)
         val ret = Expr(mark, Expr.Kind.setderef)
@@ -230,6 +253,7 @@ class C2ExprBuilder {
         if type == '=' {
             return when lhs.kind {
                 case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
+                case getgvar = setgvar(mark, lhs.gvar, icast(rhs, lhs.type))
                 case deref = setderef(mark, lhs, icast(rhs, lhs.type))
                 else = throw MError("" + lhs.kind + " is not assignable", [mark])
             }

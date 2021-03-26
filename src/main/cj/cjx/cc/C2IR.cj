@@ -6,6 +6,8 @@ import cjx.parser.Mark
 
 class C2IR {
     class TranslationUnit {
+        val gvars: List[GVar] = []
+        val gvarMap: Map[String, GVar] = MapOf()
         val funcs: List[Func] = []
         val funcMap: Map[String, Func] = MapOf()
         def addFunc(self, func: Func) {
@@ -14,6 +16,12 @@ class C2IR {
             funcMap[func.name] = func
         }
         def getFuncOrNull(self, name: String): Func? = funcMap.getOrNull(name)
+        def addGVar(self, gvar: GVar) {
+            Assert(gvar.name not in gvarMap)
+            gvars.add(gvar)
+            gvarMap[gvar.name] = gvar
+        }
+        def getGVarOrNull(self, name: String): GVar? = gvarMap.getOrNull(name)
     }
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
@@ -90,13 +98,19 @@ class C2IR {
             else = IO.panic("Type.base " + self)
         }
     }
-    class Var: Repr {
+    class Var: Repr { # local variable
         val mark: Mark
         val name: String
         val type: Type
         val index: Int
         def repr(self): String = "Var(" + name + "," + type + "," + index + ")"
         def toString(self): String = ("" + type + " " + name).trim()
+    }
+    class GVar: Repr { # global variable
+        val mark: Mark
+        val name: String
+        val type: Type
+        def repr(self): String = "GVar(" + name + "," + type + ")"
     }
     class Func {
         val mark: Mark
@@ -166,6 +180,10 @@ class C2IR {
             case getvar
             case setvar
 
+            case addrgvar    # address of a global variable
+            case getgvar
+            case setgvar
+
             case deref       # dereference a pointer
             case setderef    # assign to a dereferenced address
             case ptrAdd      # add an int to a pointer
@@ -181,6 +199,7 @@ class C2IR {
         var type: Type = ?
         var intValue: Int = ?
         var var_: Var = ?
+        var gvar: GVar = ?
         var func: Func = ?
         var arg: Expr = ?
         var lhs: Expr = ?
@@ -192,6 +211,7 @@ class C2IR {
             if is_set!(self, type) { sb.str(",\"type\":\"" + type + "\"") }
             if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
             if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
+            if is_set!(self, gvar) { sb.str(",\"gvar\":\"" + gvar.name + "\"") }
             if is_set!(self, arg) { sb.str(",\"arg\":" + arg.repr()) }
             if is_set!(self, lhs) { sb.str(",\"lhs\":" + lhs.repr()) }
             if is_set!(self, rhs) { sb.str(",\"rhs\":" + rhs.repr()) }

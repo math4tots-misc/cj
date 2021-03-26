@@ -160,4 +160,19 @@ class C2CompilerTest {
         assertStmt("int x=1; return sizeof(x=2);", 4)
         assertStmt("int x=1; sizeof(x=2); return x;", 1)
     }
+
+    @test
+    def globalVars() {
+        assertFns("int x; int main() { return x; }", 0)
+        assertFns("int x; int main() { x=3; return x; }", 3)
+        assertFns("int x; int y; int main() { x=3; y=4; return x+y; }", 7)
+        assertFns("int x, y; int main() { x=3; y=4; return x+y; }", 7)
+        assertFns("int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }", 0)
+        assertFns("int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }", 1)
+        assertFns("int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }", 2)
+        assertFns("int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }", 3)
+
+        assertFns("int x; int main() { return sizeof(x); }", 4)
+        assertFns("int x[4]; int main() { return sizeof(x); }", 16)
+    }
 }
