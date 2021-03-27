@@ -49,7 +49,7 @@ class C2Codegen {
         for gvar in tu.gvars {
             Assert(gvar.name not in cGlobalOffsets)
             val alignment = gvar.type.alignment()
-            cGlobalsEnd = alignTo(cGlobalsEnd, alignment)
+            cGlobalsEnd = cGlobalsEnd.roundUp(alignment)
             Assert.equal(cGlobalsEnd % alignment, 0)
             cGlobalOffsets[gvar.name] = cGlobalsEnd
             cGlobalsEnd += gvar.type.size()
@@ -93,8 +93,6 @@ class C2Codegen {
             for i = 0; i < addedByteLen; i++ { initData.addUint8(0) }
         }
     }
-
-    def alignTo(n: Int, align: Int): Int = n.roundUp(align)
 
     def newLabel(self): String {
         val name = "l" + labelCount
@@ -180,7 +178,7 @@ class C2Codegen {
             Assert.equal(i, cLocalOffsets.size())
 
             val alignment = var_.type.alignment()
-            cLocalsByteSize = alignTo(cLocalsByteSize, alignment)
+            cLocalsByteSize = cLocalsByteSize.roundUp(alignment)
             Assert.equal(cLocalsByteSize % alignment, 0)
             cLocalOffsets.add(cLocalsByteSize)
             cLocalsByteSize += var_.type.size()
