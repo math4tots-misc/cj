@@ -41,6 +41,11 @@ class C2RT {
             1
         }
 
+        val __putsi: Fn[Int, Int, Int] = (ptr, i) -> {
+            IO.println(getstr.call(ptr) + i)
+            1
+        }
+
         val stackTrace: List[Int] = []
         val __push: Fn[Int, Int, Int, Unit] = (funcNameIndex, fileNameIndex, lineNumber) -> {
             stackTrace.add(funcNameIndex)
@@ -89,6 +94,7 @@ class C2RT {
             c: jsobj!(
                 puts: puts,
                 __puti: __puti,
+                __putsi: __putsi,
                 assert: assert,
                 __push: __push,
                 __pop: __pop,

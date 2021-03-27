@@ -94,7 +94,7 @@ class C2Codegen {
         }
     }
 
-    def alignTo(n: Int, align: Int): Int = (n + align - 1) // align * align
+    def alignTo(n: Int, align: Int): Int = n.roundUp(align)
 
     def newLabel(self): String {
         val name = "l" + labelCount
@@ -124,6 +124,14 @@ class C2Codegen {
         val bexpr = expr(expr)
         val local = newLocal(type)
         val assign = m.local.set(local, bexpr)
+        f.call(local, assign)
+    }
+
+    ## Store the given expression in a new temporary variable and an expression
+    ## assigning to that
+    def _withLocalSet[R](self, type: C2IR.Type, expr: Binaryen.Expression, f: Fn[Int, Binaryen.Expression, R]): R {
+        val local = newLocal(type(type))
+        val assign = m.local.set(local, expr)
         f.call(local, assign)
     }
 
@@ -234,11 +242,15 @@ class C2Codegen {
         when stmt.kind {
             case nop = m.nop()
             case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
-            case ret = withLocalSet(stmt.expr, (localRetVar, assign) -> m.block(null, [
-                assign,
-                restoreSP(),
-                m.return_(m.local.get(localRetVar, type(stmt.expr.type))),
-            ], auto))
+            case ret {
+                _withLocalSet(stmt.expr.type, expr(stmt.expr), (localRetVar, assign) -> {
+                    m.block(null, [
+                        assign,
+                        restoreSP(),
+                        m.return_(m.local.get(localRetVar, type(stmt.expr.type))),
+                    ], auto)
+                })
+            }
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             case while_ {
@@ -312,8 +324,8 @@ class C2Codegen {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
             case char = m.i32.load8_u(offset, 0, addrExpr)
-            case array(..) {
-                # array values cannot be stored in a register, so
+            case array(..); case struct_(..) {
+                # array and struct values cannot be stored in a register, so
                 # instead in these cases we just return the address as is
                 if offset { m.i32.add(m.i32.const(offset), addrExpr) } else { addrExpr }
             }
@@ -335,19 +347,27 @@ class C2Codegen {
         }
     }
 
+    def _teederef(
+            self,
+            mark: Mark,
+            valtype: C2IR.Type,
+            offset: Int,
+            addrExpr: Binaryen.Expression,
+            valExpr: Binaryen.Expression): Binaryen.Expression {
+        val valbtype = type(valtype)
+        _withLocalSet(valtype, valExpr, (local, assignExpr) -> m.block(null, [
+            assignExpr,
+            _setderef(mark, valtype, offset, addrExpr, m.local.get(local, valbtype)),
+            m.local.get(local, valbtype),
+        ], auto))
+    }
+
     def dropsetderef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
         _setderef(mark, valExpr.type, 0, expr(addrExpr), expr(valExpr))
     }
 
     def teederef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
-        val valbtype = type(valExpr.type)
-        withLocalSet(valExpr, (local, assignExpr) -> {
-            m.block(null, [
-                assignExpr,
-                _setderef(mark, valExpr.type, 0, expr(addrExpr), m.local.get(local, valbtype)),
-                m.local.get(local, valbtype)
-            ], auto)
-        })
+        _teederef(mark, valExpr.type, 0, expr(addrExpr), expr(valExpr))
     }
 
     def dropexpr(self, expr: C2IR.Expr): Binaryen.Expression {
@@ -355,6 +375,7 @@ class C2Codegen {
             case setvar = dropsetvar(expr.mark, expr.var_, expr.arg)
             case setgvar = dropsetgvar(expr.mark, expr.gvar, expr.arg)
             case setderef = dropsetderef(expr.mark, expr.lhs, expr.rhs)
+            case setmember = dropsetmember(expr.mark, expr.lhs, expr.member, expr.rhs)
             else = m.drop(expr(expr))
         }
     }
@@ -366,6 +387,46 @@ class C2Codegen {
             initData.addUint8(0)
         }
         strlitCache[value]
+    }
+
+    def getmember(
+            self,
+            mark: Mark,
+            structExpr: C2IR.Expr,
+            member: C2IR.Type.Struct.Member): Binaryen.Expression {
+        _getderef(
+            mark,
+            member.type,
+            member.offset,
+            expr(structExpr)) # struct exprs should resolve to ptrs like arrays
+    }
+
+    def dropsetmember(
+            self,
+            mark: Mark,
+            structExpr: C2IR.Expr,
+            member: C2IR.Type.Struct.Member,
+            valExpr: C2IR.Expr): Binaryen.Expression {
+        _setderef(
+            mark,
+            member.type,
+            member.offset,
+            expr(structExpr), # struct exprs should resovle to ptrs like arrays
+            expr(valExpr))
+    }
+
+    def teemember(
+            self,
+            mark: Mark,
+            structExpr: C2IR.Expr,
+            member: C2IR.Type.Struct.Member,
+            valExpr: C2IR.Expr): Binaryen.Expression {
+        _teederef(
+            mark,
+            member.type,
+            member.offset,
+            expr(structExpr), # struct exprs should resovle to ptrs like arrays
+            expr(valExpr))
     }
 
     def withMark(self, mark: Mark, expr: Binaryen.Expression): Binaryen.Expression {
@@ -421,6 +482,8 @@ class C2Codegen {
             case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
+            case getmember = getmember(expr.mark, expr.arg, expr.member)
+            case setmember = teemember(expr.mark, expr.lhs, expr.member, expr.rhs)
             case deref = deref(expr.arg)
             case setderef = teederef(expr.mark, expr.lhs, expr.rhs)
             case arrayToPtr = expr(expr.arg)

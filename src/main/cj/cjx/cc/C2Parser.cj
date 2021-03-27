@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.Math
 import cjx.cc.C2ExprBuilder
 import cjx.parser.Mark
 import cjx.cc.C2Locals
@@ -119,7 +120,8 @@ class C2Parser : ParserMixin[C2Token] {
         switch peek().type {
             case C2Token.kwVOID
             case C2Token.kwCHAR
-            case C2Token.kwINT = true
+            case C2Token.kwINT
+            case C2Token.kwSTRUCT = true
             else = false
         }
     }
@@ -156,8 +158,38 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwVOID { next(); Type.void }
             case C2Token.kwINT { next(); Type.int }
             case C2Token.kwCHAR { next(); Type.char }
-            else = errorKind("declaration")
+            case C2Token.kwSTRUCT {
+                next()
+                val tag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
+                # TODO handle struct lookup by tag
+                val struct_ = Type.Struct(mark, tag)
+                structDecl(struct_)
+                struct_
+            }
+            else = errorKind("typename")
         }
+    }
+
+    def structDecl(self, struct_: Type.Struct) {
+        expect('{')
+        var currentOffset = 0
+        var currentAlignment = 1
+        while not consume('}') {
+            val baseType = declspec()
+            var first = true
+            while not consume(';') {
+                if not first { expect(',') }
+                first = false
+                val (memberMark, memberName, memberType) = declarator(baseType)
+                currentAlignment = Math.max(currentAlignment, memberType.alignment())
+                currentOffset = currentOffset.roundUp(memberType.alignment())
+                val member = Type.Struct.Member(memberMark, memberName, memberType, currentOffset)
+                currentOffset += member.type.size()
+                struct_.members.add(member)
+            }
+        }
+        struct_._alignment = currentAlignment
+        struct_._size = currentOffset.roundUp(currentAlignment)
     }
 
     def declarator(self, var type: Type): Tuple[Mark, String, Type] {
@@ -295,6 +327,11 @@ class C2Parser : ParserMixin[C2Token] {
                     expr = eb.postop(mark, type, expr)
                 }
                 case '(' { expr = eb.call(mark, expr, args()) }
+                case '.' {
+                    next()
+                    val memberName = expect(C2Token.tIDENT).stringValue
+                    expr = eb.member(mark, expr, memberName)
+                }
                 else = error("Unhandled operator " + peek().repr())
             }
             tokprec = precof(peek().type)

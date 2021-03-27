@@ -278,6 +278,44 @@ class C2ExprBuilder {
         genBinop(mark, Expr.Kind.comma, rhs.type, lhs, rhs)
     }
 
+    def member(self, mark: Mark, arg: Expr, name: String): Expr {
+        addType(arg)
+        val struct_ = when arg.type {
+            case struct_(s) = s
+            else = throw MError("" + arg.type + " is not a struct", [mark])
+        }
+        val member = if val m = struct_.getMemberOrNull(name) { m } else {
+            throw MError("Member " + name + " not found in " + arg.type, [mark])
+        }
+        val ret = Expr(mark, Expr.Kind.getmember)
+        ret.arg = arg
+        ret.member = member
+        ret.type = member.type
+        ret
+    }
+
+    def setmember0(self, mark: Mark, lhs: Expr, member: Type.Struct.Member, var rhs: Expr): Expr {
+        addType(lhs)
+        rhs = icast(rhs, member.type)
+        val ret = Expr(mark, Expr.Kind.setmember)
+        ret.lhs = lhs
+        ret.rhs = rhs
+        ret.member = member
+        ret.type = member.type
+        ret
+    }
+
+    def assign(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
+        return when lhs.kind {
+            case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
+            case getgvar = setgvar(mark, lhs.gvar, icast(rhs, lhs.type))
+            case deref = setderef(mark, lhs, icast(rhs, lhs.type))
+            case comma = comma(mark, lhs.lhs, binop(mark, '=', lhs.rhs, rhs))
+            case getmember = setmember0(mark, lhs.arg, lhs.member, rhs)
+            else = throw MError("" + lhs.kind + " is not assignable", [mark])
+        }
+    }
+
     def binop(self, mark: Mark, type: Int, var lhs: Expr, var rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
@@ -285,21 +323,10 @@ class C2ExprBuilder {
         # ======================================================================
         # comma
         # ======================================================================
-        if type == ',' {
-            return comma(mark, lhs, rhs)
-        }
-
-        # ======================================================================
-        # assignment
-        # ======================================================================
-        if type == '=' {
-            return when lhs.kind {
-                case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
-                case getgvar = setgvar(mark, lhs.gvar, icast(rhs, lhs.type))
-                case deref = setderef(mark, lhs, icast(rhs, lhs.type))
-                case comma = comma(mark, lhs.lhs, binop(mark, '=', lhs.rhs, rhs))
-                else = throw MError("" + lhs.kind + " is not assignable", [mark])
-            }
+        switch type {
+            case ',' { return comma(mark, lhs, rhs) }
+            case '=' { return assign(mark, lhs, rhs) }
+            else = ()
         }
 
         # ======================================================================

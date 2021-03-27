@@ -25,6 +25,7 @@ class C2IR {
         }
         def getGVarOrNull(self, name: String): GVar? = gvarMap.getOrNull(name)
     }
+    @implicit(Type.Struct, struct_)
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
         class Func {
@@ -44,6 +45,29 @@ class C2IR {
             def __eq(self, other: Self): Bool = base == other.base and len == other.len
         }
         class Struct {
+            class Member: Eq {
+                val mark: Mark
+                val name: String
+                val type: Type
+                var offset: Int
+                def __eq(self, other: Self): Bool = name == other.name and type == other.type
+            }
+            val mark: Mark
+            val tag: String?
+            val members: List[Member] = []
+            var _size: Int = ?
+            var _alignment: Int = ?
+            def size(self): Int = _size
+            def alignment(self): Int = _alignment
+            def __eq(self, other: Self): Bool = members == other.members
+            def getMemberOrNull(self, memberName: String): Member? {
+                for member in members {
+                    if member.name == memberName {
+                        return null(member)
+                    }
+                }
+                null
+            }
         }
         case void
         case char
@@ -67,14 +91,14 @@ class C2IR {
             case ptr(p) = "ptr(" + p.base + ")"
             case array(a) = "array(" + a.base + "," + a.len + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
-            case struct_(s) = "struct()"
+            case struct_(s) = "struct(..)"
             else name() = name
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and when self {
             case ptr(p) = p == get!(other, ptr, 0)
             case array(a) = a == get!(other, array, 0)
             case func(f) = f == get!(other, func, 0)
-            case struct_(s) = throw Error("TODO struct type equality")
+            case struct_(s) = s == get!(other, struct_, 0)
             else() = true
         }
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
@@ -83,11 +107,11 @@ class C2IR {
             case char = 1
             case void; case int; case ptr(..); case func(..) = 4
             case array(a) = a.len * a.base.size()
-            case struct_(..) = IO.panic("TODO Type.size sruct")
+            case struct_(s) = s.size()
         }
         def alignment(self): Int = when self {
             case array(a) = a.base.alignment()
-            case struct_(..) = IO.panic("TODO Type.alignment struct")
+            case struct_(s) = s.alignment()
             case ptr(..); case func(..) = size()
             else() = size()
         }
@@ -184,6 +208,9 @@ class C2IR {
 
             case comma
 
+            case getmember   # struct member access
+            case setmember
+
             case postIncr
             case postDecr
 
@@ -226,6 +253,7 @@ class C2IR {
         var rhs: Expr = ?
         var args: List[Expr] = ?
         var stmt: Stmt = ?
+        var member: Type.Struct.Member = ?
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")
@@ -239,6 +267,7 @@ class C2IR {
             if is_set!(self, rhs) { sb.str(",\"rhs\":" + rhs.repr()) }
             if is_set!(self, args) { sb.str(",\"args\":" + args.repr()) }
             if is_set!(self, stmt) { sb.str(",\"stmt\":" + stmt.repr()) }
+            if is_set!(self, member) { sb.str(",\"member\":\"" + member.offset + "/" + member.name + "\"") }
             sb.str("}")
             sb.toString()
         }
