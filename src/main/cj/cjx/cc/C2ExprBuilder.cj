@@ -284,6 +284,9 @@ class C2ExprBuilder {
             case struct_(s) = s
             else = throw MError("" + arg.type + " is not a struct", [mark])
         }
+        if not struct_.isComplete() {
+            throw MError("struct " + struct_.tag + " is an incomplete type", [mark])
+        }
         val member = if val m = struct_.getMemberOrNull(name) { m } else {
             throw MError("Member " + name + " not found in " + arg.type, [mark])
         }

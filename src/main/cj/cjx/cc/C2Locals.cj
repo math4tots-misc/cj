@@ -4,10 +4,12 @@ import cjx.parser.MError
 import cjx.parser.Mark
 import cjx.cc.C2IR.Var
 import cjx.cc.C2IR.Type
+import cjx.cc.C2IR.Taggable
 
 class C2Locals {
     val list: List[Var] = []
     val maps: List[Map[String, Var]] = [MapOf()]
+    val tagMaps: List[Map[String, Taggable]] = [MapOf()]
 
     def get(self, mark: Mark, name: String): Var {
         if val var_ = getOrNull(name) { var_ } else {
@@ -39,8 +41,10 @@ class C2Locals {
 
     def scoped[R](self, f: Fn[R]): R {
         maps.add(MapOf())
+        tagMaps.add(MapOf())
         val ret = f.call()
         maps.pop()
+        tagMaps.pop()
         ret
     }
 }

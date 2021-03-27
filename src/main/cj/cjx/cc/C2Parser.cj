@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.cc.C2Scope
 import cj.Math
 import cjx.cc.C2ExprBuilder
 import cjx.parser.Mark
@@ -30,8 +31,7 @@ class C2Parser : ParserMixin[C2Token] {
 
     val tokens: List[C2Token]
     var i = 0
-    val translationUnit: TranslationUnit = TranslationUnit()
-    var _locals: C2Locals? = null
+    val scope: C2Scope = C2Scope()
     val eb: C2ExprBuilder = C2ExprBuilder()
 
     def mark(self): Mark = markAt(peek())
@@ -41,7 +41,8 @@ class C2Parser : ParserMixin[C2Token] {
     def errorAtMark(self, message: String, mark: Mark): NoReturn = throw MError(
         message, [mark])
 
-    def __get_locals(self): C2Locals = _locals.get()
+    def __get_locals(self): C2Locals = scope._locals.get()
+    def __get_translationUnit(self): TranslationUnit = scope.translationUnit
 
     def precof(type: Int): Int = switch type {
         case '.'; case '('; case '['; case C2Token.tINCR; case C2Token.tDECR = 150
@@ -83,13 +84,12 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     def func(self, baseType: Type) {
-
         val (mark, name, funcType) = declarator(baseType)
         val func = if val f = translationUnit.getFuncOrNull(name) {
-            _locals = null(f.locals)
+            scope._locals = null(f.locals)
             f
         } else {
-            _locals = null(C2Locals())
+            scope._locals = null(C2Locals())
             val f = when funcType {
                 case func(ft) = Func(mark, name, ft)
                 else = throw MError("Expected function type", [mark])
@@ -109,7 +109,7 @@ class C2Parser : ParserMixin[C2Token] {
             func.body = block()
         }
 
-        _locals = null
+        scope._locals = null
     }
 
     # ========================================================================
@@ -160,17 +160,42 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwCHAR { next(); Type.char }
             case C2Token.kwSTRUCT {
                 next()
-                val tag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
-                # TODO handle struct lookup by tag
-                val struct_ = Type.Struct(mark, tag)
-                structDecl(struct_)
-                struct_
+                val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
+                if val tag = optTag {
+                    val optTaggable = if at('{') {
+                        # If a body is present, you don't want to check parent scopes
+                        scope.getCurrentScopeTaggableOrNull(tag)
+                    } else {
+                        scope.getTaggableOrNull(tag)
+                    }
+                    val struct_ = if val taggable = optTaggable {
+                        when taggable {
+                            case struct_(s) = s
+                            else = throw MError(
+                                "Conflicting taggable kind", [mark, taggable.mark])
+                        }
+                    } else {
+                        val s = Type.Struct(mark, optTag)
+                        scope.addTaggable(s)
+                        s
+                    }
+                    if at('{') { structDecl(struct_) }
+                    struct_
+                } else {
+                    # When no tag is provided, always assume a struct body always follows
+                    val struct_ = Type.Struct(mark, optTag)
+                    structDecl(struct_)
+                    struct_
+                }
             }
             else = errorKind("typename")
         }
     }
 
     def structDecl(self, struct_: Type.Struct) {
+        if struct_.isComplete() {
+            throw MError("Duplicate struct definition", [mark(), struct_.mark])
+        }
         expect('{')
         var currentOffset = 0
         var currentAlignment = 1
@@ -387,6 +412,9 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwSIZEOF {
                 next()
                 val expr = unary()
+                if not expr.type.isComplete() {
+                    throw MError("" + expr.type + " is an incomplete type", [mark])
+                }
                 eb.int(mark, expr.type.size())
             }
             else = errorKind("expression")

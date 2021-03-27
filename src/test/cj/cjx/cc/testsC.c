@@ -42,6 +42,14 @@ void test01_struct() {
     aeq(({ struct {} x; sizeof(x); }), 0);
 }
 
+void test02_tagged_struct() {
+    aeq(({ struct t {int a; int b;} x; struct t y; sizeof(y); }), 8);
+    aeq(({ struct t {int a; int b;}; struct t y; sizeof(y); }), 8);
+    aeq(({ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; sizeof(y); }), 2);
+    aeq(({ struct t {int x;}; int t=1; struct t y; y.x=2; t+y.x; }), 3);
+}
+
 int main() {
     test01_struct();
+    test02_tagged_struct();
 }

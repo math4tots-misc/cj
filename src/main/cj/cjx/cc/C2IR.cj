@@ -26,6 +26,12 @@ class C2IR {
         def getGVarOrNull(self, name: String): GVar? = gvarMap.getOrNull(name)
     }
     @implicit(Type.Struct, struct_)
+    union Taggable {
+        case struct_(Type.Struct)
+        def __get_mark(self): Mark = when self { else(t) = t.mark }
+        def __get_tag(self): String? = when self { else(t) = t.tag }
+    }
+    @implicit(Type.Struct, struct_)
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
         class Func {
@@ -59,6 +65,7 @@ class C2IR {
             var _alignment: Int = ?
             def size(self): Int = _size
             def alignment(self): Int = _alignment
+            def isComplete(self): Bool = is_set!(self, _size)
             def __eq(self, other: Self): Bool = members == other.members
             def getMemberOrNull(self, memberName: String): Member? {
                 for member in members {
@@ -86,6 +93,11 @@ class C2IR {
         def intPtrConvertible(self): Bool = when self {
             case void; case char; case int; case ptr(..) = true
             else = false
+        }
+        def isComplete(self): Bool = when self {
+            case void = false
+            case struct_(s) = s.isComplete()
+            else = true
         }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
