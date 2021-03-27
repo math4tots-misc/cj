@@ -105,7 +105,7 @@ class C2IR {
             case ptr(p) = "ptr(" + p.base + ")"
             case array(a) = "array(" + a.base + "," + a.len + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
-            case struct_(s) = "struct(..)"
+            case struct_(s) = if val tag = s.tag { "struct(" + tag + ")" } else { "struct(..) " }
             else name() = name
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and when self {

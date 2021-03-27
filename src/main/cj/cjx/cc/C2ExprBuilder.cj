@@ -94,7 +94,7 @@ class C2ExprBuilder {
             # TODO: Consider warning... for now, just allow
             return expr
         }
-        throw MError("Expected " + type + " but got " + expr.type, [expr.mark])
+        throw MError("Expected expression of type " + type + " but got " + expr.type, [expr.mark])
     }
 
     ## Decay an array to a pointer
@@ -209,10 +209,20 @@ class C2ExprBuilder {
     def call(self, mark: Mark, fexpr: Expr, args: List[Expr]): Expr {
         when fexpr.kind {
             case func {
+                val func = fexpr.func
+                val params = func.params
+                if params.size() != args.size() {
+                    throw MError(
+                        func.name + " expects " + params.size() + " args but got " + args.size(),
+                        [mark])
+                }
+                for i = 0; i < args.size(); i++ {
+                    args[i] = icast(args[i], params[i].type)
+                }
                 val ret = Expr(mark, Expr.Kind.funcall)
-                ret.func = fexpr.func
+                ret.func = func
                 ret.args = args
-                ret.type = fexpr.func.type.returnType
+                ret.type = func.type.returnType
                 ret
             }
             else = throw MError("" + fexpr.type + " is not callable", [mark])

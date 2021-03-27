@@ -49,20 +49,31 @@ void test02_tagged_struct() {
     aeq(({ struct t {int x;}; int t=1; struct t y; y.x=2; t+y.x; }), 3);
 }
 
-// struct Foo {
-//     int x;
-// };
+struct Foo {
+    int x;
+};
 
-// int structArg(struct Foo foo) {
-//     return foo.x + 2;
-// }
+int structArg(struct Foo foo) {
+    return foo.x + 2;
+}
 
-// void test03_struct_with_funcs() {
-//     aeq(({ struct Foo foo; foo.x = 3; structArg(foo); }), 123);
-// }
+void setArg(struct Foo foo) {
+    foo.x = 294;
+}
+
+void setArgp(struct Foo *foo) {
+    (*foo).x = 294;
+}
+
+void test03_structs_assignment() {
+    aeq(({ struct Foo foo; foo.x = 3; structArg(foo); }), 5);
+    aeq(({ struct Foo foo; foo.x = 331; setArg(foo); foo.x; }), 331);
+    aeq(({ struct Foo foo; foo.x = 331; setArgp(&foo); foo.x; }), 294);
+    aeq(({ struct Foo a, b; b.x = 5; a.x = 3; b = a; b.x; }), 3);
+}
 
 int main() {
     test01_struct();
     test02_tagged_struct();
-    // test03_struct_with_funcs();
+    test03_structs_assignment();
 }

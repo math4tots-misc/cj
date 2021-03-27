@@ -27,6 +27,7 @@ class C2Codegen {
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
     private var localSlotSP = -1 # index of wasm local variable pointing to start of local stack
+    private var cLocalsByteSize = -1 # byte size of all C locals
     private var locals: List[Binaryen.Type] = []
     private var cLocalOffsets: List[Int] = []
     private val initData: DynamicBuffer = DynamicBuffer([])
@@ -136,14 +137,15 @@ class C2Codegen {
             case array(..) = i32
             case ptr(..) = i32
             case func(..) = i32
-            case struct_(..) = throw Error("TODO codegen type struct")
+            case struct_(..) = i32
         }
     }
 
     def getLocalOffset(self, var_: C2IR.Var): Int = cLocalOffsets[var_.index]
     def getGlobalOffset(self, gvar: C2IR.GVar): Int = cGlobalOffsets[gvar.name]
 
-    def __get_localStackPtr(self): Binaryen.Expression = m.local.get(localSlotSP, i32)
+    def __get_localStackPtr(self): Binaryen.Expression = m.i32.sub(
+        m.local.get(localSlotSP, i32), m.i32.const(cLocalsByteSize))
 
     def restoreSP(self): Binaryen.Expression {
         m.global.set("SP", m.local.get(localSlotSP, i32))
@@ -164,9 +166,8 @@ class C2Codegen {
         Assert.equal(localSlotSP, func.params.size())
 
         cLocalOffsets = []
-        var nextCLocalOffset = 0
         val cLocals = func.locals.list
-        var cLocalsByteSize = 0
+        cLocalsByteSize = 0
         for i = 0; i < cLocals.size(); i++ {
             val var_ = cLocals[i]
             Assert.equal(i, var_.index)
@@ -178,20 +179,21 @@ class C2Codegen {
             cLocalOffsets.add(cLocalsByteSize)
             cLocalsByteSize += var_.type.size()
         }
+        cLocalsByteSize = cLocalsByteSize.roundUp(8)
 
         val stmts: List[Binaryen.Expression] = []
         currentFunc = null(func)
 
         # allocate space for C local variables on the stack
+        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
         stmts.add(m.global.set("SP",
             m.i32.sub(m.global.get("SP", i32), m.i32.const(cLocalsByteSize))))
-        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
 
         val params = func.params
         for i = 0; i < params.size(); i++ {
             val param = params[i]
             val ptype = type(param.type)
-            stmts.add(_setderef(
+            stmts.add(_dropsetderef(
                 param.mark,
                 param.type,
                 getLocalOffset(param),
@@ -267,12 +269,12 @@ class C2Codegen {
 
     def dropsetvar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
         val offset = getLocalOffset(var_)
-        _setderef(mark, var_.type, offset, localStackPtr, expr(expr))
+        _dropsetderef(mark, var_.type, offset, localStackPtr, expr(expr))
     }
 
     def dropsetgvar(self, mark: Mark, gvar: C2IR.GVar, expr: C2IR.Expr): Binaryen.Expression {
         val offset = getGlobalOffset(gvar)
-        _setderef(mark, gvar.type, offset, m.i32.const(0), expr(expr))
+        _dropsetderef(mark, gvar.type, offset, m.i32.const(0), expr(expr))
     }
 
     def teevar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
@@ -326,7 +328,7 @@ class C2Codegen {
         }
     }
 
-    def _setderef(
+    def _dropsetderef(
             self,
             mark: Mark,
             valtype: C2IR.Type,
@@ -334,10 +336,37 @@ class C2Codegen {
             addrExpr: Binaryen.Expression,
             valExpr: Binaryen.Expression): Binaryen.Expression {
         when valtype {
-            case void; case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
+            case void = throw MError("Assignment to void type is not allowed", [mark])
+            case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
-            else = throw MError("TODO _setderef " + valtype, [mark])
+            case array(..) = throw MError("Assignment to array type is not allowed", [mark])
+            case struct_(s) = _memcpy(mark, offset, addrExpr, valExpr, s.size())
+            else = throw MError("TODO _dropsetderef " + valtype, [mark])
         }
+    }
+
+    ## Effectively a compile time memcpy
+    def _memcpy(
+            self,
+            mark: Mark,
+            destOffset: Int,
+            destAddrExpr: Binaryen.Expression,
+            srcAddrExpr: Binaryen.Expression,
+            size: Int): Binaryen.Expression {
+        val voidp = C2IR.Type.void.ptrOf()
+        _withLocalSet(voidp, destAddrExpr, (destLocal, destAssignExpr) ->
+            _withLocalSet(voidp, srcAddrExpr, (srcLocal, srcAssignExpr) -> {
+                val exprs = [destAssignExpr, srcAssignExpr]
+                var i = 0
+                for ; i < size; i++ {
+                    exprs.add(m.i32.store8(
+                        # write to (destOffset + i + dest)
+                        destOffset + i, 0, m.local.get(destLocal, i32),
+                        # read from (i + src)
+                        m.i32.load8_u(i, 0, m.local.get(srcLocal, i32))))
+                }
+                m.block(null, exprs, none)
+            }))
     }
 
     def _teederef(
@@ -350,13 +379,13 @@ class C2Codegen {
         val valbtype = type(valtype)
         _withLocalSet(valtype, valExpr, (local, assignExpr) -> m.block(null, [
             assignExpr,
-            _setderef(mark, valtype, offset, addrExpr, m.local.get(local, valbtype)),
+            _dropsetderef(mark, valtype, offset, addrExpr, m.local.get(local, valbtype)),
             m.local.get(local, valbtype),
         ], auto))
     }
 
     def dropsetderef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
-        _setderef(mark, valExpr.type, 0, expr(addrExpr), expr(valExpr))
+        _dropsetderef(mark, valExpr.type, 0, expr(addrExpr), expr(valExpr))
     }
 
     def teederef(self, mark: Mark, addrExpr: C2IR.Expr, valExpr: C2IR.Expr): Binaryen.Expression {
@@ -400,7 +429,7 @@ class C2Codegen {
             structExpr: C2IR.Expr,
             member: C2IR.Type.Struct.Member,
             valExpr: C2IR.Expr): Binaryen.Expression {
-        _setderef(
+        _dropsetderef(
             mark,
             member.type,
             member.offset,
@@ -507,7 +536,7 @@ class C2Codegen {
                     m.local.set(
                         valLocalVar,
                         _getderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32))),
-                    _setderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32),
+                    _dropsetderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32),
                         tadd(
                             bvaltype,
                             m.local.get(valLocalVar, bvaltype),
