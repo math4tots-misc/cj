@@ -94,6 +94,8 @@ class C2IR {
             case void; case char; case int; case ptr(..) = true
             else = false
         }
+        ## More info on incomplete types:
+        ## https://docs.oracle.com/cd/E19205-01/819-5265/bjals/index.html
         def isComplete(self): Bool = when self {
             case void = false
             case struct_(s) = s.isComplete()
