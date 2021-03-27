@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.cc.C2Code
 import cj.DynamicBuffer
 import cjx.cc.C2MemDesc
 import cjx.parser.Mark
@@ -36,13 +37,7 @@ class C2Codegen {
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
 
-    class Result {
-        val binary: Uint8Array
-        val memDesc: C2MemDesc
-        val names: List[String]  # for debugging/stacktrace
-    }
-
-    def emit(self, tu: C2IR.TranslationUnit): Result {
+    def emit(self, tu: C2IR.TranslationUnit): C2Code {
         m.addMemoryImport("0", "js", "memory")
 
         # reserve space for global variables
@@ -75,7 +70,7 @@ class C2Codegen {
         m.validate()
         if optimize { m.optimize() }
         # IO.println(m.emitText())
-        Result(
+        C2Code(
             m.emitBinary(),
             C2MemDesc(
                 initMemPageCount,

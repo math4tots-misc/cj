@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.cc.C2Code
 import cjx.cc.C2RT
 import cjx.cc.C2MemDesc
 import www.wa.WebAssembly
@@ -34,7 +35,7 @@ class C2Compiler {
         C2Parser.parse(tokens)
     }
 
-    def translate(self, filepath: String, contents: String): C2Codegen.Result {
+    def translate(self, filepath: String, contents: String): C2Code {
         val tu = parse(filepath, contents)
         val codegen = C2Codegen()
         codegen.emit(tu)

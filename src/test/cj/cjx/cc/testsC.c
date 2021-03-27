@@ -49,7 +49,20 @@ void test02_tagged_struct() {
     aeq(({ struct t {int x;}; int t=1; struct t y; y.x=2; t+y.x; }), 3);
 }
 
+// struct Foo {
+//     int x;
+// };
+
+// int structArg(struct Foo foo) {
+//     return foo.x + 2;
+// }
+
+// void test03_struct_with_funcs() {
+//     aeq(({ struct Foo foo; foo.x = 3; structArg(foo); }), 123);
+// }
+
 int main() {
     test01_struct();
     test02_tagged_struct();
+    // test03_struct_with_funcs();
 }

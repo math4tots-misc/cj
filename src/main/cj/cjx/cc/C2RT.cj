@@ -1,6 +1,6 @@
 package cjx.cc
 
-import cjx.cc.C2Codegen
+import cjx.cc.C2Code
 import cj.Uint8Array
 import www.JSObject
 import cj.DataView
@@ -18,7 +18,7 @@ class C2RT {
         mem
     }
 
-    def newImportObject(self, cgr: C2Codegen.Result): JSObject {
+    def newImportObject(self, cgr: C2Code): JSObject {
         val mem = newMemory(cgr.memDesc)
 
         val getstr: Fn[Int, String] = start -> {
