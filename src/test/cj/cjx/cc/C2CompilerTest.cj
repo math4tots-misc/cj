@@ -48,6 +48,12 @@ class C2CompilerTest {
     }
 
     @test
+    def testsBcc() {
+        compiler.includePrelude = false
+        compiler.run("testsB.cc", include_str!("testsB.cc"))
+    }
+
+    @test
     def func() {
         assertFns("int foo() { return 5; } int main() { return foo(); }", 5)
         assertFns("int add(int a, int b) { return a + b; } int main() { return add(3, 17); }", 20)

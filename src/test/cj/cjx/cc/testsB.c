@@ -6,7 +6,6 @@
 //   * statement expressions
 
 void assert(int cond);
-int __puti(int i);
 void aeq(int lhs, int rhs) {
     assert(lhs == rhs);
 }
@@ -91,7 +90,6 @@ void tests5_char() {
 }
 
 void tests6_strlit() {
-    __puti(""[0]);
     aeq(""[0], 0);
     aeq(sizeof(""), 1);
 
@@ -153,4 +151,5 @@ int main() {
     tests5_char();
     tests6_strlit();
     tests7_stmtexpr();
+    // for test8, see testsB.cc
 }

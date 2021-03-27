@@ -49,6 +49,7 @@ class C2Parser : ParserMixin[C2Token] {
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
         case C2Token.tEQ; case C2Token.tNE = 70
         case '=' = 50
+        case ',' = 10
         else = -1
     }
 
@@ -141,7 +142,7 @@ class C2Parser : ParserMixin[C2Token] {
             }
             val var_ = locals.add(mark, type, name)
             if consume('=') {
-                val init = expr()
+                val init = assign()
                 initstmts.add(eb.exprStmt(
                     mark, eb.binop(mark, '=', eb.getvar(mark, var_), init)))
             }
@@ -259,7 +260,7 @@ class C2Parser : ParserMixin[C2Token] {
     # ========================================================================
 
     def expr(self): Expr = exprpr(0)
-
+    def assign(self): Expr = exprpr(assingPrec)
     def unary(self): Expr = exprpr(unaryPrec)
 
     def exprpr(self, precedence: Int): Expr {
@@ -268,7 +269,7 @@ class C2Parser : ParserMixin[C2Token] {
         while precedence < tokprec {
             val mark = mark()
             switch peek().type {
-                case '+';case '-';case '*';case '/';case '%'
+                case '+';case '-';case '*';case '/';case '%';case ','
                 case C2Token.tEQ;case C2Token.tNE
                 case '<'; case C2Token.tLE
                 case '>'; case C2Token.tGE {
@@ -305,7 +306,7 @@ class C2Parser : ParserMixin[C2Token] {
         val args: List[Expr] = []
         expect('(')
         while not consume(')') {
-            args.add(expr())
+            args.add(assign())
             if not consume(',') { assert(')') }
         }
         args

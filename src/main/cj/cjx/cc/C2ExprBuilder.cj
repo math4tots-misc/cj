@@ -272,9 +272,22 @@ class C2ExprBuilder {
         ret
     }
 
+    def comma(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
+        addType(lhs)
+        addType(rhs)
+        genBinop(mark, Expr.Kind.comma, rhs.type, lhs, rhs)
+    }
+
     def binop(self, mark: Mark, type: Int, var lhs: Expr, var rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
+
+        # ======================================================================
+        # comma
+        # ======================================================================
+        if type == ',' {
+            return comma(mark, lhs, rhs)
+        }
 
         # ======================================================================
         # assignment
@@ -284,6 +297,7 @@ class C2ExprBuilder {
                 case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
                 case getgvar = setgvar(mark, lhs.gvar, icast(rhs, lhs.type))
                 case deref = setderef(mark, lhs, icast(rhs, lhs.type))
+                case comma = comma(mark, lhs.lhs, binop(mark, '=', lhs.rhs, rhs))
                 else = throw MError("" + lhs.kind + " is not assignable", [mark])
             }
         }

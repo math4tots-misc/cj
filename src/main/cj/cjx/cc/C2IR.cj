@@ -182,6 +182,8 @@ class C2IR {
 
             case str
 
+            case comma
+
             case postIncr
             case postDecr
 
