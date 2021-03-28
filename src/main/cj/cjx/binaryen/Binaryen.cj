@@ -26,6 +26,7 @@ native class Binaryen {
         def __get_i64(self): ModuleI64 = js!(ModuleI64, self, ".i64")
         def return_(self, value: Expression): Expression = js!(
             Expression, self, ".return(", value, ")")
+        def returnVoid(self): Expression = js!(Expression, self, ".return()")
         def unreachable(self): Expression = js!(Expression, self, ".unreachable()")
         def nop(self): Expression = js!(Expression, self, ".nop()")
         def drop(self, value: Expression): Expression = js!(
@@ -226,7 +227,17 @@ native class Binaryen {
     native class ModuleI64 : IntOps {}
     native class Function {}
     native class Expression {}
-    native class Type: Eq {
+    native class Type: Eq, Repr {
         def __eq(self, other: Self): Bool = self is other
+        def repr(self): String {
+            if self == Binaryen.none { return "none" }
+            if self == Binaryen.i32 { return "i32" }
+            if self == Binaryen.i64 { return "i64" }
+            if self == Binaryen.f32 { return "f32" }
+            if self == Binaryen.f64 { return "f64" }
+            if self == Binaryen.auto { return "auto" }
+            if self == Binaryen.unreachable { return "unreachable" }
+            "unknown(" + js!(String, "''+", self) + ")"
+        }
     }
 }

@@ -38,6 +38,7 @@ class C2Codegen {
     private val debugNameCache: Map[String, Int] = MapOf()
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
+    private var retptrLocalIndex: Int? = null # used for functions with struct return types
 
     def emit(self, tu: C2IR.TranslationUnit): C2Code {
         m.addMemoryImport("0", "js", "memory")
@@ -162,18 +163,28 @@ class C2Codegen {
     }
 
     def func(self, func: C2IR.Func) {
+        val functype = func.type
+        val (wasmReturnType, wasmParamTypes) = if functype.returnType.isStruct() {
+            (none, functype.paramTypes.map(t -> type(t)) + [i32])
+        } else {
+            (type(functype.returnType), functype.paramTypes.map(t -> type(t)))
+        }
         if not is_set!(func, body) {
-            val returnType = type(func.type.returnType)
-            val paramTypes = Binaryen.createType(func.type.paramTypes.map(t -> type(t)))
-            m.addFunctionImport(func.name, "c", func.name, paramTypes, returnType)
+            m.addFunctionImport(
+                func.name, "c", func.name, Binaryen.createType(wasmParamTypes), wasmReturnType)
             return ()
         }
 
         # IO.println(func.name + " -> " + func.body)
+        # IO.println(func.name + " -> " + wasmReturnType + wasmParamTypes)
 
-        locals = func.params.map(p -> type(p.type))
+        locals = wasmParamTypes.clone()
+        retptrLocalIndex = if functype.returnType.isStruct() {
+            null(locals.size() - 1) } else { null }
         localSlotSP = newLocal(i32)
-        Assert.equal(localSlotSP, func.params.size())
+        Assert.equal(
+            localSlotSP,
+            func.params.size() + if functype.returnType.isStruct() { 1 } else { 0 })
         cLocalOffsets = MapOf()
         cLocalsByteSize = 0
         currentFunc = null(func)
@@ -201,7 +212,7 @@ class C2Codegen {
                 m.local.get(i, ptype)))
         }
         stmts.add(stmt(func.body))
-        if func.name == "main" or func.type.returnType.isVoid() {
+        if func.name == "main" or functype.returnType.isVoid() {
             # main function has an implicit "return 0"
             # functions that return void also have an implicit return at the end
             # (we translate void to i32 for convenience, so we still just return 0)
@@ -220,8 +231,8 @@ class C2Codegen {
         val body = m.block(null, stmts, auto)
         val binaryenFunc = m.addFunction(
             func.name,
-            Binaryen.createType(func.type.paramTypes.map(t -> type(t))),
-            type(func.type.returnType),
+            Binaryen.createType(wasmParamTypes),
+            wasmReturnType,
             locals,
             body)
 
@@ -270,13 +281,37 @@ class C2Codegen {
                 m.block(null, stmts, auto)
             }
             case ret {
-                _withLocalSet(stmt.expr.type, expr(stmt.expr), (localRetVar, assign) -> {
-                    m.block(null, [
-                        assign,
-                        restoreSP(),
-                        m.return_(m.local.get(localRetVar, type(stmt.expr.type))),
-                    ], auto)
-                })
+                if val func = currentFunc {
+                    when func.type.returnType {
+                        case struct_(..) {
+                            Assert(stmt.expr.type.isStruct())
+                            m.block(null, [
+                                # Copy the returning struct to the memory
+                                # pointed to by the struct return pointer.
+                                _dropsetderef(
+                                    stmt.mark,
+                                    func.type.returnType,
+                                    0,  # dest offset
+                                    m.local.get(retptrLocalIndex.get(), i32),  # dest ptr
+                                    expr(stmt.expr), # src ptr
+                                ),
+                                restoreSP(),
+                                m.returnVoid(),
+                            ], none)
+                        }
+                        else {
+                            _withLocalSet(stmt.expr.type, expr(stmt.expr), (localRetVar, assign) -> {
+                                m.block(null, [
+                                    assign,
+                                    restoreSP(),
+                                    m.return_(m.local.get(localRetVar, type(stmt.expr.type))),
+                                ], auto)
+                            })
+                        }
+                    }
+                } else {
+                    throw MError("return only be used inside a function definition", [stmt.mark])
+                }
             }
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
@@ -522,12 +557,31 @@ class C2Codegen {
             case intNe; case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt; case charLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case funcall = withMark(
-                expr.mark,
-                m.call(
-                    expr.func.name,
-                    expr.args.map(a -> expr(a)),
-                    type(expr.func.type.returnType)))
+            case funcall {
+                val args = expr.args.map(a -> expr(a))
+                val rtype = type(expr.func.type.returnType)
+                val fname = expr.func.name
+                Assert.equal(expr.type, expr.func.type.returnType)
+                when expr.type {
+                    case struct_(s) {
+                        # If a function returns a struct, we need to allocate
+                        # space for the struct to be stored. Further, we pass
+                        # a pointer to this allocated space as an extra argument
+                        # so that the function can write to it.
+                        # The function's wasm return type should be 'none'.
+                        val size = s.size()
+                        val offset = alloca(size, s.alignment())
+                        val outptr = m.i32.add(m.i32.const(offset), stackPtr)
+                        args.add(outptr) # add result ptr
+                        m.block(null, [
+                            m.call(fname, args, none),
+                            _memcpy(expr.mark, offset, stackPtr, outptr, size),
+                            outptr,
+                        ], auto)
+                    }
+                    else = withMark(expr.mark, m.call(fname, args, rtype))
+                }
+            }
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
             case stmt {

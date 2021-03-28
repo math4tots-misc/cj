@@ -88,10 +88,9 @@ void test04_structs_return() {
     aeq(({ newFoo(5).x; }), 5);
     aeq(({ newFoo(5).x + newFoo(7).x; }), 12);
 
-    // Currently, this line fails because we don't properly
-    // allocate memory for structs returned from function calls.
-    // TODO: Fix this.
-    // aeq(({ newFoo2(newFoo(5), newFoo(7)).x; }), 35);
+    // tries to test that space is properly allocated for temporary structs
+    // returned from functions
+    aeq(({ newFoo2(newFoo(5), newFoo(7)).x; }), 35);
 }
 
 int main() {
