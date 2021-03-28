@@ -250,7 +250,18 @@ class C2Codegen {
             }
             case block {
                 val savedStackOffset = cLocalsByteSize
-                val stmts = stmt.stmts.map(s -> stmt(s))
+                val stmts = stmt.stmts.map(s -> when s.kind {
+                    case declvar = stmt(s)
+                    else {
+                        # Every non-declaration statement creates its own little scope.
+                        # The intent is to clear out all temporary variables
+                        # that might have been allocated by some expressions.
+                        val savedOffset = cLocalsByteSize
+                        val ret = stmt(s)
+                        cLocalsByteSize = savedOffset
+                        ret
+                    }
+                })
                 cLocalsByteSize = savedStackOffset
                 m.block(null, stmts, auto)
             }
