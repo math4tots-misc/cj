@@ -27,9 +27,10 @@ class C2Codegen {
     private val m: Binaryen.Module = Binaryen.Module()
     private var labelCount = 0
     private var localSlotSP = -1 # index of wasm local variable pointing to start of local stack
-    private var cLocalsByteSize = -1 # byte size of all C locals
+    private var cLocalsByteSize = -1 # current number of bytes on the stack
+    private var cLocalsMaxbyteSize = -1 # total number of bytes the required on the stack
     private var locals: List[Binaryen.Type] = []
-    private var cLocalOffsets: List[Int] = []
+    private var cLocalOffsets: Map[Int, Int] = MapOf()
     private val initData: DynamicBuffer = DynamicBuffer([])
     private val cGlobalOffsets: Map[String, Int] = MapOf()
     private var cGlobalsEnd: Int = stackSize
@@ -150,6 +151,16 @@ class C2Codegen {
         m.global.set("SP", m.local.get(localSlotSP, i32))
     }
 
+    ## Alocate memory on the stack.
+    ## Returns the stack offset where the memory was allocated
+    def alloca(self, size: Int, alignment: Int): Int {
+        cLocalsByteSize = cLocalsByteSize.roundUp(alignment)
+        var offset = cLocalsByteSize
+        cLocalsByteSize += size
+        if cLocalsMaxbyteSize < cLocalsByteSize { cLocalsMaxbyteSize = cLocalsByteSize }
+        offset
+    }
+
     def func(self, func: C2IR.Func) {
         if not is_set!(func, body) {
             val returnType = type(func.type.returnType)
@@ -163,34 +174,24 @@ class C2Codegen {
         locals = func.params.map(p -> type(p.type))
         localSlotSP = newLocal(i32)
         Assert.equal(localSlotSP, func.params.size())
-
-        cLocalOffsets = []
-        val cLocals = func.locals.list
+        cLocalOffsets = MapOf()
         cLocalsByteSize = 0
-        for i = 0; i < cLocals.size(); i++ {
-            val var_ = cLocals[i]
-            Assert.equal(i, var_.index)
-            Assert.equal(i, cLocalOffsets.size())
-
-            val alignment = var_.type.alignment()
-            cLocalsByteSize = cLocalsByteSize.roundUp(alignment)
-            Assert.equal(cLocalsByteSize % alignment, 0)
-            cLocalOffsets.add(cLocalsByteSize)
-            cLocalsByteSize += var_.type.size()
-        }
-        cLocalsByteSize = cLocalsByteSize.roundUp(8)
-
-        val stmts: List[Binaryen.Expression] = []
         currentFunc = null(func)
 
-        # allocate space for C local variables on the stack
-        stmts.add(m.local.set(localSlotSP, m.global.get("SP", i32)))
-        stmts.add(m.global.set("SP",
-            m.i32.sub(m.global.get("SP", i32), m.i32.const(cLocalsByteSize))))
+        val stmts = [
+            # save the stack pointer here so that we can easily restore
+            # the stack pointer without knowing the size of the stack frame.
+            m.local.set(localSlotSP, m.global.get("SP", i32)),
 
+            # placeholder -- once we have emitted the rest of the function body,
+            # we will know the actual stack size this function requires.
+            # We reserve a spot here so that we can update it later.
+            m.nop(),
+        ]
         val params = func.params
         for i = 0; i < params.size(); i++ {
             val param = params[i]
+            cLocalOffsets[param.index] = alloca(param.type.size(), param.type.alignment())
             val ptype = type(param.type)
             stmts.add(_dropsetderef(
                 param.mark,
@@ -199,7 +200,6 @@ class C2Codegen {
                 stackPtr,
                 m.local.get(i, ptype)))
         }
-
         stmts.add(stmt(func.body))
         if func.name == "main" or func.type.returnType.isVoid() {
             # main function has an implicit "return 0"
@@ -210,6 +210,14 @@ class C2Codegen {
         } else {
             stmts.add(m.unreachable())
         }
+
+        # at this point, we should know how much space we need to allocate on the
+        # stack, so we can patch the nop from the beginning to update the stack
+        # pointer.
+        cLocalsMaxbyteSize = cLocalsMaxbyteSize.roundUp(8)
+        stmts[1] = m.global.set("SP",
+                m.i32.sub(m.global.get("SP", i32), m.i32.const(cLocalsMaxbyteSize)))
+        IO.println(func.name + " -> stacksize = " + cLocalsMaxbyteSize)
         val body = m.block(null, stmts, auto)
         val binaryenFunc = m.addFunction(
             func.name,
@@ -235,8 +243,18 @@ class C2Codegen {
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
         when stmt.kind {
             case nop = m.nop()
-            case declvar = m.nop()
-            case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
+            case declvar {
+                val var_ = stmt.var_
+                Assert(var_.index not in cLocalOffsets)
+                cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
+                m.nop()
+            }
+            case block {
+                val savedStackOffset = cLocalsByteSize
+                val stmts = stmt.stmts.map(s -> stmt(s))
+                cLocalsByteSize = savedStackOffset
+                m.block(null, stmts, auto)
+            }
             case ret {
                 _withLocalSet(stmt.expr.type, expr(stmt.expr), (localRetVar, assign) -> {
                     m.block(null, [
