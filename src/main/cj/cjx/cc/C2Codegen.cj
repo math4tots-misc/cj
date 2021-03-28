@@ -530,7 +530,13 @@ class C2Codegen {
                     type(expr.func.type.returnType)))
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
-            case stmt = m.block(null, [stmt(expr.stmt), expr(expr.arg)], auto)
+            case stmt {
+                val savedStackOffset = cLocalsByteSize
+                val parts = expr.stmts.map(s -> stmtInBlock(s))
+                parts.add(expr(expr.arg))
+                cLocalsByteSize = savedStackOffset
+                m.block(null, parts, auto)
+            }
             case addrvar = addrvar(expr.var_)
             case getgvar = getgvar(expr.mark, expr.gvar)
             case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)

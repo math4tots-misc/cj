@@ -166,24 +166,16 @@ class C2ExprBuilder {
         ret
     }
 
-    def stmtExpr(self, mark: Mark, stmt: Stmt): Expr {
+    def stmtExpr(self, mark: Mark, stmts: List[Stmt]): Expr {
         val ret = Expr(mark, Expr.Kind.stmt)
-        ret.stmt = stmt
-        ret.arg = when stmt.kind {
-            case block {
-                val argstmt = stmt.stmts.pop()
-                when argstmt.kind {
-                    case expr = argstmt.expr
-                    else = throw MError(
-                        "The last statement of a block expression must be an expression",
-                        [mark])
-                }
-            }
-            case expr = stmt.expr
-            else = throw MError(
-                "statement expressions require a non-empty block statement but got " + stmt.kind,
+        if not stmts or stmts.last().kind != Stmt.Kind.expr {
+            throw MError(
+                "The last statement of a block expression must be an expression statement",
                 [mark])
         }
+        val arg = stmts.pop().expr
+        ret.stmts = stmts
+        ret.arg = arg
         ret.type = ret.arg.type
         ret
     }

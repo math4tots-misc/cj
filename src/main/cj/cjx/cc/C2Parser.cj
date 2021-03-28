@@ -305,8 +305,7 @@ class C2Parser : ParserMixin[C2Token] {
         if atDeclaration() { declaration() } else { [stmt()] }
     }
 
-    def block(self): Stmt {
-        val mark = mark()
+    def blockInside(self): List[Stmt] {
         val stmts: List[Stmt] = []
         expect('{')
         locals.scoped(() -> {
@@ -314,7 +313,12 @@ class C2Parser : ParserMixin[C2Token] {
                 stmts.addAll(declOrStmt())
             }
         })
-        eb.block(mark, stmts)
+        stmts
+    }
+
+    def block(self): Stmt {
+        val mark = mark()
+        eb.block(mark, blockInside())
     }
 
     # ========================================================================
@@ -393,9 +397,9 @@ class C2Parser : ParserMixin[C2Token] {
             case '(' {
                 next()
                 if at('{') {
-                    val stmt = block()
+                    val stmts = blockInside()
                     expect(')')
-                    eb.stmtExpr(mark, stmt)
+                    eb.stmtExpr(mark, stmts)
                 } else {
                     val inner = expr()
                     expect(')')

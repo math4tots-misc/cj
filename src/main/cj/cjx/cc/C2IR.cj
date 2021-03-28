@@ -269,7 +269,7 @@ class C2IR {
         var lhs: Expr = ?
         var rhs: Expr = ?
         var args: List[Expr] = ?
-        var stmt: Stmt = ?
+        var stmts: List[Stmt] = ?
         var member: Type.Struct.Member = ?
         def repr(self): String {
             val sb = StringBuilder()
@@ -283,7 +283,7 @@ class C2IR {
             if is_set!(self, lhs) { sb.str(",\"lhs\":" + lhs.repr()) }
             if is_set!(self, rhs) { sb.str(",\"rhs\":" + rhs.repr()) }
             if is_set!(self, args) { sb.str(",\"args\":" + args.repr()) }
-            if is_set!(self, stmt) { sb.str(",\"stmt\":" + stmt.repr()) }
+            if is_set!(self, stmts) { sb.str(",\"stmts\":" + stmts.repr()) }
             if is_set!(self, member) { sb.str(",\"member\":\"" + member.offset + "/" + member.name + "\"") }
             sb.str("}")
             sb.toString()
