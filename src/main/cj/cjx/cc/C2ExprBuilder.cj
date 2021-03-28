@@ -64,9 +64,8 @@ class C2ExprBuilder {
         ret
     }
 
-    def for_(self, mark: Mark, init: Stmt, cond: Expr, incr: Expr, then: Stmt): Stmt {
-        block(mark, [
-            init,
+    def for_(self, mark: Mark, inits: List[Stmt], cond: Expr, incr: Expr, then: Stmt): Stmt {
+        block(mark, inits + [
             while_(mark, cond, block(mark, [
                 then,
                 exprStmt(mark, incr),

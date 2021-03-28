@@ -78,11 +78,13 @@ void tests3_if_stmt() {
 int t4f0() { int i=0, j=0; for (i=0; i<=10; i=i+1) j=i+j; return j; }
 int t4f1() { for (;;) {return 3;} return 5; }
 int t4f2() { int i=0; while(i<10) { i=i+1; } return i; }
+int t4f3() { int j=0; for (int i=0; i<=10; i=i+1) j=i+j; return j; }
 
 void tests4_loop() {
     aeq(t4f0(), 55);
     aeq(t4f1(), 3);
     aeq(t4f2(), 10);
+    aeq(t4f3(), 55);
 }
 
 int main() {

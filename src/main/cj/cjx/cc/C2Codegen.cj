@@ -217,7 +217,6 @@ class C2Codegen {
         cLocalsMaxbyteSize = cLocalsMaxbyteSize.roundUp(8)
         stmts[1] = m.global.set("SP",
                 m.i32.sub(m.global.get("SP", i32), m.i32.const(cLocalsMaxbyteSize)))
-        IO.println(func.name + " -> stacksize = " + cLocalsMaxbyteSize)
         val body = m.block(null, stmts, auto)
         val binaryenFunc = m.addFunction(
             func.name,
