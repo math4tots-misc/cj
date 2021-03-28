@@ -144,8 +144,7 @@ class C2Codegen {
     def getLocalOffset(self, var_: C2IR.Var): Int = cLocalOffsets[var_.index]
     def getGlobalOffset(self, gvar: C2IR.GVar): Int = cGlobalOffsets[gvar.name]
 
-    def __get_localStackPtr(self): Binaryen.Expression = m.i32.sub(
-        m.local.get(localSlotSP, i32), m.i32.const(cLocalsByteSize))
+    def __get_stackPtr(self): Binaryen.Expression = m.global.get("SP", i32)
 
     def restoreSP(self): Binaryen.Expression {
         m.global.set("SP", m.local.get(localSlotSP, i32))
@@ -197,7 +196,7 @@ class C2Codegen {
                 param.mark,
                 param.type,
                 getLocalOffset(param),
-                localStackPtr,
+                stackPtr,
                 m.local.get(i, ptype)))
         }
 
@@ -270,7 +269,7 @@ class C2Codegen {
 
     def dropsetvar(self, mark: Mark, var_: C2IR.Var, expr: C2IR.Expr): Binaryen.Expression {
         val offset = getLocalOffset(var_)
-        _dropsetderef(mark, var_.type, offset, localStackPtr, expr(expr))
+        _dropsetderef(mark, var_.type, offset, stackPtr, expr(expr))
     }
 
     def dropsetgvar(self, mark: Mark, gvar: C2IR.GVar, expr: C2IR.Expr): Binaryen.Expression {
@@ -288,7 +287,7 @@ class C2Codegen {
 
     def getvar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
         val offset = getLocalOffset(var_)
-        _getderef(mark, var_.type, offset, localStackPtr)
+        _getderef(mark, var_.type, offset, stackPtr)
     }
 
     def getgvar(self, mark: Mark, gvar: C2IR.GVar): Binaryen.Expression {
@@ -298,7 +297,7 @@ class C2Codegen {
 
     def addrvar(self, var_: C2IR.Var): Binaryen.Expression {
         val offset = getLocalOffset(var_)
-        m.i32.add(m.i32.const(offset), localStackPtr)
+        m.i32.add(m.i32.const(offset), stackPtr)
     }
 
     def addrgvar(self, gvar: C2IR.GVar): Binaryen.Expression {
