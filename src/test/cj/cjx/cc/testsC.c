@@ -72,8 +72,31 @@ void test03_structs_assignment() {
     aeq(({ struct Foo a, b; b.x = 5; a.x = 3; b = a; b.x; }), 3);
 }
 
+struct Foo newFoo(int x) {
+    struct Foo foo;
+    foo.x = x;
+    return foo;
+}
+
+struct Foo newFoo2(struct Foo a, struct Foo b) {
+    struct Foo foo;
+    foo.x = a.x * b.x;
+    return foo;
+}
+
+void test04_structs_return() {
+    aeq(({ newFoo(5).x; }), 5);
+    aeq(({ newFoo(5).x + newFoo(7).x; }), 12);
+
+    // Currently, this line fails because we don't properly
+    // allocate memory for structs returned from function calls.
+    // TODO: Fix this.
+    // aeq(({ newFoo2(newFoo(5), newFoo(7)).x; }), 35);
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
     test03_structs_assignment();
+    test04_structs_return();
 }

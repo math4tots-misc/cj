@@ -531,6 +531,16 @@ class C2Codegen {
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
             case stmt {
+                if expr.type.isStruct() {
+                    # Supporting this would require allcating space for the
+                    # resulting struct
+                    # It can be done, but given that statement expressions are
+                    # a non-standard extension and to keep things simple for myself,
+                    # I'm going to forgo supporting this feature for now.
+                    throw MError(
+                        "Returning a struct from a block expression is not supported",
+                        [expr.mark])
+                }
                 val savedStackOffset = cLocalsByteSize
                 val parts = expr.stmts.map(s -> stmtInBlock(s))
                 parts.add(expr(expr.arg))

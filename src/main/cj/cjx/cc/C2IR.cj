@@ -87,6 +87,7 @@ class C2IR {
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
+        def isStruct(self): Bool = tag!(self) == tag!(Self, struct_)
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def isPtrOrArray(self): Bool = isPtr() or isArray()
