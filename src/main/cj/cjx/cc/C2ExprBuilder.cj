@@ -19,6 +19,12 @@ class C2ExprBuilder {
 
     def nop(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.nop)
 
+    def declvar(self, var_: Var): Stmt {
+        val ret = Stmt(var_.mark, Stmt.Kind.declvar)
+        ret.var_ = var_
+        ret
+    }
+
     def exprStmt(self, mark: Mark, expr: Expr): Stmt {
         val ret = Stmt(mark, Stmt.Kind.expr)
         ret.expr = expr

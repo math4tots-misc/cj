@@ -143,6 +143,7 @@ class C2Parser : ParserMixin[C2Token] {
                 throw MError("Expected name", [mark])
             }
             val var_ = locals.add(mark, type, name)
+            initstmts.add(eb.declvar(var_))
             if consume('=') {
                 val init = assign()
                 initstmts.add(eb.exprStmt(

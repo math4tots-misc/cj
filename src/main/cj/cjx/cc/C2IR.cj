@@ -163,6 +163,7 @@ class C2IR {
     class Stmt: Repr {
         union Kind: Repr, Hash {
             case nop
+            case declvar
             case block
             case expr
             case ret
@@ -179,6 +180,7 @@ class C2IR {
         var cond: Expr = ?
         var then: Stmt = ?
         var els: Stmt = ?
+        var var_: Var = ?
 
         def repr(self): String {
             val sb = StringBuilder()
@@ -188,6 +190,7 @@ class C2IR {
             if is_set!(self, cond) { sb.str(",\"cond\":" + cond.repr()) }
             if is_set!(self, then) { sb.str(",\"then\":" + then.repr()) }
             if is_set!(self, els) { sb.str(",\"els\":" + els.repr()) }
+            if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
             sb.str("}")
             sb.toString()
         }

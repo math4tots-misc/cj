@@ -236,6 +236,7 @@ class C2Codegen {
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
         when stmt.kind {
             case nop = m.nop()
+            case declvar = m.nop()
             case block = m.block(null, stmt.stmts.map(s -> stmt(s)), auto)
             case ret {
                 _withLocalSet(stmt.expr.type, expr(stmt.expr), (localRetVar, assign) -> {
