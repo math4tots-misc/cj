@@ -127,7 +127,7 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     ## declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
-    def declaration(self): Stmt {
+    def declaration(self): List[Stmt] {
         val mark = mark()
         val baseType = declspec()
         var first = true
@@ -149,7 +149,7 @@ class C2Parser : ParserMixin[C2Token] {
                     mark, eb.binop(mark, '=', eb.getvar(mark, var_), init)))
             }
         }
-        eb.block(mark, initstmts)
+        initstmts
     }
 
     def declspec(self): Type {
@@ -306,7 +306,11 @@ class C2Parser : ParserMixin[C2Token] {
         expect('{')
         locals.scoped(() -> {
             while not consume('}') {
-                stmts.add(if atDeclaration() { declaration() } else { stmt() })
+                if atDeclaration() {
+                    stmts.addAll(declaration())
+                } else {
+                    stmts.add(stmt())
+                }
             }
         })
         eb.block(mark, stmts)
