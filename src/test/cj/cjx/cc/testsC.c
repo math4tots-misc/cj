@@ -1,6 +1,12 @@
 // Tests
 //   * structs
 
+/*
+ * Some multiline comments
+ * Some multiline comments
+ * Some multiline comments
+ */
+
 void __putsi(char *s, int x);
 void assert(int cond);
 void aeq(int lhs, int rhs) {

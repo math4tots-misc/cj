@@ -62,6 +62,7 @@ class C2Lexer {
 
         # comments
         b.add("//[^\n]*(\n\\s*//[^\n]*)*", m -> [])
+        b.add("/\\*([^*]|\\*[^/])*\\*/", m -> [])
 
         b.onEOF(m -> [C2Token(C2Token.tEOF, (), m.line, m.column, m.filename)])
 
