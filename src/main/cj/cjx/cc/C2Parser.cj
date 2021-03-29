@@ -244,12 +244,30 @@ class C2Parser : ParserMixin[C2Token] {
         while consume('*') {
             type = type.ptrOf()
         }
-        val mark = mark()
-        val name = if at(C2Token.tIDENT) { next().stringValue } else { "" }
 
-        # type suffix
-        type = typeSuffix(type)
-        (mark, name, type)
+        if consume('(') {
+            val savedStartI = i
+            declarator(type) # skip the part inside the parens for now
+            expect(')')
+
+            # parse the suffix first
+            type = typeSuffix(type)
+            val savedEndI = i
+
+            # go back and parse the part we skipped
+            i = savedStartI
+            val result = declarator(type)
+
+            # go back to the point after the suffix
+            i = savedEndI
+
+            result
+        } else {
+            val mark = mark()
+            val name = if at(C2Token.tIDENT) { next().stringValue } else { "" }
+            type = typeSuffix(type)
+            (mark, name, type)
+        }
     }
 
     def typeSuffix(self, var type: Type): Type {

@@ -1,6 +1,7 @@
 // Tests
 //   * structs and unions
-//   * long type
+//   * long and short types
+//   * nested type declarators
 
 /*
  * Some multiline comments
@@ -151,6 +152,17 @@ void tests09_short() {
     aeq(1, sub_short(7, 3, 3));
 }
 
+void tests10_nested_decls() {
+    aeq(12, ({ char *x[3]; sizeof(x); }));
+    aeq(4, ({ char (*x)[3]; sizeof(x); }));
+    aeq(1, ({ char (x); sizeof(x); }));
+    aeq(3, ({ char (x)[3]; sizeof(x); }));
+    aeq(12, ({ char (x[3])[4]; sizeof(x); }));
+    aeq(4, ({ char (x[3])[4]; sizeof(x[0]); }));
+    aeq(3, ({ char *x[3]; char y; x[0]=&y; y=3; x[0][0]; }));
+    aeq(4, ({ char x[3]; char (*y)[3]=&x; y[0][0]=4; y[0][0]; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -160,4 +172,6 @@ int main() {
     tests06_union();
     tests07_struct_union_assignment();
     tests08_long();
+    tests09_short();
+    tests10_nested_decls();
 }
