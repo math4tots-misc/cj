@@ -57,10 +57,16 @@ public final class CJJSOps {
     private static List<String> nativeRandomAccess = List.of(List.of("cj.List"), typedArrays).flatMap(x -> x);
 
     /**
-     * Types that can be treated like arrays in JS.
+     * Types that have the 'slice' method in JS.
      */
     private static List<String> nativeSliceableTypes = List
             .of(List.of("cj.String", "cj.ArrayBuffer"), nativeRandomAccess).flatMap(x -> x);
+
+    /**
+     * Types that have a 'length' property in JS.
+     */
+    private static List<String> nativeLengthTypes = List
+            .of(List.of("cj.String"), nativeRandomAccess).flatMap(x -> x);
 
     /**
      * Types that can be iterated over natively in JS.
@@ -293,20 +299,19 @@ public final class CJJSOps {
         }
 
         for (var type : nativeRandomAccess) {
-            OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
-            OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
             OPS.put(type + ".__getitem", ctx -> getitem(ctx, ctx.args.get(0), ctx.args.get(1)));
             OPS.put(type + ".__setitem", ctx -> setitem(ctx, ctx.args.get(0), ctx.args.get(1), ctx.args.get(2)));
         }
 
         for (var type : nativeSliceableTypes) {
-            OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
-            OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
-            OPS.put(type + ".__getitem", ctx -> getitem(ctx, ctx.args.get(0), ctx.args.get(1)));
-            OPS.put(type + ".__setitem", ctx -> setitem(ctx, ctx.args.get(0), ctx.args.get(1), ctx.args.get(2)));
             OPS.put(type + ".__sliceTo", ctx -> translateParts(ctx.args, "", ".slice(0,", ")"));
             OPS.put(type + ".__sliceFrom", ctx -> translateParts(ctx.args, "", ".slice(", ")"));
             OPS.put(type + ".__slice", ctx -> translateParts(ctx.args, "", ".slice(", ",", ")"));
+        }
+
+        for (var type : nativeLengthTypes) {
+            OPS.put(type + ".size", ctx -> translateParts(ctx.args, "", ".length"));
+            OPS.put(type + ".isEmpty", ctx -> translateParts(ctx.args, "(", ".length===0)"));
         }
 
         for (var type : nativeIterable) {

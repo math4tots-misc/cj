@@ -255,8 +255,26 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitLogicalBinop(CJIRLogicalBinop e, Void a) {
-                return translateParts(List.of(translate(e.getLeft()), translate(e.getRight())), "(",
-                        e.isAnd() ? "&&" : "||", ")");
+                var lhs = translate(e.getLeft());
+                var rhs = translate(e.getRight());
+                if (rhs.isSimple()) {
+                    return translateParts(List.of(lhs, rhs), "(",
+                            e.isAnd() ? "&&" : "||", ")");
+                } else {
+                    var tmpvar = varFactory.newName();
+                    return CJJSBlob2.withPrep(out -> {
+                        lhs.emitSet(out, "let " + tmpvar + "=");
+                        if (e.isAnd()) {
+                            out.append("if(" + tmpvar + "){");
+                        } else {
+                            out.append("if(!" + tmpvar + "){");
+                        }
+                        rhs.emitSet(out, tmpvar + "=");
+                        out.append("}");
+                    }, out -> {
+                        out.append(tmpvar);
+                    }, true);
+                }
             }
 
             @Override

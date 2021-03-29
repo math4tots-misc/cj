@@ -108,33 +108,71 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def __sliceFrom(self, start: Int): Self = js!(Self, self, ".slice(", start, ")")
     def __sliceTo(self, end: Int): Self = js!(Self, self, ".slice(0,", end, ")")
 
-    def __mul(self, n: Int): String
+    def __mul(self, n: Int): String = js!(String, self, ".repeat(", n, ")")
 
     ## Return a new string repeatedly padded with the given prefix until the
     ## final length is at least as long as length
-    def lpad(self, length: Int, prefix: String): String
+    def lpad(self, length: Int, prefix: String): String {
+        var ret = self
+        while ret.len() < length {
+            ret = prefix + ret
+        }
+        ret
+    }
 
     ## Return a new string repeatedly padded with the given suffix until the
     ## final length is at least as long as length
-    def rpad(self, length: Int, suffix: String): String
+    def rpad(self, length: Int, suffix: String): String {
+        var ret = self
+        while ret.len() < length {
+            ret = ret + suffix
+        }
+        ret
+    }
 
-    def lstripChar(self, ch: Char): String
-    def rstripChar(self, ch: Char): String
+    def lstripChar(self, ch: Char): String {
+        val s = ch.toString()
+        var start = 0
+        while startsWithAt(s, start) {
+            start += s.len()
+        }
+        self[start:]
+    }
+    def rstripChar(self, ch: Char): String {
+        val s = ch.toString()
+        var end = len()
+        while endsWithAt(s, end) {
+            end -= s.len()
+        }
+        self[:end]
+    }
 
     def parseInt(self: Self): Nullable[Int]
     def parseDouble(self: Self): Nullable[Double]
 
-    def startsWith(self, prefix: String): Bool
-    def startsWithAt(self, prefix: String, startIndex: Int): Bool
-    def endsWith(self, suffix: String): Bool
-    def endsWithAt(self, suffix: String, endIndex: Int): Bool
+    def startsWith(self, prefix: String): Bool = js!(
+        Bool, self, ".startsWith(", prefix, ")")
+    def startsWithAt(self, prefix: String, startIndex: Int): Bool = js!(
+        Bool, self, ".startsWith(", prefix, ",", startIndex, ")")
+    def endsWith(self, suffix: String): Bool = js!(
+        Bool, self, ".endsWith(", suffix, ")")
+    def endsWithAt(self, suffix: String, endIndex: Int): Bool = js!(
+        Bool, self, ".endsWith(", suffix, ",", endIndex, ")")
 
-    def trim(self: Self): String
-    def lower(self): String
-    def upper(self): String
-    def replace(self, old: String, new: String): String
+    def trim(self: Self): String = js!(String, self, ".trim()")
+    def lower(self): String = js!(String, self, ".toLowerCase()")
+    def upper(self): String = js!(String, self, ".toUpperCase()")
+    def replace(self, old: String, new: String): String = js!(
+        String, self, ".split(", old, ").join(", new, ")")
 
-    def split(self, sep: String): List[String]
+    def split(self, sep: String): List[String] {
+        if sep {
+            js!(List[String], self, ".split(", sep, ")")
+        } else {
+            # this way surrogate pairs are preserved
+            js!(List[String], "Array.from(", self, ")")
+        }
+    }
 
     ## Return -1 if not found
     def indexOf(self, substring: String): Int = js!(Int, self, ".indexOf(", substring, ")")
@@ -147,5 +185,5 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
     def fromUTF8[B: BufferLike](b: B): String = js!(
         String, "new TextDecoder().decode(", b.asUint8Array(), ")")
 
-    def default(): Self
+    def default(): Self = ""
 }

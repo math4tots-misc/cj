@@ -352,7 +352,7 @@ public final class CJJSTranslator2 {
         }
         var binding = reifiedMethod.getBinding();
         var methodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
-        IO.println("  (NAME = " + methodName + ")");
+        IO.println("  (NAME = " + methodName + " from " + method.getMark().filename + ")");
         if (method.isAsync()) {
             out.append("async ");
         }

@@ -51,4 +51,29 @@ class Test07String {
         Assert.equal("hi".rpad(1, "0"), "hi")
         Assert.equal("hi".lpad(1, "0"), "hi")
     }
+
+    @test
+    def stripChar() {
+        Assert.equal("xxxasdfyyyxx".lstripChar('x'), "asdfyyyxx")
+        Assert.equal("xxxasdfyyyxx".lstripChar('a'), "xxxasdfyyyxx")
+        Assert.equal("xxxasdfyyyxx".rstripChar('x'), "xxxasdfyyy")
+        Assert.equal("xxxasdfyyyxx".rstripChar('a'), "xxxasdfyyyxx")
+    }
+
+    @test
+    def trim() {
+        Assert.equal("tyouw".trim(), "tyouw")
+        Assert.equal("  tyouw".trim(), "tyouw")
+        Assert.equal("tyouw  ".trim(), "tyouw")
+        Assert.equal("  tyouw  ".trim(), "tyouw")
+        Assert.equal("  tyo uw  ".trim(), "tyo uw")
+        Assert.equal("  tyo  uw  ".trim(), "tyo  uw")
+    }
+
+    @test
+    def split() {
+        Assert.equal("tyouw".split(","), ["tyouw"])
+        Assert.equal("a,b,cdef,g".split(","), ["a", "b", "cdef", "g"])
+        Assert.equal("a,b,cdef , g ".split(","), ["a", "b", "cdef ", " g "])
+    }
 }

@@ -4,7 +4,7 @@ import cj.Error
 
 native class IO {
     def println[T?: ToString](t: T) = js!(Unit, "console.log(", t.toString(), ")")
-    def print[T?: ToString](t: T)
+    def print[T?: ToString](t: T) = printstr(t.toString())
     def eprintln[T?: ToString](t: T) = js!(Unit, "console.error(", t.toString(), ")")
     def panic[T?: ToString](t: T): NoReturn = throw Error(t.toString())
 
