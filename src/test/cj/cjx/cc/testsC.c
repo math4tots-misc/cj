@@ -112,6 +112,21 @@ void tests06_union() {
     aeq(({ union { int a; char b[4]; } x; x.a = 515; x.b[3]; }), 0);
 }
 
+void tests07_struct_union_assignment() {
+    aeq(3, ({ struct {int a,b;} x,y; x.a=3; y=x; y.a; }));
+    aeq(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y; struct t *z=&y; *z=x; y.a; }));
+    aeq(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y, *p=&x, *q=&y; *q=*p; y.a; }));
+    aeq(5, ({ struct t {char a, b;} x, y; x.a=5; y=x; y.a; }));
+
+    aeq(3, ({ struct {int a,b;} x,y; x.a=3; y=x; y.a; }));
+    aeq(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y; struct t *z=&y; *z=x; y.a; }));
+    aeq(7, ({ struct t {int a,b;}; struct t x; x.a=7; struct t y, *p=&x, *q=&y; *q=*p; y.a; }));
+    aeq(5, ({ struct t {char a, b;} x, y; x.a=5; y=x; y.a; }));
+
+    aeq(3, ({ union {int a,b;} x,y; x.a=3; y.a=5; y=x; y.a; }));
+    aeq(3, ({ union {struct {int a,b;} c;} x,y; x.c.b=3; y.c.b=5; y=x; y.c.b; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -119,4 +134,5 @@ int main() {
     test04_structs_return();
     test05_arrow();
     tests06_union();
+    tests07_struct_union_assignment();
 }
