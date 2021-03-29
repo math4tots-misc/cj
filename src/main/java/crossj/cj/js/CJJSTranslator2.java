@@ -78,6 +78,7 @@ public final class CJJSTranslator2 {
             }
         }, null);
         tr.out.append("(function(){\n\"use strict\";\n");
+        emitPrelude(tr.out);
         tr.emitQueued();
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
             @Override
@@ -129,6 +130,11 @@ public final class CJJSTranslator2 {
         }, null);
         tr.out.append("})()");
         return tr.out;
+    }
+
+    private static void emitPrelude(CJJSSink out) {
+        var path = FS.join(jsroot, "prelude.js");
+        out.append(IO.readFile(path));
     }
 
     private final CJIRContext ctx;

@@ -25,13 +25,7 @@ public final class CJJSOps {
     //         "setUTF8", "addI8", "addU8", "addI16", "addU16", "addI32", "addU32", "addI64", "addU64", "addF32", "addF64",
     //         "addBuffer", "addUTF8", "toString", "repr", "__eq", "__get_buffer");
 
-    private static List<String> dataViewMethods = List.of("__new", "fromParts", "useLittleEndian", "__get_byteLength",
-            "getInt8", "getUint8", "getInt16", "getUint16", "getInt32", "getUint32", "getFloat32", "getFloat64",
-            "getBigInt64", "getBigUint64", "setInt8", "setUint8", "setInt16", "setUint16", "setInt32", "setUint32",
-            "setFloat32", "setFloat64", "setBigInt64", "setBigUint64");
-
     private static List<Pair<String, List<String>>> grandfatheredNativeMethods = List.of(
-            Pair.of("cj.DataView", dataViewMethods),
             // Pair.of("cj.DynamicBuffer", dynamicBufferMethods),
             Pair.of("cj.Range", List.of("of", "inclusive", "upto", "withStep", "iter")));
 
@@ -204,8 +198,6 @@ public final class CJJSOps {
 
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
 
-            mkpair("cj.ArrayBuffer.__new", ctx -> translateParts(ctx.args, "new ArrayBuffer(", ")")),
-
             // mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
             // mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
 
@@ -346,12 +338,12 @@ public final class CJJSOps {
             OPS.put(typedArray + ".repr", ctx -> translateParts(ctx.args, "'" + name + "('+(", ").join(', ')+')'"));
         }
 
-        for (var type : List.of(List.of("cj.DataView"), typedArrays).flatMap(x -> x)) {
+        for (var type : typedArrays) {
             OPS.put(type + ".__get_buffer", ctx -> translateParts(ctx.args, "", ".buffer"));
             OPS.put(type + ".__get_byteOffset", ctx -> translateParts(ctx.args, "", ".byteOffset"));
         }
 
-        for (var type : List.of(List.of("cj.ArrayBuffer", "cj.DataView"), typedArrays).flatMap(x -> x)) {
+        for (var type : List.of(List.of("cj.ArrayBuffer"), typedArrays).flatMap(x -> x)) {
             OPS.put(type + ".__get_byteLength", ctx -> translateParts(ctx.args, "", ".byteLength"));
         }
 
