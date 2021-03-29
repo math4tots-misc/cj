@@ -170,6 +170,7 @@ void tests11_mixed_declspec() {
     aeq(4, ({ int x; sizeof(x); }));
     aeq(8, ({ long int x; sizeof(x); }));
     aeq(8, ({ int long x; sizeof(x); }));
+    aeq(8, ({ long long x; sizeof(x); }));
 }
 
 int main() {

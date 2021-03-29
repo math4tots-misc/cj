@@ -196,11 +196,11 @@ class C2Parser : ParserMixin[C2Token] {
         switch flags {
             case fvoid = Type.void
             case fint = Type.int
-            case flong; case flong + fint = Type.long
+            case flong; case flong + fint; case flong + flong = Type.long
             case fchar = Type.char
             case fshort; case fshort + fint = Type.short
             case 0 = errorKind("typename")
-            else = throw MError("invalid type combination", [mark])
+            else = throw MError("Invalid type", [mark])
         }
     }
 
