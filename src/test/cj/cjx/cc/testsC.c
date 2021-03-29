@@ -104,10 +104,19 @@ void test05_arrow() {
     aeq(({ struct t {char a;} x; struct t *y = &x; y->a=3; x.a; }), 3);
 }
 
+void tests06_union() {
+    aeq(({ union { int a; char b[6]; } x; sizeof(x); }), 8);
+    aeq(({ union { int a; char b[4]; } x; x.a = 515; x.b[0]; }), 3);
+    aeq(({ union { int a; char b[4]; } x; x.a = 515; x.b[1]; }), 2);
+    aeq(({ union { int a; char b[4]; } x; x.a = 515; x.b[2]; }), 0);
+    aeq(({ union { int a; char b[4]; } x; x.a = 515; x.b[3]; }), 0);
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
     test03_structs_assignment();
     test04_structs_return();
     test05_arrow();
+    tests06_union();
 }

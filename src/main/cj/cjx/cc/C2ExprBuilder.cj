@@ -285,16 +285,16 @@ class C2ExprBuilder {
         genBinop(mark, Expr.Kind.comma, rhs.type, lhs, rhs)
     }
 
-    def member(self, mark: Mark, arg: Expr, name: String): Expr {
+    def getmember(self, mark: Mark, arg: Expr, name: String): Expr {
         addType(arg)
-        val struct_ = when arg.type {
-            case struct_(s) = s
-            else = throw MError("" + arg.type + " is not a struct", [mark])
+        val structOrUnion = when arg.type {
+            case structOrUnion(s) = s
+            else = throw MError("" + arg.type + " is not a struct or union", [mark])
         }
-        if not struct_.isComplete() {
-            throw MError("struct " + struct_.tag + " is an incomplete type", [mark])
+        if not structOrUnion.isComplete() {
+            throw MError(structOrUnion.tag.get() + " is an incomplete type", [mark])
         }
-        val member = if val m = struct_.getMemberOrNull(name) { m } else {
+        val member = if val m = structOrUnion.getMemberOrNull(name) { m } else {
             throw MError("Member " + name + " not found in " + arg.type, [mark])
         }
         val ret = Expr(mark, Expr.Kind.getmember)
@@ -304,7 +304,12 @@ class C2ExprBuilder {
         ret
     }
 
-    def setmember0(self, mark: Mark, lhs: Expr, member: Type.Struct.Member, var rhs: Expr): Expr {
+    def setmember0(
+            self,
+            mark: Mark,
+            lhs: Expr,
+            member: Type.StructOrUnion.Member,
+            var rhs: Expr): Expr {
         addType(lhs)
         rhs = icast(rhs, member.type)
         val ret = Expr(mark, Expr.Kind.setmember)

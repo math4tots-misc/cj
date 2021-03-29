@@ -38,7 +38,9 @@ class C2Codegen {
     private val debugNameCache: Map[String, Int] = MapOf()
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
-    private var retptrLocalIndex: Int? = null # used for functions with struct return types
+
+    ## used for functions with struct or union return types
+    private var retptrLocalIndex: Int? = null
 
     def emit(self, tu: C2IR.TranslationUnit): C2Code {
         m.addMemoryImport("0", "js", "memory")
@@ -139,7 +141,7 @@ class C2Codegen {
             case array(..) = i32
             case ptr(..) = i32
             case func(..) = i32
-            case struct_(..) = i32
+            case structOrUnion(..) = i32
         }
     }
 
@@ -164,7 +166,7 @@ class C2Codegen {
 
     def func(self, func: C2IR.Func) {
         val functype = func.type
-        val (wasmReturnType, wasmParamTypes) = if functype.returnType.isStruct() {
+        val (wasmReturnType, wasmParamTypes) = if functype.returnType.isStructOrUnion() {
             (none, functype.paramTypes.map(t -> type(t)) + [i32])
         } else {
             (type(functype.returnType), functype.paramTypes.map(t -> type(t)))
@@ -179,12 +181,12 @@ class C2Codegen {
         # IO.println(func.name + " -> " + wasmReturnType + wasmParamTypes)
 
         locals = wasmParamTypes.clone()
-        retptrLocalIndex = if functype.returnType.isStruct() {
+        retptrLocalIndex = if functype.returnType.isStructOrUnion() {
             null(locals.size() - 1) } else { null }
         localSlotSP = newLocal(i32)
         Assert.equal(
             localSlotSP,
-            func.params.size() + if functype.returnType.isStruct() { 1 } else { 0 })
+            func.params.size() + if functype.returnType.isStructOrUnion() { 1 } else { 0 })
         cLocalOffsets = MapOf()
         cLocalsByteSize = 0
         currentFunc = null(func)
@@ -283,11 +285,11 @@ class C2Codegen {
             case ret {
                 if val func = currentFunc {
                     when func.type.returnType {
-                        case struct_(..) {
-                            Assert(stmt.expr.type.isStruct())
+                        case structOrUnion(..) {
+                            Assert(stmt.expr.type.isStructOrUnion())
                             m.block(null, [
-                                # Copy the returning struct to the memory
-                                # pointed to by the struct return pointer.
+                                # Copy the returning struct or union to the memory
+                                # pointed to by the struct or union return pointer.
                                 _dropsetderef(
                                     stmt.mark,
                                     func.type.returnType,
@@ -386,8 +388,8 @@ class C2Codegen {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
             case char = m.i32.load8_u(offset, 0, addrExpr)
-            case array(..); case struct_(..) {
-                # array and struct values cannot be stored in a register, so
+            case array(..); case structOrUnion(..) {
+                # array, struct and union values cannot be stored in a register, so
                 # instead in these cases we just return the address as is
                 if offset { m.i32.add(m.i32.const(offset), addrExpr) } else { addrExpr }
             }
@@ -407,7 +409,7 @@ class C2Codegen {
             case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
             case array(..) = throw MError("Assignment to array type is not allowed", [mark])
-            case struct_(s) = _memcpy(mark, offset, addrExpr, valExpr, s.size())
+            case structOrUnion(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
             else = throw MError("TODO _dropsetderef " + valtype, [mark])
         }
     }
@@ -481,40 +483,40 @@ class C2Codegen {
     def getmember(
             self,
             mark: Mark,
-            structExpr: C2IR.Expr,
-            member: C2IR.Type.Struct.Member): Binaryen.Expression {
+            structOrUnionExpr: C2IR.Expr,
+            member: C2IR.Type.StructOrUnion.Member): Binaryen.Expression {
         _getderef(
             mark,
             member.type,
             member.offset,
-            expr(structExpr)) # struct exprs should resolve to ptrs like arrays
+            expr(structOrUnionExpr)) # struct or union exprs should resolve to ptrs like arrays
     }
 
     def dropsetmember(
             self,
             mark: Mark,
-            structExpr: C2IR.Expr,
-            member: C2IR.Type.Struct.Member,
+            structOrUnionExpr: C2IR.Expr,
+            member: C2IR.Type.StructOrUnion.Member,
             valExpr: C2IR.Expr): Binaryen.Expression {
         _dropsetderef(
             mark,
             member.type,
             member.offset,
-            expr(structExpr), # struct exprs should resovle to ptrs like arrays
+            expr(structOrUnionExpr), # struct or union exprs should resovle to ptrs like arrays
             expr(valExpr))
     }
 
     def teemember(
             self,
             mark: Mark,
-            structExpr: C2IR.Expr,
-            member: C2IR.Type.Struct.Member,
+            structOrUnionExpr: C2IR.Expr,
+            member: C2IR.Type.StructOrUnion.Member,
             valExpr: C2IR.Expr): Binaryen.Expression {
         _teederef(
             mark,
             member.type,
             member.offset,
-            expr(structExpr), # struct exprs should resovle to ptrs like arrays
+            expr(structOrUnionExpr), # struct exprs should resovle to ptrs like arrays
             expr(valExpr))
     }
 
@@ -563,14 +565,14 @@ class C2Codegen {
                 val fname = expr.func.name
                 Assert.equal(expr.type, expr.func.type.returnType)
                 when expr.type {
-                    case struct_(s) {
-                        # If a function returns a struct, we need to allocate
-                        # space for the struct to be stored. Further, we pass
+                    case structOrUnion(x) {
+                        # If a function returns a struct or union, we need to allocate
+                        # space for the struct or union to be stored. Further, we pass
                         # a pointer to this allocated space as an extra argument
                         # so that the function can write to it.
                         # The function's wasm return type should be 'none'.
-                        val size = s.size()
-                        val offset = alloca(size, s.alignment())
+                        val size = x.size()
+                        val offset = alloca(size, x.alignment())
                         val outptr = m.i32.add(m.i32.const(offset), stackPtr)
                         args.add(outptr) # add result ptr
                         m.block(null, [
@@ -585,14 +587,14 @@ class C2Codegen {
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
             case stmt {
-                if expr.type.isStruct() {
+                if expr.type.isStructOrUnion() {
                     # Supporting this would require allcating space for the
                     # resulting struct
                     # It can be done, but given that statement expressions are
                     # a non-standard extension and to keep things simple for myself,
                     # I'm going to forgo supporting this feature for now.
                     throw MError(
-                        "Returning a struct from a block expression is not supported",
+                        "Returning a struct or union from a block expression is not supported",
                         [expr.mark])
                 }
                 val savedStackOffset = cLocalsByteSize

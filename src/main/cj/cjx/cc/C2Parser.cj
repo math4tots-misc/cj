@@ -122,6 +122,7 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwVOID
             case C2Token.kwCHAR
             case C2Token.kwINT
+            case C2Token.kwUNION
             case C2Token.kwSTRUCT = true
             else = false
         }
@@ -160,8 +161,9 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwVOID { next(); Type.void }
             case C2Token.kwINT { next(); Type.int }
             case C2Token.kwCHAR { next(); Type.char }
-            case C2Token.kwSTRUCT {
-                next()
+            case C2Token.kwSTRUCT; case C2Token.kwUNION {
+                val isUnion = if consume(C2Token.kwUNION) { true } else {
+                    expect(C2Token.kwSTRUCT); false }
                 val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
                 if val tag = optTag {
                     val optTaggable = if at('{') {
@@ -170,36 +172,41 @@ class C2Parser : ParserMixin[C2Token] {
                     } else {
                         scope.getTaggableOrNull(tag)
                     }
-                    val struct_ = if val taggable = optTaggable {
+                    val structOrUnion = if val taggable = optTaggable {
                         when taggable {
-                            case struct_(s) = s
+                            case structOrUnion(s) {
+                                if s.isUnion() == isUnion { s } else {
+                                    throw MError(
+                                        "Conflicting taggable kind", [mark, taggable.mark])
+                                }
+                            }
                             else = throw MError(
                                 "Conflicting taggable kind", [mark, taggable.mark])
                         }
                     } else {
-                        val s = Type.Struct(mark, optTag)
+                        val s = Type.StructOrUnion(mark, isUnion, optTag)
                         scope.addTaggable(s)
                         s
                     }
-                    if at('{') { structDecl(struct_) }
-                    struct_
+                    if at('{') { structOrUnionDecl(structOrUnion, isUnion) }
+                    structOrUnion
                 } else {
-                    # When no tag is provided, always assume a struct body always follows
-                    val struct_ = Type.Struct(mark, optTag)
-                    structDecl(struct_)
-                    struct_
+                    # When no tag is provided, assume a struct or union body always follows
+                    val structOrUnion = Type.StructOrUnion(mark, isUnion, optTag)
+                    structOrUnionDecl(structOrUnion, isUnion)
+                    structOrUnion
                 }
             }
             else = errorKind("typename")
         }
     }
 
-    def structDecl(self, struct_: Type.Struct) {
-        if struct_.isComplete() {
-            throw MError("Duplicate struct definition", [mark(), struct_.mark])
+    def structOrUnionDecl(self, structOrUnion: Type.StructOrUnion, isUnion: Bool) {
+        if structOrUnion.isComplete() {
+            throw MError("Duplicate struct or union definition", [mark(), structOrUnion.mark])
         }
         expect('{')
-        var currentOffset = 0
+        var currentSize = 0
         var currentAlignment = 1
         while not consume('}') {
             val baseType = declspec()
@@ -209,14 +216,21 @@ class C2Parser : ParserMixin[C2Token] {
                 first = false
                 val (memberMark, memberName, memberType) = declarator(baseType)
                 currentAlignment = Math.max(currentAlignment, memberType.alignment())
-                currentOffset = currentOffset.roundUp(memberType.alignment())
-                val member = Type.Struct.Member(memberMark, memberName, memberType, currentOffset)
-                currentOffset += member.type.size()
-                struct_.members.add(member)
+
+                if isUnion {
+                    val member = Type.StructOrUnion.Member(memberMark, memberName, memberType, 0)
+                    currentSize = Math.max(currentSize, member.type.size())
+                    structOrUnion.members.add(member)
+                } else {
+                    currentSize = currentSize.roundUp(memberType.alignment())
+                    val member = Type.StructOrUnion.Member(memberMark, memberName, memberType, currentSize)
+                    currentSize += member.type.size()
+                    structOrUnion.members.add(member)
+                }
             }
         }
-        struct_._alignment = currentAlignment
-        struct_._size = currentOffset.roundUp(currentAlignment)
+        structOrUnion._alignment = currentAlignment
+        structOrUnion._size = currentSize.roundUp(currentAlignment)
     }
 
     def declarator(self, var type: Type): Tuple[Mark, String, Type] {
@@ -365,12 +379,12 @@ class C2Parser : ParserMixin[C2Token] {
                 case '.' {
                     next()
                     val memberName = expect(C2Token.tIDENT).stringValue
-                    expr = eb.member(mark, expr, memberName)
+                    expr = eb.getmember(mark, expr, memberName)
                 }
                 case C2Token.tARROW {
                     next()
                     val memberName = expect(C2Token.tIDENT).stringValue
-                    expr = eb.member(mark, eb.preop(mark, '*', expr), memberName)
+                    expr = eb.getmember(mark, eb.preop(mark, '*', expr), memberName)
                 }
                 else = error("Unhandled operator " + peek().repr())
             }

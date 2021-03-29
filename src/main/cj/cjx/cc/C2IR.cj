@@ -25,13 +25,13 @@ class C2IR {
         }
         def getGVarOrNull(self, name: String): GVar? = gvarMap.getOrNull(name)
     }
-    @implicit(Type.Struct, struct_)
+    @implicit(Type.StructOrUnion, structOrUnion)
     union Taggable {
-        case struct_(Type.Struct)
+        case structOrUnion(Type.StructOrUnion)
         def __get_mark(self): Mark = when self { else(t) = t.mark }
         def __get_tag(self): String? = when self { else(t) = t.tag }
     }
-    @implicit(Type.Struct, struct_)
+    @implicit(Type.StructOrUnion, structOrUnion)
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
         class Func {
@@ -50,7 +50,11 @@ class C2IR {
             val len: Int
             def __eq(self, other: Self): Bool = base == other.base and len == other.len
         }
-        class Struct {
+        ##
+        ## Struct or Union
+        ## A union is basically a struct where all member offsets are zero.
+        ##
+        class StructOrUnion {
             class Member: Eq {
                 val mark: Mark
                 val name: String
@@ -59,6 +63,7 @@ class C2IR {
                 def __eq(self, other: Self): Bool = name == other.name and type == other.type
             }
             val mark: Mark
+            val _isUnion: Bool
             val tag: String?
             val members: List[Member] = []
             var _size: Int = ?
@@ -66,7 +71,8 @@ class C2IR {
             def size(self): Int = _size
             def alignment(self): Int = _alignment
             def isComplete(self): Bool = is_set!(self, _size)
-            def __eq(self, other: Self): Bool = members == other.members
+            def __eq(self, other: Self): Bool = (
+                _isUnion == other._isUnion and members == other.members)
             def getMemberOrNull(self, memberName: String): Member? {
                 for member in members {
                     if member.name == memberName {
@@ -75,6 +81,7 @@ class C2IR {
                 }
                 null
             }
+            def isUnion(self): Bool = _isUnion
         }
         case void
         case char
@@ -82,12 +89,12 @@ class C2IR {
         case ptr(Ptr)
         case array(Array)
         case func(Func)
-        case struct_(Struct)
+        case structOrUnion(StructOrUnion)
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
-        def isStruct(self): Bool = tag!(self) == tag!(Self, struct_)
+        def isStructOrUnion(self): Bool = tag!(self) == tag!(Self, structOrUnion)
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def isPtrOrArray(self): Bool = isPtr() or isArray()
@@ -99,21 +106,24 @@ class C2IR {
         ## https://docs.oracle.com/cd/E19205-01/819-5265/bjals/index.html
         def isComplete(self): Bool = when self {
             case void = false
-            case struct_(s) = s.isComplete()
+            case structOrUnion(s) = s.isComplete()
             else = true
         }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
             case array(a) = "array(" + a.base + "," + a.len + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
-            case struct_(s) = if val tag = s.tag { "struct(" + tag + ")" } else { "struct(..) " }
+            case structOrUnion(s) = {
+                val kind = if s.isUnion() { "union" } else { "struct" }
+                if val tag = s.tag { kind + "(" + tag + ")" } else { kind + "(..)" }
+            }
             else name() = name
         }
         def __eq(self, other: Self): Bool = tag!(self) == tag!(other) and when self {
             case ptr(p) = p == get!(other, ptr, 0)
             case array(a) = a == get!(other, array, 0)
             case func(f) = f == get!(other, func, 0)
-            case struct_(s) = s == get!(other, struct_, 0)
+            case structOrUnion(s) = s == get!(other, structOrUnion, 0)
             else() = true
         }
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
@@ -122,11 +132,11 @@ class C2IR {
             case char = 1
             case void; case int; case ptr(..); case func(..) = 4
             case array(a) = a.len * a.base.size()
-            case struct_(s) = s.size()
+            case structOrUnion(x) = x.size()
         }
         def alignment(self): Int = when self {
             case array(a) = a.base.alignment()
-            case struct_(s) = s.alignment()
+            case structOrUnion(x) = x.alignment()
             case ptr(..); case func(..) = size()
             else() = size()
         }
@@ -226,7 +236,7 @@ class C2IR {
 
             case comma
 
-            case getmember   # struct member access
+            case getmember   # struct or union member access
             case setmember
 
             case postIncr
@@ -271,7 +281,7 @@ class C2IR {
         var rhs: Expr = ?
         var args: List[Expr] = ?
         var stmts: List[Stmt] = ?
-        var member: Type.Struct.Member = ?
+        var member: Type.StructOrUnion.Member = ?
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")

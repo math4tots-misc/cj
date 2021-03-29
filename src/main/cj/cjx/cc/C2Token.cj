@@ -27,6 +27,7 @@ class C2Token: Repr {
         kwSHORT
         kwDOUBLE
         kwSTRUCT
+        kwUNION
         kwRETURN
         kwIF
         kwELSE
