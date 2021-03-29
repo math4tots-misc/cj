@@ -26,7 +26,6 @@ public final class CJJSOps {
     //         "addBuffer", "addUTF8", "toString", "repr", "__eq", "__get_buffer");
 
     private static List<Pair<String, List<String>>> grandfatheredNativeMethods = List.of(
-            // Pair.of("cj.DynamicBuffer", dynamicBufferMethods),
             Pair.of("cj.Range", List.of("of", "inclusive", "upto", "withStep", "iter")));
 
     private static List<String> nativeTruthyTypes = List.of("cj.Bool", "cj.Int", "cj.Double", "cj.String", "cj.BigInt");
@@ -203,9 +202,6 @@ public final class CJJSOps {
             mkpair("cj.Math.random", ctx -> translateParts(ctx.args, "Math.random()")),
 
             mkpair("cj.Promise.done", ctx -> ctx.args.get(0)),
-
-            // mkpair("cj.DynamicBuffer.capacity", ctx -> translateParts(ctx.args, "", "[0].byteLength")),
-            // mkpair("cj.DynamicBuffer.size", ctx -> translateParts(ctx.args, "", "[2]")),
 
             mkpair("cj.IO.debug", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
             mkpair("cj.IO.printlnstr", ctx -> translateCall(ctx.mark, "console.log", ctx.args)),
