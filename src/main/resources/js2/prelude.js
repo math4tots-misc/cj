@@ -83,3 +83,16 @@ function* iterFrom(self, start) {
         yield self[i];
     }
 }
+
+/**
+ * @param {string} self
+ */
+ function* strIter(self) {
+    for (let i = 0; i < self.length; i++) {
+        const c = self.codePointAt(i);
+        yield c;
+        if (self.charCodeAt(i) !== c) {
+            i++;
+        }
+    }
+}

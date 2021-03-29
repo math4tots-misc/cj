@@ -5,6 +5,7 @@ import crossj.base.Deque;
 import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
+import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.base.Set;
 import crossj.cj.CJError;
@@ -30,6 +31,10 @@ import crossj.cj.CJToken;
 
 public final class CJJSTranslator2 {
     private static final String jsroot = FS.join("src", "main", "resources", "js2");
+
+    private static final Map<String, List<String>> nativeIncludeMap = Map.of(
+            Pair.of("cjx.binaryen.Binaryen", List.of(FS.join("..", "js", "lib", "binaryen", "index.js"))),
+            Pair.of("cjx.binaryen.Binaryen.Module", List.of(FS.join("..", "js", "lib", "binaryen", "index.js"))));
 
     public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
         var tr = new CJJSTranslator2(irctx);
@@ -286,6 +291,20 @@ public final class CJJSTranslator2 {
 
     private void emitMethod(CJJSLLMethod reifiedMethod) {
         IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getIdStr());
+
+        {
+            // a bit of a hack to allow pulling in some JS if any method on an explicitly
+            // specified
+            // list of files is used.
+            var ownerFullName = reifiedMethod.getOwner().getItem().getFullName();
+            var nativeIncludePaths = nativeIncludeMap.getOrNull(ownerFullName);
+            if (nativeIncludePaths != null) {
+                for (var nativeIncludePath : nativeIncludePaths) {
+                    queueNative(nativeIncludePath, reifiedMethod.getMethod().getMark());
+                }
+            }
+        }
+
         var method = reifiedMethod.getMethod();
         if (method.getBody().isEmpty()) {
             if (reifiedMethod.getMethod().getName().equals("__malloc")) {
