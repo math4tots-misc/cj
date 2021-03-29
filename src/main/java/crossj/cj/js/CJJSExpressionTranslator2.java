@@ -630,7 +630,7 @@ final class CJJSExpressionTranslator2 {
                     var owner = e.getOwnerType();
                     var field = e.getField();
                     var varName = CJJSTranslator2.getStaticFieldVarName(owner, field);
-                    return CJJSBlob2.simplestr("(" + varName + "!==null)", false);
+                    return CJJSBlob2.simplestr("(" + varName + "!==undefined)", false);
                 }
             }
         }, null);

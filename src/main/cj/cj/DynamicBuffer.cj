@@ -8,7 +8,7 @@ import cj.DataView
 import cj.ArrayBuffer
 import cj.BigInt
 
-native class DynamicBuffer: Repr, Eq, BufferLike, DataViewMixin {
+native class DynamicBuffer: Repr, BufferLike, DataViewMixin {
 
     @implicit(ArrayBuffer, fromArrayBuffer)
     @implicit(List, fromList)
