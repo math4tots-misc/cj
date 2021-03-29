@@ -135,7 +135,7 @@ class C2Codegen {
 
     def type(self, type: C2IR.Type): Binaryen.Type {
         when type {
-            case void; case char; case int = i32
+            case void; case char; case int; case short = i32
             case long = i64
             case array(..) = i32
             case ptr(..) = i32
@@ -387,6 +387,7 @@ class C2Codegen {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
             case char = m.i32.load8_u(offset, 0, addrExpr)
+            case short = m.i32.load16_s(offset, 0, addrExpr)
             case long = m.i64.load(offset, 0, addrExpr)
             case array(..); case structOrUnion(..) {
                 # array, struct and union values cannot be stored in a register, so
@@ -409,6 +410,7 @@ class C2Codegen {
             case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
             case long { m.i64.store(offset, 0, addrExpr, valExpr) }
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
+            case short = m.i32.store16(offset, 0, addrExpr, valExpr)
             case array(..) = throw MError("Assignment to array type is not allowed", [mark])
             case structOrUnion(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
             else = throw MError("TODO _dropsetderef " + valtype, [mark])
@@ -549,18 +551,33 @@ class C2Codegen {
 
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
-            case int; case char = m.i32.const(expr.intValue)
-            case intNeg; case charNeg = m.i32.sub(m.i32.const(0), expr(expr.arg))
-            case intAdd; case charAdd = m.i32.add(expr(expr.lhs), expr(expr.rhs))
-            case intSub; case charSub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
-            case intMul; case charMul = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
-            case intDiv; case charDiv = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
-            case intRem; case charRem = m.i32.rem_s(expr(expr.lhs), expr(expr.rhs))
-            case intEq; case charEq = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
-            case intNe; case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
-            case intLt; case charLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
-            case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case int; case short = m.i32.const(expr.intValue)
+            case intNeg; case shortNeg = m.i32.sub(m.i32.const(0), expr(expr.arg))
+            case intAdd; case shortAdd = m.i32.add(expr(expr.lhs), expr(expr.rhs))
+            case intSub; case shortSub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
+            case intMul; case shortMul = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
+            case intDiv; case shortDiv = m.i32.div_s(expr(expr.lhs), expr(expr.rhs))
+            case intRem; case shortRem = m.i32.rem_s(expr(expr.lhs), expr(expr.rhs))
+            case intEq; case shortEq = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
+            case intNe; case shortNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
+            case intLt; case shortLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
+            case intLe; case shortLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             case intToLong = m.i64.extend_s(expr(expr.arg))
+            case intToShort; case shortToInt = expr(expr.arg)
+
+            # char is unsigned
+            case char = m.i32.const(expr.intValue)
+            case charNeg = m.i32.sub(m.i32.const(0), expr(expr.arg))
+            case charAdd = m.i32.add(expr(expr.lhs), expr(expr.rhs))
+            case charSub = m.i32.sub(expr(expr.lhs), expr(expr.rhs))
+            case charMul = m.i32.mul(expr(expr.lhs), expr(expr.rhs))
+            case charDiv = m.i32.div_u(expr(expr.lhs), expr(expr.rhs))
+            case charRem = m.i32.rem_u(expr(expr.lhs), expr(expr.rhs))
+            case charEq = m.i32.eq(expr(expr.lhs), expr(expr.rhs))
+            case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
+            case charLt = m.i32.lt_u(expr(expr.lhs), expr(expr.rhs))
+            case charLe = m.i32.le_u(expr(expr.lhs), expr(expr.rhs))
+
             case long = m.i64.const(expr.bigIntValue.toInt()) # TODO: address truncation issues
             case longNeg = m.i64.sub(m.i64.const(0), expr(expr.arg))
             case longAdd = m.i64.add(expr(expr.lhs), expr(expr.rhs))

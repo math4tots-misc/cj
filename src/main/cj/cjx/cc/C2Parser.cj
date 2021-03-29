@@ -167,6 +167,7 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwINT { next(); Type.int }
             case C2Token.kwLONG { next(); Type.long }
             case C2Token.kwCHAR { next(); Type.char }
+            case C2Token.kwSHORT { next(); Type.short }
             case C2Token.kwSTRUCT; case C2Token.kwUNION {
                 val isUnion = if consume(C2Token.kwUNION) { true } else {
                     expect(C2Token.kwSTRUCT); false }

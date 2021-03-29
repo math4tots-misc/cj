@@ -143,6 +143,14 @@ void tests08_long() {
     aeql(-1, sub_long(7, 5, 3));
 }
 
+int sub_short(short a, short b, short c) {
+  return a - b - c;
+}
+
+void tests09_short() {
+    aeq(1, sub_short(7, 3, 3));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();

@@ -100,6 +100,12 @@ class C2ExprBuilder {
                 intToLong(expr.mark, expr)
             }
         }
+        if type.isInt() and expr.type.isShort() {
+            return shortToInt(expr.mark, expr)
+        }
+        if type.isShort() and expr.kind == Expr.Kind.int {
+            return short(expr.mark, expr.intValue)
+        }
         if type.isPtr() and expr.type.isArray() {
             # Arrays may decay to pointers
             # TODO: check that this conversion is valid
@@ -162,10 +168,10 @@ class C2ExprBuilder {
         ret
     }
 
-    def intToLong(self, mark: Mark, intExpr: Expr): Expr {
-        val ret = Expr(mark, Expr.Kind.intToLong)
-        ret.arg = intExpr
-        ret.type = Type.long
+    def short(self, mark: Mark, value: Int): Expr {
+        val ret = Expr(mark, Expr.Kind.short)
+        ret.intValue = value
+        ret.type = Type.short
         ret
     }
 
@@ -180,6 +186,27 @@ class C2ExprBuilder {
         val ret = Expr(mark, Expr.Kind.char)
         ret.intValue = value
         ret.type = Type.char
+        ret
+    }
+
+    def intToLong(self, mark: Mark, intExpr: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.intToLong)
+        ret.arg = intExpr
+        ret.type = Type.long
+        ret
+    }
+
+    def intToShort(self, mark: Mark, intExpr: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.intToShort)
+        ret.arg = intExpr
+        ret.type = Type.short
+        ret
+    }
+
+    def shortToInt(self, mark: Mark, shortExpr: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.shortToInt)
+        ret.arg = shortExpr
+        ret.type = Type.int
         ret
     }
 
@@ -400,6 +427,22 @@ class C2ExprBuilder {
                 case C2Token.tLE   { return genBinop(mark, Expr.Kind.longLe, Type.int, lhs, rhs) }
                 case '>'           { return genBinop(mark, Expr.Kind.longLt, Type.int, rhs, lhs) }
                 case C2Token.tGE   { return genBinop(mark, Expr.Kind.longLe, Type.int, rhs, lhs) }
+                else = ()
+            }
+        }
+        if lhs.type.isShort() and rhs.type.isShort() {
+            switch type {
+                case '+'           { return genBinop(mark, Expr.Kind.charAdd, Type.short, lhs, rhs) }
+                case '-'           { return genBinop(mark, Expr.Kind.charSub, Type.short, lhs, rhs) }
+                case '*'           { return genBinop(mark, Expr.Kind.charMul, Type.short, lhs, rhs) }
+                case '/'           { return genBinop(mark, Expr.Kind.charDiv, Type.short, lhs, rhs) }
+                case '%'           { return genBinop(mark, Expr.Kind.charRem, Type.short, lhs, rhs) }
+                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.int, lhs, rhs) }
+                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.int, lhs, rhs) }
+                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.int, lhs, rhs) }
+                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.int, lhs, rhs) }
+                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.int, rhs, lhs) }
+                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.int, rhs, lhs) }
                 else = ()
             }
         }

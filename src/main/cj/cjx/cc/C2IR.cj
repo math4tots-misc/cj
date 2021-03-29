@@ -87,6 +87,7 @@ class C2IR {
         case void
         case char
         case int
+        case short
         case long
         case ptr(Ptr)
         case array(Array)
@@ -95,6 +96,7 @@ class C2IR {
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
+        def isShort(self): Bool = tag!(self) == tag!(Self, short)
         def isLong(self): Bool = tag!(self) == tag!(Self, long)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
         def isStructOrUnion(self): Bool = tag!(self) == tag!(Self, structOrUnion)
@@ -133,8 +135,9 @@ class C2IR {
         def arrayOf(t: Type, len: Int): Type = Type.array(Array(t, len))
         def size(self): Int = when self {
             case char = 1
-            case void; case int; case ptr(..); case func(..) = 4
+            case short = 2
             case long = 8
+            case void; case int; case ptr(..); case func(..) = 4
             case array(a) = a.len * a.base.size()
             case structOrUnion(x) = x.size()
         }
@@ -224,6 +227,7 @@ class C2IR {
             case intLt
             case intLe
             case intToLong
+            case intToShort
 
             case long
             case longNeg
@@ -236,6 +240,19 @@ class C2IR {
             case longNe
             case longLt
             case longLe
+
+            case short
+            case shortNeg
+            case shortAdd
+            case shortSub
+            case shortMul
+            case shortDiv
+            case shortRem
+            case shortEq
+            case shortNe
+            case shortLt
+            case shortLe
+            case shortToInt
 
             case char
             case charNeg

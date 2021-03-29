@@ -811,6 +811,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
                 var type = translateType(e.getExpression().getType());
                 return CJJSBlob.withPrep(out -> {
                     inner.emitPrep(out);
+                    out.addMark(e.getMark());
                     out.append("throw ");
                     if (e.getExpression().getType().repr().equals("cj.Error")) {
                         inner.emitMain(out);
