@@ -45,7 +45,8 @@ class C2Parser : ParserMixin[C2Token] {
     def __get_translationUnit(self): TranslationUnit = scope.translationUnit
 
     def precof(type: Int): Int = switch type {
-        case '.'; case '('; case '['; case C2Token.tINCR; case C2Token.tDECR = 150
+        case '.'; case C2Token.tARROW; case '('; case '[';
+        case C2Token.tINCR; case C2Token.tDECR = 150
         case '*'; case '/'; case '%' = 120
         case '+'; case '-' = 100
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
@@ -365,6 +366,11 @@ class C2Parser : ParserMixin[C2Token] {
                     next()
                     val memberName = expect(C2Token.tIDENT).stringValue
                     expr = eb.member(mark, expr, memberName)
+                }
+                case C2Token.tARROW {
+                    next()
+                    val memberName = expect(C2Token.tIDENT).stringValue
+                    expr = eb.member(mark, eb.preop(mark, '*', expr), memberName)
                 }
                 else = error("Unhandled operator " + peek().repr())
             }

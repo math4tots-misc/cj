@@ -11,12 +11,13 @@ class C2Token: Repr {
         tIDENT
         tSTR
 
-        tEQ
-        tNE
-        tLE
-        tGE
-        tDECR
-        tINCR
+        tEQ     # ==
+        tNE     # !=
+        tLE     # <=
+        tGE     # >=
+        tDECR   # --
+        tINCR   # ++
+        tARROW  # ->
 
         kwVOID
         kwUNSIGNED

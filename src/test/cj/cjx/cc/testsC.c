@@ -93,9 +93,15 @@ void test04_structs_return() {
     aeq(({ newFoo2(newFoo(5), newFoo(7)).x; }), 35);
 }
 
+void test05_arrow() {
+    aeq(({ struct t {char a;} x; struct t *y = &x; x.a=3; y->a; }), 3);
+    aeq(({ struct t {char a;} x; struct t *y = &x; y->a=3; x.a; }), 3);
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
     test03_structs_assignment();
     test04_structs_return();
+    test05_arrow();
 }
