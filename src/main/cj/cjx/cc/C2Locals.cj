@@ -5,19 +5,20 @@ import cjx.parser.Mark
 import cjx.cc.C2IR.Var
 import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Taggable
+import cjx.cc.C2IR.Ordinary
 
 class C2Locals {
     val list: List[Var] = []
-    val maps: List[Map[String, Var]] = [MapOf()]
+    val maps: List[Map[String, Ordinary]] = [MapOf()]
     val tagMaps: List[Map[String, Taggable]] = [MapOf()]
 
-    def get(self, mark: Mark, name: String): Var {
-        if val var_ = getOrNull(name) { var_ } else {
-            throw MError("Variable " + name + " not found", [mark])
+    def get(self, mark: Mark, name: String): Ordinary {
+        if val ordinary = getOrNull(name) { ordinary } else {
+            throw MError("Name '" + name + "' not found", [mark])
         }
     }
 
-    def getOrNull(self, name: String): Var? {
+    def getOrNull(self, name: String): Ordinary? {
         for i = maps.size() - 1; i >= 0; i-- {
             if val var_ = maps[i].getOrNull(name) {
                 return null(var_)
@@ -26,17 +27,21 @@ class C2Locals {
         null
     }
 
-    def add(self, mark: Mark, type: Type, name: String): Var {
-        val map = maps.last()
-        if val oldVar = map.getOrNull(name) {
-            throw MError(
-                "Variable " + name + " is already defined in this scope", [mark, oldVar.mark])
-        }
+    def addLVar(self, mark: Mark, type: Type, name: String): Var {
         val index = list.size()
         val var_ = Var(mark, name, type, index)
+        _add(mark, name, var_)
         list.add(var_)
-        map[name] = var_
         var_
+    }
+
+    def _add(self, mark: Mark, name: String, ordinary: Ordinary) {
+        val map = maps.last()
+        if val old = map.getOrNull(name) {
+            throw MError(
+                "'" + name + "' is already defined in this scope", [mark])
+        }
+        map[name] = ordinary
     }
 
     def scoped[R](self, f: Fn[R]): R {

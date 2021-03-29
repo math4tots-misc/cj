@@ -4,11 +4,18 @@ import cjx.parser.MError
 import cjx.cc.C2Locals
 import cjx.cc.C2IR.TranslationUnit
 import cjx.cc.C2IR.Taggable
+import cjx.cc.C2IR.Ordinary
 
 class C2Scope {
     val translationUnit: TranslationUnit = TranslationUnit()
     var _locals: C2Locals? = null
     val tagMap: Map[String, Taggable] = MapOf()
+
+    def getOrNull(self, name: String): Ordinary? {
+        if val ordinary = translationUnit.getOrNull(name) { return null(ordinary) }
+        if val locals = _locals { return locals.getOrNull(name) }
+        null
+    }
 
     def getCurrentScopeTaggableOrNull(self, name: String): Taggable? {
         val map = if val locals = _locals { locals.tagMaps.last() } else { tagMap }

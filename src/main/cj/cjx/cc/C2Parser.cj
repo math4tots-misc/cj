@@ -87,9 +87,14 @@ class C2Parser : ParserMixin[C2Token] {
 
     def func(self, baseType: Type) {
         val (mark, name, funcType) = declarator(baseType)
-        val func = if val f = translationUnit.getFuncOrNull(name) {
-            scope._locals = null(f.locals)
-            f
+        val func = if val ordinary = translationUnit.getOrNull(name) {
+            when ordinary {
+                case func(f) {
+                    scope._locals = null(f.locals)
+                    f
+                }
+                else = throw MError("Conflicting definition for " + name, [mark, ordinary.mark])
+            }
         } else {
             scope._locals = null(C2Locals())
             val f = when funcType {
@@ -97,7 +102,7 @@ class C2Parser : ParserMixin[C2Token] {
                 else = throw MError("Expected function type", [mark])
             }
             for param in funcType.params {
-                locals.add(param.mark, param.type, param.name)
+                locals.addLVar(param.mark, param.type, param.name)
             }
             f.locals = locals
             translationUnit.addFunc(f)
@@ -149,7 +154,7 @@ class C2Parser : ParserMixin[C2Token] {
             if not name {
                 throw MError("Expected name", [mark])
             }
-            val var_ = locals.add(mark, type, name)
+            val var_ = locals.addLVar(mark, type, name)
             initstmts.add(eb.declvar(var_))
             if consume('=') {
                 val init = assign()
@@ -494,12 +499,12 @@ class C2Parser : ParserMixin[C2Token] {
             }
             case C2Token.tIDENT {
                 val name = next().stringValue
-                if val var_ = locals.getOrNull(name) {
-                    eb.getvar(mark, var_)
-                } else if val func = translationUnit.getFuncOrNull(name) {
-                    eb.func(mark, func)
-                } else if val gvar = translationUnit.getGVarOrNull(name) {
-                    eb.getgvar(mark, gvar)
+                if val ordinary = scope.getOrNull(name) {
+                    when ordinary {
+                        case lvar(lvar) = eb.getvar(mark, lvar)
+                        case gvar(gvar) = eb.getgvar(mark, gvar)
+                        case func(func) = eb.func(mark, func)
+                    }
                 } else {
                     throw MError("Variable '" + name + "' not found", [mark])
                 }

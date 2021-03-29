@@ -10,21 +10,31 @@ import cjx.parser.Mark
 class C2IR {
     class TranslationUnit {
         val gvars: List[GVar] = []
-        val gvarMap: Map[String, GVar] = MapOf()
         val funcs: List[Func] = []
-        val funcMap: Map[String, Func] = MapOf()
+        val map: Map[String, Ordinary] = MapOf()
         def addFunc(self, func: Func) {
-            Assert(func.name not in funcMap)
             funcs.add(func)
-            funcMap[func.name] = func
+            _add(func.name, func)
         }
-        def getFuncOrNull(self, name: String): Func? = funcMap.getOrNull(name)
         def addGVar(self, gvar: GVar) {
-            Assert(gvar.name not in gvarMap)
             gvars.add(gvar)
-            gvarMap[gvar.name] = gvar
+            _add(gvar.name, gvar)
         }
-        def getGVarOrNull(self, name: String): GVar? = gvarMap.getOrNull(name)
+        def _add(self, name: String, ordinary: Ordinary) {
+            Assert(name not in map)
+            map[name] = ordinary
+        }
+        def getOrNull(self, name: String): Ordinary? = map.getOrNull(name)
+    }
+    @implicit(GVar, gvar)
+    @implicit(Var, lvar)
+    @implicit(Func, func)
+    union Ordinary {
+        case gvar(GVar)
+        case lvar(Var)
+        case func(Func)
+        def __get_name(self): String = when self { else(x) = x.name }
+        def __get_mark(self): Mark = when self { else(x) = x.mark }
     }
     @implicit(Type.StructOrUnion, structOrUnion)
     union Taggable {
