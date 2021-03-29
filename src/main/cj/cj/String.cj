@@ -147,8 +147,10 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
         self[:end]
     }
 
-    def parseInt(self: Self): Nullable[Int]
-    def parseDouble(self: Self): Nullable[Double]
+    def parseInt(self: Self): Nullable[Int] = js!(
+        Nullable[Int], "nanToNull(parseInt(", self, "))")
+    def parseDouble(self: Self): Nullable[Double] = js!(
+        Nullable[Double], "nanToNull(parseFloat(", self, "))")
 
     def startsWith(self, prefix: String): Bool = js!(
         Bool, self, ".startsWith(", prefix, ")")

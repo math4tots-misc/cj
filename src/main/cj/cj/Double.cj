@@ -12,7 +12,7 @@ native class Double: Repr, Hash, Approximate, Ord, ToBool, ToInt, ToDouble, Defa
     class Convertible {
         val x: Double
         def fromInt(i: Int): Self = __malloc(i.toDouble())
-        def fromString(s: String): Self = __malloc(s.parseDouble().get())
+        def fromString(s: String): Self = js!(Self, "parseFloat(", s, ")")
     }
 
     def(conv: Convertible): Self = conv.x
