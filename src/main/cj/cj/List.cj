@@ -18,7 +18,8 @@ native class List[T?] :
     @generic def empty(): Self = []
     @variadic @generic def of(self): Self = self
     @generic def iter(self: Self): Iterator[T] = js!(Iterator[T], self, "[Symbol.iterator]()")
-    @generic def iterFrom(self: Self, start: Int): Iterator[T]
+    @generic def iterFrom(self: Self, start: Int): Iterator[T] = js!(
+        Iterator[T], "iterFrom(", self, ",", start, ")")
     @generic def size(self: Self): Int = js!(Int, self, ".length")
     @generic def isEmpty(self: Self): Bool = js!(Bool, self, ".length==0")
     @generic def add(self: Self, t: T) = js!(Unit, self, ".push(", t, ")")
