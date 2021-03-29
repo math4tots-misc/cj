@@ -11,8 +11,8 @@ import crossj.cj.CJIRRunModeTest;
 import crossj.cj.CJIRRunModeVisitor;
 import crossj.cj.CJIRRunModeWWW;
 import crossj.cj.CJIRRunModeWWWBase;
-// import crossj.cj.CJJSTranslator;
-import crossj.cj.js.CJJSTranslator2;
+import crossj.cj.CJJSTranslator;
+// import crossj.cj.js.CJJSTranslator2;
 import crossj.json.JSON;
 
 public final class JSMain {
@@ -124,7 +124,7 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = CJJSTranslator2.translate(ctx, runMode);
+        var jsSink = CJJSTranslator.translate(ctx, runMode);
 
         var finalOutPath = outPath;
         runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
