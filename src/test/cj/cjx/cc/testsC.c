@@ -163,6 +163,15 @@ void tests10_nested_decls() {
     aeq(4, ({ char x[3]; char (*y)[3]=&x; y[0][0]=4; y[0][0]; }));
 }
 
+void tests11_mixed_declspec() {
+    aeq(1, ({ char x; sizeof(x); }));
+    aeq(2, ({ short int x; sizeof(x); }));
+    aeq(2, ({ int short x; sizeof(x); }));
+    aeq(4, ({ int x; sizeof(x); }));
+    aeq(8, ({ long int x; sizeof(x); }));
+    aeq(8, ({ int long x; sizeof(x); }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -174,4 +183,5 @@ int main() {
     tests08_long();
     tests09_short();
     tests10_nested_decls();
+    tests11_mixed_declspec();
 }

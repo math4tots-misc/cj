@@ -120,7 +120,7 @@ class C2Parser : ParserMixin[C2Token] {
     # types
     # ========================================================================
 
-    def atDeclaration(self): Bool {
+    def atTypename(self): Bool {
         switch peek().type {
             case C2Token.kwVOID
             case C2Token.kwCHAR
@@ -163,48 +163,82 @@ class C2Parser : ParserMixin[C2Token] {
     def declspec(self): Type {
         val mark = mark()
         switch peek().type {
-            case C2Token.kwVOID { next(); Type.void }
-            case C2Token.kwINT { next(); Type.int }
-            case C2Token.kwLONG { next(); Type.long }
-            case C2Token.kwCHAR { next(); Type.char }
-            case C2Token.kwSHORT { next(); Type.short }
-            case C2Token.kwSTRUCT; case C2Token.kwUNION {
-                val isUnion = if consume(C2Token.kwUNION) { true } else {
-                    expect(C2Token.kwSTRUCT); false }
-                val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
-                if val tag = optTag {
-                    val optTaggable = if at('{') {
-                        # If a body is present, you don't want to check parent scopes
-                        scope.getCurrentScopeTaggableOrNull(tag)
-                    } else {
-                        scope.getTaggableOrNull(tag)
-                    }
-                    val structOrUnion = if val taggable = optTaggable {
-                        when taggable {
-                            case structOrUnion(s) {
-                                if s.isUnion() == isUnion { s } else {
-                                    throw MError(
-                                        "Conflicting taggable kind", [mark, taggable.mark])
-                                }
-                            }
-                            else = throw MError(
+            case C2Token.kwSTRUCT; case C2Token.kwUNION { return declspecStructOrUnion() }
+            else = ()
+        }
+
+        # NOTE: some invalid combinations of types may be allowed,
+        # but at least the valid ones should be handled properly.
+        #
+        # we skip by two digits at a time to recognize when a pattern has
+        # appeared twice (of course, a pattern that appears too many times
+        # may potentially result in weird behavior)
+        var flags = 0
+        val fvoid = 1 << 0
+        var fchar = 1 << 2
+        var fshort = 1 << 4
+        var fint = 1 << 6
+        var flong = 1 << 8
+        var type: Type = Type.int
+        while atTypename() {
+            switch peek().type {
+                case C2Token.kwVOID { next(); flags += fvoid }
+                case C2Token.kwINT { next(); flags += fint }
+                case C2Token.kwLONG { next(); flags += flong }
+                case C2Token.kwCHAR { next(); flags += fchar }
+                case C2Token.kwSHORT { next(); flags += fshort }
+                case C2Token.kwSTRUCT; case C2Token.kwUNION {
+                    errorKind("struct/union cannot mix with primitive types")
+                }
+                else = errorKind("typename")
+            }
+        }
+        switch flags {
+            case fvoid = Type.void
+            case fint = Type.int
+            case flong; case flong + fint = Type.long
+            case fchar = Type.char
+            case fshort; case fshort + fint = Type.short
+            case 0 = errorKind("typename")
+            else = throw MError("invalid type combination", [mark])
+        }
+    }
+
+    def declspecStructOrUnion(self): Type {
+        val mark = mark()
+        val isUnion = if consume(C2Token.kwUNION) { true } else {
+            expect(C2Token.kwSTRUCT); false }
+        val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
+        if val tag = optTag {
+            val optTaggable = if at('{') {
+                # If a body is present, you don't want to check parent scopes
+                scope.getCurrentScopeTaggableOrNull(tag)
+            } else {
+                scope.getTaggableOrNull(tag)
+            }
+            val structOrUnion = if val taggable = optTaggable {
+                when taggable {
+                    case structOrUnion(s) {
+                        if s.isUnion() == isUnion { s } else {
+                            throw MError(
                                 "Conflicting taggable kind", [mark, taggable.mark])
                         }
-                    } else {
-                        val s = Type.StructOrUnion(mark, isUnion, optTag)
-                        scope.addTaggable(s)
-                        s
                     }
-                    if at('{') { structOrUnionDecl(structOrUnion, isUnion) }
-                    structOrUnion
-                } else {
-                    # When no tag is provided, assume a struct or union body always follows
-                    val structOrUnion = Type.StructOrUnion(mark, isUnion, optTag)
-                    structOrUnionDecl(structOrUnion, isUnion)
-                    structOrUnion
+                    else = throw MError(
+                        "Conflicting taggable kind", [mark, taggable.mark])
                 }
+            } else {
+                val s = Type.StructOrUnion(mark, isUnion, optTag)
+                scope.addTaggable(s)
+                s
             }
-            else = errorKind("typename")
+            if at('{') { structOrUnionDecl(structOrUnion, isUnion) }
+            structOrUnion
+        } else {
+            # When no tag is provided, assume a struct or union body always follows
+            val structOrUnion = Type.StructOrUnion(mark, isUnion, optTag)
+            structOrUnionDecl(structOrUnion, isUnion)
+            structOrUnion
         }
     }
 
@@ -348,7 +382,7 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     def declOrStmt(self): List[Stmt] {
-        if atDeclaration() { declaration() } else { [stmt()] }
+        if atTypename() { declaration() } else { [stmt()] }
     }
 
     def blockInside(self): List[Stmt] {
