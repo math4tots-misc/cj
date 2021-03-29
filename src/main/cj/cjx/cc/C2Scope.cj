@@ -5,6 +5,7 @@ import cjx.cc.C2Locals
 import cjx.cc.C2IR.TranslationUnit
 import cjx.cc.C2IR.Taggable
 import cjx.cc.C2IR.Ordinary
+import cjx.cc.C2IR.Typedef
 
 class C2Scope {
     val translationUnit: TranslationUnit = TranslationUnit()
@@ -15,6 +16,14 @@ class C2Scope {
         if val ordinary = translationUnit.getOrNull(name) { return null(ordinary) }
         if val locals = _locals { return locals.getOrNull(name) }
         null
+    }
+
+    def addTypedef(self, typedef: Typedef) {
+        if val locals = _locals {
+            locals.addTypedef(typedef)
+        } else {
+            translationUnit.addTypedef(typedef)
+        }
     }
 
     def getCurrentScopeTaggableOrNull(self, name: String): Taggable? {

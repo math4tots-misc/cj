@@ -2,6 +2,7 @@
 //   * structs and unions
 //   * long and short types
 //   * nested type declarators
+//   * typedefs
 
 /*
  * Some multiline comments
@@ -173,6 +174,25 @@ void tests11_mixed_declspec() {
     aeq(8, ({ long long x; sizeof(x); }));
 }
 
+typedef int MyInt, MyInt2[4];
+typedef int;
+
+void tests12_typedef() {
+    aeq(1, ({ typedef int t; t x=1; x; }));
+    aeq(1, ({ typedef struct {int a;} t; t x; x.a=1; x.a; }));
+    aeq(1, ({ typedef int t; t t2=1; t2; }));
+    aeq(2, ({ typedef struct {int a;} t; { typedef int t; } t x; x.a=2; x.a; }));
+    aeq(4, ({ typedef t; t x; sizeof(x); }));
+    aeq(3, ({ MyInt x=3; x; }));
+    aeq(16, ({ MyInt2 x; sizeof(x); }));
+
+    // The following line was part of the original chibicc tests, but I don't
+    // think this would compile with a standard C compiler, given that typedefs
+    // and variable names share the 'ordinary' namespace.
+    // In fact, this fails to compile when i test with clang.
+    // aeq(1, ({ typedef int t; t t=1; t; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -185,4 +205,5 @@ int main() {
     tests09_short();
     tests10_nested_decls();
     tests11_mixed_declspec();
+    tests12_typedef();
 }

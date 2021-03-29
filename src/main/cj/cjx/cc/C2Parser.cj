@@ -15,6 +15,9 @@ import cjx.cc.C2IR.Expr
 import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Var
 import cjx.cc.C2IR.GVar
+import cjx.cc.C2IR.Ordinary
+import cjx.cc.C2IR.VarAttr
+import cjx.cc.C2IR.Typedef
 
 class C2Parser : ParserMixin[C2Token] {
     static private val assingPrec: Int = precof('=')
@@ -59,12 +62,24 @@ class C2Parser : ParserMixin[C2Token] {
 
     def translationUnit(self) {
         while not at(C2Token.tEOF) {
-            val baseType = declspec()
-            if atFunc(baseType) {
+            val (baseType, attr) = declspecEx()
+            if attr.typedef {
+                typedef(baseType)
+            } else if atFunc(baseType) {
                 func(baseType)
             } else {
                 gvar(baseType)
             }
+        }
+    }
+
+    def typedef(self, baseType: Type) {
+        var first = true
+        while not consume(';') {
+            if not first { expect(',') }
+            first = false
+            val (mark, name, type) = declarator(baseType)
+            scope.addTypedef(Typedef(mark, name, type))
         }
     }
 
@@ -133,7 +148,10 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwSHORT
             case C2Token.kwLONG
             case C2Token.kwUNION
-            case C2Token.kwSTRUCT = true
+            case C2Token.kwSTRUCT
+            case C2Token.kwTYPEDEF = true
+            case C2Token.tIDENT = if val ordinary = scope.getOrNull(peek().stringValue) {
+                tag!(ordinary) == tag!(Ordinary, typedef) } else { false }
             else = false
         }
     }
@@ -141,9 +159,14 @@ class C2Parser : ParserMixin[C2Token] {
     ## declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
     def declaration(self): List[Stmt] {
         val mark = mark()
-        val baseType = declspec()
-        var first = true
+        val (baseType, attrs) = declspecEx()
 
+        if attrs.typedef {
+            typedef(baseType)
+            return []
+        }
+
+        var first = true
         val initstmts: List[Stmt] = []
         while not consume(';') {
             if not first {
@@ -167,46 +190,68 @@ class C2Parser : ParserMixin[C2Token] {
 
     def declspec(self): Type {
         val mark = mark()
-        switch peek().type {
-            case C2Token.kwSTRUCT; case C2Token.kwUNION { return declspecDerived() }
-            else = ()
+        val (type, attr) = declspecEx()
+        if attr {
+            throw MError("storage class specifier is not allowed in this context", [mark])
         }
+        type
+    }
 
+    def declspecEx(self): Tuple[Type, VarAttr] {
         # NOTE: some invalid combinations of types may be allowed,
         # but at least the valid ones should be handled properly.
         #
-        # we skip by two digits at a time to recognize when a pattern has
+        # We skip flags by two bits at a time to recognize when a pattern has
         # appeared twice (of course, a pattern that appears too many times
         # may potentially result in weird behavior)
+        val mark = mark()
+        val attr = VarAttr()
         var flags = 0
         val fvoid = 1 << 0
         var fchar = 1 << 2
         var fshort = 1 << 4
         var fint = 1 << 6
         var flong = 1 << 8
+        var fother = 1 << 10
         var type: Type = Type.int
         while atTypename() {
             switch peek().type {
-                case C2Token.kwVOID { next(); flags += fvoid }
-                case C2Token.kwINT { next(); flags += fint }
-                case C2Token.kwLONG { next(); flags += flong }
-                case C2Token.kwCHAR { next(); flags += fchar }
-                case C2Token.kwSHORT { next(); flags += fshort }
+                case C2Token.kwTYPEDEF { next(); attr.typedef = true }
                 case C2Token.kwSTRUCT; case C2Token.kwUNION {
-                    errorKind("struct/union cannot mix with primitive types")
+                    flags += fother
+                    type = declspecDerived()
                 }
-                else = errorKind("typename")
+                case C2Token.tIDENT {
+                    val name = next().stringValue
+                    type = if val ordinary = scope.getOrNull(name) {
+                        when ordinary {
+                            case typedef(t) = t.type
+                            else = throw MError(name + " is not a typename", [mark])
+                        }
+                    } else { throw MError("Name '" + name + "' not found", [mark]) }
+                }
+                else {
+                    switch peek().type {
+                        case C2Token.kwVOID { next(); flags += fvoid }
+                        case C2Token.kwINT { next(); flags += fint }
+                        case C2Token.kwLONG { next(); flags += flong }
+                        case C2Token.kwCHAR { next(); flags += fchar }
+                        case C2Token.kwSHORT { next(); flags += fshort }
+                        else = errorKind("typename")
+                    }
+                    type = switch flags {
+                        case fvoid = Type.void
+                        case fint = Type.int
+                        case flong; case flong + fint; case flong + flong = Type.long
+                        case fchar = Type.char
+                        case fshort; case fshort + fint = Type.short
+                        case 0 = errorKind("typename")
+                        else = throw MError("Invalid type", [mark])
+                    }
+                }
             }
         }
-        switch flags {
-            case fvoid = Type.void
-            case fint = Type.int
-            case flong; case flong + fint; case flong + flong = Type.long
-            case fchar = Type.char
-            case fshort; case fshort + fint = Type.short
-            case 0 = errorKind("typename")
-            else = throw MError("Invalid type", [mark])
-        }
+        (type, attr)
     }
 
     def declspecDerived(self): Type {
@@ -504,6 +549,8 @@ class C2Parser : ParserMixin[C2Token] {
                         case lvar(lvar) = eb.getvar(mark, lvar)
                         case gvar(gvar) = eb.getgvar(mark, gvar)
                         case func(func) = eb.func(mark, func)
+                        case typedef(..) = throw MError(
+                            "'" + name + "' is a type, not a value", [mark])
                     }
                 } else {
                     throw MError("Variable '" + name + "' not found", [mark])

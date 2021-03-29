@@ -6,6 +6,7 @@ import cjx.cc.C2IR.Var
 import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Taggable
 import cjx.cc.C2IR.Ordinary
+import cjx.cc.C2IR.Typedef
 
 class C2Locals {
     val list: List[Var] = []
@@ -25,6 +26,10 @@ class C2Locals {
             }
         }
         null
+    }
+
+    def addTypedef(self, typedef: Typedef) {
+        _add(typedef.mark, typedef.name, typedef)
     }
 
     def addLVar(self, mark: Mark, type: Type, name: String): Var {

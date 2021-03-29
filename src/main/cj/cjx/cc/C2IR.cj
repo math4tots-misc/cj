@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cjx.parser.MError
 import cj.BigInt
 import cj.Uint8Array
 import cjx.cc.C2Locals
@@ -20,8 +21,13 @@ class C2IR {
             gvars.add(gvar)
             _add(gvar.name, gvar)
         }
+        def addTypedef(self, typedef: Typedef) {
+            _add(typedef.name, typedef)
+        }
         def _add(self, name: String, ordinary: Ordinary) {
-            Assert(name not in map)
+            # if name in map {
+            #     throw MError("'" + name + "' already defined in this scope", [ordinary.mark])
+            # }
             map[name] = ordinary
         }
         def getOrNull(self, name: String): Ordinary? = map.getOrNull(name)
@@ -29,12 +35,24 @@ class C2IR {
     @implicit(GVar, gvar)
     @implicit(Var, lvar)
     @implicit(Func, func)
+    @implicit(Typedef, typedef)
     union Ordinary {
         case gvar(GVar)
         case lvar(Var)
         case func(Func)
+        case typedef(Typedef)
         def __get_name(self): String = when self { else(x) = x.name }
         def __get_mark(self): Mark = when self { else(x) = x.mark }
+    }
+    class Typedef {
+        val mark: Mark
+        val name: String
+        val type: Type
+    }
+    ## Variable attributes such as typedef or extern
+    class VarAttr: ToBool {
+        var typedef = false
+        def toBool(self): Bool = typedef
     }
     @implicit(Type.Derived, derived)
     union Taggable {
