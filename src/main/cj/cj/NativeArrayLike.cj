@@ -31,12 +31,10 @@ trait NativeArrayLike[T]: Collection[T] {
     def __getitem(self: Self, i: Int): T = js!(T, self, "[", checkedIndex(i), "]")
     def __setitem(self: Self, i: Int, t: T) = js!(T, self, "[", checkedIndex(i), "]=", t)
 
-    def __slice(self, start: Int, end: Int): Self = (
-        js!(Self, self, ".slice(", checkedIndex2(start), ",", checkedIndex2(end), ")"))
-    def __sliceFrom(self, start: Int): Self = (
-        js!(Self, self, ".slice(", checkedIndex2(start), ")"))
-    def __sliceTo(self, end: Int): Self = (
-        js!(Self, self, ".slice(0,", checkedIndex2(end), ")"))
+    def __slice(self, start: Int, end: Int): Self = js!(
+        Self, self, ".slice(", start, ",", end, ")")
+    def __sliceFrom(self, start: Int): Self = js!(Self, self, ".slice(", start, ")")
+    def __sliceTo(self, end: Int): Self = js!(Self, self, ".slice(0,", end, ")")
 
     def size(self): Int = js!(Int, self, ".length")
 

@@ -1,70 +1,9 @@
 class MC$cj$String {
-    checkedIndex(self, i) {
-        if (i < 0) {
-            i += self.length;
-        }
-        if (i < 0 || i >= self.length) {
-            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
-        }
-        return i;
-    }
-    checkedIndex2(self, i) {
-        if (i < 0) {
-            i += self.length;
-        }
-        if (i < 0 || i > self.length) {
-            throw new Error(`Index out of bounds (i = ${i}, len = ${self.length})`);
-        }
-        return i;
-    }
-    M$repr(x) {
-        return '"' + x.replace(/\n|\r|\t|[\x00-\x1E]|"/g, m => {
-            switch (m) {
-                case '\0': return "\\0";
-                case '\n': return "\\n";
-                case '\r': return "\\r";
-                case '\t': return "\\t";
-                case '"': return "\\\"";
-                default:
-                    const ch = m.codePointAt(0);
-                    if (ch < 32) {
-                        const rawStr = ch.toString(16);
-                        return "\\x" + rawStr.length < 2 ? '0'.repeat(2 - rawStr.length) + rawStr : rawStr;
-                    } else {
-                        const rawStr = ch.toString(16);
-                        return "\\u" + rawStr.length < 4 ? '0'.repeat(4 - rawStr.length) + rawStr : rawStr;
-                    }
-            }
-        }) + '"';
-    }
-
     M$charCodeAt(self, i) {
         return defined(self.charCodeAt(i));
     }
     M$charAt(self, i) {
         return defined(self.codePointAt(i));
-    }
-    *M$iter(self) {
-        for (let i = 0; i < self.length; i++) {
-            const c = self.codePointAt(i);
-            yield c;
-            if (self.charCodeAt(i) !== c) {
-                i++;
-            }
-        }
-    }
-    M$__slice(self, start, end) {
-        start = this.checkedIndex2(self, start);
-        end = this.checkedIndex2(self, end);
-        return self.substring(start, end);
-    }
-    M$__sliceFrom(self, start) {
-        start = this.checkedIndex2(self, start);
-        return self.substring(start);
-    }
-    M$__sliceTo(self, end) {
-        end = this.checkedIndex2(self, end);
-        return self.substring(0, end);
     }
 
     M$__mul(self, n) {

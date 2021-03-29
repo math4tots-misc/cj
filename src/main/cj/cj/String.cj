@@ -7,8 +7,42 @@ import cj.Uint8Array
 import cj.Math
 
 native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
+    def checkedIndex(self, var i: Int): Int {
+        if i < 0 {
+            i += len()
+        }
+        if i < 0 or i >= len() {
+            IO.panic("String index out of bounds (i = " + i + ", len = " + len() + ")")
+        }
+        i
+    }
+
     def toString(self: Self): Self = self
-    def repr(self: Self): String
+
+    def repr(self: Self): String {
+        val sb = StringBuilder()
+        sb.char('"')
+        for ch in self {
+            switch ch {
+                case '\0' = sb.str("\\0")
+                case '\n' = sb.str("\\n")
+                case '\r' = sb.str("\\r")
+                case '\t' = sb.str("\\t")
+                case '"' = sb.str("\\\"")
+                else {
+                    if ch.toInt() < 32 {
+                        sb.str("\\x" + ch.toInt().hex().lpad(2, "0"))
+                    } else if ch.toInt() >= 127 {
+                        sb.str("\\u" + ch.toInt().hex().lpad(4, "0"))
+                    } else {
+                        sb.char(ch)
+                    }
+                }
+            }
+        }
+        sb.char('"')
+        sb.toString()
+    }
 
     def unrepr(self): String {
         Assert.that(startsWith("\"") and endsWith("\""))
@@ -18,8 +52,9 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
             if escape {
                 switch ch {
                     case '0' { sb.char('\0') }
-                    case 't' { sb.char('\t') }
                     case 'n' { sb.char('\n') }
+                    case 'r' { sb.char('\r') }
+                    case 't' { sb.char('\t') }
                     case '"' { sb.char('"') }
                     case '\\' { sb.char('\\') }
                     else = throw Error("Unrecognized escape char " + ch.repr())
@@ -61,15 +96,17 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
 
     def _join(self, parts: List[String]): String = js!(String, parts, ".join(", self, ")")
 
-    def charCodeAt(self: Self, i: Int): Int
-    def charAt(self: Self, i: Int): Char
-    def iter(self: Self): Iterator[Char]
+    def charCodeAt(self: Self, i: Int): Int =  js!(
+        Char, "defined(", self, ".charCodeAt(", i, "))")
+    def charAt(self: Self, i: Int): Char = js!(Char, "defined(", self, ".codePointAt(", i, "))")
+    def iter(self: Self): Iterator[Char] = js!(Iterator[Char], "strIter(", self, ")")
 
-    def __getitem(self, i: Int): Char = charAt(i)
+    def __getitem(self, i: Int): Char = charAt(checkedIndex(i))
 
-    def __slice(self: Self, start: Int, end: Int): String
-    def __sliceFrom(self: Self, start: Int): String
-    def __sliceTo(self: Self, end: Int): String
+    def __slice(self, start: Int, end: Int): Self = js!(
+        Self, self, ".slice(", start, ",", end, ")")
+    def __sliceFrom(self, start: Int): Self = js!(Self, self, ".slice(", start, ")")
+    def __sliceTo(self, end: Int): Self = js!(Self, self, ".slice(0,", end, ")")
 
     def __mul(self, n: Int): String
 
