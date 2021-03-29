@@ -33,6 +33,7 @@ class C2Parser : ParserMixin[C2Token] {
     var i = 0
     val scope: C2Scope = C2Scope()
     val eb: C2ExprBuilder = C2ExprBuilder()
+    var currentFunc: Func? = null
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: C2Token): Mark = Mark(token.filepath, token.line, token.column)
@@ -107,7 +108,9 @@ class C2Parser : ParserMixin[C2Token] {
             if is_set!(func, body) {
                 throw MError("Duplicate function definition " + func.name, [mark, func.mark])
             }
+            currentFunc = null(func)
             func.body = block()
+            currentFunc = null
         }
 
         scope._locals = null
@@ -122,6 +125,8 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwVOID
             case C2Token.kwCHAR
             case C2Token.kwINT
+            case C2Token.kwSHORT
+            case C2Token.kwLONG
             case C2Token.kwUNION
             case C2Token.kwSTRUCT = true
             else = false
@@ -160,6 +165,7 @@ class C2Parser : ParserMixin[C2Token] {
         switch peek().type {
             case C2Token.kwVOID { next(); Type.void }
             case C2Token.kwINT { next(); Type.int }
+            case C2Token.kwLONG { next(); Type.long }
             case C2Token.kwCHAR { next(); Type.char }
             case C2Token.kwSTRUCT; case C2Token.kwUNION {
                 val isUnion = if consume(C2Token.kwUNION) { true } else {
@@ -275,7 +281,13 @@ class C2Parser : ParserMixin[C2Token] {
             case ';' { while consume(';') {}; eb.nop(mark) }
             case C2Token.kwRETURN {
                 next()
-                val ret = eb.ret(mark, expr())
+                val ret = if val func = currentFunc {
+                    val rtype = func.type.returnType
+                    val rexpr = eb.icast(expr(), rtype)
+                    eb.ret(mark, rexpr)
+                } else {
+                    throw MError("Return can only be used inside a function body", [mark])
+                }
                 expect(';')
                 ret
             }
@@ -407,6 +419,7 @@ class C2Parser : ParserMixin[C2Token] {
         val mark = mark()
         switch peek().type {
             case C2Token.tINT = eb.int(mark, next().intValue)
+            case C2Token.tLONG = eb.long(mark, next().bigIntValue)
             case C2Token.tCHAR = eb.char(mark, next().intValue)
             case C2Token.tSTR = eb.str(mark, next().bytesValue)
             case '-'; case '+'; case '&'; case '*'

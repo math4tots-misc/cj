@@ -95,6 +95,7 @@ class C2RT {
                 puts: puts,
                 __puti: __puti,
                 __putsi: __putsi,
+                __putsl: __putsi,
                 assert: assert,
                 __push: __push,
                 __pop: __pop,

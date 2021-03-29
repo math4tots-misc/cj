@@ -135,9 +135,8 @@ class C2Codegen {
 
     def type(self, type: C2IR.Type): Binaryen.Type {
         when type {
-            case void = i32
-            case char = i32
-            case int = i32
+            case void; case char; case int = i32
+            case long = i64
             case array(..) = i32
             case ptr(..) = i32
             case func(..) = i32
@@ -235,7 +234,7 @@ class C2Codegen {
             func.name,
             Binaryen.createType(wasmParamTypes),
             wasmReturnType,
-            locals,
+            locals[wasmParamTypes.size():],
             body)
 
         m.addFunctionExport(func.name, func.name)
@@ -388,6 +387,7 @@ class C2Codegen {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
             case char = m.i32.load8_u(offset, 0, addrExpr)
+            case long = m.i64.load(offset, 0, addrExpr)
             case array(..); case structOrUnion(..) {
                 # array, struct and union values cannot be stored in a register, so
                 # instead in these cases we just return the address as is
@@ -407,6 +407,7 @@ class C2Codegen {
         when valtype {
             case void = throw MError("Assignment to void type is not allowed", [mark])
             case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
+            case long { m.i64.store(offset, 0, addrExpr, valExpr) }
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
             case array(..) = throw MError("Assignment to array type is not allowed", [mark])
             case structOrUnion(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
@@ -559,6 +560,18 @@ class C2Codegen {
             case intNe; case charNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt; case charLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe; case charLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
+            case intToLong = m.i64.extend_s(expr(expr.arg))
+            case long = m.i64.const(expr.bigIntValue.toInt()) # TODO: address truncation issues
+            case longNeg = m.i64.sub(m.i64.const(0), expr(expr.arg))
+            case longAdd = m.i64.add(expr(expr.lhs), expr(expr.rhs))
+            case longSub = m.i64.sub(expr(expr.lhs), expr(expr.rhs))
+            case longMul = m.i64.mul(expr(expr.lhs), expr(expr.rhs))
+            case longDiv = m.i64.div_s(expr(expr.lhs), expr(expr.rhs))
+            case longRem = m.i64.rem_s(expr(expr.lhs), expr(expr.rhs))
+            case longEq = m.i64.eq(expr(expr.lhs), expr(expr.rhs))
+            case longNe = m.i64.ne(expr(expr.lhs), expr(expr.rhs))
+            case longLt = m.i64.lt_s(expr(expr.lhs), expr(expr.rhs))
+            case longLe = m.i64.le_s(expr(expr.lhs), expr(expr.rhs))
             case funcall {
                 val args = expr.args.map(a -> expr(a))
                 val rtype = type(expr.func.type.returnType)
@@ -678,7 +691,7 @@ class C2Codegen {
     }
 
     def incrAmount(self, type: C2IR.Type): Int = when type {
-        case int = 1
+        case int; case long = 1
         case ptr(t) = t.base.size()
         else = throw MError("TODO incrAmount " + type, [])
     }

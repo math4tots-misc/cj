@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.BigInt
 import cj.Uint8Array
 import cjx.cc.C2Locals
 import cj.StringBuilder
@@ -86,6 +87,7 @@ class C2IR {
         case void
         case char
         case int
+        case long
         case ptr(Ptr)
         case array(Array)
         case func(Func)
@@ -93,6 +95,7 @@ class C2IR {
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
+        def isLong(self): Bool = tag!(self) == tag!(Self, long)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
         def isStructOrUnion(self): Bool = tag!(self) == tag!(Self, structOrUnion)
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
@@ -131,6 +134,7 @@ class C2IR {
         def size(self): Int = when self {
             case char = 1
             case void; case int; case ptr(..); case func(..) = 4
+            case long = 8
             case array(a) = a.len * a.base.size()
             case structOrUnion(x) = x.size()
         }
@@ -219,6 +223,19 @@ class C2IR {
             case intNe
             case intLt
             case intLe
+            case intToLong
+
+            case long
+            case longNeg
+            case longAdd
+            case longSub
+            case longMul
+            case longDiv
+            case longRem
+            case longEq
+            case longNe
+            case longLt
+            case longLe
 
             case char
             case charNeg
@@ -271,6 +288,7 @@ class C2IR {
         val kind: Kind
         var type: Type = ?
         var intValue: Int = ?
+        var bigIntValue: BigInt = ?  # for long
         var stringValue: String = ?
         var bytesValue: Uint8Array = ?
         var var_: Var = ?
@@ -287,6 +305,7 @@ class C2IR {
             sb.str("{\"kind\":\"" + kind + "\"")
             if is_set!(self, type) { sb.str(",\"type\":\"" + type + "\"") }
             if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
+            if is_set!(self, bigIntValue) { sb.str(",\"bigIntValue\":\"" + bigIntValue + "\"") }
             if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
             if is_set!(self, gvar) { sb.str(",\"gvar\":\"" + gvar.name + "\"") }
             if is_set!(self, func) { sb.str(",\"func\":\"" + func.name + "\"") }

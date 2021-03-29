@@ -1,5 +1,6 @@
 // Tests
-//   * structs
+//   * structs and unions
+//   * long type
 
 /*
  * Some multiline comments
@@ -14,6 +15,9 @@ void aeq(int lhs, int rhs) {
         __putsi("lhs = ", lhs);
         __putsi("rhs = ", rhs);
     }
+    assert(lhs == rhs);
+}
+void aeql(long lhs, long rhs) {
     assert(lhs == rhs);
 }
 
@@ -127,6 +131,18 @@ void tests07_struct_union_assignment() {
     aeq(3, ({ union {struct {int a,b;} c;} x,y; x.c.b=3; y.c.b=5; y=x; y.c.b; }));
 }
 
+long sub_long(long a, long b, long c) {
+  return a - b - c;
+}
+
+void tests08_long() {
+    aeq(16, ({ struct {char a; long b;} x; sizeof(x); }));
+    aeq(8, ({ long x; sizeof(x); }));
+    aeql(1, sub_long(7, 3, 3));
+    aeql(2l, sub_long(7, 2, 3));
+    aeql(-1, sub_long(7, 5, 3));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -135,4 +151,5 @@ int main() {
     test05_arrow();
     tests06_union();
     tests07_struct_union_assignment();
+    tests08_long();
 }

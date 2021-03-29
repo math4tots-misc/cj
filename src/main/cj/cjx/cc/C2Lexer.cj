@@ -13,8 +13,10 @@ class C2Lexer {
 
     private def build(): Lexer[C2Token] {
         val b = Lexer[C2Token].builder()
-        b.add("0x[0-9A-Fa-f]+", m -> tok(m, C2Token.tINT, s -> s.parseInt().get())) # hex literals
-        b.add("\\d+", m -> tok(m, C2Token.tINT, s -> s.parseInt().get()))
+        b.add("0x[0-9A-Fa-f]+", m -> tok(m, C2Token.tINT, s -> Int(s))) # hex literals
+        b.add("\\d+", m -> tok(m, C2Token.tINT, s -> Int(s)))
+        b.add("0x[0-9A-Fa-f]+(l|L)", m -> tok(m, C2Token.tLONG, s -> BigInt(s[:-1]))) # hex literals
+        b.add("\\d+(l|L)", m -> tok(m, C2Token.tLONG, s -> BigInt(s[:-1])))
 
         for type in C2Token.keywordTypes {
             b.add(C2Token.keywordString(type), m -> symtok(m, type))

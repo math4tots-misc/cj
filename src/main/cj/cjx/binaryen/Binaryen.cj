@@ -150,6 +150,16 @@ native class Binaryen {
             Expression, self, ".store(", offset, ",", align, ",", ptr, ",", v, ")")
     }
     trait IntOps : MemOps {
+        def trunc_s_f32(self, value: Expression): Expression = js!(
+            Expression, self, ".trunc_s.f32(", value, ")")
+        def trunc_s_f64(self, value: Expression): Expression = js!(
+            Expression, self, ".trunc_s.f64(", value, ")")
+        def trunc_u_f32(self, value: Expression): Expression = js!(
+            Expression, self, ".trunc_u.f32(", value, ")")
+        def trunc_u_f64(self, value: Expression): Expression = js!(
+            Expression, self, ".trunc_u.f64(", value, ")")
+        def reinterpret(self, value: Expression): Expression = js!(
+            Expression, self, ".reinterpret(", value, ")")
         def load8_s(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
             Expression, self, ".load8_s(", offset, ",", align, ",", ptr, ")")
         def load8_u(self, offset: Int, align: Int, ptr: Expression): Expression = js!(
@@ -224,7 +234,12 @@ native class Binaryen {
             Expression, self, ".ge_u(", left, ",", right, ")")
     }
     native class ModuleI32 : IntOps {}
-    native class ModuleI64 : IntOps {}
+    native class ModuleI64 : IntOps {
+        def extend_s(self, value: Expression): Expression = js!(
+            Expression, self, ".extend_s(", value, ")")
+        def extend_u(self, value: Expression): Expression = js!(
+            Expression, self, ".extend_u(", value, ")")
+    }
     native class Function {}
     native class Expression {}
     native class Type: Eq, Repr {

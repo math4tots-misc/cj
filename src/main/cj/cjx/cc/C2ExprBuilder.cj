@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.BigInt
 import cj.Uint8Array
 import cjx.cc.C2Token
 import cjx.parser.MError
@@ -90,6 +91,15 @@ class C2ExprBuilder {
         if expr.type == type {
             return expr
         }
+        if type.isLong() and expr.type.isInt() {
+            return if expr.kind == Expr.Kind.int {
+                # convert int literals to long literals
+                long(expr.mark, BigInt(expr.intValue))
+            } else {
+                # if it's not a literal, convert i32 to i64 at runtime
+                intToLong(expr.mark, expr)
+            }
+        }
         if type.isPtr() and expr.type.isArray() {
             # Arrays may decay to pointers
             # TODO: check that this conversion is valid
@@ -149,6 +159,20 @@ class C2ExprBuilder {
         val ret = Expr(mark, Expr.Kind.int)
         ret.intValue = value
         ret.type = Type.int
+        ret
+    }
+
+    def intToLong(self, mark: Mark, intExpr: Expr): Expr {
+        val ret = Expr(mark, Expr.Kind.intToLong)
+        ret.arg = intExpr
+        ret.type = Type.long
+        ret
+    }
+
+    def long(self, mark: Mark, value: BigInt): Expr {
+        val ret = Expr(mark, Expr.Kind.long)
+        ret.bigIntValue = value
+        ret.type = Type.long
         ret
     }
 
@@ -363,6 +387,22 @@ class C2ExprBuilder {
                 else = ()
             }
         }
+        if lhs.type.isLong() and rhs.type.isLong() {
+            switch type {
+                case '+'           { return genBinop(mark, Expr.Kind.longAdd, Type.long, lhs, rhs) }
+                case '-'           { return genBinop(mark, Expr.Kind.longSub, Type.long, lhs, rhs) }
+                case '*'           { return genBinop(mark, Expr.Kind.longMul, Type.long, lhs, rhs) }
+                case '/'           { return genBinop(mark, Expr.Kind.longDiv, Type.long, lhs, rhs) }
+                case '%'           { return genBinop(mark, Expr.Kind.longRem, Type.long, lhs, rhs) }
+                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.longEq, Type.int, lhs, rhs) }
+                case C2Token.tNE   { return genBinop(mark, Expr.Kind.longNe, Type.int, lhs, rhs) }
+                case '<'           { return genBinop(mark, Expr.Kind.longLt, Type.int, lhs, rhs) }
+                case C2Token.tLE   { return genBinop(mark, Expr.Kind.longLe, Type.int, lhs, rhs) }
+                case '>'           { return genBinop(mark, Expr.Kind.longLt, Type.int, rhs, lhs) }
+                case C2Token.tGE   { return genBinop(mark, Expr.Kind.longLe, Type.int, rhs, lhs) }
+                else = ()
+            }
+        }
         if lhs.type.isChar() and rhs.type.isChar() {
             switch type {
                 case '+'           { return genBinop(mark, Expr.Kind.charAdd, Type.char, lhs, rhs) }
@@ -370,12 +410,12 @@ class C2ExprBuilder {
                 case '*'           { return genBinop(mark, Expr.Kind.charMul, Type.char, lhs, rhs) }
                 case '/'           { return genBinop(mark, Expr.Kind.charDiv, Type.char, lhs, rhs) }
                 case '%'           { return genBinop(mark, Expr.Kind.charRem, Type.char, lhs, rhs) }
-                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.char, lhs, rhs) }
-                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.char, lhs, rhs) }
-                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.char, lhs, rhs) }
-                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.char, lhs, rhs) }
-                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.char, rhs, lhs) }
-                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.char, rhs, lhs) }
+                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.int, lhs, rhs) }
+                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.int, lhs, rhs) }
+                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.int, lhs, rhs) }
+                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.int, lhs, rhs) }
+                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.int, rhs, lhs) }
+                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.int, rhs, lhs) }
                 else = ()
             }
         }

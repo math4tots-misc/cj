@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.BigInt
 import cj.Uint8Array
 import cj.Error
 
@@ -7,6 +8,7 @@ class C2Token: Repr {
     enum {
         tEOF = 200
         tINT
+        tLONG
         tCHAR
         tIDENT
         tSTR
@@ -49,25 +51,30 @@ class C2Token: Repr {
 
     @implicit(Unit, fromUnit)
     @implicit(Int, int)
+    @implicit(BigInt, bigInt)
     @implicit(String, string)
     @implicit(Uint8Array, bytes)
     union Value : Repr {
         case none
         case int(Int)
+        case bigInt(BigInt)
         case string(String)
         case bytes(Uint8Array)
         def fromUnit(u: Unit): Self = none
         def repr(self): String = when self {
             case none = "none"
-            case string(s) = s.repr()
-            case int(i) = i.repr()
-            case bytes(b) = b.repr()
+            else(x) = x.repr()
         }
     }
 
     def __get_intValue(self): Int = when value {
         case int(x) = x
         else = throw Error("Expected int value but got " + value)
+    }
+
+    def __get_bigIntValue(self): BigInt = when value {
+        case bigInt(x) = x
+        else = throw Error("Expected bigInt value but got " + value)
     }
 
     def __get_stringValue(self): String = when value {
