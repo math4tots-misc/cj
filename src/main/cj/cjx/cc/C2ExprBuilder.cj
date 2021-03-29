@@ -338,14 +338,14 @@ class C2ExprBuilder {
 
     def getmember(self, mark: Mark, arg: Expr, name: String): Expr {
         addType(arg)
-        val structOrUnion = when arg.type {
-            case structOrUnion(s) = s
+        val derived = when arg.type {
+            case derived(s) = s
             else = throw MError("" + arg.type + " is not a struct or union", [mark])
         }
-        if not structOrUnion.isComplete() {
-            throw MError(structOrUnion.tag.get() + " is an incomplete type", [mark])
+        if not derived.isComplete() {
+            throw MError(derived.tag.get() + " is an incomplete type", [mark])
         }
-        val member = if val m = structOrUnion.getMemberOrNull(name) { m } else {
+        val member = if val m = derived.getMemberOrNull(name) { m } else {
             throw MError("Member " + name + " not found in " + arg.type, [mark])
         }
         val ret = Expr(mark, Expr.Kind.getmember)
@@ -359,7 +359,7 @@ class C2ExprBuilder {
             self,
             mark: Mark,
             lhs: Expr,
-            member: Type.StructOrUnion.Member,
+            member: Type.Derived.Member,
             var rhs: Expr): Expr {
         addType(lhs)
         rhs = icast(rhs, member.type)

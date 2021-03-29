@@ -168,7 +168,7 @@ class C2Parser : ParserMixin[C2Token] {
     def declspec(self): Type {
         val mark = mark()
         switch peek().type {
-            case C2Token.kwSTRUCT; case C2Token.kwUNION { return declspecStructOrUnion() }
+            case C2Token.kwSTRUCT; case C2Token.kwUNION { return declspecDerived() }
             else = ()
         }
 
@@ -209,7 +209,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def declspecStructOrUnion(self): Type {
+    def declspecDerived(self): Type {
         val mark = mark()
         val isUnion = if consume(C2Token.kwUNION) { true } else {
             expect(C2Token.kwSTRUCT); false }
@@ -221,9 +221,9 @@ class C2Parser : ParserMixin[C2Token] {
             } else {
                 scope.getTaggableOrNull(tag)
             }
-            val structOrUnion = if val taggable = optTaggable {
+            val derived = if val taggable = optTaggable {
                 when taggable {
-                    case structOrUnion(s) {
+                    case derived(s) {
                         if s.isUnion() == isUnion { s } else {
                             throw MError(
                                 "Conflicting taggable kind", [mark, taggable.mark])
@@ -233,23 +233,23 @@ class C2Parser : ParserMixin[C2Token] {
                         "Conflicting taggable kind", [mark, taggable.mark])
                 }
             } else {
-                val s = Type.StructOrUnion(mark, isUnion, optTag)
+                val s = Type.Derived(mark, isUnion, optTag)
                 scope.addTaggable(s)
                 s
             }
-            if at('{') { structOrUnionDecl(structOrUnion, isUnion) }
-            structOrUnion
+            if at('{') { derivedDecl(derived, isUnion) }
+            derived
         } else {
-            # When no tag is provided, assume a struct or union body always follows
-            val structOrUnion = Type.StructOrUnion(mark, isUnion, optTag)
-            structOrUnionDecl(structOrUnion, isUnion)
-            structOrUnion
+            # When no tag is provided, assume a derived body always follows
+            val derived = Type.Derived(mark, isUnion, optTag)
+            derivedDecl(derived, isUnion)
+            derived
         }
     }
 
-    def structOrUnionDecl(self, structOrUnion: Type.StructOrUnion, isUnion: Bool) {
-        if structOrUnion.isComplete() {
-            throw MError("Duplicate struct or union definition", [mark(), structOrUnion.mark])
+    def derivedDecl(self, derived: Type.Derived, isUnion: Bool) {
+        if derived.isComplete() {
+            throw MError("Duplicate derived definition", [mark(), derived.mark])
         }
         expect('{')
         var currentSize = 0
@@ -264,19 +264,19 @@ class C2Parser : ParserMixin[C2Token] {
                 currentAlignment = Math.max(currentAlignment, memberType.alignment())
 
                 if isUnion {
-                    val member = Type.StructOrUnion.Member(memberMark, memberName, memberType, 0)
+                    val member = Type.Derived.Member(memberMark, memberName, memberType, 0)
                     currentSize = Math.max(currentSize, member.type.size())
-                    structOrUnion.members.add(member)
+                    derived.members.add(member)
                 } else {
                     currentSize = currentSize.roundUp(memberType.alignment())
-                    val member = Type.StructOrUnion.Member(memberMark, memberName, memberType, currentSize)
+                    val member = Type.Derived.Member(memberMark, memberName, memberType, currentSize)
                     currentSize += member.type.size()
-                    structOrUnion.members.add(member)
+                    derived.members.add(member)
                 }
             }
         }
-        structOrUnion._alignment = currentAlignment
-        structOrUnion._size = currentSize.roundUp(currentAlignment)
+        derived._alignment = currentAlignment
+        derived._size = currentSize.roundUp(currentAlignment)
     }
 
     def declarator(self, var type: Type): Tuple[Mark, String, Type] {

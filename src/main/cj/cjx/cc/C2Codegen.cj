@@ -39,7 +39,7 @@ class C2Codegen {
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
 
-    ## used for functions with struct or union return types
+    ## used for functions with derived return types
     private var retptrLocalIndex: Int? = null
 
     def emit(self, tu: C2IR.TranslationUnit): C2Code {
@@ -140,7 +140,7 @@ class C2Codegen {
             case array(..) = i32
             case ptr(..) = i32
             case func(..) = i32
-            case structOrUnion(..) = i32
+            case derived(..) = i32
         }
     }
 
@@ -165,7 +165,7 @@ class C2Codegen {
 
     def func(self, func: C2IR.Func) {
         val functype = func.type
-        val (wasmReturnType, wasmParamTypes) = if functype.returnType.isStructOrUnion() {
+        val (wasmReturnType, wasmParamTypes) = if functype.returnType.isDerived() {
             (none, functype.paramTypes.map(t -> type(t)) + [i32])
         } else {
             (type(functype.returnType), functype.paramTypes.map(t -> type(t)))
@@ -180,12 +180,12 @@ class C2Codegen {
         # IO.println(func.name + " -> " + wasmReturnType + wasmParamTypes)
 
         locals = wasmParamTypes.clone()
-        retptrLocalIndex = if functype.returnType.isStructOrUnion() {
+        retptrLocalIndex = if functype.returnType.isDerived() {
             null(locals.size() - 1) } else { null }
         localSlotSP = newLocal(i32)
         Assert.equal(
             localSlotSP,
-            func.params.size() + if functype.returnType.isStructOrUnion() { 1 } else { 0 })
+            func.params.size() + if functype.returnType.isDerived() { 1 } else { 0 })
         cLocalOffsets = MapOf()
         cLocalsByteSize = 0
         currentFunc = null(func)
@@ -284,11 +284,11 @@ class C2Codegen {
             case ret {
                 if val func = currentFunc {
                     when func.type.returnType {
-                        case structOrUnion(..) {
-                            Assert(stmt.expr.type.isStructOrUnion())
+                        case derived(..) {
+                            Assert(stmt.expr.type.isDerived())
                             m.block(null, [
-                                # Copy the returning struct or union to the memory
-                                # pointed to by the struct or union return pointer.
+                                # Copy the returning derived to the memory
+                                # pointed to by the derived return pointer.
                                 _dropsetderef(
                                     stmt.mark,
                                     func.type.returnType,
@@ -389,8 +389,8 @@ class C2Codegen {
             case char = m.i32.load8_u(offset, 0, addrExpr)
             case short = m.i32.load16_s(offset, 0, addrExpr)
             case long = m.i64.load(offset, 0, addrExpr)
-            case array(..); case structOrUnion(..) {
-                # array, struct and union values cannot be stored in a register, so
+            case array(..); case derived(..) {
+                # array, derived type values cannot be stored in a register, so
                 # instead in these cases we just return the address as is
                 if offset { m.i32.add(m.i32.const(offset), addrExpr) } else { addrExpr }
             }
@@ -412,7 +412,7 @@ class C2Codegen {
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
             case short = m.i32.store16(offset, 0, addrExpr, valExpr)
             case array(..) = throw MError("Assignment to array type is not allowed", [mark])
-            case structOrUnion(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
+            case derived(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
             else = throw MError("TODO _dropsetderef " + valtype, [mark])
         }
     }
@@ -486,40 +486,40 @@ class C2Codegen {
     def getmember(
             self,
             mark: Mark,
-            structOrUnionExpr: C2IR.Expr,
-            member: C2IR.Type.StructOrUnion.Member): Binaryen.Expression {
+            derivedExpr: C2IR.Expr,
+            member: C2IR.Type.Derived.Member): Binaryen.Expression {
         _getderef(
             mark,
             member.type,
             member.offset,
-            expr(structOrUnionExpr)) # struct or union exprs should resolve to ptrs like arrays
+            expr(derivedExpr)) # derived exprs should resolve to ptrs like arrays
     }
 
     def dropsetmember(
             self,
             mark: Mark,
-            structOrUnionExpr: C2IR.Expr,
-            member: C2IR.Type.StructOrUnion.Member,
+            derivedExpr: C2IR.Expr,
+            member: C2IR.Type.Derived.Member,
             valExpr: C2IR.Expr): Binaryen.Expression {
         _dropsetderef(
             mark,
             member.type,
             member.offset,
-            expr(structOrUnionExpr), # struct or union exprs should resovle to ptrs like arrays
+            expr(derivedExpr), # derived exprs should resovle to ptrs like arrays
             expr(valExpr))
     }
 
     def teemember(
             self,
             mark: Mark,
-            structOrUnionExpr: C2IR.Expr,
-            member: C2IR.Type.StructOrUnion.Member,
+            derivedExpr: C2IR.Expr,
+            member: C2IR.Type.Derived.Member,
             valExpr: C2IR.Expr): Binaryen.Expression {
         _teederef(
             mark,
             member.type,
             member.offset,
-            expr(structOrUnionExpr), # struct exprs should resovle to ptrs like arrays
+            expr(derivedExpr), # derived exprs should resolve to ptrs like arrays
             expr(valExpr))
     }
 
@@ -595,9 +595,9 @@ class C2Codegen {
                 val fname = expr.func.name
                 Assert.equal(expr.type, expr.func.type.returnType)
                 when expr.type {
-                    case structOrUnion(x) {
-                        # If a function returns a struct or union, we need to allocate
-                        # space for the struct or union to be stored. Further, we pass
+                    case derived(x) {
+                        # If a function returns a derived, we need to allocate
+                        # space for the derived to be stored. Further, we pass
                         # a pointer to this allocated space as an extra argument
                         # so that the function can write to it.
                         # The function's wasm return type should be 'none'.
@@ -617,9 +617,9 @@ class C2Codegen {
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
             case stmt {
-                if expr.type.isStructOrUnion() {
+                if expr.type.isDerived() {
                     # Supporting this would require allcating space for the
-                    # resulting struct
+                    # resulting derived (i.e. struct or union)
                     # It can be done, but given that statement expressions are
                     # a non-standard extension and to keep things simple for myself,
                     # I'm going to forgo supporting this feature for now.

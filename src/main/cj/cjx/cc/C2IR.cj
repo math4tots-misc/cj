@@ -36,13 +36,13 @@ class C2IR {
         def __get_name(self): String = when self { else(x) = x.name }
         def __get_mark(self): Mark = when self { else(x) = x.mark }
     }
-    @implicit(Type.StructOrUnion, structOrUnion)
+    @implicit(Type.Derived, derived)
     union Taggable {
-        case structOrUnion(Type.StructOrUnion)
+        case derived(Type.Derived)
         def __get_mark(self): Mark = when self { else(t) = t.mark }
         def __get_tag(self): String? = when self { else(t) = t.tag }
     }
-    @implicit(Type.StructOrUnion, structOrUnion)
+    @implicit(Type.Derived, derived)
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
         class Func {
@@ -61,11 +61,9 @@ class C2IR {
             val len: Int
             def __eq(self, other: Self): Bool = base == other.base and len == other.len
         }
-        ##
         ## Struct or Union
-        ## A union is basically a struct where all member offsets are zero.
-        ##
-        class StructOrUnion {
+        ## Seen another way, a union is basically a struct where all member offsets are zero.
+        class Derived {
             class Member: Eq {
                 val mark: Mark
                 val name: String
@@ -102,14 +100,14 @@ class C2IR {
         case ptr(Ptr)
         case array(Array)
         case func(Func)
-        case structOrUnion(StructOrUnion)
+        case derived(Derived)
         def isVoid(self): Bool = tag!(self) == tag!(Self, void)
         def isChar(self): Bool = tag!(self) == tag!(Self, char)
         def isInt(self): Bool = tag!(self) == tag!(Self, int)
         def isShort(self): Bool = tag!(self) == tag!(Self, short)
         def isLong(self): Bool = tag!(self) == tag!(Self, long)
         def isPtr(self): Bool = tag!(self) == tag!(Self, ptr)
-        def isStructOrUnion(self): Bool = tag!(self) == tag!(Self, structOrUnion)
+        def isDerived(self): Bool = tag!(self) == tag!(Self, derived)
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def isPtrOrArray(self): Bool = isPtr() or isArray()
@@ -121,14 +119,14 @@ class C2IR {
         ## https://docs.oracle.com/cd/E19205-01/819-5265/bjals/index.html
         def isComplete(self): Bool = when self {
             case void = false
-            case structOrUnion(s) = s.isComplete()
+            case derived(s) = s.isComplete()
             else = true
         }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
             case array(a) = "array(" + a.base + "," + a.len + ")"
             case func(f) = "func(" + f.returnType + "," + f.params + ")"
-            case structOrUnion(s) = {
+            case derived(s) = {
                 val kind = if s.isUnion() { "union" } else { "struct" }
                 if val tag = s.tag { kind + "(" + tag + ")" } else { kind + "(..)" }
             }
@@ -138,7 +136,7 @@ class C2IR {
             case ptr(p) = p == get!(other, ptr, 0)
             case array(a) = a == get!(other, array, 0)
             case func(f) = f == get!(other, func, 0)
-            case structOrUnion(s) = s == get!(other, structOrUnion, 0)
+            case derived(s) = s == get!(other, derived, 0)
             else() = true
         }
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
@@ -149,11 +147,11 @@ class C2IR {
             case long = 8
             case void; case int; case ptr(..); case func(..) = 4
             case array(a) = a.len * a.base.size()
-            case structOrUnion(x) = x.size()
+            case derived(x) = x.size()
         }
         def alignment(self): Int = when self {
             case array(a) = a.base.alignment()
-            case structOrUnion(x) = x.alignment()
+            case derived(x) = x.alignment()
             case ptr(..); case func(..) = size()
             else() = size()
         }
@@ -280,7 +278,7 @@ class C2IR {
 
             case comma
 
-            case getmember   # struct or union member access
+            case getmember   # derived member access
             case setmember
 
             case postIncr
@@ -326,7 +324,7 @@ class C2IR {
         var rhs: Expr = ?
         var args: List[Expr] = ?
         var stmts: List[Stmt] = ?
-        var member: Type.StructOrUnion.Member = ?
+        var member: Type.Derived.Member = ?
         def repr(self): String {
             val sb = StringBuilder()
             sb.str("{\"kind\":\"" + kind + "\"")
