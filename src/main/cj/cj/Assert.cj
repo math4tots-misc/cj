@@ -19,5 +19,10 @@ native class Assert {
             throw Error("Assertion failed: Expected " + a.repr() + " to approximate " + b.repr())
         }
     }
-    def throws(f: Fn[Unit])
+    def throws(f: Fn[Unit]) {
+        val thrown = js!(Bool, "(()=>{try{", f, "(); return false}catch(e){return true}})()")
+        if not thrown {
+            throw Error("Assertion failed: expected exception to be thrown")
+        }
+    }
 }
