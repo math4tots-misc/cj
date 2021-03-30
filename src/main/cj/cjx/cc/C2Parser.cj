@@ -354,6 +354,33 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
+    def abstractDeclarator(self, var type: Type): Type {
+        while consume('*') {
+            type = type.ptrOf()
+        }
+
+        if consume('(') {
+            val savedStartI = i
+            abstractDeclarator(type) # skip the part inside the parens for now
+            expect(')')
+
+            # parse the suffix first
+            type = typeSuffix(type)
+            val savedEndI = i
+
+            # go back and parse the part we skipped
+            i = savedStartI
+            val result = abstractDeclarator(type)
+
+            # go back to the point after the suffix
+            i = savedEndI
+
+            result
+        } else {
+            typeSuffix(type)
+        }
+    }
+
     def typeSuffix(self, var type: Type): Type {
         if consume('(') {
             val params: List[Var] = []
@@ -371,6 +398,10 @@ class C2Parser : ParserMixin[C2Token] {
         } else {
             type
         }
+    }
+
+    def typename(self): Type {
+        abstractDeclarator(declspec())
     }
 
     # ========================================================================
@@ -558,11 +589,19 @@ class C2Parser : ParserMixin[C2Token] {
             }
             case C2Token.kwSIZEOF {
                 next()
-                val expr = unary()
-                if not expr.type.isComplete() {
-                    throw MError("" + expr.type + " is an incomplete type", [mark])
+                val save = i
+                if consume('(') and atTypename() {
+                    val type = typename()
+                    expect(')')
+                    eb.int(mark, type.size())
+                } else {
+                    i = save
+                    val expr = unary()
+                    if not expr.type.isComplete() {
+                        throw MError("" + expr.type + " is an incomplete type", [mark])
+                    }
+                    eb.int(mark, expr.type.size())
                 }
-                eb.int(mark, expr.type.size())
             }
             else = errorKind("expression")
         }

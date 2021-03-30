@@ -3,6 +3,7 @@
 //   * long and short types
 //   * nested type declarators
 //   * typedefs
+//   * sizeof(typename)
 
 /*
  * Some multiline comments
@@ -193,6 +194,26 @@ void tests12_typedef() {
     // aeq(1, ({ typedef int t; t t=1; t; }));
 }
 
+void tests13_sizeof_type() {
+    aeq(1, sizeof(char));
+    aeq(2, sizeof(short));
+    aeq(2, sizeof(short int));
+    aeq(2, sizeof(int short));
+    aeq(4, sizeof(int));
+    aeq(8, sizeof(long));
+    aeq(8, sizeof(long int));
+    aeq(8, sizeof(long int));
+    aeq(4, sizeof(char *));
+    aeq(4, sizeof(int *));
+    aeq(4, sizeof(long *));
+    aeq(4, sizeof(int **));
+    aeq(4, sizeof(int(*)[4]));
+    aeq(16, sizeof(int*[4]));
+    aeq(16, sizeof(int[4]));
+    aeq(48, sizeof(int[3][4]));
+    aeq(8, sizeof(struct {int a; int b;}));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -206,4 +227,5 @@ int main() {
     tests10_nested_decls();
     tests11_mixed_declspec();
     tests12_typedef();
+    tests13_sizeof_type();
 }
