@@ -7,7 +7,7 @@ import compiler.CJIR.Type
 import compiler.CJIR.ExprData as ED
 import compiler.CJAst
 import compiler.CJAst.ExprData as AED
-import compiler.CJScope
+import compiler.solver.CJScope
 import compiler.solver.CJSolver
 
 class CJExprSolver {

@@ -1,4 +1,4 @@
-package compiler
+package compiler.solver
 
 import compiler.CJIR
 

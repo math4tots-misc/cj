@@ -1,8 +1,8 @@
-package compiler
+package compiler.solver
 
 import compiler.CJError
 import compiler.CJMark
-import compiler.CJData
+import compiler.solver.CJData
 
 class CJScope {
     static val autoImportedNames: List[String] = ["cj.Any", "cj.Unit", "cj.NoReturn",

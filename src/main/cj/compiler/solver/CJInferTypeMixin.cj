@@ -1,7 +1,7 @@
 package compiler.solver
 
 import compiler.solver.CJSolverBaseMixin
-import compiler.CJScope
+import compiler.solver.CJScope
 import compiler.CJError
 import compiler.CJAst
 import compiler.CJIR

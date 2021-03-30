@@ -11,8 +11,8 @@ import compiler.CJMark
 import compiler.solver.CJItemFinderMixin
 import compiler.solver.CJTypeSolverMixin
 import compiler.CJError
-import compiler.CJData
-import compiler.CJScope
+import compiler.solver.CJData
+import compiler.solver.CJScope
 import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type

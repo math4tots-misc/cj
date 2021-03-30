@@ -2,7 +2,7 @@ package compiler.solver
 
 import compiler.CJError
 import compiler.CJMark
-import compiler.CJScope
+import compiler.solver.CJScope
 import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
