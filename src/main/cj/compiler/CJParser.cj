@@ -110,10 +110,11 @@ class CJParser {
             case "'\\''" = '\''
             case "'\\\"'" = '"'
             case "'\\\\'" = '\\'
-            case "'\\n'" = '\n'
-            case "'\\t'" = '\t'
-            case "'\\r'" = '\r'
+            case "'\\b'" = '\b'
             case "'\\f'" = '\f'
+            case "'\\r'" = '\r'
+            case "'\\t'" = '\t'
+            case "'\\n'" = '\n'
             case "'\\0'" = '\0'
             else = {
                 val chars = rawText.iter().toList()
@@ -421,14 +422,24 @@ class CJParser {
         }
         list
     }
-    private def parseAnnotation(self): CJAst.Annotation {
-        val mark = mark
-        val name = switch peek().type {
+    private def parseAnnotationIdPart(self): String {
+        switch peek().type {
             case CJToken.tINT
             case CJToken.tDOUBLE
             case CJToken.tTYPEID = next().text
             else = parseId()
         }
+    }
+    private def parseAnnotationId(self): String {
+        var name = parseAnnotationIdPart()
+        while consume('.') {
+            name = name + "." + parseAnnotationIdPart()
+        }
+        name
+    }
+    private def parseAnnotation(self): CJAst.Annotation {
+        val mark = mark
+        val name = parseAnnotationId()
         val args = parseJoinOpt('(', ')', ',', () -> parseAnnotation())
         CJAst.Annotation(mark, name, args)
     }

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Run a CJ class
+java -cp target/classes crossj.cj.main.JSMain -m "$1" -o target/out.js && node --prof --enable-source-maps target/out.js "${@:2}"
+
+# The above should produce a file matching a pattern solate-*-v8.log
+# The raw ticks in that log file can be turned into something more readable by running something like:
+# node --prof-process isolate-* > perf.txt
