@@ -16,6 +16,7 @@ import compiler.solver.CJScope
 import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
+import compiler.CJIR.SelfType
 
 class CJSolver:
         CJSolverBaseMixin,
@@ -240,7 +241,7 @@ class CJSolver:
             case type(t) = t
             else = throw MError("Expected " + tp.name + " to be a type", [mark])
         })
-        val selfType = Type.self_(getReifiedTrait(mark, item.name, args))
+        val selfType = Type.self_(SelfType(getReifiedTrait(mark, item.name, args)))
         itemScope.set(mark, "Self", CJData.type(selfType))
     }
 

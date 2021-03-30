@@ -16,6 +16,7 @@ class CJIR {
         def __get_typeParameters(self): List[TypeParameter]
         def __get_traitDeclarations(self): List[TraitDeclaration]
         def __get_methods(self): List[Method]
+        def __get_methodMap(self): Map[String, Method]
         def toString(self): String = name
         def repr(self): String = "(" + kind + " " + name + ")"
         def addTypeParameter(self, typeParameter: TypeParameter) {
@@ -29,6 +30,10 @@ class CJIR {
         }
         def __get_native_(self): Bool = CJModifier.native_ in modifiers
         def isTrait(self): Bool = kind is CJItemKind.trait_
+        def getSelfType(self, args: List[Type]): Type
+        def getBinding(self, args: List[Type]): Binding {
+            getBindingWithSelfType(getSelfType(args), args)
+        }
         def getBindingWithSelfType(self, selfType: Type, args: List[Type]): Binding {
             Assert.equal(typeParameters.size(), args.size())
             val map: Map[String, Type] = MapOf()
@@ -36,6 +41,25 @@ class CJIR {
                 map[typeParameters[i].name] = args[i]
             }
             Binding(selfType, map)
+        }
+
+        ## Gets the Method directly declared in this item
+        def getMethodOrNull(self, shortName: String): Method? {
+            if shortName not in methodMap {
+                if val method = _getMethodOrNullNoCache(shortName) {
+                    methodMap[shortName] = method
+                }
+            }
+            methodMap.getOrNull(shortName)
+        }
+
+        def _getMethodOrNullNoCache(self, shortName: String): Method? {
+            for method in methods {
+                if method.name == shortName {
+                    return null(method)
+                }
+            }
+            null
         }
     }
     @implicit(ClassOrUnionDef_, _classOrUnion)
@@ -58,12 +82,14 @@ class CJIR {
         def __get_traitDeclarations(self): List[TraitDeclaration] = when self {
             else(i) = i.traitDeclarations
         }
-        def __get_methods(self): List[Method] = when self {
-            else(i) = i.methods
-        }
+        def __get_methods(self): List[Method] = when self { else(i) = i.methods }
+        def __get_methodMap(self): Map[String, Method] = when self { else(i) = i.methodMap }
+        def getSelfType(self, args: List[Type]): Type = when self { else(i) = i.getSelfType(args) }
     }
 
     trait ClassOrUnionDef: ItemDef {}
+    @implicit(ClassDef, class_)
+    @implicit(UnionDef, union_)
     union ClassOrUnionDef_ : ClassOrUnionDef {
         case class_(ClassDef)
         case union_(UnionDef)
@@ -79,6 +105,8 @@ class CJIR {
             else(i) = i.traitDeclarations
         }
         def __get_methods(self): List[Method] = when self { else(i) = i.methods }
+        def __get_methodMap(self): Map[String, Method] = when self { else(i) = i.methodMap }
+        def getSelfType(self, args: List[Type]): Type = when self { else(i) = i.getSelfType(args) }
     }
 
     class ClassDef: ClassOrUnionDef {
@@ -90,10 +118,12 @@ class CJIR {
         val traitDeclarations: List[TraitDeclaration] = []
         val fields: List[Field] = []
         val methods: List[Method] = []
+        val methodMap: Map[String, Method] = MapOf()
         def __get_kind(self): CJItemKind = CJItemKind.class_
         def addField(self, field: Field) {
             fields.add(field)
         }
+        def getSelfType(self, args: List[Type]): Type = ReifiedType(self, args)
     }
 
     class UnionDef: ClassOrUnionDef {
@@ -105,7 +135,9 @@ class CJIR {
         val traitDeclarations: List[TraitDeclaration] = []
         val cases: List[Case] = []
         val methods: List[Method] = []
+        val methodMap: Map[String, Method] = MapOf()
         def __get_kind(self): CJItemKind = CJItemKind.union_
+        def getSelfType(self, args: List[Type]): Type = ReifiedType(self, args)
     }
 
     class TraitDef: ItemDef {
@@ -116,7 +148,9 @@ class CJIR {
         val typeParameters: List[TypeParameter] = []
         val traitDeclarations: List[TraitDeclaration] = []
         val methods: List[Method] = []
+        val methodMap: Map[String, Method] = MapOf()
         def __get_kind(self): CJItemKind = CJItemKind.trait_
+        def getSelfType(self, args: List[Type]): Type = SelfType(Trait(self, args))
     }
 
     class TraitDeclaration {
@@ -136,7 +170,7 @@ class CJIR {
         }
     }
 
-    class TypeVar: Eq {
+    class TypeVar: Eq, Type {
         val decl: TypeParameter
         val additionalTraits: List[Trait] = [] # e.g. from conditions on methods
         def __get_mark(self): Mark = decl.mark
@@ -153,8 +187,14 @@ class CJIR {
         val map: Map[String, Type]
     }
 
-    union Type: Repr, Eq {
-        case self_(Trait)
+    trait Type {
+    }
+
+    @implicit(SelfType, self_)
+    @implicit(ReifiedType, reified)
+    @implicit(TypeVar, variable)
+    union Type_: Repr, Eq, Type {
+        case self_(SelfType)
         case reified(ReifiedType)
         case variable(TypeVar)
         def repr(self): String = when self {
@@ -167,14 +207,14 @@ class CJIR {
             case reified(t) = t.defn.name
             case variable(tv) = tv.name
         }
-        def __eq(self, other: Self): Bool = when self {
-            case self_(t) = when other { case self_(ot) = true; else = false }
-            case reified(rt) = when other { case reified(ot) = rt == ot; else = false }
-            case variable(tvar) = when other { case variable(ovar) = tvar == ovar; else = false }
+        def __eq(self, other: Self): Bool = tag!(self) is tag!(other) and when self {
+            case self_(t) = true
+            case reified(rt) = rt == get!(other, reified, 0)
+            case variable(tvar) = tvar == get!(other, variable, 0)
         }
         def applyBinding(self, mark: Mark, binding: Binding): Self {
             when self {
-                case self_(trait_) = binding.selfType
+                case self_(..) = binding.selfType
                 case reified(rtype) = Type.reified(rtype.applyBinding(mark, binding))
                 case variable(tv) = if val t = binding.map.getOrNull(tv.name) { t } else {
                     throw MError(tv.name + " not found in binding", [mark])
@@ -183,9 +223,8 @@ class CJIR {
         }
         def findTraitByName(self, mark: Mark, traitName: String): Trait? {
             when self {
-                case self_(trait_) = trait_.findTraitByName(mark, traitName)
-                case reified(rtype) = rtype.findTraitByName(mark, traitName)
-                case variable(tvar) = tvar.findTraitByName(mark, traitName)
+                case self_(stype) = stype.selfTrait.findTraitByName(mark, traitName)
+                else(t) = t.findTraitByName(mark, traitName)
             }
         }
         def implementsTrait(self, mark: Mark, trait_: Trait): Bool {
@@ -221,7 +260,7 @@ class CJIR {
     }
 
     @derive(repr)
-    class ReifiedType: Eq, ReifiedTypeOrTrait {
+    class ReifiedType: Eq, ReifiedTypeOrTrait, Type {
         val defn: ClassOrUnionDef
         val args: List[Type]
         def __get_item(self): ItemDef = defn
@@ -246,6 +285,10 @@ class CJIR {
         }
     }
 
+    class SelfType: Type {
+        val selfTrait: Trait
+    }
+
     @derive(repr)
     class Trait: Eq, ReifiedTypeOrTrait {
         val defn: TraitDef
@@ -261,7 +304,7 @@ class CJIR {
             for i = 0; i < args.size(); i++ {
                 map[defn.typeParameters[i].name] = args[i]
             }
-            Binding(Type.self_(self), map)
+            Binding(SelfType(self), map)
         }
         def getTraits(self, mark: Mark): List[Trait] {
             val binding = _getBinding()
