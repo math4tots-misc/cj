@@ -84,6 +84,12 @@ function* iterFrom(self, start) {
     }
 }
 
+function* nullIter(self) {
+    if (self !== null) {
+        yield self;
+    }
+}
+
 /**
  * @param {string} self
  */

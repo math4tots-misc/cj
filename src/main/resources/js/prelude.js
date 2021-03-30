@@ -92,6 +92,12 @@ function* iterFrom(self, start) {
     }
 }
 
+function* nullIter(self) {
+    if (self !== null) {
+        yield self;
+    }
+}
+
 /**
  * @param {string} self
  */
@@ -103,17 +109,6 @@ function* strIter(self) {
             i++;
         }
     }
-}
-
-/**
- * Returns number as is, unless it's NaN, in which case it returns null
- * @param {number} x
- */
- function assertNotNAN(x) {
-     if (isNaN(x)) {
-         throw new Error("Not a number");
-     }
-     return x;
 }
 
 /**
