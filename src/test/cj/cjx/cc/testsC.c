@@ -214,6 +214,16 @@ void tests13_sizeof_type() {
     aeq(8, sizeof(struct {int a; int b;}));
 }
 
+void tests14_cast() {
+    aeq(131585, (int)8590066177);
+    aeq(513, (short)8590066177);
+    aeq(1, (char)8590066177);
+    aeq(1, (int)(long)1);
+    aeq(0, (int)(long)&*(int *)0);
+    aeq(513, ({ int x=512; *(char *)&x=1; x; }));
+    aeq(5, ({ int x=5; long y=(long)&x; *(int*)y; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -228,4 +238,5 @@ int main() {
     tests11_mixed_declspec();
     tests12_typedef();
     tests13_sizeof_type();
+    tests14_cast();
 }

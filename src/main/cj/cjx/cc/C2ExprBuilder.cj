@@ -87,35 +87,64 @@ class C2ExprBuilder {
 
     ## Implicit cast an expression to a given type
     def icast(self, expr: Expr, type: Type): Expr {
+        if val e = icastOrNull(expr, type) { return e }
+        throw MError("Expected expression of type " + type + " but got " + expr.type, [expr.mark])
+    }
+
+    def _cast(self, expr: Expr, type: Type): Expr {
+        val ret = Expr(expr.mark, Expr.Kind.cast)
+        ret.arg = expr
+        ret.type = type
+        ret
+    }
+
+    def icastOrNull(self, expr: Expr, type: Type): Expr? {
         addType(expr)
         if expr.type == type {
-            return expr
+            return null(expr)
         }
-        if type.isLong() and expr.type.isInt() {
-            return if expr.kind == Expr.Kind.int {
-                # convert int literals to long literals
-                long(expr.mark, BigInt(expr.intValue))
-            } else {
-                # if it's not a literal, convert i32 to i64 at runtime
-                intToLong(expr.mark, expr)
+
+        # integer literals
+        if expr.kind == Expr.Kind.int {
+            when type {
+                case char { return null(char(expr.mark, expr.intValue)) }
+                case short { return null(short(expr.mark, expr.intValue)) }
+                case long { return null(long(expr.mark, BigInt(expr.intValue))) }
+                else = ()
             }
         }
-        if type.isInt() and expr.type.isShort() {
-            return shortToInt(expr.mark, expr)
+
+        # widening
+        if type.isIntegral() and expr.type.isIntegral() and type.size() > expr.type.size() {
+            return null(_cast(expr, type))
         }
-        if type.isShort() and expr.kind == Expr.Kind.int {
-            return short(expr.mark, expr.intValue)
-        }
+
+        # For now, we allow any array type to be implicitly converted to any pointer type
+        # TODO: check that the conversion is valid
         if type.isPtr() and expr.type.isArray() {
-            # Arrays may decay to pointers
-            # TODO: check that this conversion is valid
-            return arrayToPtrEx(expr, type)
+            return null(arrayToPtrEx(expr, type))
         }
-        if expr.type.intPtrConvertible() and type.intPtrConvertible() {
-            # TODO: Consider warning... for now, just allow
-            return expr
+
+        # For now, we allow any ponter type to be implicitly converted to any other
+        # pointer type
+        # TODO: check that the conversion is valid
+        if type.isPtr() and expr.type.isPtr() {
+            return null(_cast(expr, type))
         }
-        throw MError("Expected expression of type " + type + " but got " + expr.type, [expr.mark])
+
+        null
+    }
+
+    ## Explicit cast
+    def ecast(self, expr: Expr, type: Type): Expr {
+        if val e = icastOrNull(expr, type) { return e }
+
+        # conversion between integral types and pointers.
+        if (type.isIntegral() or type.isPtr()) and (expr.type.isIntegral() or expr.type.isPtr()) {
+            return _cast(expr, type)
+        }
+
+        throw MError("Could not cast " + type + " to " + expr.type, [expr.mark])
     }
 
     ## Decay an array to a pointer
@@ -186,27 +215,6 @@ class C2ExprBuilder {
         val ret = Expr(mark, Expr.Kind.char)
         ret.intValue = value
         ret.type = Type.char
-        ret
-    }
-
-    def intToLong(self, mark: Mark, intExpr: Expr): Expr {
-        val ret = Expr(mark, Expr.Kind.intToLong)
-        ret.arg = intExpr
-        ret.type = Type.long
-        ret
-    }
-
-    def intToShort(self, mark: Mark, intExpr: Expr): Expr {
-        val ret = Expr(mark, Expr.Kind.intToShort)
-        ret.arg = intExpr
-        ret.type = Type.short
-        ret
-    }
-
-    def shortToInt(self, mark: Mark, shortExpr: Expr): Expr {
-        val ret = Expr(mark, Expr.Kind.shortToInt)
-        ret.arg = shortExpr
-        ret.type = Type.int
         ret
     }
 

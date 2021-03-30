@@ -233,7 +233,10 @@ native class Binaryen {
         def ge_u(self, left: Expression, right: Expression): Expression = js!(
             Expression, self, ".ge_u(", left, ",", right, ")")
     }
-    native class ModuleI32 : IntOps {}
+    native class ModuleI32 : IntOps {
+        def wrap(self, value: Expression): Expression = js!(
+            Expression, self, ".wrap(", value, ")")
+    }
     native class ModuleI64 : IntOps {
         def extend_s(self, value: Expression): Expression = js!(
             Expression, self, ".extend_s(", value, ")")

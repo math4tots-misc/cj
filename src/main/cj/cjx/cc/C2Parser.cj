@@ -563,7 +563,12 @@ class C2Parser : ParserMixin[C2Token] {
             }
             case '(' {
                 next()
-                if at('{') {
+                if atTypename() {
+                    val type = typename()
+                    expect(')')
+                    val arg = unary()
+                    eb.ecast(arg, type)
+                } else if at('{') {
                     val stmts = blockInside()
                     expect(')')
                     eb.stmtExpr(mark, stmts)

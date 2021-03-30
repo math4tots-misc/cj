@@ -6,6 +6,9 @@ import cj.math.EuclideanDomain
 @implicit(Char, _fromChar)
 native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, EuclideanDomain {
 
+    def __get_max(): Self = 2147483647
+    def __get_min(): Self = -2147483648
+
     @implicit(Int, __new)
     @implicit(Double, fromDouble)
     @implicit(String, fromString)

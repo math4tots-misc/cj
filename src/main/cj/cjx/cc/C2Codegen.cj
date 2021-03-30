@@ -549,6 +549,10 @@ class C2Codegen {
         }
     }
 
+    def _casterr(self, ce: C2IR.Expr): NoReturn {
+        throw MError("" + ce.arg.type + " to " + ce.type + " casts are not supported", [ce.mark])
+    }
+
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case int; case short = m.i32.const(expr.intValue)
@@ -562,8 +566,6 @@ class C2Codegen {
             case intNe; case shortNe = m.i32.ne(expr(expr.lhs), expr(expr.rhs))
             case intLt; case shortLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe; case shortLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
-            case intToLong = m.i64.extend_s(expr(expr.arg))
-            case intToShort; case shortToInt = expr(expr.arg)
 
             # char is unsigned
             case char = m.i32.const(expr.intValue)
@@ -589,6 +591,35 @@ class C2Codegen {
             case longNe = m.i64.ne(expr(expr.lhs), expr(expr.rhs))
             case longLt = m.i64.lt_s(expr(expr.lhs), expr(expr.rhs))
             case longLe = m.i64.le_s(expr(expr.lhs), expr(expr.rhs))
+
+            case cast {
+                when expr.arg.type {
+                    case int;case ptr(..) = when expr.type {
+                        case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                        # case short = m.i32.and_(m.i32.const(0xFFFF), expr(expr.arg))
+                        case int;case ptr(..) = expr(expr.arg)
+                        case long = m.i64.extend_s(expr(expr.arg))
+                        else = _casterr(expr)
+                    }
+                    case char = when expr.type {
+                        case short;case int;case ptr(..) = expr(expr.arg)
+                        else = _casterr(expr)
+                    }
+                    case short = when expr.type {
+                        case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                        case int;case ptr(..) = expr(expr.arg)
+                        else = _casterr(expr)
+                    }
+                    case long = when expr.type {
+                        case char = m.i32.and_(m.i32.const(0xFF), m.i32.wrap(expr(expr.arg)))
+                        case short = m.i32.and_(m.i32.const(0xFFFF), m.i32.wrap(expr(expr.arg)))
+                        case int;case ptr(..) = m.i32.wrap(expr(expr.arg))
+                        else = _casterr(expr)
+                    }
+                    else = _casterr(expr)
+                }
+            }
+
             case funcall {
                 val args = expr.args.map(a -> expr(a))
                 val rtype = type(expr.func.type.returnType)

@@ -140,6 +140,10 @@ class C2IR {
             case derived(s) = s.isComplete()
             else = true
         }
+        def isIntegral(self): Bool = when self {
+            case char; case int; case short; case long = true
+            else = false
+        }
         def repr(self): String = when self {
             case ptr(p) = "ptr(" + p.base + ")"
             case array(a) = "array(" + a.base + "," + a.len + ")"
@@ -252,8 +256,6 @@ class C2IR {
             case intNe
             case intLt
             case intLe
-            case intToLong
-            case intToShort
 
             case long
             case longNeg
@@ -278,7 +280,6 @@ class C2IR {
             case shortNe
             case shortLt
             case shortLe
-            case shortToInt
 
             case char
             case charNeg
@@ -293,6 +294,8 @@ class C2IR {
             case charLe
 
             case str
+
+            case cast
 
             case comma
 

@@ -13,9 +13,10 @@ class C2Lexer {
 
     private def build(): Lexer[C2Token] {
         val b = Lexer[C2Token].builder()
-        b.add("0x[0-9A-Fa-f]+", m -> tok(m, C2Token.tINT, s -> Int(s))) # hex literals
-        b.add("\\d+", m -> tok(m, C2Token.tINT, s -> Int(s)))
-        b.add("0x[0-9A-Fa-f]+(l|L)", m -> tok(m, C2Token.tLONG, s -> BigInt(s[:-1]))) # hex literals
+        b.add("0x[0-9A-Fa-f]+", m -> itok(m)) # hex literals
+        b.add("\\d+", m -> itok(m))
+        b.add("0x[0-9A-Fa-f]+(l|L)", m ->
+            tok(m, C2Token.tLONG, s -> BigInt(s[:-1]))) # hex literals
         b.add("\\d+(l|L)", m -> tok(m, C2Token.tLONG, s -> BigInt(s[:-1])))
 
         for type in C2Token.keywordTypes {
@@ -81,6 +82,16 @@ class C2Lexer {
             type: Int,
             valf: Fn[String, C2Token.Value]): List[C2Token] = [
                 C2Token(type, valf.call(m.matchText), m.line, m.column, m.filename)]
+
+    private def itok(m: Regex.MatchResult): List[C2Token] = {
+        val text = m.matchText
+        # If the literal is too long, automatically promote it to a long
+        if text.len() >= 10 {
+            [C2Token(C2Token.tLONG, BigInt(text), m.line, m.column, m.filename)]
+        } else {
+            [C2Token(C2Token.tINT, Int(text), m.line, m.column, m.filename)]
+        }
+    }
 
     private def chartok(m: Regex.MatchResult): List[C2Token] {
         val type = m.originalString.charAt(m.start)
