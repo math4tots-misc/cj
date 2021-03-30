@@ -1,5 +1,6 @@
 package uu
 
+import uu.UULexer
 import uu.UUAst
 import cj.StringBuilder
 import uu.UUAst.File
@@ -13,6 +14,13 @@ import uu.UUToken
 import cjx.parser.ParserMixin
 
 class UUParser: ParserMixin[UUToken] {
+
+    def parse(filepath: String, contents: String): File {
+        val tokens = UULexer.lex(filepath, contents)
+        val parser = Self(tokens)
+        parser.parseFile()
+    }
+
     def typeOfToken(token: UUToken): Int = token.type
     def nameOfType(type: Int): String = UUToken.typeRepr(type)
 
