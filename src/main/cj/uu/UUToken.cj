@@ -94,6 +94,7 @@ class UUToken : Repr {
     val value: Value
     val line : Int
     val column : Int
+    val filepath: String
 
     union Value: Repr {
         case none

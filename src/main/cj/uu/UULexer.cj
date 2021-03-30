@@ -63,7 +63,7 @@ class UULexer {
         # whitespace
         b.add("[^\\S\n]+", m -> [])
 
-        b.onEOF(m -> [UUToken(UUToken.tEOF, UUToken.Value.none, m.line, m.column)])
+        b.onEOF(m -> [UUToken(UUToken.tEOF, UUToken.Value.none, m.line, m.column, m.filename)])
 
         b.onError(m -> {
             val mark = Mark(m.filename, m.line, m.column)
@@ -74,33 +74,37 @@ class UULexer {
     }
 
     private def itok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.int(Int(m.matchText)), m.line, m.column)]
+        UUToken(type, UUToken.Value.int(Int(m.matchText)), m.line, m.column, m.filename)]
 
     private def bitok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.bigInt(BigInt(m.matchText.rstripChar('n'))), m.line, m.column)]
+        UUToken(type,
+            UUToken.Value.bigInt(BigInt(m.matchText.rstripChar('n'))),
+            m.line,
+            m.column,
+            m.filename)]
 
     private def dtok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.double(Double(m.matchText)), m.line, m.column)]
+        UUToken(type, UUToken.Value.double(Double(m.matchText)), m.line, m.column, m.filename)]
 
     ## 'name' token -- save the token match text as is
     private def ntok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.string(m.matchText), m.line, m.column)]
+        UUToken(type, UUToken.Value.string(m.matchText), m.line, m.column, m.filename)]
 
     ## string literal token
     private def sltok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.string(m.matchText.unrepr()), m.line, m.column)]
+        UUToken(type, UUToken.Value.string(m.matchText.unrepr()), m.line, m.column, m.filename)]
 
     ## char literal token
     private def cltok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.char(m.matchText.unreprChar()), m.line, m.column)]
+        UUToken(type, UUToken.Value.char(m.matchText.unreprChar()), m.line, m.column, m.filename)]
 
     private def chartok(m: Regex.MatchResult): List[UUToken] = {
         val type = m.originalString.charAt(m.start)
-        [UUToken(type, UUToken.Value.none, m.line, m.column)]
+        [UUToken(type, UUToken.Value.none, m.line, m.column, m.filename)]
     }
 
     private def symtok(type: Int, m: Regex.MatchResult): List[UUToken] = [
-        UUToken(type, UUToken.Value.none, m.line, m.column)]
+        UUToken(type, UUToken.Value.none, m.line, m.column, m.filename)]
 
     def lex(filename: String, string: String): List[UUToken] = {
         val oldTokens = lexer.lex(filename, string)

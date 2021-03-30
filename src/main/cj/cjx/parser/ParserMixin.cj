@@ -35,4 +35,7 @@ trait ParserMixin[Token] {
         }
         list
     }
+    def parseJoinOpt[T](self, open: Int, close: Int, sep: Int, el: Fn[T]): List[T] {
+        if at(open) { parseJoin(open, close, sep, el) } else { [] }
+    }
 }

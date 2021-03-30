@@ -55,6 +55,34 @@ class UUAst {
 
     union Member {
         case item(Item)
+        case method(Method)
+    }
+
+    class Var {
+        val mark: Mark
+        val mutable: Bool
+        val name: String
+        val type: TypeExpr
+    }
+
+    class TypeExpr {
+        val mark: Mark
+        val name: String
+        val args: List[TypeExpr]
+    }
+
+    class TraitExpr {
+        val mark: Mark
+        val name: String
+        val args: List[TypeExpr]
+    }
+
+    class Method {
+        val mark: Mark
+        val name: String
+        val parameters: List[Var]
+        val returnType: TypeExpr
+        val body: Expr?
     }
 
     class Expr {
