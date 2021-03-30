@@ -10,7 +10,7 @@ import compiler.solver.CJInferTypeMixin
 import cjx.parser.Mark
 import compiler.solver.CJItemFinderMixin
 import compiler.solver.CJTypeSolverMixin
-import compiler.CJError
+import cjx.parser.MError
 import compiler.solver.CJData
 import compiler.solver.CJScope
 import compiler.CJAst
@@ -212,7 +212,7 @@ class CJSolver:
                 handleItemTraits(itemScope, item, iritem)
                 handleItemMethods(itemScope, item, iritem)
             }
-            case interface_ = throw CJError("TODO", [item.mark])
+            case interface_ = throw MError("TODO", [item.mark])
         }
         for member in item.members {
             when member {
@@ -228,7 +228,7 @@ class CJSolver:
         val mark = item.mark
         val args = item.typeParameters.map(tp -> when itemScope.get(mark, tp.name) {
             case type(t) = t
-            else = throw CJError("Expected " + tp.name + " to be a type", [mark])
+            else = throw MError("Expected " + tp.name + " to be a type", [mark])
         })
         val selfType = Type.reified(getReifiedType(mark, item.name, args))
         itemScope.set(mark, "Self", CJData.type(selfType))
@@ -238,7 +238,7 @@ class CJSolver:
         val mark = item.mark
         val args = item.typeParameters.map(tp -> when itemScope.get(mark, tp.name) {
             case type(t) = t
-            else = throw CJError("Expected " + tp.name + " to be a type", [mark])
+            else = throw MError("Expected " + tp.name + " to be a type", [mark])
         })
         val selfType = Type.self_(getReifiedTrait(mark, item.name, args))
         itemScope.set(mark, "Self", CJData.type(selfType))
@@ -295,9 +295,9 @@ class CJSolver:
             val itemTypeVar = when itemScope.get(astCondition.mark, condition.variableName) {
                 case type(type) = when type {
                     case variable(tv) = tv
-                    else = throw CJError("Expected type variable", [astCondition.mark])
+                    else = throw MError("Expected type variable", [astCondition.mark])
                 }
-                else = throw CJError("Expected type variable", [astCondition.mark])
+                else = throw MError("Expected type variable", [astCondition.mark])
             }
             val newTypeVar = CJIR.TypeVar(itemTypeVar.decl)
             newTypeVar.additionalTraits.addAll(itemTypeVar.additionalTraits)
@@ -314,7 +314,7 @@ class CJSolver:
                 false,
                 astTypeParam.name)
             if typeParam.name in itemScope {
-                throw CJError(
+                throw MError(
                     "Method level type parameters may not shadow another type", [typeParam.mark])
             }
             for astTrait in astTypeParam.traits {
@@ -404,7 +404,7 @@ class CJSolver:
         } else if val init = astField.init {
             inferTypeOfAst(scope, init)
         } else {
-            throw CJError("Could not infer type of field", [astField.mark])
+            throw MError("Could not infer type of field", [astField.mark])
         }
 
         val field = CJIR.Field(

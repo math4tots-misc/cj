@@ -1,6 +1,6 @@
 package compiler.solver
 
-import compiler.CJError
+import cjx.parser.MError
 import compiler.CJIR
 import compiler.CJIR.Expr
 import compiler.CJIR.Type
@@ -23,7 +23,7 @@ class CJExprSolver {
             # TODO: Implicits
             val at = expr.type
             if at != et and at != solver.noreturnType and et != solver.unitType {
-                throw CJError("TODO solveExprEx at = " + at + ", et = " + et, [expr.mark])
+                throw MError("TODO solveExprEx at = " + at + ", et = " + et, [expr.mark])
             }
         }
         expr
@@ -40,23 +40,23 @@ class CJExprSolver {
             case string(x) = Expr(mark, solver.stringType, ED.string(x))
             case bigint(x) = Expr(mark, solver.bigintType, ED.bigint(x))
 
-            case block(..) = throw CJError("TODO solveExpr block", [mark])
-            case call(ownerType, methodName, ..) = throw CJError("TODO solveExpr call " + ownerType + ", " + methodName, [mark])
-            case callname(name, ..) = throw CJError("TODO solveExpr callname " + name, [mark])
-            case decl(..) = throw CJError("TODO solveExpr decl", [mark])
-            case getvar(..) = throw CJError("TODO solveExpr getvar", [mark])
-            case setvar(..) = throw CJError("TODO solveExpr setvar", [mark])
-            case augvar(..) = throw CJError("TODO solveExpr augvar", [mark])
-            case getfield(..) = throw CJError("TODO solveExpr getfield", [mark])
-            case setfield(..) = throw CJError("TODO solveExpr setfield", [mark])
-            case augfield(..) = throw CJError("TODO solveExpr augfield", [mark])
-            case getstatic(..) = throw CJError("TODO solveExpr getstatic", [mark])
-            case setstatic(..) = throw CJError("TODO solveExpr setstatic", [mark])
-            case augstatic(..) = throw CJError("TODO solveExpr augstatic", [mark])
-            case logicalNot(..) = throw CJError("TODO solveExpr logicalNot", [mark])
-            case logicalAnd(..) = throw CJError("TODO solveExpr logicalAnd", [mark])
-            case logicalOr(..) = throw CJError("TODO solveExpr logicalOr", [mark])
-            case is_(..) = throw CJError("TODO solveExpr is_", [mark])
+            case block(..) = throw MError("TODO solveExpr block", [mark])
+            case call(ownerType, methodName, ..) = throw MError("TODO solveExpr call " + ownerType + ", " + methodName, [mark])
+            case callname(name, ..) = throw MError("TODO solveExpr callname " + name, [mark])
+            case decl(..) = throw MError("TODO solveExpr decl", [mark])
+            case getvar(..) = throw MError("TODO solveExpr getvar", [mark])
+            case setvar(..) = throw MError("TODO solveExpr setvar", [mark])
+            case augvar(..) = throw MError("TODO solveExpr augvar", [mark])
+            case getfield(..) = throw MError("TODO solveExpr getfield", [mark])
+            case setfield(..) = throw MError("TODO solveExpr setfield", [mark])
+            case augfield(..) = throw MError("TODO solveExpr augfield", [mark])
+            case getstatic(..) = throw MError("TODO solveExpr getstatic", [mark])
+            case setstatic(..) = throw MError("TODO solveExpr setstatic", [mark])
+            case augstatic(..) = throw MError("TODO solveExpr augstatic", [mark])
+            case logicalNot(..) = throw MError("TODO solveExpr logicalNot", [mark])
+            case logicalAnd(..) = throw MError("TODO solveExpr logicalAnd", [mark])
+            case logicalOr(..) = throw MError("TODO solveExpr logicalOr", [mark])
+            case is_(..) = throw MError("TODO solveExpr is_", [mark])
 
             case null_(astSpecifiedInnerType, astInnerExpr) {
                 val nullableInnerType = if val sit = astSpecifiedInnerType {
@@ -75,25 +75,25 @@ class CJExprSolver {
                 } else { null }
                 val innerType = if val it = nullableInnerType { it } else if val ie = innerExpr {
                     ie.type
-                } else { throw CJError("Could not infer type of null", [mark]) }
+                } else { throw MError("Could not infer type of null", [mark]) }
                 Expr(mark, solver.getNullableType(mark, innerType), ED.null_(innerExpr))
             }
 
-            case list(..) = throw CJError("TODO solveExpr list", [mark])
-            case tuple(..) = throw CJError("TODO solveExpr tuple", [mark])
-            case if_(..) = throw CJError("TODO solveExpr if_", [mark])
-            case ifNull(..) = throw CJError("TODO solveExpr ifNull", [mark])
-            case while_(..) = throw CJError("TODO solveExpr while_", [mark])
-            case for_(..) = throw CJError("TODO solveExpr for_", [mark])
-            case when_(..) = throw CJError("TODO solveExpr when_", [mark])
-            case switch_(..) = throw CJError("TODO solveExpr switch_", [mark])
-            case lambda(..) = throw CJError("TODO solveExpr lambda", [mark])
-            case return_(..) = throw CJError("TODO solveExpr return_", [mark])
-            case await_(..) = throw CJError("TODO solveExpr await_", [mark])
-            case throw_(..) = throw CJError("TODO solveExpr throw_", [mark])
-            case try_(..) = throw CJError("TODO solveExpr try_", [mark])
-            case macro(..) = throw CJError("TODO solveExpr macro", [mark])
-            case type(..) = throw CJError("TODO solveExpr type", [mark])
+            case list(..) = throw MError("TODO solveExpr list", [mark])
+            case tuple(..) = throw MError("TODO solveExpr tuple", [mark])
+            case if_(..) = throw MError("TODO solveExpr if_", [mark])
+            case ifNull(..) = throw MError("TODO solveExpr ifNull", [mark])
+            case while_(..) = throw MError("TODO solveExpr while_", [mark])
+            case for_(..) = throw MError("TODO solveExpr for_", [mark])
+            case when_(..) = throw MError("TODO solveExpr when_", [mark])
+            case switch_(..) = throw MError("TODO solveExpr switch_", [mark])
+            case lambda(..) = throw MError("TODO solveExpr lambda", [mark])
+            case return_(..) = throw MError("TODO solveExpr return_", [mark])
+            case await_(..) = throw MError("TODO solveExpr await_", [mark])
+            case throw_(..) = throw MError("TODO solveExpr throw_", [mark])
+            case try_(..) = throw MError("TODO solveExpr try_", [mark])
+            case macro(..) = throw MError("TODO solveExpr macro", [mark])
+            case type(..) = throw MError("TODO solveExpr type", [mark])
         }
     }
 }

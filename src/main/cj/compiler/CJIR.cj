@@ -1,7 +1,7 @@
 package compiler
 
 import cj.BigInt
-import compiler.CJError
+import cjx.parser.MError
 import compiler.CJItemKind
 import compiler.CJModifier
 import cjx.parser.Mark
@@ -164,7 +164,7 @@ class CJIR {
         def isSatisfied(self, mark: Mark, binding: Binding): Bool {
             if val variableType = binding.map.getOrNull(variableName) {
                 traits.all(trait_ -> variableType.implementsTrait(mark, trait_))
-            } else { throw CJError(variableName + " not found in binding", [mark]) }
+            } else { throw MError(variableName + " not found in binding", [mark]) }
         }
     }
 
@@ -209,7 +209,7 @@ class CJIR {
                 case self_(trait_) = binding.selfType
                 case reified(rtype) = Type.reified(rtype.applyBinding(mark, binding))
                 case variable(tv) = if val t = binding.map.getOrNull(tv.name) { t } else {
-                    throw CJError(tv.name + " not found in binding", [mark])
+                    throw MError(tv.name + " not found in binding", [mark])
                 }
             }
         }

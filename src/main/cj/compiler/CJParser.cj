@@ -8,7 +8,7 @@ import compiler.CJAst.ExprData as ED
 import cj.StringBuilder
 import compiler.CJItemKind
 import compiler.CJModifier
-import compiler.CJError
+import cjx.parser.MError
 import cjx.parser.Mark
 import compiler.CJToken
 
@@ -55,8 +55,8 @@ class CJParser {
     private def consume(self, type: Int): Bool {
         if at(type) { next(); true } else { false }
     }
-    private def etype(self, type: Int): CJError = ekind(CJToken.typeRepr(type))
-    private def ekind(self, kind: String): CJError = CJError(
+    private def etype(self, type: Int): MError = ekind(CJToken.typeRepr(type))
+    private def ekind(self, kind: String): MError = MError(
         "Expected " + kind + " but got " + CJToken.typeRepr(peek().type), [mark])
     private def expectDelimiters(self) {
         if not at(';') and not at('}') and not at('\n') {
@@ -120,7 +120,7 @@ class CJParser {
                 if chars.size() == 3 and chars[0] == '\'' and chars[2] == '\'' {
                     chars[1]
                 } else {
-                    throw CJError("Could not convert character literal: " + rawText, [mark])
+                    throw MError("Could not convert character literal: " + rawText, [mark])
                 }
             }
         }
@@ -156,7 +156,7 @@ class CJParser {
                     case 'f' = '\f'
                     case '0' = '\0'
                     else = {
-                        throw CJError(
+                        throw MError(
                             "Unrecognized escape " + ch.repr() + " (in " + rawText + ")", [mark])
                     }
                 })
@@ -602,7 +602,7 @@ class CJParser {
                         case getvar(name) = ED.setvar(name, valexpr)
                         case getfield(owner, name) = ED.setfield(owner, name, valexpr)
                         case getstatic(owner, name) = ED.setstatic(owner, name, valexpr)
-                        else = throw CJError("Left hand side is not assignable", [opMark])
+                        else = throw MError("Left hand side is not assignable", [opMark])
                     })
                 }
                 case CJToken.tPLUS_EQ; case CJToken.tMINUS_EQ;
@@ -626,7 +626,7 @@ class CJParser {
                         case getvar(name) = ED.augvar(name, kind, valexpr)
                         case getfield(owner, name) = ED.augfield(owner, name, kind, valexpr)
                         case getstatic(owner, name) = ED.augstatic(owner, name, kind, valexpr)
-                        else = throw CJError("Left hand side is not aug-assignable", [opMark])
+                        else = throw MError("Left hand side is not aug-assignable", [opMark])
                     })
                 }
                 case CJToken.kwAND {
@@ -1076,7 +1076,7 @@ class CJParser {
                 val subtargets = parseJoin('(', ')', ',', () -> parseTarget(mutable))
                 CJAst.DeclTarget(mark, CJAst.DeclTargetData.tuple(subtargets))
             }
-            else = throw CJError("Expected declaration target", [mark])
+            else = throw MError("Expected declaration target", [mark])
         }
     }
 }

@@ -2,7 +2,7 @@ package compiler.solver
 
 import compiler.solver.CJSolverBaseMixin
 import compiler.solver.CJScope
-import compiler.CJError
+import cjx.parser.MError
 import compiler.CJAst
 import compiler.CJIR
 import compiler.CJIR.Type
@@ -24,7 +24,7 @@ trait CJInferTypeMixin: CJSolverBaseMixin {
 
     def inferTypeOfAst(self, scope: CJScope, expr: CJAst.Expr): Type = {
         if val t = inferTypeOfAstOrNull(scope, expr) { t } else {
-            throw CJError("Could not infer type of expression", [expr.mark])
+            throw MError("Could not infer type of expression", [expr.mark])
         }
     }
 }

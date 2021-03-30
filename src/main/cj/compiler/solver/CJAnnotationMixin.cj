@@ -3,7 +3,7 @@ package compiler.solver
 import compiler.solver.CJMethodSynthesizerMixin
 import compiler.CJItemKind
 import compiler.solver.CJSolverBaseMixin
-import compiler.CJError
+import cjx.parser.MError
 import compiler.CJAst
 import compiler.CJIR
 
@@ -16,7 +16,7 @@ trait CJAnnotationMixin: CJSolverBaseMixin, CJMethodSynthesizerMixin {
                 case "test" = { method.test = true }
                 case "generic" = ()
                 case "genericSelf" = ()
-                else = throw CJError(
+                else = throw MError(
                     "Unrecognized method annotation " + annotation.name.repr(), [annotation.mark])
             }
         }
@@ -26,7 +26,7 @@ trait CJAnnotationMixin: CJSolverBaseMixin, CJMethodSynthesizerMixin {
         for annotation in annotations {
             switch annotation.name {
                 case "lateinit" = { field.lateinit = true }
-                else = throw CJError(
+                else = throw MError(
                     "Unrecognized field annotation " + annotation.name.repr(), [annotation.mark])
             }
         }
@@ -51,12 +51,12 @@ trait CJAnnotationMixin: CJSolverBaseMixin, CJMethodSynthesizerMixin {
                             case "default" = { default = true }
                             case "repr" = { repr = true }
                             case "pod" = { pod = true }
-                            else = throw CJError(
+                            else = throw MError(
                                 "Unrecognized derive " + arg.name.repr(), [arg.mark])
                         }
                     }
                 }
-                else = throw CJError(
+                else = throw MError(
                     "Unrecognized item annotation " + annotation.name.repr(), [annotation.mark])
             }
         }

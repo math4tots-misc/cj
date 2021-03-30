@@ -1,7 +1,7 @@
 package compiler.solver
 
 import compiler.CJModifier
-import compiler.CJError
+import cjx.parser.MError
 import compiler.solver.CJInferTypeMixin
 import compiler.CJAst
 import compiler.CJAst.Expr
@@ -28,7 +28,7 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
                 case field(field) {
                     if not field.static_ and field.init.isEmpty() {
                         val type = if val t = field.type { t } else {
-                            throw CJError("Could not infer type of field", [field.mark])
+                            throw MError("Could not infer type of field", [field.mark])
                         }
                         parameters.add(CJAst.Local(
                             field.mark,
@@ -61,8 +61,8 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
         when item.kind {
             case class_ = _synthesizeEqForClass(item)
             case union_ = _synthesizeEqForUnion(item)
-            case trait_ = throw CJError("derive eq not supported for traits", [item.mark])
-            case interface_ = throw CJError("derive eq not supported for interfaces", [item.mark])
+            case trait_ = throw MError("derive eq not supported for traits", [item.mark])
+            case interface_ = throw MError("derive eq not supported for interfaces", [item.mark])
         }
     }
 
@@ -70,8 +70,8 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
         when item.kind {
             case class_ = _synthesizeHashForClass(item)
             case union_ = _synthesizeHashForUnion(item)
-            case trait_ = throw CJError("derive hash not supported for traits", [item.mark])
-            case interface_ = throw CJError("derive hash not supported for interfaces", [item.mark])
+            case trait_ = throw MError("derive hash not supported for traits", [item.mark])
+            case interface_ = throw MError("derive hash not supported for interfaces", [item.mark])
         }
     }
 
@@ -79,17 +79,17 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
         when item.kind {
             case class_ = _synthesizeReprForClass(item)
             case union_ = _synthesizeReprForUnion(item)
-            case trait_ = throw CJError("derive repr not supported for traits", [item.mark])
-            case interface_ = throw CJError("derive repr not supported for interfaces", [item.mark])
+            case trait_ = throw MError("derive repr not supported for traits", [item.mark])
+            case interface_ = throw MError("derive repr not supported for interfaces", [item.mark])
         }
     }
 
     def synthesizeDefault(self, item: CJAst.Item) {
         when item.kind {
             case class_ = _synthesizeDefaultForClass(item)
-            case union_ = throw CJError("derive default not supported for unions", [item.mark])
-            case trait_ = throw CJError("derive default not supported for traits", [item.mark])
-            case interface_ = throw CJError("derive default not supported for interfaces", [item.mark])
+            case union_ = throw MError("derive default not supported for unions", [item.mark])
+            case trait_ = throw MError("derive default not supported for traits", [item.mark])
+            case interface_ = throw MError("derive default not supported for interfaces", [item.mark])
         }
     }
 
@@ -188,11 +188,11 @@ trait CJMethodSynthesizerMixin: CJInferTypeMixin {
     }
 
     def _synthesizeEqForUnion(self, item: CJAst.Item) {
-        throw CJError("TODO derive(eq) for union", [item.mark])
+        throw MError("TODO derive(eq) for union", [item.mark])
     }
 
     def _synthesizeHashForUnion(self, item: CJAst.Item) {
-        throw CJError("TODO derive(hash) for union", [item.mark])
+        throw MError("TODO derive(hash) for union", [item.mark])
     }
 
     def _synthesizeReprForUnion(self, item: CJAst.Item) {

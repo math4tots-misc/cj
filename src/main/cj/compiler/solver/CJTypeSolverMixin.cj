@@ -1,6 +1,6 @@
 package compiler.solver
 
-import compiler.CJError
+import cjx.parser.MError
 import cjx.parser.Mark
 import compiler.solver.CJScope
 import compiler.CJAst
@@ -30,11 +30,11 @@ trait CJTypeSolverMixin {
                     }
                     getReifiedTrait(mark, fullName, args)
                 }
-                case type(type) = throw CJError("Expected trait but got type", [mark])
-                else = throw CJError("Expected trait", [mark])
+                case type(type) = throw MError("Expected trait but got type", [mark])
+                else = throw MError("Expected trait", [mark])
             }
         } else {
-            throw CJError("Name " + outerShortName + " not found in this scope", [mark])
+            throw MError("Name " + outerShortName + " not found in this scope", [mark])
         }
     }
 
@@ -63,13 +63,13 @@ trait CJTypeSolverMixin {
                 }
                 case type(type) {
                     if args {
-                        throw CJError("Unexpected type args", [mark])
+                        throw MError("Unexpected type args", [mark])
                     }
                     type
                 }
-                else = throw CJError("Expected type", [mark])
+                else = throw MError("Expected type", [mark])
             }
-        } else { throw CJError("Name " + outerShortName + " not found in this scope", [mark]) }
+        } else { throw MError("Name " + outerShortName + " not found in this scope", [mark]) }
     }
 
     def getReifiedType(self, mark: Mark, fullName: String, args: List[Type]): ReifiedType {
@@ -78,7 +78,7 @@ trait CJTypeSolverMixin {
                 return getReifiedType(mark, fullName + "_", args)
             }
             if itemdef.typeParameters.size() != args.size() {
-                throw CJError(
+                throw MError(
                     "Expected " + itemdef.typeParameters.size() +
                     " type args but got " + args.size(), [mark])
             }
@@ -87,29 +87,29 @@ trait CJTypeSolverMixin {
                 case union_(uni) = CJIR.ClassOrUnionDef.union_(uni)
                 case trait_(..) = return if not fullName.endsWith("_") {
                     getReifiedType(mark, fullName + "_", args)
-                } else { throw CJError(fullName + " is a trait, not a type", [mark]) }
+                } else { throw MError(fullName + " is a trait, not a type", [mark]) }
             }
             val rtype = ReifiedType(classOrUnionDef, args)
             _checkReifiedTypeTypeArgs(mark, rtype)
             rtype
-        } else { throw CJError("Item " + fullName + " not found", [mark]) }
+        } else { throw MError("Item " + fullName + " not found", [mark]) }
     }
 
     def getReifiedTrait(self, mark: Mark, fullName: String, args: List[Type]): Trait {
         if val itemdef = getItemDefOrNull(fullName) {
             if itemdef.typeParameters.size() != args.size() {
-                throw CJError(
+                throw MError(
                     "Expected " + itemdef.typeParameters.size() +
                     " type args but got " + args.size(), [mark])
             }
             val traitdef = when itemdef {
                 case trait_(t) = t
-                else = throw CJError(fullName + " is a type, not a trait", [mark])
+                else = throw MError(fullName + " is a type, not a trait", [mark])
             }
             val trait_ = Trait(traitdef, args)
             _checkTraitTypeArgs(mark, trait_)
             trait_
-        } else { throw CJError("Item " + fullName + " not found", [mark]) }
+        } else { throw MError("Item " + fullName + " not found", [mark]) }
     }
 
     def _checkTraitTypeArgs(self, mark: Mark, trait_: Trait) {
@@ -127,7 +127,7 @@ trait CJTypeSolverMixin {
             params: List[CJIR.TypeParameter],
             args: List[Type]) {
         if params.size() != args.size() {
-            throw CJError(
+            throw MError(
                 "Expected " + params.size() + " type args but got " + args.size(), [mark])
         }
         for i = 0; i < args.size(); i++ {
@@ -136,7 +136,7 @@ trait CJTypeSolverMixin {
             for originalTrait in param.traits {
                 val trait_ = originalTrait.applyBinding(mark, binding)
                 if not arg.implementsTrait(mark, trait_) {
-                    throw CJError("" + arg + " does not implement " + trait_, [mark, param.mark])
+                    throw MError("" + arg + " does not implement " + trait_, [mark, param.mark])
                 }
             }
         }

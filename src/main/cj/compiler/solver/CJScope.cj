@@ -1,6 +1,6 @@
 package compiler.solver
 
-import compiler.CJError
+import cjx.parser.MError
 import cjx.parser.Mark
 import compiler.solver.CJData
 
@@ -28,7 +28,7 @@ class CJScope {
     def newFileScope(): Self = Self(root)
     def set(self, mark: Mark, key: String, data: CJData) {
         if key in map {
-            throw CJError(key.repr() + " already defined in this scope", [mark])
+            throw MError(key.repr() + " already defined in this scope", [mark])
         }
         map[key] = data
     }
@@ -49,7 +49,7 @@ class CJScope {
         if val data = getOrNull(key) {
             data
         } else {
-            throw CJError(key.repr() + " not defined in this scope", [mark])
+            throw MError(key.repr() + " not defined in this scope", [mark])
         }
     }
     def dumpKeys(self): List[List[String]] {

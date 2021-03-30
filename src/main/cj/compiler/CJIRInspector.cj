@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.CJError
+import cjx.parser.MError
 import cj.StringBuilder
 import compiler.CJIR
 
@@ -117,7 +117,7 @@ class CJIRInspector {
     def _inspectExpr(self, expr: CJIR.Expr) {
         when expr.data {
             case unit = line("()")
-            else = throw CJError("TODO inspectExpr " + tag_name!(expr.data), [expr.mark])
+            else = throw MError("TODO inspectExpr " + tag_name!(expr.data), [expr.mark])
         }
     }
 
