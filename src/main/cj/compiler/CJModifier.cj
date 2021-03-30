@@ -7,12 +7,5 @@ union CJModifier: Eq {
     case private_
     case async_
     case synthetic
-    def __eq(self, other: Self): Bool = when self {
-        case native_ = when other { case native_ = true; else = false }
-        case static_ = when other { case static_ = true; else = false }
-        case public_ = when other { case public_ = true; else = false }
-        case private_ = when other { case private_ = true; else = false }
-        case async_ = when other { case async_ = true; else = false }
-        case synthetic = when other { case synthetic = true; else = false }
-    }
+    def __eq(self, other: Self): Bool = tag!(self) is tag!(other)
 }
