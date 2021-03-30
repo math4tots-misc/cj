@@ -28,50 +28,38 @@ class CJIR {
             methods.add(method)
         }
         def __get_native_(self): Bool = CJModifier.native_ in modifiers
+        def isTrait(self): Bool = kind is CJItemKind.trait_
+        def getBindingWithSelfType(self, selfType: Type, args: List[Type]): Binding {
+            Assert.equal(typeParameters.size(), args.size())
+            val map: Map[String, Type] = MapOf()
+            for i = 0; i < args.size(); i++ {
+                map[typeParameters[i].name] = args[i]
+            }
+            Binding(selfType, map)
+        }
     }
+    @implicit(ClassOrUnionDef_, _classOrUnion)
+    @implicit(ClassDef, class_)
+    @implicit(UnionDef, union_)
+    @implicit(TraitDef, trait_)
     union ItemDef_: ItemDef {
         case class_(ClassDef)
         case union_(UnionDef)
         case trait_(TraitDef)
-        def __get_mark(self): Mark = when self {
-            case class_(i) = i.mark
-            case union_(i) = i.mark
-            case trait_(i) = i.mark
-        }
-        def __get_comment(self): String? = when self {
-            case class_(i) = i.comment
-            case union_(i) = i.comment
-            case trait_(i) = i.comment
-        }
-        def __get_modifiers(self): List[CJModifier] = when self {
-            case class_(i) = i.modifiers
-            case union_(i) = i.modifiers
-            case trait_(i) = i.modifiers
-        }
-        def __get_kind(self): CJItemKind = when self {
-            case class_(i) = CJItemKind.class_
-            case union_(i) = CJItemKind.union_
-            case trait_(i) = CJItemKind.trait_
-        }
-        def __get_name(self): String = when self {
-            case class_(i) = i.name
-            case union_(i) = i.name
-            case trait_(i) = i.name
-        }
+        def _classOrUnion(cu: ClassOrUnionDef): Self = when cu { else(defn) = defn }
+        def __get_mark(self): Mark = when self { else(i) = i.mark }
+        def __get_comment(self): String? = when self { else(i) = i.comment }
+        def __get_modifiers(self): List[CJModifier] = when self { else(i) = i.modifiers }
+        def __get_kind(self): CJItemKind = when self { else(i) = i.kind }
+        def __get_name(self): String = when self { else(i) = i.name }
         def __get_typeParameters(self): List[TypeParameter] = when self {
-            case class_(i) = i.typeParameters
-            case union_(i) = i.typeParameters
-            case trait_(i) = i.typeParameters
+            else(i) = i.typeParameters
         }
         def __get_traitDeclarations(self): List[TraitDeclaration] = when self {
-            case class_(i) = i.traitDeclarations
-            case union_(i) = i.traitDeclarations
-            case trait_(i) = i.traitDeclarations
+            else(i) = i.traitDeclarations
         }
         def __get_methods(self): List[Method] = when self {
-            case class_(i) = i.methods
-            case union_(i) = i.methods
-            case trait_(i) = i.methods
+            else(i) = i.methods
         }
     }
 
@@ -79,38 +67,18 @@ class CJIR {
     union ClassOrUnionDef_ : ClassOrUnionDef {
         case class_(ClassDef)
         case union_(UnionDef)
-        def __get_mark(self): Mark = when self {
-            case class_(i) = i.mark
-            case union_(i) = i.mark
-        }
-        def __get_comment(self): String? = when self {
-            case class_(i) = i.comment
-            case union_(i) = i.comment
-        }
-        def __get_modifiers(self): List[CJModifier] = when self {
-            case class_(i) = i.modifiers
-            case union_(i) = i.modifiers
-        }
-        def __get_kind(self): CJItemKind = when self {
-            case class_(i) = CJItemKind.class_
-            case union_(i) = CJItemKind.union_
-        }
-        def __get_name(self): String = when self {
-            case class_(i) = i.name
-            case union_(i) = i.name
-        }
+        def __get_mark(self): Mark = when self { else(i) = i.mark }
+        def __get_comment(self): String? = when self { else(i) = i.comment }
+        def __get_modifiers(self): List[CJModifier] = when self { else(i) = i.modifiers }
+        def __get_kind(self): CJItemKind = when self { else(i) = i.kind }
+        def __get_name(self): String = when self { else(i) = i.name }
         def __get_typeParameters(self): List[TypeParameter] = when self {
-            case class_(i) = i.typeParameters
-            case union_(i) = i.typeParameters
+            else(i) = i.typeParameters
         }
         def __get_traitDeclarations(self): List[TraitDeclaration] = when self {
-            case class_(i) = i.traitDeclarations
-            case union_(i) = i.traitDeclarations
+            else(i) = i.traitDeclarations
         }
-        def __get_methods(self): List[Method] = when self {
-            case class_(i) = i.methods
-            case union_(i) = i.methods
-        }
+        def __get_methods(self): List[Method] = when self { else(i) = i.methods }
     }
 
     class ClassDef: ClassOrUnionDef {
@@ -228,6 +196,7 @@ class CJIR {
     }
 
     trait ReifiedTypeOrTrait: Repr {
+        def __get_item(self): ItemDef
         def applyBinding(self, mark: Mark, binding: Binding): Self
         def _getBinding(self): Binding
         def getTraits(self, mark: Mark): List[Trait]
@@ -241,32 +210,21 @@ class CJIR {
             case reified(t) = reified(t.applyBinding(mark, binding))
             case trait_(t) = trait_(t.applyBinding(mark, binding))
         }
-        def _getBinding(self): Binding = when self {
-            case reified(t) = t._getBinding()
-            case trait_(t) = t._getBinding()
-        }
-        def getTraits(self, mark: Mark): List[Trait] = when self {
-            case reified(t) = t.getTraits(mark)
-            case trait_(t) = t.getTraits(mark)
-        }
+        def _getBinding(self): Binding = when self { else(t) = t._getBinding() }
+        def __get_item(self): ItemDef = when self { else(t) = t.item }
+        def getTraits(self, mark: Mark): List[Trait] = when self { else(t) = t.getTraits(mark) }
         def findTraitByName(self, mark: Mark, traitName: String): Trait? = when self {
-            case reified(t) = t.findTraitByName(mark, traitName)
-            case trait_(t) = t.findTraitByName(mark, traitName)
+            else(t) = t.findTraitByName(mark, traitName)
         }
-        def repr(self): String = when self {
-            case reified(t) = t.repr()
-            case trait_(t) = t.repr()
-        }
-        def toString(self): String = when self {
-            case reified(t) = t.toString()
-            case trait_(t) = t.toString()
-        }
+        def repr(self): String = when self { else(t) = t.repr() }
+        def toString(self): String = when self { else(t) = t.toString() }
     }
 
     @derive(repr)
     class ReifiedType: Eq, ReifiedTypeOrTrait {
         val defn: ClassOrUnionDef
         val args: List[Type]
+        def __get_item(self): ItemDef = defn
         def toString(self): String = if args { defn.name + args } else { defn.name }
         def __eq(self, other: Self): Bool = defn.name == other.defn.name and args == other.args
         def applyBinding(self, mark: Mark, binding: Binding): Self {
@@ -292,6 +250,7 @@ class CJIR {
     class Trait: Eq, ReifiedTypeOrTrait {
         val defn: TraitDef
         val args: List[Type]
+        def __get_item(self): ItemDef = defn
         def toString(self): String = if args { defn.name + args } else { defn.name }
         def __eq(self, other: Self): Bool = defn is other.defn and args == other.args
         def applyBinding(self, mark: Mark, binding: Binding): Trait {
