@@ -1,7 +1,7 @@
 package compiler.solver
 
 import compiler.CJError
-import compiler.CJMark
+import cjx.parser.Mark
 import compiler.solver.CJData
 
 class CJScope {
@@ -26,7 +26,7 @@ class CJScope {
         self
     }
     def newFileScope(): Self = Self(root)
-    def set(self, mark: CJMark, key: String, data: CJData) {
+    def set(self, mark: Mark, key: String, data: CJData) {
         if key in map {
             throw CJError(key.repr() + " already defined in this scope", [mark])
         }
@@ -45,7 +45,7 @@ class CJScope {
         }
     }
     def __contains(self, key: String): Bool = getOrNull(key).isPresent()
-    def get(self, mark: CJMark, key: String): CJData {
+    def get(self, mark: Mark, key: String): CJData {
         if val data = getOrNull(key) {
             data
         } else {

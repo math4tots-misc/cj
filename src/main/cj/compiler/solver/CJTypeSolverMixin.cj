@@ -1,7 +1,7 @@
 package compiler.solver
 
 import compiler.CJError
-import compiler.CJMark
+import cjx.parser.Mark
 import compiler.solver.CJScope
 import compiler.CJAst
 import compiler.CJIR
@@ -19,7 +19,7 @@ trait CJTypeSolverMixin {
     }
 
     def solveTraitEx(
-            self, scope: CJScope, mark: CJMark, shortName: String, args: List[Type]): Trait {
+            self, scope: CJScope, mark: Mark, shortName: String, args: List[Type]): Trait {
         val dotIndex = shortName.indexOf(".")
         val outerShortName = if dotIndex == -1 { shortName } else { shortName[:dotIndex] }
         if val data = scope.getOrNull(outerShortName) {
@@ -44,7 +44,7 @@ trait CJTypeSolverMixin {
     }
 
     def solveTypeEx(
-            self, scope: CJScope, mark: CJMark, shortName: String, args: List[Type]): Type {
+            self, scope: CJScope, mark: Mark, shortName: String, args: List[Type]): Type {
         val dotIndex = shortName.indexOf(".")
         val outerShortName = if dotIndex == -1 {
             switch shortName {
@@ -72,7 +72,7 @@ trait CJTypeSolverMixin {
         } else { throw CJError("Name " + outerShortName + " not found in this scope", [mark]) }
     }
 
-    def getReifiedType(self, mark: CJMark, fullName: String, args: List[Type]): ReifiedType {
+    def getReifiedType(self, mark: Mark, fullName: String, args: List[Type]): ReifiedType {
         if val itemdef = getItemDefOrNull(fullName) {
             if itemdef.typeParameters and not args.size() and not fullName.endsWith("_") {
                 return getReifiedType(mark, fullName + "_", args)
@@ -95,7 +95,7 @@ trait CJTypeSolverMixin {
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
     }
 
-    def getReifiedTrait(self, mark: CJMark, fullName: String, args: List[Type]): Trait {
+    def getReifiedTrait(self, mark: Mark, fullName: String, args: List[Type]): Trait {
         if val itemdef = getItemDefOrNull(fullName) {
             if itemdef.typeParameters.size() != args.size() {
                 throw CJError(
@@ -112,17 +112,17 @@ trait CJTypeSolverMixin {
         } else { throw CJError("Item " + fullName + " not found", [mark]) }
     }
 
-    def _checkTraitTypeArgs(self, mark: CJMark, trait_: Trait) {
+    def _checkTraitTypeArgs(self, mark: Mark, trait_: Trait) {
         _checkTypeArgs(mark, trait_._getBinding(), trait_.defn.typeParameters, trait_.args)
     }
 
-    def _checkReifiedTypeTypeArgs(self, mark: CJMark, rtype: ReifiedType) {
+    def _checkReifiedTypeTypeArgs(self, mark: Mark, rtype: ReifiedType) {
         _checkTypeArgs(mark, rtype._getBinding(), rtype.defn.typeParameters, rtype.args)
     }
 
     def _checkTypeArgs(
             self,
-            mark: CJMark,
+            mark: Mark,
             binding: CJIR.Binding,
             params: List[CJIR.TypeParameter],
             args: List[Type]) {

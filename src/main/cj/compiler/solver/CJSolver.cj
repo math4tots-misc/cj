@@ -7,7 +7,7 @@ import compiler.solver.CJAnnotationMixin
 import compiler.solver.CJMethodSynthesizerMixin
 import compiler.solver.CJSolverBaseMixin
 import compiler.solver.CJInferTypeMixin
-import compiler.CJMark
+import cjx.parser.Mark
 import compiler.solver.CJItemFinderMixin
 import compiler.solver.CJTypeSolverMixin
 import compiler.CJError
@@ -146,7 +146,7 @@ class CJSolver:
         }
     }
 
-    def getNullableType(self, mark: CJMark, inner: Type): Type {
+    def getNullableType(self, mark: Mark, inner: Type): Type {
         Type.reified(getReifiedType(mark, "cj.Nullable", [inner]))
     }
 

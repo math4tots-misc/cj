@@ -3,25 +3,25 @@ package compiler
 import compiler.CJItemKind
 import compiler.CJModifier
 import cj.BigInt
-import compiler.CJMark
+import cjx.parser.Mark
 
 class CJAst {
 
     class File {
-        val mark: CJMark
+        val mark: Mark
         val packageName: String
         val imports: List[Import]
         val item: Item
     }
 
     class Import {
-        val mark: CJMark
+        val mark: Mark
         val fullName: String
         val alias: String
     }
 
     class Item {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val annotations: List[Annotation]
         val modifiers: List[CJModifier]
@@ -54,7 +54,7 @@ class CJAst {
     }
 
     class TypeParameter {
-        val mark: CJMark
+        val mark: Mark
         val itemLevel: Bool
         val annotations: List[Annotation]
         val name: String
@@ -62,19 +62,19 @@ class CJAst {
     }
 
     class TraitDeclaration {
-        val mark: CJMark
+        val mark: Mark
         val trait_: Trait
         val conditions: List[TypeCondition]
     }
 
     class TypeCondition {
-        val mark: CJMark
+        val mark: Mark
         val variableName: String
         val traits: List[Trait]
     }
 
     class Annotation {
-        val mark: CJMark
+        val mark: Mark
         val name: String
         val args: List[Annotation]
     }
@@ -87,7 +87,7 @@ class CJAst {
     }
 
     class Case {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val annotations: List[Annotation]
         val modifiers: List[CJModifier]
@@ -96,7 +96,7 @@ class CJAst {
     }
 
     class Field {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val annotations: List[Annotation]
         val modifiers: List[CJModifier]
@@ -117,7 +117,7 @@ class CJAst {
     }
 
     class Method {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val annotations: List[Annotation]
         val modifiers: List[CJModifier]
@@ -140,19 +140,19 @@ class CJAst {
     }
 
     class Trait: TraitOrType {
-        val mark: CJMark
+        val mark: Mark
         val name: String
         val args: List[Type]
     }
 
     class Type: TraitOrType {
-        val mark: CJMark
+        val mark: Mark
         val name: String
         val args: List[Type]
     }
 
     class Expr: Repr {
-        val mark: CJMark
+        val mark: Mark
         val data: ExprData
         def repr(self): String = data.repr()
     }
@@ -202,7 +202,7 @@ class CJAst {
     }
 
     class WhenCase: Repr {
-        val patterns: List[Tuple[CJMark, String, List[Local], Bool]]
+        val patterns: List[Tuple[Mark, String, List[Local], Bool]]
         val body: Expr
         def repr(self): String {
             "CaseWhen(" + ", ".join(patterns.map(t ->
@@ -224,7 +224,7 @@ class CJAst {
     }
 
     class Local: Repr {
-        val mark: CJMark
+        val mark: Mark
         val mutable: Bool
         val name: String
         val type: Type?
@@ -244,7 +244,7 @@ class CJAst {
     }
 
     class DeclTarget: Repr {
-        val mark: CJMark
+        val mark: Mark
         val data: DeclTargetData
         def repr(self): String = data.repr()
     }

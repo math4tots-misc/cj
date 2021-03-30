@@ -1,13 +1,13 @@
 package compiler
 
 import cj.StringBuilder
-import compiler.CJMark
+import cjx.parser.Mark
 
 class CJError : Repr {
     val message: String
-    val stack: List[CJMark]
+    val stack: List[Mark]
 
-    def(message: String, stack: List[CJMark]): Self = __malloc(message, stack)
+    def(message: String, stack: List[Mark]): Self = __malloc(message, stack)
 
     def repr(self): String = "CJError(" + message + ", " + stack.repr() + ")"
 

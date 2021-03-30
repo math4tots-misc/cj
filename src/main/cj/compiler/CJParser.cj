@@ -9,7 +9,7 @@ import cj.StringBuilder
 import compiler.CJItemKind
 import compiler.CJModifier
 import compiler.CJError
-import compiler.CJMark
+import cjx.parser.Mark
 import compiler.CJToken
 
 class CJParser {
@@ -38,7 +38,7 @@ class CJParser {
         expr
     }
 
-    private def __get_mark(self): CJMark = { val t = peek(); CJMark(path, t.line, t.column) }
+    private def __get_mark(self): Mark = { val t = peek(); Mark(path, t.line, t.column) }
     private def peek(self): CJToken = tokens[i]
     private def next(self): CJToken { i = i + 1; tokens[i - 1] }
     private def at(self, type: Int): Bool = peek().type == type
@@ -105,7 +105,7 @@ class CJParser {
         }
         list
     }
-    private def lit2char(rawText: String, mark: CJMark): Char {
+    private def lit2char(rawText: String, mark: Mark): Char {
         switch rawText {
             case "'\\''" = '\''
             case "'\\\"'" = '"'
@@ -125,7 +125,7 @@ class CJParser {
             }
         }
     }
-    private def lit2str(rawText: String, mark: CJMark): String {
+    private def lit2str(rawText: String, mark: Mark): String {
         if rawText.startsWith("r\"\"\"") {
             Assert.that(rawText.size() >= 7 and rawText.endsWith("\"\"\""))
             rawText[4:rawText.size() - 3]
@@ -141,7 +141,7 @@ class CJParser {
             litchars2str(rawText, rawText[1:rawText.size() - 1].iter(), mark)
         }
     }
-    private def litchars2str(rawText: String, chars: Iterator[Char], mark: CJMark): String {
+    private def litchars2str(rawText: String, chars: Iterator[Char], mark: Mark): String {
         val sb = StringBuilder()
         var escape = false
         for ch in chars {
@@ -885,7 +885,7 @@ class CJParser {
                 skipDelimiters()
                 val cases = List[CJAst.WhenCase].empty()
                 while not at('}') and not at(CJToken.kwELSE) {
-                    val patterns = List[Tuple[CJMark, String, List[CJAst.Local], Bool]].empty()
+                    val patterns = List[Tuple[Mark, String, List[CJAst.Local], Bool]].empty()
                     while at(CJToken.kwCASE) {
                         val caseMark = self.mark
                         expect(CJToken.kwCASE)
@@ -918,7 +918,7 @@ class CJParser {
                 # TODO: actually save the parsed else-cases
                 while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
                     while at(CJToken.kwELSE) and (atOffset('(', 1) or atOffset(CJToken.tID, 1)) {
-                        val patterns = List[Tuple[CJMark, String?, List[CJAst.Local], Bool]].of()
+                        val patterns = List[Tuple[Mark, String?, List[CJAst.Local], Bool]].of()
                         val caseMark = self.mark
                         expect(CJToken.kwELSE)
                         val caseNameVar = if at(CJToken.tID) { null(parseId()) } else { null }

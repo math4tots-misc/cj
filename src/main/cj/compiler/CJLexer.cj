@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.CJError
-import compiler.CJMark
+import cjx.parser.Mark
 import cjx.re.Lexer
 import compiler.CJToken
 import cjx.re.Regex
@@ -65,7 +65,7 @@ class CJLexer {
         b.onEOF(m -> [CJToken(CJToken.tEOF, "", m.line, m.column)])
 
         b.onError(m -> {
-            val mark = CJMark(m.filename, m.line, m.column)
+            val mark = Mark(m.filename, m.line, m.column)
             throw CJError("Unrecognized token", [mark])
         })
 

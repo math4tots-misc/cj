@@ -4,11 +4,11 @@ import cj.BigInt
 import compiler.CJError
 import compiler.CJItemKind
 import compiler.CJModifier
-import compiler.CJMark
+import cjx.parser.Mark
 
 class CJIR {
     trait ItemDef: Repr {
-        def __get_mark(self): CJMark
+        def __get_mark(self): Mark
         def __get_comment(self): String?
         def __get_modifiers(self): List[CJModifier]
         def __get_kind(self): CJItemKind
@@ -33,7 +33,7 @@ class CJIR {
         case class_(ClassDef)
         case union_(UnionDef)
         case trait_(TraitDef)
-        def __get_mark(self): CJMark = when self {
+        def __get_mark(self): Mark = when self {
             case class_(i) = i.mark
             case union_(i) = i.mark
             case trait_(i) = i.mark
@@ -79,7 +79,7 @@ class CJIR {
     union ClassOrUnionDef_ : ClassOrUnionDef {
         case class_(ClassDef)
         case union_(UnionDef)
-        def __get_mark(self): CJMark = when self {
+        def __get_mark(self): Mark = when self {
             case class_(i) = i.mark
             case union_(i) = i.mark
         }
@@ -114,7 +114,7 @@ class CJIR {
     }
 
     class ClassDef: ClassOrUnionDef {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val name: String
@@ -129,7 +129,7 @@ class CJIR {
     }
 
     class UnionDef: ClassOrUnionDef {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val name: String
@@ -141,7 +141,7 @@ class CJIR {
     }
 
     class TraitDef: ItemDef {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val name: String
@@ -152,16 +152,16 @@ class CJIR {
     }
 
     class TraitDeclaration {
-        val mark: CJMark
+        val mark: Mark
         val trait_: Trait
         val conditions: List[TypeCondition]
     }
 
     class TypeCondition {
-        val mark: CJMark
+        val mark: Mark
         val variableName: String
         val traits: List[Trait]
-        def isSatisfied(self, mark: CJMark, binding: Binding): Bool {
+        def isSatisfied(self, mark: Mark, binding: Binding): Bool {
             if val variableType = binding.map.getOrNull(variableName) {
                 traits.all(trait_ -> variableType.implementsTrait(mark, trait_))
             } else { throw CJError(variableName + " not found in binding", [mark]) }
@@ -171,10 +171,10 @@ class CJIR {
     class TypeVar: Eq {
         val decl: TypeParameter
         val additionalTraits: List[Trait] = [] # e.g. from conditions on methods
-        def __get_mark(self): CJMark = decl.mark
+        def __get_mark(self): Mark = decl.mark
         def __get_name(self): String = decl.name
-        def getTraits(self, mark: CJMark): List[Trait] = decl.traits + additionalTraits
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+        def getTraits(self, mark: Mark): List[Trait] = decl.traits + additionalTraits
+        def findTraitByName(self, mark: Mark, traitName: String): Trait? {
             CJIR._findTraitByName(getTraits(mark), mark, traitName)
         }
         def __eq(self, other: Self): Bool = name == other.name
@@ -204,7 +204,7 @@ class CJIR {
             case reified(rt) = when other { case reified(ot) = rt == ot; else = false }
             case variable(tvar) = when other { case variable(ovar) = tvar == ovar; else = false }
         }
-        def applyBinding(self, mark: CJMark, binding: Binding): Self {
+        def applyBinding(self, mark: Mark, binding: Binding): Self {
             when self {
                 case self_(trait_) = binding.selfType
                 case reified(rtype) = Type.reified(rtype.applyBinding(mark, binding))
@@ -213,14 +213,14 @@ class CJIR {
                 }
             }
         }
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+        def findTraitByName(self, mark: Mark, traitName: String): Trait? {
             when self {
                 case self_(trait_) = trait_.findTraitByName(mark, traitName)
                 case reified(rtype) = rtype.findTraitByName(mark, traitName)
                 case variable(tvar) = tvar.findTraitByName(mark, traitName)
             }
         }
-        def implementsTrait(self, mark: CJMark, trait_: Trait): Bool {
+        def implementsTrait(self, mark: Mark, trait_: Trait): Bool {
             if val implTrait = findTraitByName(mark, trait_.defn.name) {
                 implTrait == trait_
             } else { false }
@@ -228,16 +228,16 @@ class CJIR {
     }
 
     trait ReifiedTypeOrTrait: Repr {
-        def applyBinding(self, mark: CJMark, binding: Binding): Self
+        def applyBinding(self, mark: Mark, binding: Binding): Self
         def _getBinding(self): Binding
-        def getTraits(self, mark: CJMark): List[Trait]
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait?
+        def getTraits(self, mark: Mark): List[Trait]
+        def findTraitByName(self, mark: Mark, traitName: String): Trait?
     }
 
     union ReifiedTypeOrTrait_: ReifiedTypeOrTrait {
         case reified(ReifiedType)
         case trait_(Trait)
-        def applyBinding(self, mark: CJMark, binding: Binding): Self = when self {
+        def applyBinding(self, mark: Mark, binding: Binding): Self = when self {
             case reified(t) = reified(t.applyBinding(mark, binding))
             case trait_(t) = trait_(t.applyBinding(mark, binding))
         }
@@ -245,11 +245,11 @@ class CJIR {
             case reified(t) = t._getBinding()
             case trait_(t) = t._getBinding()
         }
-        def getTraits(self, mark: CJMark): List[Trait] = when self {
+        def getTraits(self, mark: Mark): List[Trait] = when self {
             case reified(t) = t.getTraits(mark)
             case trait_(t) = t.getTraits(mark)
         }
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait? = when self {
+        def findTraitByName(self, mark: Mark, traitName: String): Trait? = when self {
             case reified(t) = t.findTraitByName(mark, traitName)
             case trait_(t) = t.findTraitByName(mark, traitName)
         }
@@ -269,7 +269,7 @@ class CJIR {
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
         def __eq(self, other: Self): Bool = defn.name == other.defn.name and args == other.args
-        def applyBinding(self, mark: CJMark, binding: Binding): Self {
+        def applyBinding(self, mark: Mark, binding: Binding): Self {
             ReifiedType(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
         def _getBinding(self): Binding {
@@ -279,11 +279,11 @@ class CJIR {
             }
             Binding(Type.reified(self), map)
         }
-        def getTraits(self, mark: CJMark): List[Trait] {
+        def getTraits(self, mark: Mark): List[Trait] {
             val binding = _getBinding()
             CJIR._getTraits(mark, binding, defn.traitDeclarations)
         }
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+        def findTraitByName(self, mark: Mark, traitName: String): Trait? {
             CJIR._findTraitByName(getTraits(mark), mark, traitName)
         }
     }
@@ -294,7 +294,7 @@ class CJIR {
         val args: List[Type]
         def toString(self): String = if args { defn.name + args } else { defn.name }
         def __eq(self, other: Self): Bool = defn is other.defn and args == other.args
-        def applyBinding(self, mark: CJMark, binding: Binding): Trait {
+        def applyBinding(self, mark: Mark, binding: Binding): Trait {
             Trait(defn, args.map(arg -> arg.applyBinding(mark, binding)))
         }
         def _getBinding(self): Binding {
@@ -304,16 +304,16 @@ class CJIR {
             }
             Binding(Type.self_(self), map)
         }
-        def getTraits(self, mark: CJMark): List[Trait] {
+        def getTraits(self, mark: Mark): List[Trait] {
             val binding = _getBinding()
             CJIR._getTraits(mark, binding, defn.traitDeclarations)
         }
-        def findTraitByName(self, mark: CJMark, traitName: String): Trait? {
+        def findTraitByName(self, mark: Mark, traitName: String): Trait? {
             CJIR._findTraitByName([self], mark, traitName)
         }
     }
 
-    def _getTraits(mark: CJMark, binding: Binding, decls: List[TraitDeclaration]): List[Trait] {
+    def _getTraits(mark: Mark, binding: Binding, decls: List[TraitDeclaration]): List[Trait] {
         val traits = List[Trait].empty()
         for traitDecl in decls {
             if traitDecl.conditions.all(c -> c.isSatisfied(mark, binding)) {
@@ -323,7 +323,7 @@ class CJIR {
         traits
     }
 
-    def _findTraitByName(rootTraits: List[Trait], mark: CJMark, traitName: String): Trait? {
+    def _findTraitByName(rootTraits: List[Trait], mark: Mark, traitName: String): Trait? {
         for rootTrait in rootTraits {
             if rootTrait.defn.name == traitName {
                 return null(rootTrait)
@@ -347,7 +347,7 @@ class CJIR {
     }
 
     class Case {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val name: String
@@ -355,7 +355,7 @@ class CJIR {
     }
 
     class Field {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val mutable: Bool
@@ -367,7 +367,7 @@ class CJIR {
     }
 
     class Method {
-        val mark: CJMark
+        val mark: Mark
         val comment: String?
         val modifiers: List[CJModifier]
         val conditions: List[TypeCondition]
@@ -383,7 +383,7 @@ class CJIR {
     }
 
     class TypeParameter: ToString {
-        val mark: CJMark
+        val mark: Mark
         val itemLevel: Bool
         val name: String
         val traits: List[Trait] = []
@@ -394,14 +394,14 @@ class CJIR {
     }
 
     class Local {
-        val mark: CJMark
+        val mark: Mark
         val mutable: Bool
         val name: String
         val type: Type
     }
 
     class Expr {
-        val mark: CJMark
+        val mark: Mark
         val type: Type
         val data: ExprData
     }
