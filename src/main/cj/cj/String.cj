@@ -68,6 +68,32 @@ native class String: Repr, ToBool, Hash, Ord, Iterable[Char], Default {
         sb.toString()
     }
 
+    def unreprChar(self): Char {
+        Assert.that(startsWith("'") and endsWith("'"))
+        val sb = StringBuilder()
+        var escape = false
+        val chars: List[Char] = []
+        for ch in self[1:-1] {
+            if escape {
+                switch ch {
+                    case '0' { chars.add('\0') }
+                    case 'n' { chars.add('\n') }
+                    case 'r' { chars.add('\r') }
+                    case 't' { chars.add('\t') }
+                    case '"' { chars.add('"') }
+                    case '\\' { chars.add('\\') }
+                    else = throw Error("Unrecognized escape char " + ch.repr())
+                }
+            } else if ch == '\\' {
+                escape = true
+            } else {
+                chars.add(ch)
+            }
+        }
+        Assert.equal(chars.size(), 1)
+        chars[0]
+    }
+
     def __add[T?: ToString](self: Self, other: T): Self = js!(Self, self, "+", other.toString())
 
     ## Number of char codes in this string.

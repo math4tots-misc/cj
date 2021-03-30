@@ -1,5 +1,7 @@
 package uu
 
+import cj.BigInt
+
 class UUToken : Repr {
 
     # Token types
@@ -89,12 +91,27 @@ class UUToken : Repr {
         static_field_name_value_pairs!(Self, "(kw|t)[A-Z]+").map(p -> (p.f1, p.f0)))
 
     val type : Int
-    val text : String
+    val value: Value
     val line : Int
     val column : Int
 
+    union Value: Repr {
+        case none
+        case string(String)
+        case int(Int)
+        case char(Char)
+        case bigInt(BigInt)
+        case double(Double)
+        def repr(self): String = when self { case none = "none"; else(v) = v.repr() }
+    }
+    def __get_stringValue(self): String = get!(value, string, 0)
+    def __get_intValue(self): Int = get!(value, int, 0)
+    def __get_charValue(self): Char = get!(value, char, 0)
+    def __get_bigIntValue(self): BigInt = get!(value, bigInt, 0)
+    def __get_doubleValue(self): Double = get!(value, double, 0)
+
     def repr(self): String = (
-        "UUToken(" + typeRepr(type) + ", " + text.repr() + ", " + line + ", " + column + ")")
+        "UUToken(" + typeRepr(type) + ", " + value.repr() + ", " + line + ", " + column + ")")
 
     def keywordString(type: Int): String = {
         val str = typeRepr(type)
