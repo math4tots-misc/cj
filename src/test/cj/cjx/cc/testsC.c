@@ -261,14 +261,17 @@ void tests15_usual_arith_conv() {
 }
 
 int g1;
-
 int *g1_ptr() { return &g1; }
 char int_to_char(int x) { return x; }
+int div_long(long a, long b) {
+  return a / b;
+}
 
 void tests16_more_type_conv() {
   g1 = 3;
   aeq(3, *g1_ptr());
   aeq(5, int_to_char(261));
+  aeq(-5, div_long(-10, 2));
 }
 
 int main() {
