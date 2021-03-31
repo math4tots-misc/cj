@@ -78,6 +78,8 @@ class UUParser: ParserMixin[UUToken] {
             annotations: List[Annotation],
             modifiers: List[Modifier]): Item {
         val kind = parseItemKind()
+        val comment = parseComment()
+        val annotations = parseAnnotations()
         error("TODO")
     }
     private def parseItemKind(self): Item.Kind {
