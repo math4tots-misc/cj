@@ -260,6 +260,17 @@ void tests15_usual_arith_conv() {
     aeq(5, ({ struct t {char a;} x, y; x.a=5; y=x; y.a; }));
 }
 
+int g1;
+
+int *g1_ptr() { return &g1; }
+char int_to_char(int x) { return x; }
+
+void tests16_more_type_conv() {
+  g1 = 3;
+  aeq(3, *g1_ptr());
+  aeq(5, int_to_char(261));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -276,4 +287,5 @@ int main() {
     tests13_sizeof_type();
     tests14_cast();
     tests15_usual_arith_conv();
+    tests16_more_type_conv();
 }

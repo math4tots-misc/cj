@@ -254,6 +254,7 @@ class C2ExprBuilder {
     def addr(self, mark: Mark, expr: Expr): Expr {
         when expr.kind {
             case getvar = addrvar(mark, expr.var_)
+            case getgvar = addrgvar(mark, expr.gvar)
             case deref = expr.arg
             else = throw MError("" + expr.kind + " is not an l-value", [expr.mark])
         }

@@ -655,10 +655,11 @@ class C2Codegen {
                 m.block(null, parts, auto)
             }
             case addrvar = addrvar(expr.var_)
-            case getgvar = getgvar(expr.mark, expr.gvar)
-            case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)
+            case addrgvar = addrgvar(expr.gvar)
+            case getgvar = getgvar(expr.mark, expr.gvar)
+            case setgvar = teegvar(expr.mark, expr.gvar, expr.arg)
             case getmember = getmember(expr.mark, expr.arg, expr.member)
             case setmember = teemember(expr.mark, expr.lhs, expr.member, expr.rhs)
             case deref = deref(expr.arg)
