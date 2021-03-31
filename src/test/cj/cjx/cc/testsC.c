@@ -268,10 +268,33 @@ int div_long(long a, long b) {
 }
 
 void tests16_more_type_conv() {
-  g1 = 3;
-  aeq(3, *g1_ptr());
-  aeq(5, int_to_char(261));
-  aeq(-5, div_long(-10, 2));
+    g1 = 3;
+    aeq(3, *g1_ptr());
+    aeq(5, int_to_char(261));
+    aeq(-5, div_long(-10, 2));
+}
+
+_Bool bool_fn_add(_Bool x) { return x + 1; }
+_Bool bool_fn_sub(_Bool x) { return x - 1; }
+
+void tests17_bool() {
+    aeq(0, ({ _Bool x=0; x; }));
+    aeq(1, ({ _Bool x=1; x; }));
+    aeq(1, ({ _Bool x=2; x; }));
+    aeq(1, (_Bool)1);
+    aeq(1, (_Bool)2);
+    aeq(0, (char)256);
+    aeq(0, (_Bool)(char)256);
+
+    aeq(1, bool_fn_add(3));
+    aeq(0, bool_fn_sub(3));
+    aeq(1, bool_fn_add(-3));
+    aeq(0, bool_fn_sub(-3));
+    aeq(1, bool_fn_add(0));
+    aeq(1, bool_fn_sub(0));
+
+    // aeq(1, true);
+    // aeq(1, false);
 }
 
 int main() {
@@ -291,4 +314,5 @@ int main() {
     tests14_cast();
     tests15_usual_arith_conv();
     tests16_more_type_conv();
+    tests17_bool();
 }

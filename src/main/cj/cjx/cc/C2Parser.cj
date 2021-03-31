@@ -143,6 +143,7 @@ class C2Parser : ParserMixin[C2Token] {
     def atTypename(self): Bool {
         switch peek().type {
             case C2Token.kwVOID
+            case C2Token.kwBOOL
             case C2Token.kwCHAR
             case C2Token.kwINT
             case C2Token.kwSHORT
@@ -208,11 +209,12 @@ class C2Parser : ParserMixin[C2Token] {
         val attr = VarAttr()
         var flags = 0
         val fvoid = 1 << 0
-        var fchar = 1 << 2
-        var fshort = 1 << 4
-        var fint = 1 << 6
-        var flong = 1 << 8
-        var fother = 1 << 10
+        val fbool = 1 << 2
+        var fchar = 1 << 4
+        var fshort = 1 << 6
+        var fint = 1 << 8
+        var flong = 1 << 10
+        var fother = 1 << 12
         var type: Type = Type.int
         while atTypename() {
             switch peek().type {
@@ -233,6 +235,7 @@ class C2Parser : ParserMixin[C2Token] {
                 else {
                     switch peek().type {
                         case C2Token.kwVOID { next(); flags += fvoid }
+                        case C2Token.kwBOOL { next(); flags += fbool }
                         case C2Token.kwINT { next(); flags += fint }
                         case C2Token.kwLONG { next(); flags += flong }
                         case C2Token.kwCHAR { next(); flags += fchar }
@@ -243,6 +246,7 @@ class C2Parser : ParserMixin[C2Token] {
                         case fvoid = Type.void
                         case fint = Type.int
                         case flong; case flong + fint; case flong + flong = Type.long
+                        case fbool = Type.bool
                         case fchar = Type.char
                         case fshort; case fshort + fint = Type.short
                         case 0 = errorKind("typename")

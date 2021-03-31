@@ -111,6 +111,7 @@ class C2IR {
             def isUnion(self): Bool = _isUnion
         }
         case void
+        case bool
         case char  # NOTE: char is unsigned
         case int
         case short
@@ -131,6 +132,7 @@ class C2IR {
         def isPtrOrArray(self): Bool = isPtr() or isArray()
         def rank(self): Int {
             when self {
+                case bool = 0
                 case char = 1
                 case short = 2
                 case int = 3
@@ -153,7 +155,7 @@ class C2IR {
             else = true
         }
         def isIntegral(self): Bool = when self {
-            case char; case int; case short; case long = true
+            case bool; case char; case int; case short; case long = true
             else = false
         }
         def repr(self): String = when self {
@@ -176,6 +178,7 @@ class C2IR {
         def ptrOf(t: Type): Type = Type.ptr(Ptr(t))
         def arrayOf(t: Type, len: Int): Type = Type.array(Array(t, len))
         def size(self): Int = when self {
+            case bool = 1
             case char = 1
             case short = 2
             case long = 8
@@ -282,17 +285,7 @@ class C2IR {
             case longLe
 
             case short
-            case shortNeg
-            case shortAdd
-            case shortSub
-            case shortMul
-            case shortDiv
-            case shortRem
-            case shortEq
-            case shortNe
-            case shortLt
-            case shortLe
-
+            case bool
             case char        # NOTE: char is unsigned
 
             case str

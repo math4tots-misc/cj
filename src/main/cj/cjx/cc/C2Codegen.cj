@@ -135,7 +135,7 @@ class C2Codegen {
 
     def type(self, type: C2IR.Type): Binaryen.Type {
         when type {
-            case void; case char; case int; case short = i32
+            case void; case bool; case char; case int; case short = i32
             case long = i64
             case array(..) = i32
             case ptr(..) = i32
@@ -386,6 +386,7 @@ class C2Codegen {
             addrExpr: Binaryen.Expression): Binaryen.Expression {
         when valtype {
             case void; case int; case ptr(..) = m.i32.load(offset, 0, addrExpr)
+            case bool = int2bool(m.i32.load8_u(offset, 0, addrExpr))
             case char = m.i32.load8_u(offset, 0, addrExpr)
             case short = m.i32.load16_s(offset, 0, addrExpr)
             case long = m.i64.load(offset, 0, addrExpr)
@@ -410,6 +411,7 @@ class C2Codegen {
             case int; case ptr(..) { m.i32.store(offset, 0, addrExpr, valExpr) }
             case long { m.i64.store(offset, 0, addrExpr, valExpr) }
             case char = m.i32.store8(offset, 0, addrExpr, valExpr)
+            case bool = m.i32.store8(offset, 0, addrExpr, int2bool(valExpr))
             case short = m.i32.store16(offset, 0, addrExpr, valExpr)
             case array(..) = throw MError("Assignment to array type is not allowed", [mark])
             case derived(x) = _memcpy(mark, offset, addrExpr, valExpr, x.size())
@@ -553,6 +555,10 @@ class C2Codegen {
         throw MError("" + ce.arg.type + " to " + ce.type + " casts are not supported", [ce.mark])
     }
 
+    def int2bool(self, expr: Binaryen.Expression): Binaryen.Expression {
+        m.i32.xor(m.i32.const(1), m.i32.eqz(expr))
+    }
+
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case int; case short = m.i32.const(expr.intValue)
@@ -585,17 +591,27 @@ class C2Codegen {
             case cast {
                 when expr.arg.type {
                     case int;case ptr(..) = when expr.type {
-                        case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                        case bool = int2bool(expr(expr.arg))
+                        case char = {
+                            IO.println("CASTING FROM INT TO CHAR " + expr.arg)
+                            m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                        }
                         # case short = m.i32.and_(m.i32.const(0xFFFF), expr(expr.arg))
                         case int;case ptr(..) = expr(expr.arg)
                         case long = m.i64.extend_s(expr(expr.arg))
                         else = _casterr(expr)
                     }
+                    case bool = when expr.type {
+                        case char; case short; case int = expr(expr.arg)
+                        else = _casterr(expr)
+                    }
                     case char = when expr.type {
+                        case bool = int2bool(expr(expr.arg))
                         case short;case int;case ptr(..) = expr(expr.arg)
                         else = _casterr(expr)
                     }
                     case short = when expr.type {
+                        case bool = int2bool(expr(expr.arg))
                         case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
                         case int;case ptr(..) = expr(expr.arg)
                         else = _casterr(expr)

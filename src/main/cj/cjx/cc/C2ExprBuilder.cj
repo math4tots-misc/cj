@@ -201,9 +201,16 @@ class C2ExprBuilder {
         ret
     }
 
+    def bool(self, mark: Mark, value: Bool): Expr {
+        val ret = Expr(mark, Expr.Kind.bool)
+        ret.intValue = Int(value) & 1
+        ret.type = Type.bool
+        ret
+    }
+
     def short(self, mark: Mark, value: Int): Expr {
         val ret = Expr(mark, Expr.Kind.short)
-        ret.intValue = value
+        ret.intValue = value & 0xFFFF
         ret.type = Type.short
         ret
     }
@@ -217,7 +224,7 @@ class C2ExprBuilder {
 
     def char(self, mark: Mark, value: Int): Expr {
         val ret = Expr(mark, Expr.Kind.char)
-        ret.intValue = value
+        ret.intValue = value & 0xFF
         ret.type = Type.char
         ret
     }

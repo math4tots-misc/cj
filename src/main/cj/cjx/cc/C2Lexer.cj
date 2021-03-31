@@ -22,6 +22,7 @@ class C2Lexer {
         for type in C2Token.keywordTypes {
             b.add(C2Token.keywordString(type), m -> symtok(m, type))
         }
+        b.add("_Bool", m -> tok(m, C2Token.kwBOOL, s -> ()))
 
         b.add("[a-zA-Z_][a-zA-Z_0-9]*", m -> tok(m, C2Token.tIDENT, s -> s))
 
