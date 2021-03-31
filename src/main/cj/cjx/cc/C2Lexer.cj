@@ -85,9 +85,10 @@ class C2Lexer {
 
     private def itok(m: Regex.MatchResult): List[C2Token] = {
         val text = m.matchText
-        # If the literal is too long, automatically promote it to a long
-        if text.len() >= 10 {
-            [C2Token(C2Token.tLONG, BigInt(text), m.line, m.column, m.filename)]
+        if text.len() >= 10 and BigInt(text) > BigInt(Int.max) {
+            throw MError(
+                "Int literal will overflow: " + text,
+                [Mark(m.filename, m.line, m.column)])
         } else {
             [C2Token(C2Token.tINT, Int(text), m.line, m.column, m.filename)]
         }

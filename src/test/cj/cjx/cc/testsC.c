@@ -4,6 +4,7 @@
 //   * nested type declarators
 //   * typedefs
 //   * sizeof(typename)
+//   * usual arithmetic conversions
 
 /*
  * Some multiline comments
@@ -215,13 +216,48 @@ void tests13_sizeof_type() {
 }
 
 void tests14_cast() {
-    aeq(131585, (int)8590066177);
-    aeq(513, (short)8590066177);
-    aeq(1, (char)8590066177);
+    aeq(131585, (int)8590066177L);
+    aeq(513, (short)8590066177L);
+    aeq(1, (char)8590066177L);
     aeq(1, (int)(long)1);
     aeq(0, (int)(long)&*(int *)0);
     aeq(513, ({ int x=512; *(char *)&x=1; x; }));
     aeq(5, ({ int x=5; long y=(long)&x; *(int*)y; }));
+}
+
+void tests15_usual_arith_conv() {
+    aeq(0, 1073741824 * 100 / 100);
+
+    aeq(8, sizeof(-10 + (long)5));
+    aeq(8, sizeof(-10 - (long)5));
+    aeq(8, sizeof(-10 * (long)5));
+    aeq(8, sizeof(-10 / (long)5));
+    aeq(8, sizeof((long)-10 + 5));
+    aeq(8, sizeof((long)-10 - 5));
+    aeq(8, sizeof((long)-10 * 5));
+    aeq(8, sizeof((long)-10 / 5));
+
+    aeq((long)-5, -10 + (long)5);
+    aeq((long)-15, -10 - (long)5);
+    aeq((long)-50, -10 * (long)5);
+    aeq((long)-2, -10 / (long)5);
+
+    aeq(1, -2 < (long)-1);
+    aeq(1, -2 <= (long)-1);
+    aeq(0, -2 > (long)-1);
+    aeq(0, -2 >= (long)-1);
+
+    aeq(1, (long)-2 < -1);
+    aeq(1, (long)-2 <= -1);
+    aeq(0, (long)-2 > -1);
+    aeq(0, (long)-2 >= -1);
+
+    aeq(0, 2147483647 + 2147483647 + 2);
+    aeq((long)-1, ({ long x; x=-1; x; }));
+
+    aeq(1, ({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[0]; }));
+    aeq(0, ({ char x[3]; x[0]=0; x[1]=1; x[2]=2; char *y=x+1; y[-1]; }));
+    aeq(5, ({ struct t {char a;} x, y; x.a=5; y=x; y.a; }));
 }
 
 int main() {
@@ -239,4 +275,5 @@ int main() {
     tests12_typedef();
     tests13_sizeof_type();
     tests14_cast();
+    tests15_usual_arith_conv();
 }

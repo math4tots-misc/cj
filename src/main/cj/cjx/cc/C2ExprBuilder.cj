@@ -14,6 +14,10 @@ import cjx.parser.Mark
 
 class C2ExprBuilder {
 
+    static val usualArithmeticConversionBinops: Set[Int] = SetOf(
+        '*', '/', '%', '+', '-', '<', '>', C2Token.tLE, C2Token.tGE, C2Token.tEQ, C2Token.tNE,
+        '&', '^', '|')
+
     # ========================================================================
     # Statements
     # ========================================================================
@@ -114,8 +118,8 @@ class C2ExprBuilder {
             }
         }
 
-        # widening
-        if type.isIntegral() and expr.type.isIntegral() and type.size() > expr.type.size() {
+        # widening and narrowing both happen implicitly in C
+        if type.isIntegral() and expr.type.isIntegral() {
             return null(_cast(expr, type))
         }
 
@@ -390,9 +394,45 @@ class C2ExprBuilder {
         }
     }
 
+    ## https://wiki.sei.cmu.edu/confluence/display/c/INT02-C.+Understand+integer+conversion+rules
+    def integerPromotion(self, expr: Expr): Expr {
+        if expr.type.isIntegral() and expr.type.size() < Type.int.size() {
+            icast(expr, Type.int)
+        } else { expr }
+    }
+
+    ## Determine common real type
+    def commonType(self, lhs: Type, rhs: Type): Type {
+        if lhs == rhs {
+            lhs
+        } else if lhs.isSigned() == rhs.isSigned() {
+            if lhs.rank() < rhs.rank() { rhs } else { lhs }
+        } else {
+            throw MError("Could not determine commont type (" + lhs + ", " + rhs + ")", [])
+        }
+    }
+
+    ## https://en.cppreference.com/w/c/language/conversion
+    def usualArithmeticConversion(self, var lhs: Expr, var rhs: Expr): Tuple[Expr, Expr] {
+        if lhs.type.isIntegral() and rhs.type.isIntegral() {
+            lhs = integerPromotion(lhs)
+            rhs = integerPromotion(rhs)
+            val type = commonType(lhs.type, rhs.type)
+            (icast(lhs, type), icast(rhs, type))
+        } else {
+            (lhs, rhs)
+        }
+    }
+
     def binop(self, mark: Mark, type: Int, var lhs: Expr, var rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
+
+        if type in usualArithmeticConversionBinops {
+            val (newLhs, newRhs) = usualArithmeticConversion(lhs, rhs)
+            lhs = newLhs
+            rhs = newRhs
+        }
 
         # ======================================================================
         # comma
@@ -438,38 +478,6 @@ class C2ExprBuilder {
                 else = ()
             }
         }
-        if lhs.type.isShort() and rhs.type.isShort() {
-            switch type {
-                case '+'           { return genBinop(mark, Expr.Kind.charAdd, Type.short, lhs, rhs) }
-                case '-'           { return genBinop(mark, Expr.Kind.charSub, Type.short, lhs, rhs) }
-                case '*'           { return genBinop(mark, Expr.Kind.charMul, Type.short, lhs, rhs) }
-                case '/'           { return genBinop(mark, Expr.Kind.charDiv, Type.short, lhs, rhs) }
-                case '%'           { return genBinop(mark, Expr.Kind.charRem, Type.short, lhs, rhs) }
-                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.int, lhs, rhs) }
-                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.int, lhs, rhs) }
-                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.int, lhs, rhs) }
-                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.int, lhs, rhs) }
-                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.int, rhs, lhs) }
-                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.int, rhs, lhs) }
-                else = ()
-            }
-        }
-        if lhs.type.isChar() and rhs.type.isChar() {
-            switch type {
-                case '+'           { return genBinop(mark, Expr.Kind.charAdd, Type.char, lhs, rhs) }
-                case '-'           { return genBinop(mark, Expr.Kind.charSub, Type.char, lhs, rhs) }
-                case '*'           { return genBinop(mark, Expr.Kind.charMul, Type.char, lhs, rhs) }
-                case '/'           { return genBinop(mark, Expr.Kind.charDiv, Type.char, lhs, rhs) }
-                case '%'           { return genBinop(mark, Expr.Kind.charRem, Type.char, lhs, rhs) }
-                case C2Token.tEQ   { return genBinop(mark, Expr.Kind.charEq, Type.int, lhs, rhs) }
-                case C2Token.tNE   { return genBinop(mark, Expr.Kind.charNe, Type.int, lhs, rhs) }
-                case '<'           { return genBinop(mark, Expr.Kind.charLt, Type.int, lhs, rhs) }
-                case C2Token.tLE   { return genBinop(mark, Expr.Kind.charLe, Type.int, lhs, rhs) }
-                case '>'           { return genBinop(mark, Expr.Kind.charLt, Type.int, rhs, lhs) }
-                case C2Token.tGE   { return genBinop(mark, Expr.Kind.charLe, Type.int, rhs, lhs) }
-                else = ()
-            }
-        }
 
         # ======================================================================
         # pointer ops
@@ -509,14 +517,15 @@ class C2ExprBuilder {
             [mark])
     }
 
-    def preop(self, mark: Mark, type: Int, arg: Expr): Expr {
+    def preop(self, mark: Mark, type: Int, var arg: Expr): Expr {
         addType(arg)
         switch type {
             case '&' { return addr(mark, arg) }
             case '*' { return deref(mark, arg) }
             else = ()
         }
-        if arg.type.isInt() {
+        if arg.type.isIntegral() and arg.type.rank() <= Type.int.rank() {
+            arg = integerPromotion(arg)
             switch type {
                 case '-' { return genUnop(mark, Expr.Kind.intNeg, Type.int, arg) }
                 case '+' { return arg }

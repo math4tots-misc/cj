@@ -111,7 +111,7 @@ class C2IR {
             def isUnion(self): Bool = _isUnion
         }
         case void
-        case char
+        case char  # NOTE: char is unsigned
         case int
         case short
         case long
@@ -129,9 +129,21 @@ class C2IR {
         def isArray(self): Bool = tag!(self) == tag!(Self, array)
         def isFunc(self): Bool = tag!(self) == tag!(Self, func)
         def isPtrOrArray(self): Bool = isPtr() or isArray()
-        def intPtrConvertible(self): Bool = when self {
-            case void; case char; case int; case ptr(..) = true
-            else = false
+        def rank(self): Int {
+            when self {
+                case char = 1
+                case short = 2
+                case int = 3
+                case long = 4
+                else = throw MError("Rank does not apply to non-integral type " + self, [])
+            }
+        }
+        def isSigned(self): Bool {
+            when self {
+                case short; case int; case long = true
+                case char = false
+                else = throw MError("non-integral type " + self + " does not have signedness", [])
+            }
         }
         ## More info on incomplete types:
         ## https://docs.oracle.com/cd/E19205-01/819-5265/bjals/index.html
@@ -281,17 +293,7 @@ class C2IR {
             case shortLt
             case shortLe
 
-            case char
-            case charNeg
-            case charAdd
-            case charSub
-            case charMul
-            case charDiv
-            case charRem
-            case charEq
-            case charNe
-            case charLt
-            case charLe
+            case char        # NOTE: char is unsigned
 
             case str
 
