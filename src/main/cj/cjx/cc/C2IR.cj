@@ -312,9 +312,6 @@ class C2IR {
             case getmember   # derived member access
             case setmember
 
-            case postIncr
-            case postDecr
-
             case arrayToPtr  # decay an array to a pointer
 
             case func        # function reference

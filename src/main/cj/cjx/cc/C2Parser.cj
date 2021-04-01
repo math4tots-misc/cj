@@ -573,6 +573,8 @@ class C2Parser : ParserMixin[C2Token] {
                 case C2Token.tMINUS_EQ
                 case C2Token.tSTAR_EQ
                 case C2Token.tDIV_EQ {
+                    # augmented assignment
+                    # (a) op = (b) becomes t=&(a),*t=*t op (b)
                     val augtype = next().type
                     val type = switch augtype {
                         case C2Token.tPLUS_EQ = '+'
@@ -584,9 +586,34 @@ class C2Parser : ParserMixin[C2Token] {
                     expr = toAugassign(mark, type, expr, rhs)
                 }
                 case C2Token.tINCR; case C2Token.tDECR {
-                    # postfix operators
-                    val type = next().type
-                    expr = eb.postop(mark, type, expr)
+                    # postfix increment operators
+                    # (e)++ becomes p=&(e),v=*p,*p=v+1,v
+                    val type = switch next().type {
+                        case C2Token.tINCR = '+'
+                        case C2Token.tDECR = '-'
+                    }
+                    val tmppvar = locals.addLVar(mark, expr.type.ptrOf(), newTmpvarname())
+                    val tmpvvar = locals.addLVar(mark, expr.type, newTmpvarname())
+                    expr = eb.commaSeq(
+                        mark,
+
+                        # p = &(expr)
+                        eb.setvar(mark, tmppvar, eb.preop(mark, '&', expr)),
+
+                        # v = *p
+                        eb.binop(mark, '=',
+                            eb.getvar(mark, tmpvvar),
+                            eb.preop(mark, '*', eb.getvar(mark, tmppvar))),
+
+                        # *p = v + 1
+                        eb.binop(mark, '=',
+                            eb.preop(mark, '*', eb.getvar(mark, tmppvar)),
+                            eb.binop(mark, type,
+                                eb.getvar(mark, tmpvvar),
+                                eb.int(mark, 1))),
+
+                        # v
+                        eb.getvar(mark, tmpvvar))
                 }
                 case '(' { expr = eb.call(mark, expr, args()) }
                 case '.' {

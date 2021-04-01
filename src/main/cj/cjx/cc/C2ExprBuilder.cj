@@ -362,6 +362,14 @@ class C2ExprBuilder {
         genBinop(mark, Expr.Kind.comma, rhs.type, lhs, rhs)
     }
 
+    @variadic def commaSeq(self, mark: Mark, args: List[Expr]): Expr {
+        var ret = args[0]
+        for i = 1; i < args.size(); i++ {
+            ret = comma(mark, ret, args[i])
+        }
+        ret
+    }
+
     def getmember(self, mark: Mark, arg: Expr, name: String): Expr {
         addType(arg)
         val derived = when arg.type {
@@ -552,25 +560,6 @@ class C2ExprBuilder {
             }
         }
         throw MError("TODO eb.preop " + C2Token.typeRepr(type), [mark])
-    }
-
-    def postop(self, mark: Mark, type: Int, arg: Expr): Expr {
-        addType(arg)
-        if type == C2Token.tINCR {
-            when arg.type {
-                case int; case ptr(..) = return genUnop(
-                    mark, Expr.Kind.postIncr, arg.type, addr(mark, arg))
-                else = ()
-            }
-        }
-        if type == C2Token.tDECR {
-            when arg.type {
-                case int; case ptr(..) = return genUnop(
-                    mark, Expr.Kind.postDecr, arg.type, addr(mark, arg))
-                else = ()
-            }
-        }
-        throw MError("TODO eb.postop " + C2Token.typeRepr(type) + " (" + arg.type + ")", [mark])
     }
 
     private def genUnop(self, mark: Mark, kind: Expr.Kind, type: Type, arg: Expr): Expr {

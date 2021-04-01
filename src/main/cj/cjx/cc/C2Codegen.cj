@@ -703,27 +703,6 @@ class C2Codegen {
                     expr(expr.lhs),
                     expr(expr.rhs)),
                 m.i32.const(expr.lhs.type.base.size()))
-            case postIncr; case postDecr {
-                val sign = if expr.kind == C2IR.Expr.Kind.postIncr { 1 } else { -1 }
-                val mark = expr.mark
-                val incrAmount = sign * incrAmount(expr.type)
-                val bvaltype = type(expr.type)
-                val ptrLocalVar = newLocal(i32)
-                val valLocalVar = newLocal(bvaltype)
-                m.block(null, [
-                    m.local.set(ptrLocalVar, expr(expr.arg)),
-                    m.local.set(
-                        valLocalVar,
-                        _getderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32))),
-                    _dropsetderef(mark, expr.type, 0, m.local.get(ptrLocalVar, i32),
-                        tadd(
-                            bvaltype,
-                            m.local.get(valLocalVar, bvaltype),
-                            tconst(bvaltype, incrAmount)
-                        )),
-                    m.local.get(valLocalVar, bvaltype),
-                ], auto)
-            }
             else = throw MError("TODO codegen expr " + expr.kind, [expr.mark])
         }
     }
@@ -750,11 +729,5 @@ class C2Codegen {
         } else {
             throw MError("TODO tadd " + js!(String, "''+", type), [])
         }
-    }
-
-    def incrAmount(self, type: C2IR.Type): Int = when type {
-        case int; case long = 1
-        case ptr(t) = t.base.size()
-        else = throw MError("TODO incrAmount " + type, [])
     }
 }

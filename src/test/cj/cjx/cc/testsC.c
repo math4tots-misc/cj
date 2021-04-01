@@ -345,6 +345,25 @@ void tests22_augassign() {
     aeq(3, ({ int i=6; i/=2; }));
 }
 
+void tests23_post_incr() {
+    aeq(2, ({ int i=2; i++; }));
+    aeq(2, ({ int i=2; i--; }));
+    aeq(3, ({ int i=2; i++; i; }));
+    aeq(1, ({ int i=2; i--; i; }));
+    aeq(1, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; *p++; }));
+    aeq(1, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; *p--; }));
+
+    aeq(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p++)--; a[0]; }));
+    aeq(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*(p--))--; a[1]; }));
+    aeq(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p)--; a[2]; }));
+    aeq(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p)--; p++; *p; }));
+
+    aeq(20, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p++)--; a[0]; }));
+    aeq(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p++)--; a[1]; }));
+    aeq(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p++)--; a[2]; }));
+    aeq(2, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; (*p++)--; *p; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
