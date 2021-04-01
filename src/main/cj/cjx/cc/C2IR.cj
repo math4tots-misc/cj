@@ -309,6 +309,8 @@ class C2IR {
 
             case comma
 
+            case logicalNot
+
             case getmember   # derived member access
             case setmember
 

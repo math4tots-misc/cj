@@ -664,7 +664,7 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.tLONG = eb.long(mark, next().bigIntValue)
             case C2Token.tCHAR = eb.char(mark, next().intValue)
             case C2Token.tSTR = eb.str(mark, next().bytesValue)
-            case '-'; case '+'; case '&'; case '*' {
+            case '-'; case '+'; case '&'; case '*'; case '!' {
                 val type = next().type
                 eb.preop(mark, type, unary())
             }

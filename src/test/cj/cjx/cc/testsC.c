@@ -5,6 +5,8 @@
 //   * typedefs
 //   * sizeof(typename)
 //   * usual arithmetic conversions
+//   * augmented assignment and other operators
+//   * logical operators
 
 /*
  * Some multiline comments
@@ -384,6 +386,16 @@ void test25_int_literals() {
     aeq(47, 0B101111);
 }
 
+void test26_logical_not() {
+    aeq(0, !1);
+    aeq(0, !2);
+    aeq(1, !0);
+    aeq(1, !(char)0);
+    aeq(0, !(long)3);
+    aeq(4, sizeof(!(char)0));
+    aeq(4, sizeof(!(long)0));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -410,4 +422,5 @@ int main() {
     tests23_post_incr();
     tests24_pre_incr();
     test25_int_literals();
+    test26_logical_not();
 }

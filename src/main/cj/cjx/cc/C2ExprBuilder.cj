@@ -544,6 +544,7 @@ class C2ExprBuilder {
         switch type {
             case '&' { return addr(mark, arg) }
             case '*' { return deref(mark, arg) }
+            case '!' { return genUnop(mark, Expr.Kind.logicalNot, Type.int, ecast(arg, Type.int)) }
             else = ()
         }
         if arg.type.isIntegral() and arg.type.rank() <= Type.int.rank() {
