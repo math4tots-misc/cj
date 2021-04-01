@@ -18,6 +18,7 @@ import cjx.cc.C2IR.GVar
 import cjx.cc.C2IR.Ordinary
 import cjx.cc.C2IR.VarAttr
 import cjx.cc.C2IR.Typedef
+import cjx.cc.C2IR.EnumConstant
 
 class C2Parser : ParserMixin[C2Token] {
     static private val assingPrec: Int = precof('=')
@@ -150,6 +151,7 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwLONG
             case C2Token.kwUNION
             case C2Token.kwSTRUCT
+            case C2Token.kwENUM
             case C2Token.kwTYPEDEF = true
             case C2Token.tIDENT = if val ordinary = scope.getOrNull(peek().stringValue) {
                 tag!(ordinary) == tag!(Ordinary, typedef) } else { false }
@@ -223,8 +225,14 @@ class C2Parser : ParserMixin[C2Token] {
                     flags += fother
                     type = declspecDerived()
                 }
+                case C2Token.kwENUM {
+                    flags += fother
+                    declspecEnum()
+                    type = Type.int
+                }
                 case C2Token.tIDENT {
                     val name = next().stringValue
+                    flags += fother
                     type = if val ordinary = scope.getOrNull(name) {
                         when ordinary {
                             case typedef(t) = t.type
@@ -256,6 +264,29 @@ class C2Parser : ParserMixin[C2Token] {
             }
         }
         (type, attr)
+    }
+
+    def declspecEnum(self) {
+        expect(C2Token.kwENUM)
+        val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
+        if consume('{') {
+            var nextValue = 0
+            while not consume('}') {
+                val mark = mark()
+                val name = next().stringValue
+                val value = if consume('=') {
+                    val expr = unary()
+                    when expr.kind {
+                        case int = expr.intValue
+                        else = throw errorKind("constant expression")
+                    }
+                } else { nextValue }
+                nextValue = value + 1
+                val ec = EnumConstant(mark, name, value)
+                scope.addEnumConstant(ec)
+                if not consume(',') { assert('}') }
+            }
+        }
     }
 
     def declspecDerived(self): Type {
@@ -589,6 +620,7 @@ class C2Parser : ParserMixin[C2Token] {
                         case lvar(lvar) = eb.getvar(mark, lvar)
                         case gvar(gvar) = eb.getgvar(mark, gvar)
                         case func(func) = eb.func(mark, func)
+                        case enumConstant(ec) = eb.int(mark, ec.value)
                         case typedef(..) = throw MError(
                             "'" + name + "' is a type, not a value", [mark])
                     }

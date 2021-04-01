@@ -535,7 +535,12 @@ class C2ExprBuilder {
         if arg.type.isIntegral() and arg.type.rank() <= Type.int.rank() {
             arg = integerPromotion(arg)
             switch type {
-                case '-' { return genUnop(mark, Expr.Kind.intNeg, Type.int, arg) }
+                case '-' {
+                    return when arg.kind {
+                        case int = int(mark, -arg.intValue)
+                        else = genUnop(mark, Expr.Kind.intNeg, Type.int, arg)
+                    }
+                }
                 case '+' { return arg }
                 else = ()
             }

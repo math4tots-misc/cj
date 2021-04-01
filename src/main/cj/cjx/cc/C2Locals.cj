@@ -7,6 +7,7 @@ import cjx.cc.C2IR.Type
 import cjx.cc.C2IR.Taggable
 import cjx.cc.C2IR.Ordinary
 import cjx.cc.C2IR.Typedef
+import cjx.cc.C2IR.EnumConstant
 
 class C2Locals {
     val list: List[Var] = []
@@ -26,6 +27,10 @@ class C2Locals {
             }
         }
         null
+    }
+
+    def addEnumConstant(self, ec: EnumConstant) {
+        _add(ec.mark, ec.name, ec)
     }
 
     def addTypedef(self, typedef: Typedef) {

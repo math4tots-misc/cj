@@ -1,5 +1,6 @@
 package cjx.cc
 
+import cj.BigInt
 import cjx.cc.C2Code
 import cj.DynamicBuffer
 import cjx.cc.C2MemDesc
@@ -576,7 +577,17 @@ class C2Codegen {
             # char is unsigned
             case char = m.i32.const(expr.intValue)
 
-            case long = m.i64.const(expr.bigIntValue.toInt()) # TODO: address truncation issues
+            case long {
+                # TODO: address this lie
+                val i = js!(Int, "Number(", expr.bigIntValue, ")")
+
+                # TODO: address truncation issues
+                if expr.bigIntValue < 0n {
+                    m.i64.sub(m.i64.const(0), m.i64.const(-i))
+                } else {
+                    m.i64.const(i)
+                }
+            }
             case longNeg = m.i64.sub(m.i64.const(0), expr(expr.arg))
             case longAdd = m.i64.add(expr(expr.lhs), expr(expr.rhs))
             case longSub = m.i64.sub(expr(expr.lhs), expr(expr.rhs))

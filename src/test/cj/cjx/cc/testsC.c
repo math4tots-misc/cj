@@ -22,6 +22,12 @@ void aeq(int lhs, int rhs) {
     assert(lhs == rhs);
 }
 void aeql(long lhs, long rhs) {
+    if (lhs != rhs) {
+        __putsi("lhs0 = ", lhs);
+        __putsi("lhs1 = ", lhs / 1073741824);
+        __putsi("rhs0 = ", rhs);
+        __putsi("rhs1 = ", rhs / 1073741824);
+    }
     assert(lhs == rhs);
 }
 
@@ -303,6 +309,20 @@ void tests18_charlit() {
     aeq(128, '\x80');
 }
 
+void tests19_enum() {
+    aeq(0, ({ enum { zero, one, two }; zero; }));
+    aeq(1, ({ enum { zero, one, two }; one; }));
+    aeq(2, ({ enum { zero, one, two }; two; }));
+    aeq(5, ({ enum { five=5, six, seven }; five; }));
+    aeq(6, ({ enum { five=5, six, seven }; six; }));
+    aeq(0, ({ enum { zero, five=5, three=3, four }; zero; }));
+    aeq(5, ({ enum { zero, five=5, three=3, four }; five; }));
+    aeq(3, ({ enum { zero, five=5, three=3, four }; three; }));
+    aeq(4, ({ enum { zero, five=5, three=3, four }; four; }));
+    aeq(4, ({ enum { zero, one, two } x; sizeof(x); }));
+    aeq(4, ({ enum t { zero, one, two }; enum t y; sizeof(y); }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -322,4 +342,5 @@ int main() {
     tests16_more_type_conv();
     tests17_bool();
     tests18_charlit();
+    tests19_enum();
 }

@@ -3,6 +3,7 @@ package cjx.cc
 import cjx.parser.MError
 import cjx.cc.C2Locals
 import cjx.cc.C2IR.TranslationUnit
+import cjx.cc.C2IR.EnumConstant
 import cjx.cc.C2IR.Taggable
 import cjx.cc.C2IR.Ordinary
 import cjx.cc.C2IR.Typedef
@@ -16,6 +17,14 @@ class C2Scope {
         if val ordinary = translationUnit.getOrNull(name) { return null(ordinary) }
         if val locals = _locals { return locals.getOrNull(name) }
         null
+    }
+
+    def addEnumConstant(self, ec: EnumConstant) {
+        if val locals = _locals {
+            locals.addEnumConstant(ec)
+        } else {
+            translationUnit.addEnumConstant(ec)
+        }
     }
 
     def addTypedef(self, typedef: Typedef) {

@@ -21,13 +21,16 @@ class C2IR {
             gvars.add(gvar)
             _add(gvar.name, gvar)
         }
+        def addEnumConstant(self, ec: EnumConstant) {
+            _add(ec.name, ec)
+        }
         def addTypedef(self, typedef: Typedef) {
             _add(typedef.name, typedef)
         }
         def _add(self, name: String, ordinary: Ordinary) {
-            # if name in map {
-            #     throw MError("'" + name + "' already defined in this scope", [ordinary.mark])
-            # }
+            if name in map {
+                throw MError("'" + name + "' already defined in this scope", [ordinary.mark])
+            }
             map[name] = ordinary
         }
         def getOrNull(self, name: String): Ordinary? = map.getOrNull(name)
@@ -36,13 +39,20 @@ class C2IR {
     @implicit(Var, lvar)
     @implicit(Func, func)
     @implicit(Typedef, typedef)
+    @implicit(EnumConstant, enumConstant)
     union Ordinary {
         case gvar(GVar)
         case lvar(Var)
         case func(Func)
         case typedef(Typedef)
+        case enumConstant(EnumConstant)
         def __get_name(self): String = when self { else(x) = x.name }
         def __get_mark(self): Mark = when self { else(x) = x.mark }
+    }
+    class EnumConstant {
+        val mark: Mark
+        val name: String
+        val value: Int
     }
     class Typedef {
         val mark: Mark
@@ -63,25 +73,25 @@ class C2IR {
     @implicit(Type.Derived, derived)
     @implicit(Type.Func, func)
     union Type: Repr, Eq {
-        class Func {
+        class Func: Eq {
             val returnType: Type
             val params: List[Var]
             def __get_paramTypes(self): List[Type] = params.map(p -> p.type)
             def __eq(self, other: Self): Bool = (
                 returnType == other.returnType and paramTypes == other.paramTypes)
         }
-        class Ptr {
+        class Ptr: Eq {
             val base: Type
             def __eq(self, other: Self): Bool = base == other.base
         }
-        class Array {
+        class Array: Eq {
             val base: Type
             val len: Int
             def __eq(self, other: Self): Bool = base == other.base and len == other.len
         }
         ## Struct or Union
         ## Seen another way, a union is basically a struct where all member offsets are zero.
-        class Derived {
+        class Derived: Eq {
             class Member: Eq {
                 val mark: Mark
                 val name: String
