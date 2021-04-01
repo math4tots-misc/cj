@@ -62,7 +62,12 @@ class C2IR {
     ## Variable attributes such as typedef or extern
     class VarAttr: ToBool {
         var typedef = false
-        def toBool(self): Bool = typedef
+        var static_ = false
+        def add(self, other: Self) {
+            typedef = typedef or other.typedef
+            static_ = static_ or other.static_
+        }
+        def toBool(self): Bool = typedef or static_
     }
     @implicit(Type.Derived, derived)
     union Taggable {
@@ -227,6 +232,7 @@ class C2IR {
     }
     class Func {
         val mark: Mark
+        val attr: VarAttr
         val name: String
         val type: Type.Func
         var body: Stmt = ?

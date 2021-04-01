@@ -238,7 +238,9 @@ class C2Codegen {
             locals[wasmParamTypes.size():],
             body)
 
-        m.addFunctionExport(func.name, func.name)
+        if not func.attr.static_ {
+            m.addFunctionExport(func.name, func.name)
+        }
         currentFunc = null
     }
 

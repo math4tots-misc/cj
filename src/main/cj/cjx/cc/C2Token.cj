@@ -35,6 +35,7 @@ class C2Token: Repr {
         kwUNION
         kwENUM
         kwTYPEDEF
+        kwSTATIC
         kwRETURN
         kwIF
         kwELSE

@@ -67,7 +67,7 @@ class C2Parser : ParserMixin[C2Token] {
             if attr.typedef {
                 typedef(baseType)
             } else if atFunc(baseType) {
-                func(baseType)
+                func(baseType, attr)
             } else {
                 gvar(baseType)
             }
@@ -101,11 +101,12 @@ class C2Parser : ParserMixin[C2Token] {
         ret
     }
 
-    def func(self, baseType: Type) {
+    def func(self, baseType: Type, attr: VarAttr) {
         val (mark, name, funcType) = declarator(baseType)
         val func = if val ordinary = translationUnit.getOrNull(name) {
             when ordinary {
                 case func(f) {
+                    f.attr.add(attr)
                     scope._locals = null(f.locals)
                     f
                 }
@@ -114,7 +115,7 @@ class C2Parser : ParserMixin[C2Token] {
         } else {
             scope._locals = null(C2Locals())
             val f = when funcType {
-                case func(ft) = Func(mark, name, ft)
+                case func(ft) = Func(mark, attr, name, ft)
                 else = throw MError("Expected function type", [mark])
             }
             for param in funcType.params {
@@ -152,6 +153,7 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwUNION
             case C2Token.kwSTRUCT
             case C2Token.kwENUM
+            case C2Token.kwSTATIC
             case C2Token.kwTYPEDEF = true
             case C2Token.tIDENT = if val ordinary = scope.getOrNull(peek().stringValue) {
                 tag!(ordinary) == tag!(Ordinary, typedef) } else { false }
@@ -221,6 +223,7 @@ class C2Parser : ParserMixin[C2Token] {
         while atTypename() {
             switch peek().type {
                 case C2Token.kwTYPEDEF { next(); attr.typedef = true }
+                case C2Token.kwSTATIC { next(); attr.static_ = true }
                 case C2Token.kwSTRUCT; case C2Token.kwUNION {
                     flags += fother
                     type = declspecDerived()

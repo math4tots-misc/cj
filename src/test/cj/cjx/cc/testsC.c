@@ -323,6 +323,12 @@ void tests19_enum() {
     aeq(4, ({ enum t { zero, one, two }; enum t y; sizeof(y); }));
 }
 
+static int static_fn() { return 3; }
+
+void tests20_static_fn() {
+    aeq(3, static_fn());
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -343,4 +349,5 @@ int main() {
     tests17_bool();
     tests18_charlit();
     tests19_enum();
+    tests20_static_fn();
 }
