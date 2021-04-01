@@ -633,17 +633,18 @@ class C2Parser : ParserMixin[C2Token] {
         expr
     }
 
-    def toAugassign(self, mark: Mark, type: Int, lhs: Expr, rhs: Expr): Expr {
-        val tmpvarname = newTmpvarname()
-        val tmpvar = locals.addLVar(mark, lhs.type.ptrOf(), tmpvarname)
+    def toAugassign(self, mark: Mark, op: Int, lhs: Expr, rhs: Expr): Expr {
+        val t = eb.getvar(mark, locals.addLVar(mark, lhs.type.ptrOf(), newTmpvarname()))
         eb.comma(
             mark,
-            eb.setvar(mark, tmpvar, eb.preop(mark, '&', lhs)),
+
+            # t = &lhs
+            eb.binop(mark, '=', t, eb.preop(mark, '&', lhs)),
+
+            # *t = *t op rhs
             eb.binop(mark, '=',
-                eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
-                eb.binop(mark, type,
-                    eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
-                    rhs)))
+                eb.preop(mark, '*', t),
+                eb.binop(mark, op, eb.preop(mark, '*', t), rhs)))
     }
 
     def args(self): List[Expr] {
@@ -663,10 +664,34 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.tLONG = eb.long(mark, next().bigIntValue)
             case C2Token.tCHAR = eb.char(mark, next().intValue)
             case C2Token.tSTR = eb.str(mark, next().bytesValue)
-            case '-'; case '+'; case '&'; case '*'
-            case C2Token.tINCR; case C2Token.tDECR {
+            case '-'; case '+'; case '&'; case '*' {
                 val type = next().type
                 eb.preop(mark, type, unary())
+            }
+            case C2Token.tINCR; case C2Token.tDECR {
+                # prefix increment operators
+                # ++(e) becomes p=&(e),*p=v+1,*p
+                val type = switch next().type {
+                    case C2Token.tINCR = '+'
+                    case C2Token.tDECR = '-'
+                }
+                val arg = unary()
+                val tmpvar = locals.addLVar(mark, arg.type.ptrOf(), newTmpvarname())
+                eb.commaSeq(
+                    mark,
+
+                    # p = &(arg)
+                    eb.setvar(mark, tmpvar, eb.preop(mark, '&', arg)),
+
+                    # *p = *p + 1
+                    eb.binop(mark, '=',
+                        eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
+                        eb.binop(mark, type,
+                            eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
+                            eb.int(mark, 1))),
+
+                    # *p
+                    eb.preop(mark, '*', eb.getvar(mark, tmpvar)))
             }
             case '(' {
                 next()
