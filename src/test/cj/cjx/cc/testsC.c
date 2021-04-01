@@ -297,6 +297,12 @@ void tests17_bool() {
     // aeq(1, false);
 }
 
+void tests18_charlit() {
+    aeq(97, 'a');
+    aeq(10, '\n');
+    aeq(128, '\x80');
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -315,4 +321,5 @@ int main() {
     tests15_usual_arith_conv();
     tests16_more_type_conv();
     tests17_bool();
+    tests18_charlit();
 }
