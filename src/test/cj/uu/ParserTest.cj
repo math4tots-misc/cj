@@ -17,9 +17,17 @@ class ParserTest {
 
     @test
     def name() {
-        val file = parse("package foo\nclass Foo{}")
-        Assert.equal(file.packageName, "foo")
-        Assert.equal(file.item.shortName, "Foo")
+        {
+            val file = parse("package foo\nclass Foo{}")
+            Assert.equal(file.packageName, "foo")
+            Assert.equal(file.item.shortName, "Foo")
+            Assert.equal(file.item.name, "foo.Foo")
+        }
+        {
+            val file = parse("package foo\nclass Bar{class Baz{}}")
+            Assert.equal(file.item.name, "foo.Bar")
+            Assert.equal(get!(file.item.members[0], item, 0).name, "foo.Bar.Baz")
+        }
     }
 
     @test
@@ -33,5 +41,6 @@ class ParserTest {
         val item = file.item
         Assert.equal(file.packageName, "sample")
         Assert.equal(item.shortName, "Sample0")
+        Assert.equal(item.name, "sample.Sample0")
     }
 }

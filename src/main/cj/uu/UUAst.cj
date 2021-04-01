@@ -33,6 +33,7 @@ class UUAst {
         val modifiers: List[Modifier]
         val kind: Kind
         val shortName: String
+        val name: String
         val members: List[Member]
         def getMethodOrNull(self, name: String): Method? {
             for member in members {

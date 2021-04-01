@@ -32,6 +32,7 @@ class UUParser: ParserMixin[UUToken] {
 
     private val tokens: List[UUToken]
     private var i = 0
+    private var outerName = ""
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: UUToken): Mark = Mark(token.filepath, token.line, token.column)
@@ -67,6 +68,7 @@ class UUParser: ParserMixin[UUToken] {
         val mark = mark()
         expect(UUToken.kwPACKAGE)
         val packageName = parsePackageName()
+        outerName = packageName
         expectDelimiters()
         val imports: List[Import] = []
         while at(UUToken.kwIMPORT) {
@@ -90,14 +92,20 @@ class UUParser: ParserMixin[UUToken] {
         val kind = parseItemKind()
         val mark = mark()
         val shortName = parseTypeId()
+        val name = outerName + "." + shortName
         val members: List[Member] = []
+
+        val savedOuterName = outerName
+        outerName = name
         expect('{')
         skipDelimiters()
         while not consume('}') {
             parseMember(members)
         }
         expectDelimiters()
-        Item(mark, comment, annotations, modifiers, kind, shortName, members)
+        outerName = savedOuterName
+
+        Item(mark, comment, annotations, modifiers, kind, shortName, name, members)
     }
     private def parseMember(self, members: List[Member]) {
         val comment = parseComment()
