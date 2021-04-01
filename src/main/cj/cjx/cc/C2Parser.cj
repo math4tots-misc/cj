@@ -183,7 +183,6 @@ class C2Parser : ParserMixin[C2Token] {
                 throw MError("Expected name", [mark])
             }
             val var_ = locals.addLVar(mark, type, name)
-            initstmts.add(eb.declvar(var_))
             if consume('=') {
                 val init = assign()
                 initstmts.add(eb.exprStmt(
@@ -466,15 +465,19 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwFOR {
                 next()
                 expect('(')
-                locals.scoped(() -> {
-                    val inits = if not consume(';') { declOrStmt() } else { [] }
-                    val cond = if at(';') { eb.int(mark, 1) } else { expr() }
+                var inits: List[Stmt] = []
+                var cond = eb.int(mark, -1)
+                var incr = eb.int(mark, -1)
+                var then = eb.nop(mark)
+                val vars = locals.scoped(() -> {
+                    inits = if not consume(';') { declOrStmt() } else { [] }
+                    cond = if at(';') { eb.int(mark, 1) } else { expr() }
                     expect(';')
-                    val incr = if at(')') { eb.int(mark, 0) } else { expr() }
+                    incr = if at(')') { eb.int(mark, 0) } else { expr() }
                     expect(')')
-                    val then = stmt()
-                    eb.for_(mark, inits, cond, incr, then)
+                    then = stmt()
                 })
+                eb.for_(mark, vars, inits, cond, incr, then)
             }
             case C2Token.kwWHILE {
                 next()
@@ -506,20 +509,21 @@ class C2Parser : ParserMixin[C2Token] {
         if atTypename() { declaration() } else { [stmt()] }
     }
 
-    def blockInside(self): List[Stmt] {
+    def blockInside(self): Tuple[List[Var], List[Stmt]] {
         val stmts: List[Stmt] = []
         expect('{')
-        locals.scoped(() -> {
+        val vars = locals.scoped(() -> {
             while not consume('}') {
                 stmts.addAll(declOrStmt())
             }
         })
-        stmts
+        (vars, stmts)
     }
 
     def block(self): Stmt {
         val mark = mark()
-        eb.block(mark, blockInside())
+        val (vars, stmts) = blockInside()
+        eb.block(mark, vars, stmts)
     }
 
     # ========================================================================
@@ -609,9 +613,9 @@ class C2Parser : ParserMixin[C2Token] {
                     val arg = unary()
                     eb.ecast(arg, type)
                 } else if at('{') {
-                    val stmts = blockInside()
+                    val (vars, stmts) = blockInside()
                     expect(')')
-                    eb.stmtExpr(mark, stmts)
+                    eb.stmtExpr(mark, vars, stmts)
                 } else {
                     val inner = expr()
                     expect(')')

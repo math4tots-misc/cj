@@ -242,7 +242,6 @@ class C2IR {
     class Stmt: Repr {
         union Kind: Repr, Hash {
             case nop
-            case declvar
             case block
             case expr
             case ret
@@ -259,7 +258,7 @@ class C2IR {
         var cond: Expr = ?
         var then: Stmt = ?
         var els: Stmt = ?
-        var var_: Var = ?
+        var vars: List[Var] = ?
 
         def repr(self): String {
             val sb = StringBuilder()
@@ -269,7 +268,7 @@ class C2IR {
             if is_set!(self, cond) { sb.str(",\"cond\":" + cond.repr()) }
             if is_set!(self, then) { sb.str(",\"then\":" + then.repr()) }
             if is_set!(self, els) { sb.str(",\"els\":" + els.repr()) }
-            if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
+            if is_set!(self, vars) { sb.str(",\"vars\":" + vars.map(v -> v.name + "/" + v.index) + "") }
             sb.str("}")
             sb.toString()
         }
@@ -349,6 +348,7 @@ class C2IR {
         var stringValue: String = ?
         var bytesValue: Uint8Array = ?
         var var_: Var = ?
+        var vars: List[Var] = ?
         var gvar: GVar = ?
         var func: Func = ?
         var arg: Expr = ?
@@ -364,6 +364,7 @@ class C2IR {
             if is_set!(self, intValue) { sb.str(",\"intValue\":" + intValue) }
             if is_set!(self, bigIntValue) { sb.str(",\"bigIntValue\":\"" + bigIntValue + "\"") }
             if is_set!(self, var_) { sb.str(",\"var\":\"" + var_.index + "/" + var_.name + "\"") }
+            if is_set!(self, vars) { sb.str(",\"vars\":" + vars.map(v -> "\"" + v + "\"") + "") }
             if is_set!(self, gvar) { sb.str(",\"gvar\":\"" + gvar.name + "\"") }
             if is_set!(self, func) { sb.str(",\"func\":\"" + func.name + "\"") }
             if is_set!(self, arg) { sb.str(",\"arg\":" + arg.repr()) }

@@ -54,12 +54,17 @@ class C2Locals {
         map[name] = ordinary
     }
 
-    def scoped[R](self, f: Fn[R]): R {
+    def scoped(self, f: Fn[Unit]): List[Var] {
         maps.add(MapOf())
         tagMaps.add(MapOf())
-        val ret = f.call()
-        maps.pop()
+        f.call()
+        val vars = maps.pop().values().flatMap(ordinary -> {
+            when ordinary {
+                case lvar(v) = [v].iter()
+                else = List[Var].empty().iter()
+            }
+        }).sortedBy(v -> v.index)
         tagMaps.pop()
-        ret
+        vars
     }
 }

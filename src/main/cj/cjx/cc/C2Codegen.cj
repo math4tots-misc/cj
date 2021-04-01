@@ -255,31 +255,23 @@ class C2Codegen {
     }
 
     def stmtInBlock(self, s: C2IR.Stmt): Binaryen.Expression {
-        when s.kind {
-            case declvar = stmt(s)
-            else {
-                # Every non-declaration statement creates its own little scope.
-                # The intent is to clear out all temporary variables
-                # that might have been allocated by some expressions.
-                val savedOffset = cLocalsByteSize
-                val ret = stmt(s)
-                cLocalsByteSize = savedOffset
-                ret
-            }
-        }
+        # Every statement creates its own little scope.
+        # The intent is to clear out all temporary variables
+        # that might have been allocated by some expressions.
+        val savedOffset = cLocalsByteSize
+        val ret = stmt(s)
+        cLocalsByteSize = savedOffset
+        ret
     }
 
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
         when stmt.kind {
             case nop = m.nop()
-            case declvar {
-                val var_ = stmt.var_
-                Assert(var_.index not in cLocalOffsets)
-                cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
-                m.nop()
-            }
             case block {
                 val savedStackOffset = cLocalsByteSize
+                for var_ in stmt.vars {
+                    cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
+                }
                 val stmts = stmt.stmts.map(s -> stmtInBlock(s))
                 cLocalsByteSize = savedStackOffset
                 m.block(null, stmts, auto)
@@ -677,6 +669,9 @@ class C2Codegen {
                         [expr.mark])
                 }
                 val savedStackOffset = cLocalsByteSize
+                for var_ in expr.vars {
+                    cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
+                }
                 val parts = expr.stmts.map(s -> stmtInBlock(s))
                 parts.add(expr(expr.arg))
                 cLocalsByteSize = savedStackOffset

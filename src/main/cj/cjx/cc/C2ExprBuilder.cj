@@ -24,12 +24,6 @@ class C2ExprBuilder {
 
     def nop(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.nop)
 
-    def declvar(self, var_: Var): Stmt {
-        val ret = Stmt(var_.mark, Stmt.Kind.declvar)
-        ret.var_ = var_
-        ret
-    }
-
     def exprStmt(self, mark: Mark, expr: Expr): Stmt {
         val ret = Stmt(mark, Stmt.Kind.expr)
         ret.expr = expr
@@ -42,22 +36,26 @@ class C2ExprBuilder {
         ret
     }
 
-    def block(self, mark: Mark, stmts: List[Stmt]): Stmt {
+    def block(self, mark: Mark, vars: List[Var], stmts: List[Stmt]): Stmt {
         val newStmts: List[Stmt] = []
         for stmt in stmts {
             when stmt.kind {
-                case block = newStmts.addAll(stmt.stmts)
+                case block {
+                    if stmt.vars { newStmts.add(stmt) } else { newStmts.addAll(stmt.stmts) }
+                }
+                case nop = ()
                 else = newStmts.add(stmt)
             }
         }
-        switch newStmts.size() {
-            case 0 = nop(mark)
-            case 1 = newStmts[0]
-            else {
-                val ret = Stmt(mark, Stmt.Kind.block)
-                ret.stmts = newStmts
-                ret
-            }
+        if vars.isEmpty() and newStmts.size() == 0 {
+            nop(mark)
+        } else if vars.isEmpty() and newStmts.size() == 1 {
+            newStmts[0]
+        } else {
+            val ret = Stmt(mark, Stmt.Kind.block)
+            ret.vars = vars
+            ret.stmts = newStmts
+            ret
         }
     }
 
@@ -69,9 +67,16 @@ class C2ExprBuilder {
         ret
     }
 
-    def for_(self, mark: Mark, inits: List[Stmt], cond: Expr, incr: Expr, then: Stmt): Stmt {
-        block(mark, inits + [
-            while_(mark, cond, block(mark, [
+    def for_(
+            self,
+            mark: Mark,
+            vars: List[Var],
+            inits: List[Stmt],
+            cond: Expr,
+            incr: Expr,
+            then: Stmt): Stmt {
+        block(mark, vars, inits + [
+            while_(mark, cond, block(mark, [], [
                 then,
                 exprStmt(mark, incr),
             ])),
@@ -236,7 +241,7 @@ class C2ExprBuilder {
         ret
     }
 
-    def stmtExpr(self, mark: Mark, stmts: List[Stmt]): Expr {
+    def stmtExpr(self, mark: Mark, vars: List[Var], stmts: List[Stmt]): Expr {
         val ret = Expr(mark, Expr.Kind.stmt)
         if not stmts or stmts.last().kind != Stmt.Kind.expr {
             throw MError(
@@ -244,6 +249,7 @@ class C2ExprBuilder {
                 [mark])
         }
         val arg = stmts.pop().expr
+        ret.vars = vars
         ret.stmts = stmts
         ret.arg = arg
         ret.type = ret.arg.type
