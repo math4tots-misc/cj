@@ -8,6 +8,12 @@ import uu.UUAst.Item
 import uu.UUAst.Import
 import uu.UUAst.Annotation
 import uu.UUAst.Modifier
+import uu.UUAst.Member
+import uu.UUAst.Method
+import uu.UUAst.Var
+import uu.UUAst.TraitExpr
+import uu.UUAst.TypeExpr
+import uu.UUAst.Expr
 import cjx.parser.MError
 import cjx.parser.Mark
 import uu.UUToken
@@ -34,7 +40,7 @@ class UUParser: ParserMixin[UUToken] {
     def errorAtMark(self, message: String, mark: Mark): NoReturn = throw MError(
         message, [mark])
     private def expectDelimiters(self) {
-        if not at(';') and not at('}') and not at('\n') {
+        if not at(';') and not at('}') and not at('\n') and not at(UUToken.tEOF) {
             throw errorKind("delimiter")
         }
         skipDelimiters()
@@ -72,15 +78,39 @@ class UUParser: ParserMixin[UUToken] {
         val item = parseItem(comment, annotations, modifiers)
         File(mark, packageName, imports, item)
     }
+
+    ## ==========================================================================================
+    ## Item and members
+    ## ==========================================================================================
     private def parseItem(
             self,
             comment: String?,
             annotations: List[Annotation],
             modifiers: List[Modifier]): Item {
         val kind = parseItemKind()
+        val mark = mark()
+        val shortName = parseTypeId()
+        val members: List[Member] = []
+        expect('{')
+        skipDelimiters()
+        while not consume('}') {
+            parseMember(members)
+        }
+        expectDelimiters()
+        Item(mark, comment, annotations, modifiers, kind, shortName, members)
+    }
+    private def parseMember(self, members: List[Member]) {
         val comment = parseComment()
         val annotations = parseAnnotations()
-        error("TODO")
+        val modifiers = parseModifiers()
+        switch peek().type {
+            case UUToken.kwTRAIT
+            case UUToken.kwCLASS
+            case UUToken.kwUNION = members.add(parseItem(comment, annotations, modifiers))
+            case UUToken.kwIF
+            case UUToken.kwDEF = members.add(parseMethod(comment, annotations, modifiers))
+            else = throw errorKind("item member")
+        }
     }
     private def parseItemKind(self): Item.Kind {
         switch peek().type {
@@ -91,6 +121,59 @@ class UUParser: ParserMixin[UUToken] {
             else = throw errorKind("class, union, trait or interface")
         }
     }
+    private def parseMethod(
+            self,
+            comment: String?,
+            annotations: List[Annotation],
+            modifiers: List[Modifier]): Method {
+        val mark = mark()
+        expect(UUToken.kwDEF)
+        val name = if at(UUToken.tID) { parseId() } else { "__new" }
+        val parameters = parseParameters()
+        val returnType = if consume(':') { parseType() } else { TypeExpr(mark, "Void", []) }
+        val body = if consume('=') {
+            null(parseExpr())
+        } else if at('{') {
+            null(parseBlock())
+        } else { null }
+        expectDelimiters()
+        Method(mark, comment, annotations, modifiers, name, parameters, returnType, body)
+    }
+    private def parseParameters(self): List[Var] = parseJoin('(', ')', ',', () -> parseParameter())
+    private def parseParameter(self): Var {
+        val mutable = consume(UUToken.kwVAR)
+        val mark = mark()
+        val name = parseId()
+        val type = if at(':') or name != "self" {
+            expect(':')
+            parseType()
+        } else { TypeExpr(mark, "Self", []) }
+        Var(mark, mutable, name, type)
+    }
+
+    ## ==========================================================================================
+    ## Type and Trait expressions
+    ## ==========================================================================================
+    private def parseType(self): TypeExpr {
+        val mark = mark()
+        val name = parseTypeIdEx()
+        val args = parseTypeArgs()
+        var texpr = TypeExpr(mark, name, args)
+        if at('?') {
+            val qmark = mark()
+            next()
+            texpr = TypeExpr(mark, "Nullable", [texpr])
+        }
+        texpr
+    }
+    private def parseTrait(self): TraitExpr {
+        val mark = mark()
+        val name = parseTypeIdEx()
+        val args = parseTypeArgs()
+        TraitExpr(mark, name, args)
+    }
+    private def parseTypeArgs(self): List[TypeExpr] = parseJoinOpt(
+        '[', ']', ',', () -> parseType())
 
     ## ==========================================================================================
     ## Package, imports, comments and modifiers
@@ -178,5 +261,34 @@ class UUParser: ParserMixin[UUToken] {
         val name = parseAnnotationId()
         val args = parseJoin('(', ')', ',', () -> parseAnnotation())
         UUAst.Annotation(mark, name, args)
+    }
+
+    ## ==========================================================================================
+    ## Expressions
+    ## ==========================================================================================
+    private def parseExpr(self): Expr = parseAtom()
+    private def parseAtom(self): Expr {
+        val mark = mark()
+        switch peek().type {
+            case UUToken.tINT = Expr.int(mark, next().intValue)
+            case '{' = parseBlock()
+            case '(' {
+                next()
+                val inner = parseExpr()
+                expect(')')
+                inner
+            }
+            else = errorKind("expression")
+        }
+    }
+    private def parseBlock(self): Expr {
+        val mark = mark()
+        expect('{')
+        val exprs: List[Expr] = []
+        while not consume('}') {
+            exprs.add(parseExpr())
+            expectDelimiters()
+        }
+        Expr.block(mark, exprs)
     }
 }
