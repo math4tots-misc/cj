@@ -320,7 +320,7 @@ class C2ExprBuilder {
     def setvar(self, mark: Mark, var_: Var, arg: Expr): Expr {
         val ret = Expr(mark, Expr.Kind.setvar)
         ret.var_ = var_
-        ret.arg = arg
+        ret.arg = icast(arg, var_.type)
         ret.type = var_.type
         ret
     }
@@ -342,7 +342,7 @@ class C2ExprBuilder {
     def setgvar(self, mark: Mark, gvar: GVar, arg: Expr): Expr {
         val ret = Expr(mark, Expr.Kind.setgvar)
         ret.gvar = gvar
-        ret.arg = arg
+        ret.arg = icast(arg, gvar.type)
         ret.type = gvar.type
         ret
     }
@@ -399,8 +399,8 @@ class C2ExprBuilder {
 
     def assign(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
         return when lhs.kind {
-            case getvar = setvar(mark, lhs.var_, icast(rhs, lhs.type))
-            case getgvar = setgvar(mark, lhs.gvar, icast(rhs, lhs.type))
+            case getvar = setvar(mark, lhs.var_, rhs)
+            case getgvar = setgvar(mark, lhs.gvar, rhs)
             case deref = setderef(mark, lhs, icast(rhs, lhs.type))
             case comma = comma(mark, lhs.lhs, binop(mark, '=', lhs.rhs, rhs))
             case getmember = setmember0(mark, lhs.arg, lhs.member, rhs)

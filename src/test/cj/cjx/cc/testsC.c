@@ -330,8 +330,19 @@ void tests20_static_fn() {
 }
 
 void tests21_for_local() {
-  aeq(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }));
-  aeq(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }));
+    aeq(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }));
+    aeq(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }));
+}
+
+void tests22_augassign() {
+    aeq(7, ({ int i=2; i+=5; i; }));
+    aeq(7, ({ int i=2; i+=5; }));
+    aeq(3, ({ int i=5; i-=2; i; }));
+    aeq(3, ({ int i=5; i-=2; }));
+    aeq(6, ({ int i=3; i*=2; i; }));
+    aeq(6, ({ int i=3; i*=2; }));
+    aeq(3, ({ int i=6; i/=2; i; }));
+    aeq(3, ({ int i=6; i/=2; }));
 }
 
 int main() {
@@ -356,4 +367,5 @@ int main() {
     tests19_enum();
     tests20_static_fn();
     tests21_for_local();
+    tests22_augassign();
 }

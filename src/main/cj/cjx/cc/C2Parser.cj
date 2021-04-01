@@ -38,6 +38,7 @@ class C2Parser : ParserMixin[C2Token] {
     val scope: C2Scope = C2Scope()
     val eb: C2ExprBuilder = C2ExprBuilder()
     var currentFunc: Func? = null
+    var funcTmpVarCount = 0
 
     def mark(self): Mark = markAt(peek())
     def markAt(self, token: C2Token): Mark = Mark(token.filepath, token.line, token.column)
@@ -56,7 +57,8 @@ class C2Parser : ParserMixin[C2Token] {
         case '+'; case '-' = 100
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
         case C2Token.tEQ; case C2Token.tNE = 70
-        case '=' = 50
+        case '='; case C2Token.tPLUS_EQ; case C2Token.tMINUS_EQ
+        case C2Token.tSTAR_EQ; case C2Token.tDIV_EQ = 50
         case ',' = 10
         else = -1
     }
@@ -131,11 +133,18 @@ class C2Parser : ParserMixin[C2Token] {
                 throw MError("Duplicate function definition " + func.name, [mark, func.mark])
             }
             currentFunc = null(func)
+            funcTmpVarCount = 0
             func.body = block()
             currentFunc = null
         }
 
         scope._locals = null
+    }
+
+    def newTmpvarname(self): String {
+        val name = "__T" + funcTmpVarCount
+        funcTmpVarCount++
+        name
     }
 
     # ========================================================================
@@ -560,6 +569,20 @@ class C2Parser : ParserMixin[C2Token] {
                     expect(']')
                     expr = eb.preop(mark, '*', eb.binop(mark, '+', expr, indexExpr))
                 }
+                case C2Token.tPLUS_EQ
+                case C2Token.tMINUS_EQ
+                case C2Token.tSTAR_EQ
+                case C2Token.tDIV_EQ {
+                    val augtype = next().type
+                    val type = switch augtype {
+                        case C2Token.tPLUS_EQ = '+'
+                        case C2Token.tMINUS_EQ = '-'
+                        case C2Token.tSTAR_EQ = '*'
+                        case C2Token.tDIV_EQ = '/'
+                    }
+                    val rhs = assign()
+                    expr = toAugassign(mark, type, expr, rhs)
+                }
                 case C2Token.tINCR; case C2Token.tDECR {
                     # postfix operators
                     val type = next().type
@@ -581,6 +604,19 @@ class C2Parser : ParserMixin[C2Token] {
             tokprec = precof(peek().type)
         }
         expr
+    }
+
+    def toAugassign(self, mark: Mark, type: Int, lhs: Expr, rhs: Expr): Expr {
+        val tmpvarname = newTmpvarname()
+        val tmpvar = locals.addLVar(mark, lhs.type.ptrOf(), tmpvarname)
+        eb.comma(
+            mark,
+            eb.setvar(mark, tmpvar, eb.preop(mark, '&', lhs)),
+            eb.binop(mark, '=',
+                eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
+                eb.binop(mark, type,
+                    eb.preop(mark, '*', eb.getvar(mark, tmpvar)),
+                    rhs)))
     }
 
     def args(self): List[Expr] {

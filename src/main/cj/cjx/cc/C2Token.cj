@@ -13,13 +13,18 @@ class C2Token: Repr {
         tIDENT
         tSTR
 
-        tEQ     # ==
-        tNE     # !=
-        tLE     # <=
-        tGE     # >=
-        tDECR   # --
-        tINCR   # ++
-        tARROW  # ->
+        tEQ        # ==
+        tNE        # !=
+        tLE        # <=
+        tGE        # >=
+        tDECR      # --
+        tINCR      # ++
+        tARROW     # ->
+
+        tPLUS_EQ   # +=
+        tMINUS_EQ  # -=
+        tSTAR_EQ   # *=
+        tDIV_EQ    # /=
 
         kwVOID
         kwUNSIGNED
@@ -44,10 +49,10 @@ class C2Token: Repr {
         kwSIZEOF
     }
 
-    static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z]+")
+    static val keywordTypes: List[Int] = static_field_values!(Self, "kw[A-Z_]+")
 
     static val typeNameMap: Map[Int, String] = Map(
-        static_field_name_value_pairs!(Self, "(kw|t)[A-Z]+").map(p -> (p.f1, p.f0)))
+        static_field_name_value_pairs!(Self, "(kw|t)[A-Z_]+").map(p -> (p.f1, p.f0)))
 
     val type : Int
     val value: Value
