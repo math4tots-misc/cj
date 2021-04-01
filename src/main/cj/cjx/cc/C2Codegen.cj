@@ -593,7 +593,6 @@ class C2Codegen {
                     case int;case ptr(..) = when expr.type {
                         case bool = int2bool(expr(expr.arg))
                         case char = {
-                            IO.println("CASTING FROM INT TO CHAR " + expr.arg)
                             m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
                         }
                         # case short = m.i32.and_(m.i32.const(0xFFFF), expr(expr.arg))
