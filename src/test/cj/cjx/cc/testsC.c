@@ -370,6 +370,20 @@ void tests24_pre_incr() {
     aeq(0, ({ int a[3]; a[0]=0; a[1]=1; a[2]=2; int *p=a+1; --*p; }));
 }
 
+void test25_int_literals() {
+    aeq(511, 0777);
+    aeq(0, 0x0);
+    aeq(10, 0xa);
+    aeq(10, 0XA);
+    aeq(48879, 0xbeef);
+    aeq(48879, 0xBEEF);
+    aeq(48879, 0XBEEF);
+    aeq(0, 0b0);
+    aeq(1, 0b1);
+    aeq(47, 0b101111);
+    aeq(47, 0B101111);
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -395,4 +409,5 @@ int main() {
     tests22_augassign();
     tests23_post_incr();
     tests24_pre_incr();
+    test25_int_literals();
 }

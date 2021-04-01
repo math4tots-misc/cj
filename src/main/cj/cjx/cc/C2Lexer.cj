@@ -13,9 +13,11 @@ class C2Lexer {
 
     private def build(): Lexer[C2Token] {
         val b = Lexer[C2Token].builder()
-        b.add("0x[0-9A-Fa-f]+", m -> itok(m)) # hex literals
+        b.add("0(x|X)[0-9A-Fa-f]+", m -> itok(m)) # hex literals
+        b.add("0\\d+", m -> hitok(m))
+        b.add("0(b|B)\\d+", m -> bitok(m))
         b.add("\\d+", m -> itok(m))
-        b.add("0x[0-9A-Fa-f]+(l|L)", m ->
+        b.add("0(x|X)[0-9A-Fa-f]+(l|L)", m ->
             tok(m, C2Token.tLONG, s -> BigInt(s[:-1]))) # hex literals
         b.add("\\d+(l|L)", m -> tok(m, C2Token.tLONG, s -> BigInt(s[:-1])))
 
@@ -98,6 +100,16 @@ class C2Lexer {
         } else {
             [C2Token(C2Token.tINT, Int(text), m.line, m.column, m.filename)]
         }
+    }
+
+    private def hitok(m: Regex.MatchResult): List[C2Token] = {
+        val text = m.matchText
+        [C2Token(C2Token.tINT, Int(Int.fromOctal(text)), m.line, m.column, m.filename)]
+    }
+
+    private def bitok(m: Regex.MatchResult): List[C2Token] = {
+        val text = m.matchText
+        [C2Token(C2Token.tINT, Int(Int.fromBinary(text[2:])), m.line, m.column, m.filename)]
     }
 
     private def chartok(m: Regex.MatchResult): List[C2Token] {

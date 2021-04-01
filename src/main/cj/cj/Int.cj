@@ -50,6 +50,8 @@ native class Int: Repr, Hash, Ord, ToBool, ToInt, ToDouble, ToChar, Default, Euc
     def default(): Int = 0
     def hex(self): String = js!(String, self, ".toString(16).toUpperCase()")
     def fromHex(hexString: String): Int = js!(Int, "parseInt(", hexString, ",16)")
+    def fromOctal(string: String): Int = js!(Int, "parseInt(", string, ",8)")
+    def fromBinary(string: String): Int = js!(Int, "parseInt(", string, ",2)")
 
     ## Round self up to the multiple of n
     def roundUp(self, n: Int): Int = (self + n - 1) // n * n
