@@ -466,13 +466,15 @@ class C2Parser : ParserMixin[C2Token] {
             case C2Token.kwFOR {
                 next()
                 expect('(')
-                val inits = if not consume(';') { declOrStmt() } else { [] }
-                val cond = if at(';') { eb.int(mark, 1) } else { expr() }
-                expect(';')
-                val incr = if at(')') { eb.int(mark, 0) } else { expr() }
-                expect(')')
-                val then = stmt()
-                eb.for_(mark, inits, cond, incr, then)
+                locals.scoped(() -> {
+                    val inits = if not consume(';') { declOrStmt() } else { [] }
+                    val cond = if at(';') { eb.int(mark, 1) } else { expr() }
+                    expect(';')
+                    val incr = if at(')') { eb.int(mark, 0) } else { expr() }
+                    expect(')')
+                    val then = stmt()
+                    eb.for_(mark, inits, cond, incr, then)
+                })
             }
             case C2Token.kwWHILE {
                 next()

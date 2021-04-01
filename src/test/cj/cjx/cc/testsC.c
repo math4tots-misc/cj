@@ -329,6 +329,11 @@ void tests20_static_fn() {
     aeq(3, static_fn());
 }
 
+void tests21_for_local() {
+  aeq(55, ({ int j=0; for (int i=0; i<=10; i=i+1) j=j+i; j; }));
+  aeq(3, ({ int i=3; int j=0; for (int i=0; i<=10; i=i+1) j=j+i; i; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -350,4 +355,5 @@ int main() {
     tests18_charlit();
     tests19_enum();
     tests20_static_fn();
+    tests21_for_local();
 }
