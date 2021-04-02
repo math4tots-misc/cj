@@ -483,6 +483,9 @@ class C2ExprBuilder {
                 case C2Token.tLE   { return genBinop(mark, Expr.Kind.intLe, Type.int, lhs, rhs) }
                 case '>'           { return genBinop(mark, Expr.Kind.intLt, Type.int, rhs, lhs) }
                 case C2Token.tGE   { return genBinop(mark, Expr.Kind.intLe, Type.int, rhs, lhs) }
+                case '&' { return genBinop(mark, Expr.Kind.intBitwiseAnd, Type.int, lhs, rhs) }
+                case '|' { return genBinop(mark, Expr.Kind.intBitwiseOr, Type.int, lhs, rhs) }
+                case '^' { return genBinop(mark, Expr.Kind.intBitwiseXor, Type.int, lhs, rhs) }
                 else = ()
             }
         }

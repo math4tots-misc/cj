@@ -408,6 +408,24 @@ void test28_rem() {
     aeq(2, ({ long i=10; i%=4; i; }));
 }
 
+void test29_bitwise_ops() {
+    aeq(0, 0&1);
+    aeq(1, 3&1);
+    aeq(3, 7&3);
+    aeq(10, -1&10);
+
+    aeq(1, 0|1);
+    aeq(0b10011, 0b10000|0b00011);
+
+    aeq(0, 0^0);
+    aeq(0, 0b1111^0b1111);
+    aeq(0b110100, 0b111000^0b001100);
+
+    aeq(2, ({ int i=6; i&=3; i; }));
+    aeq(7, ({ int i=6; i|=3; i; }));
+    aeq(10, ({ int i=15; i^=5; i; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -437,4 +455,5 @@ int main() {
     test26_logical_not();
     test27_bitwise_not();
     test28_rem();
+    test29_bitwise_ops();
 }

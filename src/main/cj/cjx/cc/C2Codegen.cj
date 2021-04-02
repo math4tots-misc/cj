@@ -568,6 +568,9 @@ class C2Codegen {
             case intLt = m.i32.lt_s(expr(expr.lhs), expr(expr.rhs))
             case intLe = m.i32.le_s(expr(expr.lhs), expr(expr.rhs))
             case intBitwiseNot = m.i32.xor(m.i32.const(-1), expr(expr.arg))
+            case intBitwiseAnd = m.i32.and_(expr(expr.lhs), expr(expr.rhs))
+            case intBitwiseOr = m.i32.or_(expr(expr.lhs), expr(expr.rhs))
+            case intBitwiseXor = m.i32.xor(expr(expr.lhs), expr(expr.rhs))
 
             # char is unsigned
             case char = m.i32.const(expr.intValue)

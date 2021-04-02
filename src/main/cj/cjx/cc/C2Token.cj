@@ -26,6 +26,9 @@ class C2Token: Repr {
         tSTAR_EQ   # *=
         tDIV_EQ    # /=
         tREM_EQ    # %=
+        tAND_EQ    # &=
+        tOR_EQ     # |=
+        tXOR_EQ    # ^=
 
         kwVOID
         kwUNSIGNED

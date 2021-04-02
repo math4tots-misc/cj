@@ -57,8 +57,12 @@ class C2Parser : ParserMixin[C2Token] {
         case '+'; case '-' = 100
         case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
         case C2Token.tEQ; case C2Token.tNE = 70
+        case '&' = 60
+        case '^' = 50
+        case '|' = 40
         case '='; case C2Token.tPLUS_EQ; case C2Token.tMINUS_EQ
-        case C2Token.tSTAR_EQ; case C2Token.tDIV_EQ; case C2Token.tREM_EQ = 50
+        case C2Token.tSTAR_EQ; case C2Token.tDIV_EQ; case C2Token.tREM_EQ
+        case C2Token.tAND_EQ; case C2Token.tOR_EQ; case C2Token.tXOR_EQ = 20
         case ',' = 10
         else = -1
     }
@@ -551,8 +555,8 @@ class C2Parser : ParserMixin[C2Token] {
             switch peek().type {
                 case '+';case '-';case '*';case '/';case '%';case ','
                 case C2Token.tEQ;case C2Token.tNE
-                case '<'; case C2Token.tLE
-                case '>'; case C2Token.tGE {
+                case '<'; case C2Token.tLE; case '>'; case C2Token.tGE
+                case '&'; case '|'; case '^' {
                     # left associative binops
                     val type = next().type
                     expr = eb.binop(mark, type, expr, exprpr(tokprec))
@@ -573,7 +577,10 @@ class C2Parser : ParserMixin[C2Token] {
                 case C2Token.tMINUS_EQ
                 case C2Token.tSTAR_EQ
                 case C2Token.tDIV_EQ
-                case C2Token.tREM_EQ {
+                case C2Token.tREM_EQ
+                case C2Token.tAND_EQ
+                case C2Token.tOR_EQ
+                case C2Token.tXOR_EQ {
                     # augmented assignment
                     # (a) op = (b) becomes t=&(a),*t=*t op (b)
                     val augtype = next().type
@@ -583,6 +590,9 @@ class C2Parser : ParserMixin[C2Token] {
                         case C2Token.tSTAR_EQ = '*'
                         case C2Token.tDIV_EQ = '/'
                         case C2Token.tREM_EQ = '%'
+                        case C2Token.tAND_EQ = '&'
+                        case C2Token.tOR_EQ = '|'
+                        case C2Token.tXOR_EQ = '^'
                     }
                     val rhs = assign()
                     expr = toAugassign(mark, type, expr, rhs)

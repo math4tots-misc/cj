@@ -68,6 +68,9 @@ class C2Lexer {
         b.add("\\*=", m -> symtok(m, C2Token.tSTAR_EQ))
         b.add("/=", m -> symtok(m, C2Token.tDIV_EQ))
         b.add("%=", m -> symtok(m, C2Token.tREM_EQ))
+        b.add("&=", m -> symtok(m, C2Token.tAND_EQ))
+        b.add("\\|=", m -> symtok(m, C2Token.tOR_EQ))
+        b.add("^=", m -> symtok(m, C2Token.tXOR_EQ))
 
         # whitespace
         b.add("\\s+", m -> [])
