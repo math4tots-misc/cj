@@ -109,8 +109,20 @@ class C2Parser : ParserMixin[C2Token] {
         ret
     }
 
+    private def translateTypeForParameterContext(self, paramtype: Type): Type {
+        # "array of T" is converted to "pointer to T" only in the parameter context
+        if paramtype.isArray() { paramtype.base.ptrOf() } else { paramtype }
+    }
+
     def func(self, baseType: Type, attr: VarAttr) {
-        val (mark, name, funcType) = declarator(baseType)
+        val (mark, name, declaredFuncType) = declarator(baseType)
+        val funcType: Type = Type.Func(
+            declaredFuncType.returnType,
+            declaredFuncType.params.map(p -> Var(
+                p.mark,
+                p.name,
+                translateTypeForParameterContext(p.type),
+                p.index)))
         val func = if val ordinary = translationUnit.getOrNull(name) {
             when ordinary {
                 case func(f) {
