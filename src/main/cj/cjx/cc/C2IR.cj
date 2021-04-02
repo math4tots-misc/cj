@@ -91,7 +91,7 @@ class C2IR {
         }
         class Array: Eq {
             val base: Type
-            val len: Int
+            var len: Int
             def __eq(self, other: Self): Bool = base == other.base and len == other.len
         }
         ## Struct or Union
@@ -167,6 +167,7 @@ class C2IR {
         def isComplete(self): Bool = when self {
             case void = false
             case derived(s) = s.isComplete()
+            case array(a) = a.len >= 0
             else = true
         }
         def isIntegral(self): Bool = when self {
@@ -198,7 +199,8 @@ class C2IR {
             case short = 2
             case long = 8
             case void; case int; case ptr(..); case func(..) = 4
-            case array(a) = a.len * a.base.size()
+            case array(a) = if a.len >= 0 {
+                a.len * a.base.size() } else { IO.panic("incomplete array type") }
             case derived(x) = x.size()
         }
         def alignment(self): Int = when self {

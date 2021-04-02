@@ -444,9 +444,13 @@ class C2Parser : ParserMixin[C2Token] {
             }
             Type.func(Type.Func(typeSuffix(type), params))
         } else if consume('[') {
-            val len = expect(C2Token.tINT).intValue
-            expect(']')
-            typeSuffix(type).arrayOf(len)
+            if consume(']') {
+                typeSuffix(type).arrayOf(-1)
+            } else {
+                val len = expect(C2Token.tINT).intValue
+                expect(']')
+                typeSuffix(type).arrayOf(len)
+            }
         } else {
             type
         }
