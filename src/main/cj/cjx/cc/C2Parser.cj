@@ -270,13 +270,7 @@ class C2Parser : ParserMixin[C2Token] {
                     type = switch flags {
                         case fvoid = Type.void
                         case fint = Type.int
-                        case flong; case flong + fint = Type.long
-
-                        # NOTE: this is a bit of a hack, and not really standards compliant.
-                        # the standard requires that even if the size is the same, long types
-                        # have a higher 'rank' and all the consequences resulting from it.
-                        # Aliasing 'long long' to 'long' might violate this requirement.
-                        case flong + flong = Type.long
+                        case flong; case flong + fint; case flong + flong = Type.long
                         case fbool = Type.bool
                         case fchar = Type.char
                         case fshort; case fshort + fint = Type.short
