@@ -57,8 +57,13 @@ void test03_forward_goto() {
     aeq(256 * 2 + 25, goto_break_nested_loop());
 }
 
+void test04_labels_and_typedefs() {
+    aeq(1, ({ typedef int foo; goto foo; foo:; 1; }));
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
     test03_forward_goto();
+    test04_labels_and_typedefs();
 }

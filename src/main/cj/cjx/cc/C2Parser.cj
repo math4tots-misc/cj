@@ -554,7 +554,7 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     def declOrStmt(self): List[Stmt] {
-        if atTypename() { declaration() } else { [stmt()] }
+        if atTypename() and not atOffset(':', 1) { declaration() } else { [stmt()] }
     }
 
     def blockInside(self): Tuple[List[Var], List[Stmt]] {
