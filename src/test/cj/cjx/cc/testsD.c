@@ -75,10 +75,37 @@ void test05_break_and_continue() {
     aeq(11, ({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; }));
 }
 
+void test06_switch() {
+    aeq(5, ({ int i=0; switch(0) { case 0:i=5;break; case 1:i=6;break; case 2:i=7;break; } i; }));
+    aeq(6, ({ int i=0; switch(1) { case 0:i=5;break; case 1:i=6;break; case 2:i=7;break; } i; }));
+    aeq(7, ({ int i=0; switch(2) { case 0:i=5;break; case 1:i=6;break; case 2:i=7;break; } i; }));
+    aeq(0, ({ int i=0; switch(3) { case 0:i=5;break; case 1:i=6;break; case 2:i=7;break; } i; }));
+    aeq(5, ({ int i=0; switch(0) { case 0:i=5;break; default:i=7; } i; }));
+    aeq(7, ({ int i=0; switch(1) { case 0:i=5;break; default:i=7; } i; }));
+    aeq(2, ({ int i=0; switch(1) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; }));
+    aeq(0, ({ int i=0; switch(3) { case 0: 0; case 1: 0; case 2: 0; i=2; } i; }));
+    aeq(3, ({ int i=0; switch(-1) { case -1: i=3; break; } i; }));
+
+    // continue from inside a switch
+    {
+        int total = 0;
+        for (int i = 0; i < 10; i++) {
+            switch (i) {
+                case 4: break;
+                case 5: continue;
+                case 6:case 7: break;
+            }
+            total += i;
+        }
+        aeq(40, total);
+    }
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
     test03_forward_goto();
     test04_labels_and_typedefs();
     test05_break_and_continue();
+    test06_switch();
 }

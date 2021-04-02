@@ -41,12 +41,16 @@ class C2ExprBuilder {
     def block(self, mark: Mark, vars: List[Var], stmts: List[Stmt]): Stmt {
         val newStmts: List[Stmt] = []
         for stmt in stmts {
-            when stmt.kind {
-                case block {
-                    if stmt.vars { newStmts.add(stmt) } else { newStmts.addAll(stmt.stmts) }
+            if stmt.labels {
+                newStmts.add(stmt)
+            } else {
+                when stmt.kind {
+                    case block {
+                        if stmt.vars { newStmts.add(stmt) } else { newStmts.addAll(stmt.stmts) }
+                    }
+                    case nop = ()
+                    else = newStmts.add(stmt)
                 }
-                case nop = ()
-                else = newStmts.add(stmt)
             }
         }
         if vars.isEmpty() and newStmts.size() == 0 {
@@ -78,21 +82,22 @@ class C2ExprBuilder {
             incr: Expr,
             then: Stmt): Stmt {
         block(mark, vars, inits + [
-            whileEx(mark, cond, incr, then),
+            whileEx(mark, cond, incr, then, true),
         ])
     }
 
     def while_(self, mark: Mark, cond: Expr, then: Stmt): Stmt {
-        whileEx(mark, cond, int(mark, 0), then)
+        whileEx(mark, cond, int(mark, 0), then, true)
     }
 
     ## A version of while expression that has been extended with a for-loop
     ## style 'increment' expression.
-    def whileEx(self, mark: Mark, cond: Expr, incr: Expr, then: Stmt): Stmt {
+    def whileEx(self, mark: Mark, cond: Expr, incr: Expr, then: Stmt, handleContinue: Bool): Stmt {
         val ret = Stmt(mark, Stmt.Kind.whileEx)
         ret.cond = castTruthy(cond)
         ret.incr = incr
         ret.then = then
+        ret.handleContinue = handleContinue
         ret
     }
 

@@ -539,6 +539,78 @@ class C2Parser : ParserMixin[C2Token] {
                 expect(';')
                 eb.continue_(mark)
             }
+            case C2Token.kwSWITCH {
+                next()
+                val initstmts: List[Stmt] = []
+                val bodystmts: List[Stmt] = []
+                expect('(')
+                val valexpr = expr()
+                val tmpvar = locals.addLVar(mark, valexpr.type, newTmpvarname())
+                val gettmpvar = eb.getvar(mark, tmpvar)
+                initstmts.add(eb.exprStmt(mark, eb.setvar(mark, tmpvar, valexpr)))
+                expect(')')
+                expect('{')
+                var defaultSeen = false
+                while not consume('}') {
+                    if at(C2Token.kwCASE) {
+                        if defaultSeen {
+                            throw MError("Case labels cannot come after the default label", [mark])
+                        }
+                        val label = newTmpvarname()
+
+                        # add the goto statements at the top
+                        while consume(C2Token.kwCASE) {
+                            val value = intConstExpr()
+                            expect(':')
+                            initstmts.add(eb.if_(
+                                mark,
+                                eb.binop(mark, C2Token.tEQ, gettmpvar, eb.int(mark, value)),
+                                eb.goto(mark, label),
+                                eb.nop(mark)))
+                        }
+
+                        # add the label in the body
+                        val labelStmt = eb.nop(mark)
+                        labelStmt.labels = [label]
+                        bodystmts.add(labelStmt)
+                    } else if consume(C2Token.kwDEFAULT) {
+                        if defaultSeen {
+                            throw MError("Only one default label is allowed per switch", [mark])
+                        }
+                        defaultSeen = true
+                        expect(':')
+                        val label = newTmpvarname()
+
+                        # add the goto statement at the top
+                        initstmts.add(eb.goto(mark, label))
+
+                        # add the label in the body
+                        val labelStmt = eb.nop(mark)
+                        labelStmt.labels = [label]
+                        bodystmts.add(labelStmt)
+                    } else {
+                        bodystmts.addAll(declOrStmt())
+                    }
+                }
+                if not defaultSeen {
+                    # If there's no default label, we should just break if there's no match
+                    # add the goto statement at the top
+                    initstmts.add(eb.break_(mark))
+                }
+                bodystmts.add(eb.break_(mark))
+
+                eb.whileEx(
+                    mark,
+                    eb.int(mark, 1),  # cond
+                    eb.int(mark, 0),  # incr
+                    eb.block(mark, [], initstmts + bodystmts),
+
+                    # handleContinue
+                    # We don't handle continues so that a 'continue' inside the switch body
+                    # will refer to a loop that contains the switch, rather than this
+                    # pseudo while loop.
+                    false)
+            }
             case C2Token.kwIF {
                 next()
                 expect('(')
@@ -591,6 +663,14 @@ class C2Parser : ParserMixin[C2Token] {
     def expr(self): Expr = exprpr(0)
     def assign(self): Expr = exprpr(assingPrec)
     def unary(self): Expr = exprpr(unaryPrec)
+
+    def intConstExpr(self): Int {
+        val expr = assign()
+        when expr.kind {
+            case int = expr.intValue
+            else = throw MError("Expected int constant expression", [expr.mark])
+        }
+    }
 
     def exprpr(self, precedence: Int): Expr {
         var expr = atom()

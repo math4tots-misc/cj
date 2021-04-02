@@ -266,6 +266,7 @@ class C2IR {
         var els: Stmt = ?
         var vars: List[Var] = ?
         var targetLabel: String = ?
+        var handleContinue: Bool = ?  # determines whether whileEx will respond to a 'continue'
 
         def repr(self): String {
             val sb = StringBuilder()

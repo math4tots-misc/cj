@@ -385,7 +385,7 @@ class C2Codegen {
                 val breakLabel = newLabel()
                 val continueLabel = newLabel()
                 currentBreakLabel = null(breakLabel)
-                currentContinueLabel = null(continueLabel)
+                if stmt.handleContinue { currentContinueLabel = null(continueLabel) }
                 val cond = expr(stmt.cond)
                 val then = stmt(stmt.then)
                 val ret = if stmt.incr.isPure() {

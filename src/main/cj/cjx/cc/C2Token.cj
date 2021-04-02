@@ -55,6 +55,9 @@ class C2Token: Repr {
         kwWHILE
         kwBREAK
         kwCONTINUE
+        kwSWITCH
+        kwCASE
+        kwDEFAULT
         kwGOTO
         kwSIZEOF
     }
