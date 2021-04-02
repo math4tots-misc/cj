@@ -113,8 +113,7 @@ class C2IR {
             def size(self): Int = _size
             def alignment(self): Int = _alignment
             def isComplete(self): Bool = is_set!(self, _size)
-            def __eq(self, other: Self): Bool = (
-                _isUnion == other._isUnion and members == other.members)
+            def __eq(self, other: Self): Bool = self is other
             def getMemberOrNull(self, memberName: String): Member? {
                 for member in members {
                     if member.name == memberName {
