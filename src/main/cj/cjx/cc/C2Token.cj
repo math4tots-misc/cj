@@ -30,6 +30,9 @@ class C2Token: Repr {
         tOR_EQ     # |=
         tXOR_EQ    # ^=
 
+        tAND       # &&
+        tOR        # ||
+
         kwVOID
         kwUNSIGNED
         kwINT

@@ -662,6 +662,8 @@ class C2Codegen {
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
             case logicalNot = m.i32.eqz(expr(expr.arg))
+            case logicalAnd = m.if_(expr(expr.lhs), expr(expr.rhs), m.i32.const(0))
+            case logicalOr = m.if_(expr(expr.lhs), m.i32.const(1), expr(expr.rhs))
             case stmt {
                 if expr.type.isDerived() {
                     # Supporting this would require allcating space for the

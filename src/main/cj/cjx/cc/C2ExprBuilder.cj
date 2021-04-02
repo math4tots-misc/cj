@@ -459,6 +459,26 @@ class C2ExprBuilder {
         }
 
         # ======================================================================
+        # logical
+        # ======================================================================
+        switch type {
+            case C2Token.tOR
+            case C2Token.tAND {
+                val op = switch type {
+                    case C2Token.tAND = Expr.Kind.logicalAnd
+                    case C2Token.tOR = Expr.Kind.logicalOr
+                }
+                return genBinop(
+                    mark,
+                    op,
+                    Type.int,
+                    binop(mark, C2Token.tNE, lhs, int(mark, 0)),
+                    binop(mark, C2Token.tNE, rhs, int(mark, 0)))
+            }
+            else = ()
+        }
+
+        # ======================================================================
         # comma
         # ======================================================================
         switch type {

@@ -53,13 +53,15 @@ class C2Parser : ParserMixin[C2Token] {
     def precof(type: Int): Int = switch type {
         case '.'; case C2Token.tARROW; case '('; case '[';
         case C2Token.tINCR; case C2Token.tDECR = 150
-        case '*'; case '/'; case '%' = 120
-        case '+'; case '-' = 100
-        case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 80
-        case C2Token.tEQ; case C2Token.tNE = 70
-        case '&' = 60
-        case '^' = 50
-        case '|' = 40
+        case '*'; case '/'; case '%' = 130
+        case '+'; case '-' = 120
+        case '<'; case '>'; case C2Token.tLE; case C2Token.tGE = 100
+        case C2Token.tEQ; case C2Token.tNE = 90
+        case '&' = 80
+        case '^' = 70
+        case '|' = 60
+        case C2Token.tAND = 50
+        case C2Token.tOR = 40
         case '='; case C2Token.tPLUS_EQ; case C2Token.tMINUS_EQ
         case C2Token.tSTAR_EQ; case C2Token.tDIV_EQ; case C2Token.tREM_EQ
         case C2Token.tAND_EQ; case C2Token.tOR_EQ; case C2Token.tXOR_EQ = 20
@@ -556,7 +558,7 @@ class C2Parser : ParserMixin[C2Token] {
                 case '+';case '-';case '*';case '/';case '%';case ','
                 case C2Token.tEQ;case C2Token.tNE
                 case '<'; case C2Token.tLE; case '>'; case C2Token.tGE
-                case '&'; case '|'; case '^' {
+                case '&'; case '|'; case '^'; case C2Token.tAND; case C2Token.tOR {
                     # left associative binops
                     val type = next().type
                     expr = eb.binop(mark, type, expr, exprpr(tokprec))

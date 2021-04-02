@@ -426,6 +426,32 @@ void test29_bitwise_ops() {
     aeq(10, ({ int i=15; i^=5; i; }));
 }
 
+int lbc;
+
+int incrlbc() {
+    return lbc++;
+}
+
+void test30_logical_binops() {
+    aeq(1, 0||1);
+    aeq(1, 0||(2-2)||5);
+    aeq(0, 0||0);
+    aeq(0, 0||(2-2));
+
+    aeq(0, 0&&1);
+    aeq(0, (2-2)&&5);
+    aeq(1, 1&&5);
+
+    // test short circuiting
+    aeq(lbc, 0);
+    aeq(0, incrlbc()&&incrlbc());
+    aeq(lbc, 1); // incrlbc() should have been called exactly once
+    aeq(1, incrlbc()||incrlbc());
+    aeq(lbc, 2); // incrlbc() should have been called exactly one more time
+    aeq(1, incrlbc()&&incrlbc());
+    aeq(lbc, 4); // incrlbc() should have been called exactly two more times
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -456,4 +482,5 @@ int main() {
     test27_bitwise_not();
     test28_rem();
     test29_bitwise_ops();
+    test30_logical_binops();
 }
