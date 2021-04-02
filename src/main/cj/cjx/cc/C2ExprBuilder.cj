@@ -92,6 +92,9 @@ class C2ExprBuilder {
         ret
     }
 
+    def break_(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.break_)
+    def continue_(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.continue_)
+
     ## Only forward goto jumps are supported, as these are the easiest to implement
     ## for a webassembly backend.
     ##

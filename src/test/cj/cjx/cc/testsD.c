@@ -61,9 +61,17 @@ void test04_labels_and_typedefs() {
     aeq(1, ({ typedef int foo; goto foo; foo:; 1; }));
 }
 
+void test05_break_and_continue() {
+    aeq(3, ({ int i=0; for(;i<10;i++) { if (i == 3) break; } i; }));
+    aeq(4, ({ int i=0; while (1) { if (i++ == 3) break; } i; }));
+    aeq(3, ({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; }));
+    aeq(4, ({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; }));
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
     test03_forward_goto();
     test04_labels_and_typedefs();
+    test05_break_and_continue();
 }

@@ -40,6 +40,8 @@ class C2Codegen {
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
     private var funcGotoTable: Map[String, GotoTarget] = MapOf()
+    private var currentBreakLabel: String? = null
+    private var currentContinueLabel: String? = null
 
     ## used for functions with derived return types
     private var retptrLocalIndex: Int? = null
@@ -192,6 +194,8 @@ class C2Codegen {
         cLocalsByteSize = 0
         currentFunc = null(func)
         funcGotoTable = MapOf()
+        currentBreakLabel = null
+        currentContinueLabel = null
 
         val stmts = [
             # save the stack pointer here so that we can easily restore
@@ -376,17 +380,31 @@ class C2Codegen {
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
             case while_ {
+                val savedBreakLabel = currentBreakLabel
+                val savedContinueLabel = currentContinueLabel
                 val breakLabel = newLabel()
                 val continueLabel = newLabel()
+                currentBreakLabel = null(breakLabel)
+                currentContinueLabel = null(continueLabel)
                 val cond = expr(stmt.cond)
                 val then = stmt(stmt.then)
-                m.block(null(breakLabel), [
+                val ret = m.block(null(breakLabel), [
                     m.loop(null(continueLabel), m.block(null, [
                         m.br_if(breakLabel, m.i32.eqz(cond)),
                         then,
                         m.br(continueLabel),
                     ], none))
                 ], none)
+                currentBreakLabel = savedBreakLabel
+                currentContinueLabel = savedContinueLabel
+                ret
+            }
+            case break_ {
+                if val breakLabel = currentBreakLabel {
+                    m.br(breakLabel)
+                } else {
+                    throw MError("Misplaced break statement", [stmt.mark])
+                }
             }
             case goto = if val target = funcGotoTable.getOrNull(stmt.targetLabel) {
                 if target.passed {

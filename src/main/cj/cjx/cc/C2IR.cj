@@ -248,6 +248,8 @@ class C2IR {
             case ret
             case if_
             case while_
+            case break_
+            case continue_
             case goto  # Restricted, see `C2ExprBuilder.goto()` for more details
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other

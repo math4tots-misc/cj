@@ -53,6 +53,8 @@ class C2Token: Repr {
         kwELSE
         kwFOR
         kwWHILE
+        kwBREAK
+        kwCONTINUE
         kwGOTO
         kwSIZEOF
     }

@@ -529,6 +529,16 @@ class C2Parser : ParserMixin[C2Token] {
                 val then = stmt()
                 eb.while_(mark, cond, then)
             }
+            case C2Token.kwBREAK {
+                next()
+                expect(';')
+                eb.break_(mark)
+            }
+            case C2Token.kwCONTINUE {
+                next()
+                expect(';')
+                eb.continue_(mark)
+            }
             case C2Token.kwIF {
                 next()
                 expect('(')
