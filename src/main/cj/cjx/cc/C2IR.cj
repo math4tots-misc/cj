@@ -248,18 +248,21 @@ class C2IR {
             case ret
             case if_
             case while_
+            case goto  # Restricted, see `C2ExprBuilder.goto()` for more details
             def repr(self): String = tag_name!(self)
             def __eq(self, other: Self): Bool = self is other
             def hash(self): Int = tag!(self)
         }
         val mark: Mark
         val kind: Kind
+        var labels: List[String] = []
         var stmts: List[Stmt] = ?
         var expr: Expr = ?
         var cond: Expr = ?
         var then: Stmt = ?
         var els: Stmt = ?
         var vars: List[Var] = ?
+        var targetLabel: String = ?
 
         def repr(self): String {
             val sb = StringBuilder()

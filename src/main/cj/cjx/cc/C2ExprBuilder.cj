@@ -92,6 +92,20 @@ class C2ExprBuilder {
         ret
     }
 
+    ## Only forward goto jumps are supported, as these are the easiest to implement
+    ## for a webassembly backend.
+    ##
+    ## However, by and large, the most useful use cases for gotos I can think of
+    ## right now fall into this category. In particular,
+    ##   * breaking out of nested loops, and
+    ##   * jumping to the end of the function for 'return with cleanup'
+    ##
+    def goto(self, mark: Mark, label: String): Stmt {
+        val ret = Stmt(mark, Stmt.Kind.goto)
+        ret.targetLabel = label
+        ret
+    }
+
     # ========================================================================
     # Expressions
     # ========================================================================
@@ -250,7 +264,13 @@ class C2ExprBuilder {
                 "The last statement of a block expression must be an expression statement",
                 [mark])
         }
-        val arg = stmts.pop().expr
+        val lastStmt = stmts.pop()
+        val arg = lastStmt.expr
+        if lastStmt.labels {
+            val newLast = nop(lastStmt.mark)
+            newLast.labels = lastStmt.labels
+            stmts.add(newLast)
+        }
         ret.vars = vars
         ret.stmts = stmts
         ret.arg = arg

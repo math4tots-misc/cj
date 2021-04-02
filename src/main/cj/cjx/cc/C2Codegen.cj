@@ -39,6 +39,7 @@ class C2Codegen {
     private val debugNameCache: Map[String, Int] = MapOf()
     private val debugNames: List[String] = []
     private var currentFunc: C2IR.Func? = null
+    private var funcGotoTable: Map[String, GotoTarget] = MapOf()
 
     ## used for functions with derived return types
     private var retptrLocalIndex: Int? = null
@@ -190,6 +191,7 @@ class C2Codegen {
         cLocalOffsets = MapOf()
         cLocalsByteSize = 0
         currentFunc = null(func)
+        funcGotoTable = MapOf()
 
         val stmts = [
             # save the stack pointer here so that we can easily restore
@@ -264,18 +266,80 @@ class C2Codegen {
         ret
     }
 
+    ## A goto target.
+    ## Currently, only 'forward' gotos are supported.
+    class GotoTarget {
+        ## If you are "behind" the target, branching to this label
+        val forwardLabel: String
+
+        ## Indicates whether this goto label has been 'passed'.
+        ## This is used to determine whether a simple branching to the
+        ## forward label will suffice.
+        var passed: Bool = false
+    }
+
+    def block(self, block: C2IR.Stmt): Binaryen.Expression {
+        val savedStackOffset = cLocalsByteSize
+        allocVarsForBlock(block.vars)
+        val stmts = stmtsWithLabels(block.stmts)
+        cLocalsByteSize = savedStackOffset
+        m.block(null, stmts, auto)
+    }
+
+    def stmtExpr(self, expr: C2IR.Expr): Binaryen.Expression {
+        if expr.type.isDerived() {
+            # Supporting this would require allcating space for the
+            # resulting derived (i.e. struct or union)
+            # It can be done, but given that statement expressions are
+            # a non-standard extension and to keep things simple for myself,
+            # I'm going to forgo supporting this feature for now.
+            throw MError(
+                "Returning a struct or union from a block expression is not supported",
+                [expr.mark])
+        }
+        val savedStackOffset = cLocalsByteSize
+        allocVarsForBlock(expr.vars)
+        val parts = stmtsWithLabels(expr.stmts)
+        parts.add(expr(expr.arg))
+        cLocalsByteSize = savedStackOffset
+        m.block(null, parts, auto)
+    }
+
+    def allocVarsForBlock(self, vars: List[C2IR.Var]) {
+        for var_ in vars {
+            cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
+        }
+    }
+
+    def stmtsWithLabels(self, stmts: List[C2IR.Stmt]): List[Binaryen.Expression] {
+        for s in stmts {
+            if s.labels {
+                val wasmForwardLabel = newLabel()
+                val target = GotoTarget(wasmForwardLabel)
+                for label in s.labels {
+                    if label in funcGotoTable {
+                        throw MError("Duplicate label name", [s.mark])
+                    }
+                    funcGotoTable[label] = target
+                }
+            }
+        }
+        var out: List[Binaryen.Expression] = []
+        for s in stmts {
+            if s.labels {
+                val gotoTarget = funcGotoTable[s.labels[0]]
+                gotoTarget.passed = true
+                out = [m.block(null(gotoTarget.forwardLabel), out, auto)]
+            }
+            out.add(stmtInBlock(s))
+        }
+        out
+    }
+
     def stmt(self, stmt: C2IR.Stmt): Binaryen.Expression {
         when stmt.kind {
             case nop = m.nop()
-            case block {
-                val savedStackOffset = cLocalsByteSize
-                for var_ in stmt.vars {
-                    cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
-                }
-                val stmts = stmt.stmts.map(s -> stmtInBlock(s))
-                cLocalsByteSize = savedStackOffset
-                m.block(null, stmts, auto)
-            }
+            case block = block(stmt)
             case ret {
                 if val func = currentFunc {
                     when func.type.returnType {
@@ -324,6 +388,12 @@ class C2Codegen {
                     ], none))
                 ], none)
             }
+            case goto = if val target = funcGotoTable.getOrNull(stmt.targetLabel) {
+                if target.passed {
+                    throw MError("backward gotos are not yet supported", [stmt.mark])
+                }
+                m.br(target.forwardLabel)
+            } else { throw MError("label " + stmt.targetLabel + " not found", [stmt.mark]) }
             else = throw MError("TODO codegen stmt " + stmt.kind, [stmt.mark])
         }
     }
@@ -664,26 +734,7 @@ class C2Codegen {
             case logicalNot = m.i32.eqz(expr(expr.arg))
             case logicalAnd = m.if_(expr(expr.lhs), expr(expr.rhs), m.i32.const(0))
             case logicalOr = m.if_(expr(expr.lhs), m.i32.const(1), expr(expr.rhs))
-            case stmt {
-                if expr.type.isDerived() {
-                    # Supporting this would require allcating space for the
-                    # resulting derived (i.e. struct or union)
-                    # It can be done, but given that statement expressions are
-                    # a non-standard extension and to keep things simple for myself,
-                    # I'm going to forgo supporting this feature for now.
-                    throw MError(
-                        "Returning a struct or union from a block expression is not supported",
-                        [expr.mark])
-                }
-                val savedStackOffset = cLocalsByteSize
-                for var_ in expr.vars {
-                    cLocalOffsets[var_.index] = alloca(var_.type.size(), var_.type.alignment())
-                }
-                val parts = expr.stmts.map(s -> stmtInBlock(s))
-                parts.add(expr(expr.arg))
-                cLocalsByteSize = savedStackOffset
-                m.block(null, parts, auto)
-            }
+            case stmt = stmtExpr(expr)
             case addrvar = addrvar(expr.var_)
             case getvar = getvar(expr.mark, expr.var_)
             case setvar = teevar(expr.mark, expr.var_, expr.arg)

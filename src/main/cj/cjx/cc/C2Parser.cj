@@ -477,6 +477,17 @@ class C2Parser : ParserMixin[C2Token] {
     # ========================================================================
 
     def stmt(self): Stmt {
+        val labels: List[String] = []
+        while at(C2Token.tIDENT) and atOffset(':', 1) {
+            labels.add(next().stringValue)
+            next()
+        }
+        val stmt = stmtWithoutLabels()
+        if labels { stmt.labels = labels }
+        stmt
+    }
+
+    def stmtWithoutLabels(self): Stmt {
         val mark = mark()
         switch peek().type {
             case '{' = block()
@@ -526,6 +537,12 @@ class C2Parser : ParserMixin[C2Token] {
                 val then = stmt()
                 val els = if consume(C2Token.kwELSE) { stmt() } else { eb.nop(mark) }
                 eb.if_(mark, cond, then, els)
+            }
+            case C2Token.kwGOTO {
+                next()
+                val targetLabel = expect(C2Token.tIDENT).stringValue
+                expect(';')
+                eb.goto(mark, targetLabel)
             }
             else {
                 val expr = expr()
