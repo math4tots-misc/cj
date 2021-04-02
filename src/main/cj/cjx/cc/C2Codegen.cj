@@ -379,7 +379,7 @@ class C2Codegen {
             }
             case expr = dropexpr(stmt.expr)
             case if_ = m.if_(expr(stmt.cond), stmt(stmt.then), stmt(stmt.els))
-            case while_ {
+            case whileEx {
                 val savedBreakLabel = currentBreakLabel
                 val savedContinueLabel = currentContinueLabel
                 val breakLabel = newLabel()
@@ -388,13 +388,31 @@ class C2Codegen {
                 currentContinueLabel = null(continueLabel)
                 val cond = expr(stmt.cond)
                 val then = stmt(stmt.then)
-                val ret = m.block(null(breakLabel), [
-                    m.loop(null(continueLabel), m.block(null, [
-                        m.br_if(breakLabel, m.i32.eqz(cond)),
-                        then,
-                        m.br(continueLabel),
-                    ], none))
-                ], none)
+                val ret = if stmt.incr.isPure() {
+                    m.block(null(breakLabel), [
+                        m.loop(null(continueLabel), m.block(null, [
+                            m.br_if(breakLabel, m.i32.eqz(cond)),
+                            then,
+                            m.br(continueLabel),
+                        ], none))
+                    ], none)
+                } else {
+                    val incr = dropexpr(stmt.incr)
+                    val firstFlag = newLocal(i32)
+                    m.block(null(breakLabel), [
+                        m.local.set(firstFlag, m.i32.const(0)),
+                        m.loop(null(continueLabel), m.block(null, [
+                            m.if_(
+                                m.local.get(firstFlag, i32),
+                                incr,
+                                m.nop()),
+                            m.local.set(firstFlag, m.i32.const(1)),
+                            m.br_if(breakLabel, m.i32.eqz(cond)),
+                            then,
+                            m.br(continueLabel),
+                        ], none))
+                    ], none)
+                }
                 currentBreakLabel = savedBreakLabel
                 currentContinueLabel = savedContinueLabel
                 ret
@@ -404,6 +422,13 @@ class C2Codegen {
                     m.br(breakLabel)
                 } else {
                     throw MError("Misplaced break statement", [stmt.mark])
+                }
+            }
+            case continue_ {
+                if val continueLabel = currentContinueLabel {
+                    m.br(continueLabel)
+                } else {
+                    throw MError("Misplaced continue statement", [stmt.mark])
                 }
             }
             case goto = if val target = funcGotoTable.getOrNull(stmt.targetLabel) {

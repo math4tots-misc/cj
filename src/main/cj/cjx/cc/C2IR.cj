@@ -247,7 +247,7 @@ class C2IR {
             case expr
             case ret
             case if_
-            case while_
+            case whileEx  # while extended with a for-loop style increment expression
             case break_
             case continue_
             case goto  # Restricted, see `C2ExprBuilder.goto()` for more details
@@ -261,6 +261,7 @@ class C2IR {
         var stmts: List[Stmt] = ?
         var expr: Expr = ?
         var cond: Expr = ?
+        var incr: Expr = ?
         var then: Stmt = ?
         var els: Stmt = ?
         var vars: List[Var] = ?
@@ -272,6 +273,7 @@ class C2IR {
             if is_set!(self, stmts) { sb.str(",\"stmts\":" + stmts.repr()) }
             if is_set!(self, expr) { sb.str(",\"expr\":" + expr.repr()) }
             if is_set!(self, cond) { sb.str(",\"cond\":" + cond.repr()) }
+            if is_set!(self, incr) { sb.str(",\"incr\":" + incr.repr()) }
             if is_set!(self, then) { sb.str(",\"then\":" + then.repr()) }
             if is_set!(self, els) { sb.str(",\"els\":" + els.repr()) }
             if is_set!(self, vars) { sb.str(",\"vars\":" + vars.map(v -> v.name + "/" + v.index) + "") }
@@ -386,6 +388,11 @@ class C2IR {
             if is_set!(self, member) { sb.str(",\"member\":\"" + member.offset + "/" + member.name + "\"") }
             sb.str("}")
             sb.toString()
+        }
+        ## Checks if the expression has no side-effects
+        def isPure(self): Bool = when kind {
+            case int = true
+            else = false
         }
     }
 }

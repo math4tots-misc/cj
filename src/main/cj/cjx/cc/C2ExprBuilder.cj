@@ -78,16 +78,20 @@ class C2ExprBuilder {
             incr: Expr,
             then: Stmt): Stmt {
         block(mark, vars, inits + [
-            while_(mark, cond, block(mark, [], [
-                then,
-                exprStmt(mark, incr),
-            ])),
+            whileEx(mark, cond, incr, then),
         ])
     }
 
     def while_(self, mark: Mark, cond: Expr, then: Stmt): Stmt {
-        val ret = Stmt(mark, Stmt.Kind.while_)
+        whileEx(mark, cond, int(mark, 0), then)
+    }
+
+    ## A version of while expression that has been extended with a for-loop
+    ## style 'increment' expression.
+    def whileEx(self, mark: Mark, cond: Expr, incr: Expr, then: Stmt): Stmt {
+        val ret = Stmt(mark, Stmt.Kind.whileEx)
         ret.cond = castTruthy(cond)
+        ret.incr = incr
         ret.then = then
         ret
     }

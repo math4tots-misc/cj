@@ -66,6 +66,13 @@ void test05_break_and_continue() {
     aeq(4, ({ int i=0; while (1) { if (i++ == 3) break; } i; }));
     aeq(3, ({ int i=0; for(;i<10;i++) { for (;;) break; if (i == 3) break; } i; }));
     aeq(4, ({ int i=0; while (1) { while(1) break; if (i++ == 3) break; } i; }));
+
+    aeq(10, ({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j++; } i; }));
+    aeq(6, ({ int i=0; int j=0; for (;i<10;i++) { if (i>5) continue; j++; } j; }));
+    aeq(10, ({ int i=0; int j=0; for(;!i;) { for (;j!=10;j++) continue; break; } j; }));
+    aeq(11, ({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j++; } i; }));
+    aeq(5, ({ int i=0; int j=0; while (i++<10) { if (i>5) continue; j++; } j; }));
+    aeq(11, ({ int i=0; int j=0; while(!i) { while (j++!=10) continue; break; } j; }));
 }
 
 int main() {
