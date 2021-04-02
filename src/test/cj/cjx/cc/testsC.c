@@ -401,6 +401,13 @@ void test27_bitwise_not() {
     aeq(0, ~-1);
 }
 
+void test28_rem() {
+    aeq(5, 17%6);
+    aeq(5, ((long)17)%6);
+    aeq(2, ({ int i=10; i%=4; i; }));
+    aeq(2, ({ long i=10; i%=4; i; }));
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -429,4 +436,5 @@ int main() {
     test25_int_literals();
     test26_logical_not();
     test27_bitwise_not();
+    test28_rem();
 }
