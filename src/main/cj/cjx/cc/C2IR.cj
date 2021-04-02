@@ -286,6 +286,7 @@ class C2IR {
             case intNe
             case intLt
             case intLe
+            case intBitwiseNot
 
             case long
             case longNeg

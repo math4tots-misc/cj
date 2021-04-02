@@ -18,6 +18,8 @@ class C2ExprBuilder {
         '*', '/', '%', '+', '-', '<', '>', C2Token.tLE, C2Token.tGE, C2Token.tEQ, C2Token.tNE,
         '&', '^', '|')
 
+    static val usualArithmeticConversionUnops: Set[Int] = SetOf('+', '-', '~')
+
     # ========================================================================
     # Statements
     # ========================================================================
@@ -541,10 +543,18 @@ class C2ExprBuilder {
 
     def preop(self, mark: Mark, type: Int, var arg: Expr): Expr {
         addType(arg)
+
+        if type in usualArithmeticConversionUnops {
+            arg = integerPromotion(arg)
+        }
+
         switch type {
             case '&' { return addr(mark, arg) }
             case '*' { return deref(mark, arg) }
             case '!' { return genUnop(mark, Expr.Kind.logicalNot, Type.int, ecast(arg, Type.int)) }
+            case '~' {
+                return genUnop(mark, Expr.Kind.intBitwiseNot, Type.int, icast(arg, Type.int))
+            }
             else = ()
         }
         if arg.type.isIntegral() and arg.type.rank() <= Type.int.rank() {

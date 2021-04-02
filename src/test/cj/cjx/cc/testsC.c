@@ -396,6 +396,11 @@ void test26_logical_not() {
     aeq(4, sizeof(!(long)0));
 }
 
+void test27_bitwise_not() {
+    aeq(-1, ~0);
+    aeq(0, ~-1);
+}
+
 int main() {
     test01_struct();
     test02_tagged_struct();
@@ -423,4 +428,5 @@ int main() {
     tests24_pre_incr();
     test25_int_literals();
     test26_logical_not();
+    test27_bitwise_not();
 }
