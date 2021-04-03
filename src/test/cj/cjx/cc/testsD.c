@@ -103,7 +103,6 @@ void test06_switch() {
 
 void test06_shift() {
     aeq(1024>>5, 1<<5);
-
     aeq(1, 1<<0);
     aeq(8, 1<<3);
     aeq(10, 5<<1);
@@ -118,6 +117,22 @@ void test06_shift() {
     aeq(-1, ({ int i=-1; i>>=1; i; }));
 }
 
+void test07_cond() {
+    aeq(2, 0?1:2);
+    aeq(1, 1?1:2);
+    aeq(-1, 0?-2:-1);
+    aeq(-2, 1?-2:-1);
+    aeq(4, sizeof(0?1:2));
+    aeq(8, sizeof(0?(long)1:(long)2));
+    aeq(-1, 0?(long)-2:-1);
+    aeq(-1, 0?-2:(long)-1);
+    aeq(-2, 1?(long)-2:-1);
+    aeq(-2, 1?-2:(long)-1);
+
+    // TODO: get this line to compile
+    // 1 ? -2 : (void)-1;
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
@@ -126,4 +141,5 @@ int main() {
     test05_break_and_continue();
     test06_switch();
     test06_shift();
+    test07_cond();
 }

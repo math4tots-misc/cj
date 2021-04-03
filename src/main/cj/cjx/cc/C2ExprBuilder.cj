@@ -480,6 +480,28 @@ class C2ExprBuilder {
         }
     }
 
+    def cond(self, mark: Mark, cond: Expr, var lhs: Expr, var rhs: Expr): Expr {
+        addType(cond)
+        addType(lhs)
+        addType(rhs)
+
+        val (newLhs, newRhs) = usualArithmeticConversion(lhs, rhs)
+        lhs = newLhs
+        rhs = newRhs
+
+        val ret = Expr(mark, Expr.Kind.cond)
+        ret.arg = truthy(cond)
+        ret.lhs = lhs
+        ret.rhs = rhs
+        ret.type = lhs.type
+
+        ret
+    }
+
+    def truthy(self, expr: Expr): Expr {
+        binop(expr.mark, C2Token.tNE, expr, int(expr.mark, 0))
+    }
+
     def binop(self, mark: Mark, type: Int, var lhs: Expr, var rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)
@@ -509,12 +531,7 @@ class C2ExprBuilder {
                     case C2Token.tAND = Expr.Kind.logicalAnd
                     case C2Token.tOR = Expr.Kind.logicalOr
                 }
-                return genBinop(
-                    mark,
-                    op,
-                    Type.int,
-                    binop(mark, C2Token.tNE, lhs, int(mark, 0)),
-                    binop(mark, C2Token.tNE, rhs, int(mark, 0)))
+                return genBinop(mark, op, Type.int, truthy(lhs), truthy(rhs))
             }
             else = ()
         }

@@ -23,6 +23,7 @@ import cjx.cc.C2IR.EnumConstant
 class C2Parser : ParserMixin[C2Token] {
     static private val assingPrec: Int = precof('=')
     static private val unaryPrec: Int = precof('*') + 5
+    static private val condPrec: Int = precof('?')
 
     def typeOfToken(token: C2Token): Int = token.type
     def nameOfType(type: Int): String = C2Token.typeRepr(type)
@@ -63,6 +64,7 @@ class C2Parser : ParserMixin[C2Token] {
         case '|' = 60
         case C2Token.tAND = 50
         case C2Token.tOR = 40
+        case '?' = 30
         case '='; case C2Token.tPLUS_EQ; case C2Token.tMINUS_EQ
         case C2Token.tSTAR_EQ; case C2Token.tDIV_EQ; case C2Token.tREM_EQ
         case C2Token.tAND_EQ; case C2Token.tOR_EQ; case C2Token.tXOR_EQ
@@ -665,6 +667,7 @@ class C2Parser : ParserMixin[C2Token] {
     def expr(self): Expr = exprpr(0)
     def assign(self): Expr = exprpr(assingPrec)
     def unary(self): Expr = exprpr(unaryPrec)
+    def cond(self): Expr = exprpr(condPrec)
 
     def intConstExpr(self): Int {
         val expr = assign()
@@ -688,6 +691,14 @@ class C2Parser : ParserMixin[C2Token] {
                     # left associative binops
                     val type = next().type
                     expr = eb.binop(mark, type, expr, exprpr(tokprec))
+                }
+                case '?' {
+                    # conditional operator
+                    next()
+                    val lhs = expr()
+                    expect(':')
+                    val rhs = cond()
+                    expr = eb.cond(mark, expr, lhs, rhs)
                 }
                 case '=' {
                     # right associative binops

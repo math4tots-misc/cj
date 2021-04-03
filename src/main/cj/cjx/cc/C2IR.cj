@@ -324,6 +324,8 @@ class C2IR {
 
             case comma
 
+            case cond        # conditional ternary operator
+
             case logicalNot
             case logicalOr
             case logicalAnd
