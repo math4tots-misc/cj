@@ -1,3 +1,0 @@
-package cj
-
-trait Repr {}

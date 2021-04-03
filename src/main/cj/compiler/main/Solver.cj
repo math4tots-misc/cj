@@ -10,7 +10,7 @@ class Solver {
     def main() {
         val argv = Argv()
         val solver = CJSolver([
-            "src/main/cj2",
+            # "src/main/cj2",
             "src/main/cj",
         ])
         for filename in argv {
