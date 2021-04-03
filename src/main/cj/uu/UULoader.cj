@@ -1,5 +1,7 @@
 package uu
 
+import cjx.parser.MError
+import cjx.parser.Mark
 import cjx.re.Regex
 import uu.UUParser
 import cj.FS
@@ -16,7 +18,11 @@ class UULoader {
 
     def load(self, itemName: String): UUAst.File? {
         if itemName not in itemAstMap {
-            val outerItemName = outerNameRe.match(itemName).get().matchText
+            val outerItemName = if val m = outerNameRe.match(itemName) {
+                m.matchText
+            } else {
+                IO.panic("Could not determine outer name of " + itemName)
+            }
             if val fileAst = loadFileAst(outerItemName) {
                 # NOTE: there's a chance that the outer item is found, but the
                 # target item might not actually be found. In this case we return null.
@@ -26,8 +32,30 @@ class UULoader {
         itemAstMap.getOrNull(itemName)
     }
 
+    def loadAllDeps(self, itemNames: List[String]) {
+        val seen = itemNames.toSet()
+        val stack: List[Tuple[List[Mark], String]] = itemNames.map(n -> ([], n))
+        while stack {
+            val (marks, itemName) = stack.pop()
+            if val file = load(itemName) {
+                for import_ in file.imports {
+                    if import_.fullName not in seen {
+                        seen.add(import_.fullName)
+                        stack.add((marks.clone() + [import_.mark], import_.fullName))
+                    }
+                }
+            } else {
+                throw MError("Item " + itemName + " not found", marks)
+            }
+        }
+    }
+
     def addFileAst(self, fileAst: UUAst.File) {
         fileAstMap[fileAst.item.name] = fileAst
+    }
+
+    def getAllLoadedItems(self): List[UUAst.File] {
+        fileAstMap.values().toList()
     }
 
     private def loadFileAst(self, outerItemName: String): UUAst.File? {

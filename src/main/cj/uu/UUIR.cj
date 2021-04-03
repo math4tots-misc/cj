@@ -1,5 +1,6 @@
 package uu
 
+import cjx.parser.MError
 import cjx.parser.Mark
 import uu.UUAst.Item.Kind as IKind
 import uu.UUAst.Modifier
@@ -7,6 +8,12 @@ import uu.UUAst.Modifier
 class UUIR {
     class Module {
         val typeMap: Map[String, Type] = MapOf()
+
+        def addType(self, type: Type) {
+            if val oldType = typeMap.getOrNull(type.name) {
+                throw MError("Duplicate definition of " + type.name, [type.mark, oldType.mark])
+            }
+        }
     }
 
     class Type {
