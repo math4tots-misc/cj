@@ -181,7 +181,12 @@ class C2ExprBuilder {
             return _cast(expr, type)
         }
 
-        throw MError("Could not cast " + type + " to " + expr.type, [expr.mark])
+        # allow anything to be cast to void
+        if type.isVoid() {
+            return _cast(expr, type)
+        }
+
+        throw MError("Could not cast " + expr.type + " to " + type, [expr.mark])
     }
 
     ## Decay an array to a pointer

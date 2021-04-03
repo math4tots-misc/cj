@@ -667,6 +667,47 @@ class C2Codegen {
         m.i32.xor(m.i32.const(1), m.i32.eqz(expr))
     }
 
+    def cast(self, expr: C2IR.Expr): Binaryen.Expression {
+        Assert.equal(expr.kind, C2IR.Expr.Kind.cast)
+        if expr.type.isVoid() {
+            return m.block(null, [dropexpr(expr.arg), m.i32.const(0)], auto)
+        }
+        when expr.arg.type {
+            case int;case ptr(..) = when expr.type {
+                case bool = int2bool(expr(expr.arg))
+                case char = {
+                    m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                }
+                # case short = m.i32.and_(m.i32.const(0xFFFF), expr(expr.arg))
+                case int;case ptr(..) = expr(expr.arg)
+                case long = m.i64.extend_s(expr(expr.arg))
+                else = _casterr(expr)
+            }
+            case bool = when expr.type {
+                case char; case short; case int = expr(expr.arg)
+                else = _casterr(expr)
+            }
+            case char = when expr.type {
+                case bool = int2bool(expr(expr.arg))
+                case short;case int;case ptr(..) = expr(expr.arg)
+                else = _casterr(expr)
+            }
+            case short = when expr.type {
+                case bool = int2bool(expr(expr.arg))
+                case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
+                case int;case ptr(..) = expr(expr.arg)
+                else = _casterr(expr)
+            }
+            case long = when expr.type {
+                case char = m.i32.and_(m.i32.const(0xFF), m.i32.wrap(expr(expr.arg)))
+                case short = m.i32.and_(m.i32.const(0xFFFF), m.i32.wrap(expr(expr.arg)))
+                case int;case ptr(..) = m.i32.wrap(expr(expr.arg))
+                else = _casterr(expr)
+            }
+            else = _casterr(expr)
+        }
+    }
+
     def expr(self, expr: C2IR.Expr): Binaryen.Expression {
         when expr.kind {
             case int; case short = m.i32.const(expr.intValue)
@@ -712,42 +753,7 @@ class C2Codegen {
             case longLt = m.i64.lt_s(expr(expr.lhs), expr(expr.rhs))
             case longLe = m.i64.le_s(expr(expr.lhs), expr(expr.rhs))
 
-            case cast {
-                when expr.arg.type {
-                    case int;case ptr(..) = when expr.type {
-                        case bool = int2bool(expr(expr.arg))
-                        case char = {
-                            m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
-                        }
-                        # case short = m.i32.and_(m.i32.const(0xFFFF), expr(expr.arg))
-                        case int;case ptr(..) = expr(expr.arg)
-                        case long = m.i64.extend_s(expr(expr.arg))
-                        else = _casterr(expr)
-                    }
-                    case bool = when expr.type {
-                        case char; case short; case int = expr(expr.arg)
-                        else = _casterr(expr)
-                    }
-                    case char = when expr.type {
-                        case bool = int2bool(expr(expr.arg))
-                        case short;case int;case ptr(..) = expr(expr.arg)
-                        else = _casterr(expr)
-                    }
-                    case short = when expr.type {
-                        case bool = int2bool(expr(expr.arg))
-                        case char = m.i32.and_(m.i32.const(0xFF), expr(expr.arg))
-                        case int;case ptr(..) = expr(expr.arg)
-                        else = _casterr(expr)
-                    }
-                    case long = when expr.type {
-                        case char = m.i32.and_(m.i32.const(0xFF), m.i32.wrap(expr(expr.arg)))
-                        case short = m.i32.and_(m.i32.const(0xFFFF), m.i32.wrap(expr(expr.arg)))
-                        case int;case ptr(..) = m.i32.wrap(expr(expr.arg))
-                        else = _casterr(expr)
-                    }
-                    else = _casterr(expr)
-                }
-            }
+            case cast = cast(expr)
 
             case funcall {
                 val args = expr.args.map(a -> expr(a))

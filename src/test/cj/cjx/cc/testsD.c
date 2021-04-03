@@ -128,9 +128,7 @@ void test07_cond() {
     aeq(-1, 0?-2:(long)-1);
     aeq(-2, 1?(long)-2:-1);
     aeq(-2, 1?-2:(long)-1);
-
-    // TODO: get this line to compile
-    // 1 ? -2 : (void)-1;
+    1 ? -2 : (void)-1;
 }
 
 int main() {
