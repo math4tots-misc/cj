@@ -101,6 +101,23 @@ void test06_switch() {
     }
 }
 
+void test06_shift() {
+    aeq(1024>>5, 1<<5);
+
+    aeq(1, 1<<0);
+    aeq(8, 1<<3);
+    aeq(10, 5<<1);
+    aeq(2, 5>>1);
+    aeq(-1, -1>>1);
+    aeq(1, ({ int i=1; i<<=0; i; }));
+    aeq(8, ({ int i=1; i<<=3; i; }));
+    aeq(10, ({ int i=5; i<<=1; i; }));
+    aeq(2, ({ int i=5; i>>=1; i; }));
+    aeq(-1, -1);
+    aeq(-1, ({ int i=-1; i; }));
+    aeq(-1, ({ int i=-1; i>>=1; i; }));
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
@@ -108,4 +125,5 @@ int main() {
     test04_labels_and_typedefs();
     test05_break_and_continue();
     test06_switch();
+    test06_shift();
 }

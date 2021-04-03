@@ -490,6 +490,15 @@ class C2ExprBuilder {
             rhs = newRhs
         }
 
+        switch type {
+            case C2Token.tSHL
+            case C2Token.tSHR {
+                lhs = integerPromotion(lhs)
+                rhs = integerPromotion(rhs)
+            }
+            else = ()
+        }
+
         # ======================================================================
         # logical
         # ======================================================================
@@ -538,6 +547,8 @@ class C2ExprBuilder {
                 case '&' { return genBinop(mark, Expr.Kind.intBitwiseAnd, Type.int, lhs, rhs) }
                 case '|' { return genBinop(mark, Expr.Kind.intBitwiseOr, Type.int, lhs, rhs) }
                 case '^' { return genBinop(mark, Expr.Kind.intBitwiseXor, Type.int, lhs, rhs) }
+                case C2Token.tSHL  { return genBinop(mark, Expr.Kind.intShl, Type.int, lhs, rhs) }
+                case C2Token.tSHR  { return genBinop(mark, Expr.Kind.intShr, Type.int, lhs, rhs) }
                 else = ()
             }
         }

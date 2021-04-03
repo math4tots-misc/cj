@@ -684,6 +684,8 @@ class C2Codegen {
             case intBitwiseAnd = m.i32.and_(expr(expr.lhs), expr(expr.rhs))
             case intBitwiseOr = m.i32.or_(expr(expr.lhs), expr(expr.rhs))
             case intBitwiseXor = m.i32.xor(expr(expr.lhs), expr(expr.rhs))
+            case intShl = m.i32.shl(expr(expr.lhs), expr(expr.rhs))
+            case intShr = m.i32.shr_s(expr(expr.lhs), expr(expr.rhs))
 
             # char is unsigned
             case char = m.i32.const(expr.intValue)

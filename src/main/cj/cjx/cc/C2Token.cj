@@ -21,6 +21,8 @@ class C2Token: Repr {
         tINCR      # ++
         tARROW     # ->
 
+        tSHL_EQ    # <<=
+        tSHR_EQ    # >>=
         tPLUS_EQ   # +=
         tMINUS_EQ  # -=
         tSTAR_EQ   # *=
@@ -32,6 +34,9 @@ class C2Token: Repr {
 
         tAND       # &&
         tOR        # ||
+
+        tSHL       # <<
+        tSHR       # >>
 
         kwVOID
         kwUNSIGNED

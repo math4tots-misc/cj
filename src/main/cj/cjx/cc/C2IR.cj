@@ -299,6 +299,8 @@ class C2IR {
             case intBitwiseAnd
             case intBitwiseOr
             case intBitwiseXor
+            case intShl
+            case intShr
 
             case long
             case longNeg
