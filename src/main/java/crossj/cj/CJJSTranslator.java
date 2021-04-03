@@ -236,7 +236,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         }
 
         // for (non-union) classes: emit non-static fields and malloc
-        if ((item.getKind() == CJIRItemKind.Class || item.getKind() == CJIRItemKind.Interface) && !item.isNative()) {
+        if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
             var nonStaticFields = item.getFields().filter(f -> !f.isStatic());
             var argFields = nonStaticFields.filter(f -> f.includeInMalloc());
             if (isWrapperItem(item)) {

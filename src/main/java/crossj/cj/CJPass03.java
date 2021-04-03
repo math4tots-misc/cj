@@ -82,7 +82,7 @@ final class CJPass03 extends CJPassBaseEx {
                         throw CJError.of("classes with type parameters cannot have static fields", fieldAst.getMark());
                     }
                 } else {
-                    if (item.getKind() != CJIRItemKind.Class && item.getKind() != CJIRItemKind.Interface) {
+                    if (item.getKind() != CJIRItemKind.Class) {
                         throw CJError.of("unions cannot have non-static fields", fieldAst.getMark());
                     }
                 }
@@ -135,7 +135,7 @@ final class CJPass03 extends CJPassBaseEx {
             }
         }
 
-        if ((item.getKind() == CJIRItemKind.Class || item.getKind() == CJIRItemKind.Interface) && !item.isNative()) {
+        if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
             var mallocMethodAst = synthesizeMallocMethod(item);
             materializeMethod(item, mallocMethodAst, true, null);
         }

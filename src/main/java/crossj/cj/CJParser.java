@@ -157,9 +157,6 @@ public final class CJParser {
         case CJToken.KW_TRAIT:
             next();
             return CJIRItemKind.Trait;
-        case CJToken.KW_INTERFACE:
-            next();
-            return CJIRItemKind.Interface;
         }
         throw ekind("class, union or trait");
     }
@@ -405,7 +402,6 @@ public final class CJParser {
         case CJToken.KW_CLASS:
         case CJToken.KW_TRAIT:
         case CJToken.KW_UNION:
-        case CJToken.KW_INTERFACE:
             return List.of(parseChildItemDefinition(outerPackageName, outerShortName, importsCombo, comment,
                     annotations, modifiers));
         }
