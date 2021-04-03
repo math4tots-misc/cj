@@ -417,5 +417,6 @@ class CJIR {
         case string(String)
         case bigint(BigInt)
         case null_(Expr?)
+        case call(Type, List[Expr])
     }
 }
