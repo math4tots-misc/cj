@@ -11,7 +11,8 @@ class Solver {
         val argv = Argv()
         val solver = CJSolver([
             # "src/main/cj2",
-            "src/main/cj",
+            # "src/main/cj",
+            "main",
         ])
         for filename in argv {
             val data = FS.readFile(filename)

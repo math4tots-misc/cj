@@ -260,8 +260,7 @@ class CJParser {
             }
             case CJToken.kwCLASS
             case CJToken.kwTRAIT
-            case CJToken.kwUNION
-            case CJToken.kwINTERFACE {
+            case CJToken.kwUNION {
                 members.add(CJAst.Member.item(parseItem(comment, annotations, modifiers)))
             }
             case CJToken.kwENUM = parseEnum(members)
@@ -381,7 +380,6 @@ class CJParser {
             case CJToken.kwCLASS { next(); CJItemKind.class_ }
             case CJToken.kwUNION { next(); CJItemKind.union_ }
             case CJToken.kwTRAIT { next(); CJItemKind.trait_ }
-            case CJToken.kwINTERFACE { next(); CJItemKind.interface_ }
             else = throw ekind("class, union or trait")
         }
     }

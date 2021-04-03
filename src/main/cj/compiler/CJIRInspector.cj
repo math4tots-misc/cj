@@ -117,7 +117,8 @@ class CJIRInspector {
     def _inspectExpr(self, expr: CJIR.Expr) {
         when expr.data {
             case unit = line("()")
-            else = throw MError("TODO inspectExpr " + tag_name!(expr.data), [expr.mark])
+            case int(i) = line("int(" + i + ")")
+            else = throw MError("TODO CJIR inspectExpr " + tag_name!(expr.data), [expr.mark])
         }
     }
 

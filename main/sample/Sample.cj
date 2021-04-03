@@ -1,4 +1,5 @@
 package sample
 
-class Sample {
+native class Sample {
+    def main(): Int = 20
 }
