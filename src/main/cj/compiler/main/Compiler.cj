@@ -1,5 +1,6 @@
 package compiler.main
 
+import compiler.codegen.CJCodegen
 import compiler.CJParser
 import compiler.CJIRInspector
 import cj.FS
@@ -14,10 +15,10 @@ class Compiler {
             solver.getItemDefOrNull(itemName)
         }
         solver.solve()
-        val pairs = solver.itemMap.pairs().toList()
-        pairs.sortBy(pair -> pair.f0)
-        for (name, item) in pairs {
-            IO.println(CJIRInspector.inspectItem(item))
-        }
+        val items = solver.itemMap.values().sortedBy(i -> i.name)
+        val cgen = CJCodegen()
+        val jsb = cgen.emit(items)
+        jsb.inlineSourceMap = true
+        IO.println(jsb.getSource())
     }
 }
