@@ -8,11 +8,13 @@ public class Main {
     public static void main(String[] args) {
         var paths = Arrays.asList(args);
         var cus = parser.parseFiles(paths);
+        System.out.println("COUNT = " + cus.size());
         for (var cu : cus) {
-            System.out.println("##########################################");
-            System.out.println(cu.path);
-            System.out.println("##########################################");
-            // System.out.println(cu.ast);
+            var type = cu.ast.resolveBinding();
+            System.out.println("######## " + type.getQualifiedName() + " ########");
+            var cgen = new Codegen();
+            cgen.emit(cu);
+            System.out.println(cgen.toString());
         }
     }
 }

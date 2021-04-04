@@ -13,6 +13,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 public final class Parser {
     private final ASTParser parser = ASTParser.newParser(AST.JLS14);
@@ -36,7 +37,11 @@ public final class Parser {
         parser.createASTs(toStringArray(paths), getEncodings(paths.size()), new String[0], new FileASTRequestor() {
             @Override
             public void acceptAST(String sourceFilePath, CompilationUnit ast) {
-                cus.add(new CUnit(sourceFilePath, ast));
+                for (var element : ast.types()) {
+                    if (element instanceof TypeDeclaration) {
+                        cus.add(new CUnit(sourceFilePath, (TypeDeclaration) element));
+                    }
+                }
             }
         }, new NullProgressMonitor());
         return cus;
