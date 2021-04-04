@@ -1,11 +1,14 @@
 package com.github.math4tots.java2cj;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class Main {
     private static final Parser parser = new Parser();
 
     public static void main(String[] args) {
+        parser.addSourceRoot(Paths.get("src", "main", "java").toString());
+
         var paths = Arrays.asList(args);
         var cus = parser.parseFiles(paths);
         System.out.println("COUNT = " + cus.size());

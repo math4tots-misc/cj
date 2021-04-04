@@ -30,7 +30,7 @@ public final class Parser {
         for (int i = 0; i < sourceRoots.length; i++) {
             sourceRoots[i] = this.sourceRoots.get(i);
         }
-        parser.setEnvironment(classpath, sourceRoots, getEncodings(sourceRoots.length), false);
+        parser.setEnvironment(classpath, sourceRoots, getEncodings(sourceRoots.length), true);
         parser.setUnitName(paths.get(0));
         parser.setSource(readFile(paths.get(0)).toCharArray());
         List<CUnit> cus = new ArrayList<>();
