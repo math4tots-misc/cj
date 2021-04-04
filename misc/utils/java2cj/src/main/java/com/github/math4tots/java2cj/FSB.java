@@ -11,6 +11,14 @@ public final class FSB {
         sb.append(" ".repeat(4 * depth));
     }
 
+    public void indent() {
+        depth++;
+    }
+
+    public void dedent() {
+        depth--;
+    }
+
     public void line(String line) {
         emitIndent();
         sb.append(line);
