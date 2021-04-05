@@ -4,15 +4,15 @@ import crossj.base.List;
 import crossj.cj.ast.CJAstTypeParameter;
 
 public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
-    private final CJIRAnnotationProcessor annotation;
+    private final CJAnnotationProcessor annotation;
     private final List<CJIRTrait> traits = List.of();
 
     CJIRTypeParameter(CJAstTypeParameter ast) {
         super(ast);
-        this.annotation = CJIRAnnotationProcessor.processTypeParameter(ast);
+        this.annotation = CJAnnotationProcessor.processTypeParameter(ast);
     }
 
-    public CJIRAnnotationProcessor getAnnotation() {
+    public CJAnnotationProcessor getAnnotation() {
         return annotation;
     }
 

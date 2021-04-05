@@ -4,12 +4,12 @@ import crossj.base.Optional;
 import crossj.cj.ast.CJAstFieldDefinition;
 
 public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
-    private final CJIRAnnotationProcessor annotations;
+    private final CJAnnotationProcessor annotations;
     private final int index;
     private final CJIRType type;
     private Optional<CJIRExpression> expression = Optional.empty();
 
-    CJIRField(CJAstFieldDefinition ast, CJIRAnnotationProcessor annotations, int index, CJIRType type) {
+    CJIRField(CJAstFieldDefinition ast, CJAnnotationProcessor annotations, int index, CJIRType type) {
         super(ast);
         this.annotations = annotations;
         this.index = index;

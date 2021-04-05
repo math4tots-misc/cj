@@ -11,22 +11,22 @@ import crossj.cj.ast.CJAstMethodDefinition;
 import crossj.cj.ast.CJAstNode;
 import crossj.cj.ast.CJAstTypeParameter;
 
-public final class CJIRAnnotationProcessor {
+public final class CJAnnotationProcessor {
 
-    public static CJIRAnnotationProcessor processItem(CJAstItemDefinition ast) {
-        var proc = new CJIRAnnotationProcessor(ast.getMark(), ast.getAnnotations());
+    public static CJAnnotationProcessor processItem(CJAstItemDefinition ast) {
+        var proc = new CJAnnotationProcessor(ast.getMark(), ast.getAnnotations());
         proc.checkForItem(ast);
         return proc;
     }
 
-    public static CJIRAnnotationProcessor processMember(CJAstItemMemberDefinition ast) {
-        var proc = new CJIRAnnotationProcessor(ast.getMark(), ast.getAnnotations());
+    public static CJAnnotationProcessor processMember(CJAstItemMemberDefinition ast) {
+        var proc = new CJAnnotationProcessor(ast.getMark(), ast.getAnnotations());
         proc.checkForMember(ast);
         return proc;
     }
 
-    public static CJIRAnnotationProcessor processTypeParameter(CJAstTypeParameter ast) {
-        var proc = new CJIRAnnotationProcessor(ast.getMark(), ast.getAnnotations());
+    public static CJAnnotationProcessor processTypeParameter(CJAstTypeParameter ast) {
+        var proc = new CJAnnotationProcessor(ast.getMark(), ast.getAnnotations());
         proc.checkForTypeParameter(ast);
         return proc;
     }
@@ -41,7 +41,7 @@ public final class CJIRAnnotationProcessor {
     private final List<String> deriveList = List.of();
     private final List<Pair<String, String>> implicits = List.of();
 
-    private CJIRAnnotationProcessor(CJMark mark, List<CJAstAnnotationExpression> commands) {
+    private CJAnnotationProcessor(CJMark mark, List<CJAstAnnotationExpression> commands) {
         for (var command : commands) {
             exec(command);
         }

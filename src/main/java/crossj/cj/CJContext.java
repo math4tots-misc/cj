@@ -100,7 +100,7 @@ public final class CJContext extends CJContextBase {
     }
 
     private static CJIRItem itemFromAst(CJAstItemDefinition ast) {
-        var annotationProcessor = CJIRAnnotationProcessor.processItem(ast);
+        var annotationProcessor = CJAnnotationProcessor.processItem(ast);
         return new CJIRItem(ast, annotationProcessor);
     }
 

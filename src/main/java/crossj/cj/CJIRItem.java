@@ -12,7 +12,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean deriveRepr;
     private final boolean derivePod;
     private final boolean deriveDefault;
-    private final CJIRAnnotationProcessor annotations;
+    private final CJAnnotationProcessor annotations;
     private final String fullName;
     private final List<CJIRTypeParameter> typeParameters = List.of();
     private final List<CJIRTraitDeclaration> traitDeclarations = List.of();
@@ -25,7 +25,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final Map<CJIRItem, String> implicitsTypeItemMap = Map.of();
     private final List<Pair<CJIRItem, String>> implicitsTraitsList = List.of();
 
-    CJIRItem(CJAstItemDefinition ast, CJIRAnnotationProcessor annotations) {
+    CJIRItem(CJAstItemDefinition ast, CJAnnotationProcessor annotations) {
         super(ast);
         this.annotations = annotations;
         this.fullName = ast.getPackageName() + "." + ast.getShortName();

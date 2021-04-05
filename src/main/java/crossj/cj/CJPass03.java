@@ -104,7 +104,7 @@ final class CJPass03 extends CJPassBaseEx {
                 var index = fieldAst.isStatic() ? -1 : item.getFields().filter(f -> !f.isStatic()).size();
                 var type = lctx.evalTypeExpression(fieldAst.getType());
                 fieldAst.getAnnotations();
-                var annotations = CJIRAnnotationProcessor.processMember(fieldAst);
+                var annotations = CJAnnotationProcessor.processMember(fieldAst);
                 var field = new CJIRField(fieldAst, annotations, index, type);
                 if (field.isLateinit() && !field.isMutable()) {
                     throw CJError.of("lateinit fields must be mutable", field.getMark());
@@ -450,7 +450,7 @@ final class CJPass03 extends CJPassBaseEx {
 
     private void materializeMethod(CJIRItem item, CJAstMethodDefinition methodAst, boolean implPresent,
             CJIRExtraMethodInfo extra) {
-        var annotationProcessor = CJIRAnnotationProcessor.processMember(methodAst);
+        var annotationProcessor = CJAnnotationProcessor.processMember(methodAst);
         var conditions = methodAst.getConditions().map(conditionAst -> {
             var condition = new CJIRTypeCondition(conditionAst,
                     getTypeParameter(conditionAst.getVariableName(), conditionAst.getMark()));
