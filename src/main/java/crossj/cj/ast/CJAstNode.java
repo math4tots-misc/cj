@@ -5,7 +5,7 @@ import crossj.cj.CJMark;
 public abstract class CJAstNode {
     private CJMark mark;
 
-    protected CJAstNode(CJMark mark) {
+    CJAstNode(CJMark mark) {
         this.mark = mark;
     }
 

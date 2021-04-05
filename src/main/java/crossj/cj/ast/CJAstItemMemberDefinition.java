@@ -11,7 +11,7 @@ public abstract class CJAstItemMemberDefinition extends CJAstNode {
     private final List<CJIRModifier> modifiers;
     private final String name;
 
-    public CJAstItemMemberDefinition(CJMark mark, Optional<String> comment, List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers,
+    CJAstItemMemberDefinition(CJMark mark, Optional<String> comment, List<CJAstAnnotationExpression> annotations, List<CJIRModifier> modifiers,
             String name) {
         super(mark);
         this.comment = comment;

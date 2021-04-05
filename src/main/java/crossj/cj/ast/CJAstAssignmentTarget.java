@@ -3,7 +3,7 @@ package crossj.cj.ast;
 import crossj.cj.CJMark;
 
 public abstract class CJAstAssignmentTarget extends CJAstNode {
-    public CJAstAssignmentTarget(CJMark mark) {
+    CJAstAssignmentTarget(CJMark mark) {
         super(mark);
     }
 

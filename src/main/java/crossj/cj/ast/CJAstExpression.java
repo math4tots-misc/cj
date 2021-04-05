@@ -3,7 +3,7 @@ package crossj.cj.ast;
 import crossj.cj.CJMark;
 
 public abstract class CJAstExpression extends CJAstNode {
-    public CJAstExpression(CJMark mark) {
+    CJAstExpression(CJMark mark) {
         super(mark);
     }
 
