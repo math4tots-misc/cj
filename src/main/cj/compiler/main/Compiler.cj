@@ -1,8 +1,7 @@
 package compiler.main
 
-import compiler.codegen.CJCodegen
-import compiler.CJParser
-import compiler.CJIRInspector
+import compiler.CJC
+import compiler.CJS2
 import cj.FS
 import compiler.solver.CJSolver
 import cj.Argv
@@ -10,15 +9,19 @@ import cj.Argv
 class Compiler {
     def main() {
         val argv = Argv()
-        val solver = CJSolver(["main"])
+        val solver = CJS2()
+        solver.addSourceRoot("main")
+
         for itemName in argv {
-            solver.getItemDefOrNull(itemName)
+            solver.queueItem(itemName)
         }
         solver.solve()
-        val items = solver.itemMap.values().sortedBy(i -> i.name)
-        val cgen = CJCodegen()
-        val jsb = cgen.emit(items)
-        jsb.inlineSourceMap = true
-        IO.println(jsb.getSource())
+
+        val types = solver.program.typeMap.values().sortedBy(t -> t.name)
+        val cgen = CJC()
+
+        for type in types {
+            IO.println(type.name)
+        }
     }
 }
