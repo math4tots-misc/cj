@@ -1,9 +1,10 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Assert;
 import crossj.base.FS;
 import crossj.base.List;
 import crossj.base.Map;
+import crossj.cj.CJMark;
 
 public final class CJJSSink {
     private final StringBuilder src = new StringBuilder();

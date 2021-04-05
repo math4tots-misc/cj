@@ -8,7 +8,6 @@ import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Str;
 import crossj.cj.CJError;
-import crossj.cj.CJJSSink;
 import crossj.cj.CJMark;
 import crossj.cj.CJToken;
 import crossj.cj.ir.CJIRAssignment;
@@ -47,6 +46,7 @@ import crossj.cj.ir.CJIRVariableAccess;
 import crossj.cj.ir.CJIRVariableDeclaration;
 import crossj.cj.ir.CJIRWhen;
 import crossj.cj.ir.CJIRWhile;
+import crossj.cj.js.CJJSSink;
 
 final class CJJSExpressionTranslator2 {
     private final CJJSTempVarFactory varFactory;

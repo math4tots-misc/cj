@@ -1,10 +1,13 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Assert;
 import crossj.base.Func1;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Str;
+import crossj.cj.CJError;
+import crossj.cj.CJMark;
+import crossj.cj.CJToken;
 import crossj.cj.ir.CJIRAssignment;
 import crossj.cj.ir.CJIRAugAssignKind;
 import crossj.cj.ir.CJIRAugmentedAssignment;

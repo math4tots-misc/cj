@@ -1,7 +1,8 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Func1;
 import crossj.base.Optional;
+import crossj.cj.CJMark;
 
 public final class CJJSBlob {
     private final Optional<Func1<Void, CJJSSink>> prep;

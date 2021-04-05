@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Assert;
 import crossj.base.List;

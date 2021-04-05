@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Assert;
 import crossj.base.FS;
@@ -7,6 +7,9 @@ import crossj.base.List;
 import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
+import crossj.cj.CJContext;
+import crossj.cj.CJContextBase;
+import crossj.cj.CJMark;
 import crossj.cj.ir.CJIRExpression;
 import crossj.cj.ir.CJIRItem;
 import crossj.cj.ir.CJIRItemKind;

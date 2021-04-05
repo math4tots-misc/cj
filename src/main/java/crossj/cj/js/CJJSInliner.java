@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.js;
 
 import crossj.base.Optional;
 import crossj.cj.ir.CJIRJSBlob;

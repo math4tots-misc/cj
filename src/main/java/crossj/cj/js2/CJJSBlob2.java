@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 import crossj.base.Func0;
 import crossj.base.Optional;
-import crossj.cj.CJJSSink;
+import crossj.cj.js.CJJSSink;
 
 public final class CJJSBlob2 {
     private final Optional<Consumer<CJJSSink>> prep;

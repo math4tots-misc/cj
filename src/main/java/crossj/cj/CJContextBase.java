@@ -13,7 +13,7 @@ import crossj.cj.ir.meta.CJIRType;
 
 public abstract class CJContextBase {
 
-    static void walkTraits(CJIRTraitOrClassType start, Func1<Void, CJIRTrait> f) {
+    public static void walkTraits(CJIRTraitOrClassType start, Func1<Void, CJIRTrait> f) {
         var stack = start.getTraits();
         var seenTraits = Set.of(start.getItem().getFullName());
         seenTraits.addAll(stack.map(t -> t.getItem().getFullName()));
