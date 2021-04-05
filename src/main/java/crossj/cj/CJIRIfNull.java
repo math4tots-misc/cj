@@ -10,7 +10,7 @@ public final class CJIRIfNull extends CJIRExpression {
     private final CJIRExpression left;
     private final CJIRExpression right;
 
-    CJIRIfNull(CJAstExpression ast, CJIRType type, boolean mutable, CJIRAssignmentTarget target, CJIRExpression expression,
+    public CJIRIfNull(CJAstExpression ast, CJIRType type, boolean mutable, CJIRAssignmentTarget target, CJIRExpression expression,
             CJIRExpression left, CJIRExpression right) {
         super(ast, type);
         this.mutable = mutable;

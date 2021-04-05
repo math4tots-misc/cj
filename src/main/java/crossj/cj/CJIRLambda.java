@@ -9,7 +9,7 @@ public final class CJIRLambda extends CJIRExpression {
     private final List<CJIRAdHocVariableDeclaration> parameters;
     private final CJIRExpression body;
 
-    CJIRLambda(CJAstExpression ast, CJIRType type, boolean async_, List<CJIRAdHocVariableDeclaration> parameters, CJIRExpression body) {
+    public CJIRLambda(CJAstExpression ast, CJIRType type, boolean async_, List<CJIRAdHocVariableDeclaration> parameters, CJIRExpression body) {
         super(ast, type);
         this.async_ = async_;
         this.parameters = parameters;

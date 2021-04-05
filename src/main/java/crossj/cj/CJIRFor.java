@@ -8,7 +8,7 @@ public final class CJIRFor extends CJIRExpression {
     private final CJIRExpression iterator;
     private final CJIRExpression body;
 
-    CJIRFor(CJAstExpression ast, CJIRType type, CJIRAssignmentTarget target, CJIRExpression iterator,
+    public CJIRFor(CJAstExpression ast, CJIRType type, CJIRAssignmentTarget target, CJIRExpression iterator,
             CJIRExpression body) {
         super(ast, type);
         this.target = target;

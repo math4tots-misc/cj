@@ -7,7 +7,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRListDisplay extends CJIRExpression {
     private final List<CJIRExpression> expressions;
 
-    CJIRListDisplay(CJAstExpression ast, CJIRType type, List<CJIRExpression> expressions) {
+    public CJIRListDisplay(CJAstExpression ast, CJIRType type, List<CJIRExpression> expressions) {
         super(ast, type);
         this.expressions = expressions;
     }

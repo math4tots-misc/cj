@@ -11,7 +11,7 @@ public final class CJIRSwitch extends CJIRExpression {
     private final List<Pair<List<CJIRExpression>, CJIRExpression>> cases;
     private final Optional<CJIRExpression> fallback;
 
-    CJIRSwitch(CJAstExpression ast, CJIRType type, CJIRExpression target,
+    public CJIRSwitch(CJAstExpression ast, CJIRType type, CJIRExpression target,
             List<Pair<List<CJIRExpression>, CJIRExpression>> cases, Optional<CJIRExpression> fallback) {
         super(ast, type);
         this.target = target;

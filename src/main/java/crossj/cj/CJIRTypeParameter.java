@@ -8,7 +8,7 @@ public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
     private final CJAnnotationProcessor annotation;
     private final List<CJIRTrait> traits = List.of();
 
-    CJIRTypeParameter(CJAstTypeParameter ast) {
+    public CJIRTypeParameter(CJAstTypeParameter ast) {
         super(ast);
         this.annotation = CJAnnotationProcessor.processTypeParameter(ast);
     }

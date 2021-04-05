@@ -7,7 +7,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRTupleAssignmentTarget extends CJIRAssignmentTarget {
     private final List<CJIRAssignmentTarget> subtargets;
 
-    CJIRTupleAssignmentTarget(CJAstAssignmentTarget ast, List<CJIRAssignmentTarget> subtargets, CJIRType targetType) {
+    public CJIRTupleAssignmentTarget(CJAstAssignmentTarget ast, List<CJIRAssignmentTarget> subtargets, CJIRType targetType) {
         super(ast, targetType);
         this.subtargets = subtargets;
     }

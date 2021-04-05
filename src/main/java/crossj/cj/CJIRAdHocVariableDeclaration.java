@@ -8,7 +8,7 @@ public final class CJIRAdHocVariableDeclaration implements CJIRLocalVariableDecl
     private final String name;
     private final CJIRType type;
 
-    CJIRAdHocVariableDeclaration(CJMark mark, boolean mutable, String name, CJIRType type) {
+    public CJIRAdHocVariableDeclaration(CJMark mark, boolean mutable, String name, CJIRType type) {
         this.mark = mark;
         this.mutable = mutable;
         this.name = name;

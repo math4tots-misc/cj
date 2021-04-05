@@ -30,7 +30,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final Map<CJIRItem, String> implicitsTypeItemMap = Map.of();
     private final List<Pair<CJIRItem, String>> implicitsTraitsList = List.of();
 
-    CJIRItem(CJAstItemDefinition ast, CJAnnotationProcessor annotations) {
+    public CJIRItem(CJAstItemDefinition ast, CJAnnotationProcessor annotations) {
         super(ast);
         this.annotations = annotations;
         this.fullName = ast.getPackageName() + "." + ast.getShortName();

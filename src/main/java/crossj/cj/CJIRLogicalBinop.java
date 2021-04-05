@@ -8,7 +8,7 @@ public final class CJIRLogicalBinop extends CJIRExpression {
     private final CJIRExpression left;
     private final CJIRExpression right;
 
-    CJIRLogicalBinop(CJAstExpression ast, CJIRType type, boolean andType, CJIRExpression left,
+    public CJIRLogicalBinop(CJAstExpression ast, CJIRType type, boolean andType, CJIRExpression left,
             CJIRExpression right) {
         super(ast, type);
         this.andType = andType;

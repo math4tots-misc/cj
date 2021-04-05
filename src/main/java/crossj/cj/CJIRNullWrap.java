@@ -7,7 +7,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRNullWrap extends CJIRExpression {
     private final Optional<CJIRExpression> inner;
 
-    CJIRNullWrap(CJAstExpression ast, CJIRType type, Optional<CJIRExpression> inner) {
+    public CJIRNullWrap(CJAstExpression ast, CJIRType type, Optional<CJIRExpression> inner) {
         super(ast, type);
         this.inner = inner;
     }

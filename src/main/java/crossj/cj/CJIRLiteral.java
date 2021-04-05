@@ -7,7 +7,7 @@ public final class CJIRLiteral extends CJIRExpression {
     private final CJIRLiteralKind kind;
     private final String rawText;
 
-    CJIRLiteral(CJAstExpression ast, CJIRType type, CJIRLiteralKind kind, String rawText) {
+    public CJIRLiteral(CJAstExpression ast, CJIRType type, CJIRLiteralKind kind, String rawText) {
         super(ast, type);
         this.kind = kind;
         this.rawText = rawText;

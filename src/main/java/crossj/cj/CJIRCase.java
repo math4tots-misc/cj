@@ -8,7 +8,7 @@ public final class CJIRCase extends CJIRItemMember<CJAstCaseDefinition> {
     private final int tag;
     private final List<CJIRType> types;
 
-    CJIRCase(CJAstCaseDefinition ast, int tag, List<CJIRType> types) {
+    public CJIRCase(CJAstCaseDefinition ast, int tag, List<CJIRType> types) {
         super(ast);
         this.tag = tag;
         this.types = types;

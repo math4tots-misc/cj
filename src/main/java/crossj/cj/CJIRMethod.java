@@ -20,7 +20,7 @@ public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
     private final Map<String, CJIRTypeParameter> typeParameterMap = Map.of();
     private Optional<CJIRExpression> body = Optional.empty();
 
-    CJIRMethod(CJAstMethodDefinition ast, List<CJIRTypeCondition> conditions, List<CJIRTypeParameter> typeParameters,
+    public CJIRMethod(CJAstMethodDefinition ast, List<CJIRTypeCondition> conditions, List<CJIRTypeParameter> typeParameters,
             boolean implPresent, CJAnnotationProcessor annotation, CJIRExtraMethodInfo extra) {
         super(ast);
         this.conditions = conditions;

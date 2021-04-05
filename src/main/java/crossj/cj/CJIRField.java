@@ -10,7 +10,7 @@ public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
     private final CJIRType type;
     private Optional<CJIRExpression> expression = Optional.empty();
 
-    CJIRField(CJAstFieldDefinition ast, CJAnnotationProcessor annotations, int index, CJIRType type) {
+    public CJIRField(CJAstFieldDefinition ast, CJAnnotationProcessor annotations, int index, CJIRType type) {
         super(ast);
         this.annotations = annotations;
         this.index = index;

@@ -7,7 +7,7 @@ public final class CJIRAssignment extends CJIRExpression {
     private final String variableName;
     private final CJIRExpression expression;
 
-    CJIRAssignment(CJAstExpression ast, CJIRType type, String variableName, CJIRExpression expression) {
+    public CJIRAssignment(CJAstExpression ast, CJIRType type, String variableName, CJIRExpression expression) {
         super(ast, type);
         this.variableName = variableName;
         this.expression = expression;

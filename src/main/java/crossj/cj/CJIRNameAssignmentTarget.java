@@ -7,7 +7,7 @@ public final class CJIRNameAssignmentTarget extends CJIRAssignmentTarget impleme
     private final boolean mutable;
     private final String name;
 
-    CJIRNameAssignmentTarget(CJAstAssignmentTarget ast, boolean mutable, String name, CJIRType variableType) {
+    public CJIRNameAssignmentTarget(CJAstAssignmentTarget ast, boolean mutable, String name, CJIRType variableType) {
         super(ast, variableType);
         this.mutable = mutable;
         this.name = name;

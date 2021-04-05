@@ -4,7 +4,7 @@ public final class CJIRFieldMethodInfo extends CJIRExtraMethodInfo {
     private final CJIRField field;
     private final String kind;
 
-    CJIRFieldMethodInfo(CJIRField field, String kind) {
+    public CJIRFieldMethodInfo(CJIRField field, String kind) {
         this.field = field;
         this.kind = kind;
     }

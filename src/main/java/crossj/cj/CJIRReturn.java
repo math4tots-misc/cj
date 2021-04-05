@@ -6,7 +6,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRReturn extends CJIRExpression {
     private final CJIRExpression expression;
 
-    CJIRReturn(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
+    public CJIRReturn(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
         super(ast, type);
         this.expression = expression;
     }

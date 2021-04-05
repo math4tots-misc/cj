@@ -12,7 +12,7 @@ public final class CJIRTraitDeclaration extends CJIRNode<CJAstTraitDeclaration> 
     private final CJIRTrait trait;
     private final List<CJIRTypeCondition> conditions = List.of();
 
-    CJIRTraitDeclaration(CJAstTraitDeclaration ast, CJIRTrait trait) {
+    public CJIRTraitDeclaration(CJAstTraitDeclaration ast, CJIRTrait trait) {
         super(ast);
         this.trait = trait;
     }

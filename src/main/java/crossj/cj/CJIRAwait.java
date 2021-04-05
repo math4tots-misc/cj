@@ -6,7 +6,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRAwait extends CJIRExpression {
     private final CJIRExpression inner;
 
-    CJIRAwait(CJAstExpression ast, CJIRType type, CJIRExpression inner) {
+    public CJIRAwait(CJAstExpression ast, CJIRType type, CJIRExpression inner) {
         super(ast, type);
         this.inner = inner;
     }

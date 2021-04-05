@@ -11,7 +11,7 @@ public final class CJIRTry extends CJIRExpression {
     private final List<Tuple3<CJIRAssignmentTarget, CJIRType, CJIRExpression>> clauses;
     private final Optional<CJIRExpression> fin;
 
-    CJIRTry(CJAstExpression ast, CJIRType type, CJIRExpression body,
+    public CJIRTry(CJAstExpression ast, CJIRType type, CJIRExpression body,
             List<Tuple3<CJIRAssignmentTarget, CJIRType, CJIRExpression>> clauses, Optional<CJIRExpression> fin) {
         super(ast, type);
         this.body = body;

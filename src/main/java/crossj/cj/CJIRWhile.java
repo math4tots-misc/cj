@@ -7,7 +7,7 @@ public final class CJIRWhile extends CJIRExpression {
     private final CJIRExpression condition;
     private final CJIRExpression body;
 
-    CJIRWhile(CJAstExpression ast, CJIRType type, CJIRExpression condition, CJIRExpression body) {
+    public CJIRWhile(CJAstExpression ast, CJIRType type, CJIRExpression condition, CJIRExpression body) {
         super(ast, type);
         this.condition = condition;
         this.body = body;

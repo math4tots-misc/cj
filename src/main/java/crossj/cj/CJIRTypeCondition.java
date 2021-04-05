@@ -8,7 +8,7 @@ public final class CJIRTypeCondition extends CJIRNode<CJAstTypeCondition> {
     private final CJIRTypeParameter typeParameter;
     private final List<CJIRTrait> traits = List.of();
 
-    CJIRTypeCondition(CJAstTypeCondition ast, CJIRTypeParameter typeParameter) {
+    public CJIRTypeCondition(CJAstTypeCondition ast, CJIRTypeParameter typeParameter) {
         super(ast);
         this.typeParameter = typeParameter;
     }

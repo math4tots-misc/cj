@@ -11,7 +11,7 @@ public final class CJIRWhen extends CJIRExpression {
     private final List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases;
     private final Optional<CJIRExpression> fallback;
 
-    CJIRWhen(CJAstExpression ast, CJIRType type, CJIRExpression target,
+    public CJIRWhen(CJAstExpression ast, CJIRType type, CJIRExpression target,
             List<Tuple5<CJMark, CJIRCase, List<CJIRAdHocVariableDeclaration>, Boolean, CJIRExpression>> cases,
             Optional<CJIRExpression> fallback) {
         super(ast, type);

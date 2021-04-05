@@ -6,7 +6,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRThrow extends CJIRExpression {
     private final CJIRExpression expression;
 
-    CJIRThrow(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
+    public CJIRThrow(CJAstExpression ast, CJIRType type, CJIRExpression expression) {
         super(ast, type);
         this.expression = expression;
     }

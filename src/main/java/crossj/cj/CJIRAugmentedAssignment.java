@@ -8,7 +8,7 @@ public final class CJIRAugmentedAssignment extends CJIRExpression {
     private final CJIRAugAssignKind kind;
     private final CJIRExpression expression;
 
-    CJIRAugmentedAssignment(CJAstExpression ast, CJIRType type, CJIRLocalVariableDeclaration target,
+    public CJIRAugmentedAssignment(CJAstExpression ast, CJIRType type, CJIRLocalVariableDeclaration target,
             CJIRAugAssignKind kind, CJIRExpression expression) {
         super(ast, type);
         this.target = target;

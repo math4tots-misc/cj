@@ -6,7 +6,7 @@ import crossj.cj.ir.meta.CJIRType;
 public final class CJIRLogicalNot extends CJIRExpression {
     private final CJIRExpression inner;
 
-    CJIRLogicalNot(CJAstExpression ast, CJIRType type, CJIRExpression inner) {
+    public CJIRLogicalNot(CJAstExpression ast, CJIRType type, CJIRExpression inner) {
         super(ast, type);
         this.inner = inner;
     }

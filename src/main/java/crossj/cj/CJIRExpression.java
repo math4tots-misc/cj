@@ -6,7 +6,7 @@ import crossj.cj.ir.meta.CJIRType;
 public abstract class CJIRExpression extends CJIRNode<CJAstExpression> {
     private final CJIRType type;
 
-    CJIRExpression(CJAstExpression ast, CJIRType type) {
+    protected CJIRExpression(CJAstExpression ast, CJIRType type) {
         super(ast);
         this.type = type;
     }

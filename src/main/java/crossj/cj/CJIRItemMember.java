@@ -4,7 +4,7 @@ import crossj.base.List;
 import crossj.cj.ast.CJAstItemMemberDefinition;
 
 public abstract class CJIRItemMember<N extends CJAstItemMemberDefinition> extends CJIRNode<N> {
-    CJIRItemMember(N ast) {
+    protected CJIRItemMember(N ast) {
         super(ast);
     }
 

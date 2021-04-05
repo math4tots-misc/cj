@@ -8,7 +8,7 @@ public final class CJIRIf extends CJIRExpression {
     private final CJIRExpression left;
     private final CJIRExpression right;
 
-    CJIRIf(CJAstExpression ast, CJIRType type, CJIRExpression condition, CJIRExpression left, CJIRExpression right) {
+    public CJIRIf(CJAstExpression ast, CJIRType type, CJIRExpression condition, CJIRExpression left, CJIRExpression right) {
         super(ast, type);
         this.condition = condition;
         this.left = left;

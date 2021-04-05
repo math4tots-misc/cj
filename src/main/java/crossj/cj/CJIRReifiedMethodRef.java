@@ -13,7 +13,7 @@ public final class CJIRReifiedMethodRef {
     private final List<CJIRType> typeArgs;
     private final CJIRBinding binding;
 
-    CJIRReifiedMethodRef(CJIRMethodRef methodRef, List<CJIRType> typeArgs, CJIRBinding binding) {
+    public CJIRReifiedMethodRef(CJIRMethodRef methodRef, List<CJIRType> typeArgs, CJIRBinding binding) {
         Assert.equals(methodRef.getMethod().getTypeParameters().size(), typeArgs.size());
         this.methodRef = methodRef;
         this.typeArgs = typeArgs;

@@ -8,7 +8,7 @@ public final class CJIRVariableDeclaration extends CJIRExpression {
     private final CJIRAssignmentTarget target;
     private final CJIRExpression expression;
 
-    CJIRVariableDeclaration(CJAstExpression ast, CJIRType type, boolean mutable, CJIRAssignmentTarget target,
+    public CJIRVariableDeclaration(CJAstExpression ast, CJIRType type, boolean mutable, CJIRAssignmentTarget target,
             CJIRExpression expression) {
         super(ast, type);
         this.mutable = mutable;

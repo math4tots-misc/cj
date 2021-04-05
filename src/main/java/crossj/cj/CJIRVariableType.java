@@ -9,7 +9,7 @@ public final class CJIRVariableType implements CJIRType {
     private final CJIRTypeParameter declaration;
     private final List<CJIRTrait> additionalTraits;
 
-    CJIRVariableType(CJIRTypeParameter declaration, List<CJIRTrait> additionalTraits) {
+    public CJIRVariableType(CJIRTypeParameter declaration, List<CJIRTrait> additionalTraits) {
         this.declaration = declaration;
         this.additionalTraits = additionalTraits;
     }
