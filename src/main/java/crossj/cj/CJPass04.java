@@ -46,6 +46,8 @@ import crossj.cj.ast.CJAstVariableAccess;
 import crossj.cj.ast.CJAstVariableDeclaration;
 import crossj.cj.ast.CJAstWhen;
 import crossj.cj.ast.CJAstWhile;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 /**
  * Pass 4

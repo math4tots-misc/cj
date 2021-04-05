@@ -2,6 +2,8 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.List;
+import crossj.cj.ir.meta.CJIRTraitOrClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 /**
  * CJIRMethod together with the CJIRTraitOrClassType that contains the method's
@@ -12,7 +14,7 @@ public final class CJIRMethodRef {
     private final CJIRMethod method;
     private boolean allConditionsCache = false;
 
-    CJIRMethodRef(CJIRTraitOrClassType owner, CJIRMethod method) {
+    public CJIRMethodRef(CJIRTraitOrClassType owner, CJIRMethod method) {
         this.owner = owner;
         this.method = method;
     }

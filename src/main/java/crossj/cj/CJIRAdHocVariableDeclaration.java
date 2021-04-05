@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ir.meta.CJIRType;
+
 public final class CJIRAdHocVariableDeclaration implements CJIRLocalVariableDeclaration {
     private final CJMark mark;
     private final boolean mutable;

@@ -1,7 +1,13 @@
-package crossj.cj;
+package crossj.cj.ir.meta;
 
 import crossj.base.List;
 import crossj.base.Repr;
+import crossj.cj.CJError;
+import crossj.cj.CJIRBinding;
+import crossj.cj.CJIRItem;
+import crossj.cj.CJIRMethodRef;
+import crossj.cj.CJIRTypeVisitor;
+import crossj.cj.CJMark;
 
 public interface CJIRType {
 

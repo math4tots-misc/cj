@@ -2,6 +2,8 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.base.Pair;
+import crossj.cj.ir.meta.CJIRTrait;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRVariableType implements CJIRType {
     private final CJIRTypeParameter declaration;

@@ -6,6 +6,8 @@ import crossj.base.Map;
 import crossj.base.Optional;
 import crossj.base.annotations.Nullable;
 import crossj.cj.ast.CJAstMethodDefinition;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRMethod extends CJIRItemMember<CJAstMethodDefinition> {
     private final List<CJIRTypeCondition> conditions;

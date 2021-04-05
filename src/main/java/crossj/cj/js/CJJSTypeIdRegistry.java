@@ -2,7 +2,7 @@ package crossj.cj.js;
 
 import crossj.base.List;
 import crossj.base.Map;
-import crossj.cj.CJIRType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJJSTypeIdRegistry {
     private final List<CJIRType> typeById = List.of();

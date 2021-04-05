@@ -1,11 +1,13 @@
-package crossj.cj;
+package crossj.cj.ir.meta;
 
 import crossj.base.List;
+import crossj.cj.CJIRMethodRef;
+import crossj.cj.CJIRTypeVisitor;
 
 public final class CJIRSelfType implements CJIRType {
     private final CJIRTrait selfTrait;
 
-    CJIRSelfType(CJIRTrait selfTrait) {
+    public CJIRSelfType(CJIRTrait selfTrait) {
         this.selfTrait = selfTrait;
     }
 

@@ -4,6 +4,9 @@ import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.cj.ast.CJAstTypeParameter;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRSelfType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRBinding {
     private final CJIRType selfType;
@@ -46,7 +49,7 @@ public final class CJIRBinding {
      * @param marks
      * @return
      */
-    CJIRType apply(CJIRType type, CJMark... marks) {
+    public CJIRType apply(CJIRType type, CJMark... marks) {
         return type.accept(new CJIRTypeVisitor<CJIRType, Void>() {
 
             @Override

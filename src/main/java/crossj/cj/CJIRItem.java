@@ -5,6 +5,11 @@ import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
 import crossj.cj.ast.CJAstItemDefinition;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRSelfType;
+import crossj.cj.ir.meta.CJIRTrait;
+import crossj.cj.ir.meta.CJIRTraitOrClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean deriveEq;

@@ -2,6 +2,8 @@ package crossj.cj;
 
 import crossj.base.Optional;
 import crossj.cj.ast.CJAstExpression;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRIsSet extends CJIRExpression {
     private final CJIRClassType ownerType;

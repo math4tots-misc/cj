@@ -7,6 +7,7 @@ import crossj.base.List;
 import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
+import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.run.CJRunMode;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;

@@ -9,6 +9,9 @@ import crossj.base.Repr;
 import crossj.base.Set;
 import crossj.base.Str;
 import crossj.cj.ast.CJAstItemDefinition;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRTrait;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJContext extends CJContextBase {
 

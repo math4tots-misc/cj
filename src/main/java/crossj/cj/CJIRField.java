@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.Optional;
 import crossj.cj.ast.CJAstFieldDefinition;
+import crossj.cj.ir.meta.CJIRType;
 
 public class CJIRField extends CJIRItemMember<CJAstFieldDefinition> {
     private final CJAnnotationProcessor annotations;

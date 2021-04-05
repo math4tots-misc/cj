@@ -1,6 +1,9 @@
-package crossj.cj;
+package crossj.cj.ir.meta;
 
 import crossj.base.List;
+import crossj.cj.CJIRBinding;
+import crossj.cj.CJIRItem;
+import crossj.cj.CJIRMethodRef;
 
 public abstract class CJIRTraitOrClassType {
     private CJIRBinding binding = null;
@@ -20,7 +23,7 @@ public abstract class CJIRTraitOrClassType {
         return args;
     }
 
-    CJIRBinding getBinding() {
+    public CJIRBinding getBinding() {
         if (binding == null) {
             binding = getItem().getBinding(getArgs());
         }

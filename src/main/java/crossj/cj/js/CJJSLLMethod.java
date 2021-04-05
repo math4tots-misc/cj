@@ -1,7 +1,7 @@
 package crossj.cj.js;
 
-import crossj.cj.CJIRClassType;
 import crossj.cj.CJIRMethod;
+import crossj.cj.ir.meta.CJIRClassType;
 
 /**
  * A CJIRMethod together with a type-binding and its reified owner.

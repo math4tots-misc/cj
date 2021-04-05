@@ -1,6 +1,10 @@
-package crossj.cj;
+package crossj.cj.ir.meta;
 
 import crossj.base.List;
+import crossj.cj.CJIRItem;
+import crossj.cj.CJIRItemKind;
+import crossj.cj.CJIRMethodRef;
+import crossj.cj.CJIRTypeVisitor;
 
 public final class CJIRClassType extends CJIRTraitOrClassType implements CJIRType {
     public CJIRClassType(CJIRItem item, List<CJIRType> args) {

@@ -3,6 +3,10 @@ package crossj.cj;
 import crossj.base.Func1;
 import crossj.base.List;
 import crossj.base.Set;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRTrait;
+import crossj.cj.ir.meta.CJIRTraitOrClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 public abstract class CJContextBase {
 

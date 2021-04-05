@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.cj.ast.CJAstExpression;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRLambda extends CJIRExpression {
     private final boolean async_;

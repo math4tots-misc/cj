@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.cj.ast.CJAstTypeParameter;
+import crossj.cj.ir.meta.CJIRTrait;
 
 public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
     private final CJAnnotationProcessor annotation;

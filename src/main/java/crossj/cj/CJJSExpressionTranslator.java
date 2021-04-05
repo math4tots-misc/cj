@@ -5,6 +5,8 @@ import crossj.base.Func1;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Str;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
     CJJSExpressionTranslator(CJJSContext ctx, CJIRItem item, CJIRClassType selfType) {

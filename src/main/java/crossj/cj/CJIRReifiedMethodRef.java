@@ -2,6 +2,8 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.List;
+import crossj.cj.ir.meta.CJIRTraitOrClassType;
+import crossj.cj.ir.meta.CJIRType;
 
 /**
  * CJIRMethodRef together with its type arguments

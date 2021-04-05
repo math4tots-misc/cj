@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.cj.ast.CJAstParameter;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRParameter extends CJIRNode<CJAstParameter> implements CJIRLocalVariableDeclaration {
     private final CJIRType type;

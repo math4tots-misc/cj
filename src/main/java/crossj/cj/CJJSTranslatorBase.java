@@ -3,6 +3,9 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Str;
+import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRSelfType;
+import crossj.cj.ir.meta.CJIRType;
 
 public abstract class CJJSTranslatorBase {
     final CJJSContext ctx;

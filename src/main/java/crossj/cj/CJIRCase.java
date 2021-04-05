@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.cj.ast.CJAstCaseDefinition;
+import crossj.cj.ir.meta.CJIRType;
 
 public final class CJIRCase extends CJIRItemMember<CJAstCaseDefinition> {
     private final int tag;

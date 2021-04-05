@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.List;
 import crossj.cj.ast.CJAstTraitDeclaration;
+import crossj.cj.ir.meta.CJIRTrait;
 
 /**
  * Indicates that the current item implements the given trait if the given type
