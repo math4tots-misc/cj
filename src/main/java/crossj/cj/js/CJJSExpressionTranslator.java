@@ -99,6 +99,15 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
 
             @Override
             public CJJSBlob visitMethodCall(CJIRMethodCall e, Void a) {
+
+                // Try to inline this method call, and if successful, return
+                // the inlined result.
+                var inliner = new CJJSInliner(CJJSExpressionTranslator.this);
+                var optInlinedBlob = inliner.tryInline(e);
+                if (optInlinedBlob.isPresent()) {
+                    return optInlinedBlob.get();
+                }
+
                 var typeArgs = e.getMethodRef().isGeneric() ? e.getTypeArgs().map(i -> "null")
                         : translateTypeArgs(e.getMethodRef().getMethod().getTypeParameters(), e.getTypeArgs());
                 var args0 = e.getArgs().map(CJJSExpressionTranslator.this::translateExpression);
@@ -942,22 +951,7 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
 
             @Override
             public CJJSBlob visitJSBlob(CJIRJSBlob e, Void a) {
-                var parts = e.getParts().map(p -> (p instanceof String) ? p : translateExpression((CJIRExpression) p));
-                var blobs0 = parts.filter(p -> p instanceof CJJSBlob).map(p -> (CJJSBlob) p);
-                var blobs = blobs0.all(b -> b.isSimple()) ? blobs0 : blobs0.map(b -> b.toPure(ctx));
-                var prep = joinPreps(blobs.map(b -> b.getPrep()));
-                return new CJJSBlob(prep, out -> {
-                    out.append("(");
-                    for (var part : parts) {
-                        if (part instanceof String) {
-                            out.append((String) part);
-                        } else {
-                            ((CJJSBlob) part).emitMain(out);
-                        }
-                    }
-                    out.append(")");
-                    return null;
-                }, false);
+                return translateBlob(e);
             }
 
             @Override
@@ -990,5 +984,24 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             }
             return null;
         });
+    }
+
+    CJJSBlob translateBlob(CJIRJSBlob e) {
+        var parts = e.getParts().map(p -> (p instanceof String) ? p : translateExpression((CJIRExpression) p));
+        var blobs0 = parts.filter(p -> p instanceof CJJSBlob).map(p -> (CJJSBlob) p);
+        var blobs = blobs0.all(b -> b.isSimple()) ? blobs0 : blobs0.map(b -> b.toPure(ctx));
+        var prep = joinPreps(blobs.map(b -> b.getPrep()));
+        return new CJJSBlob(prep, out -> {
+            out.append("(");
+            for (var part : parts) {
+                if (part instanceof String) {
+                    out.append((String) part);
+                } else {
+                    ((CJJSBlob) part).emitMain(out);
+                }
+            }
+            out.append(")");
+            return null;
+        }, false);
     }
 }
