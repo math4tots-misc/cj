@@ -1,6 +1,5 @@
 package crossj.cj.js;
 
-import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.cj.ir.CJIRJSBlob;
