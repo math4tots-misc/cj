@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.run;
 
 import crossj.json.JSON;
 

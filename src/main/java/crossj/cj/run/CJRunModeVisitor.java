@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.run;
 
 public abstract class CJRunModeVisitor<R, A> {
     public abstract R visitMain(CJRunModeMain m, A a);

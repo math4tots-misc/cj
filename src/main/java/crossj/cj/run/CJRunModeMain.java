@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.run;
 
 public final class CJRunModeMain extends CJRunMode {
     private final String mainClass;

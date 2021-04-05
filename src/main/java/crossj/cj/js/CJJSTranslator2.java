@@ -18,16 +18,16 @@ import crossj.cj.CJIRFieldMethodInfo;
 import crossj.cj.CJIRItem;
 import crossj.cj.CJIRLiteral;
 import crossj.cj.CJIRNullWrap;
-import crossj.cj.CJRunMode;
-import crossj.cj.CJRunModeMain;
-import crossj.cj.CJRunModeNW;
-import crossj.cj.CJRunModeTest;
-import crossj.cj.CJRunModeVisitor;
-import crossj.cj.CJRunModeWWW;
 import crossj.cj.CJIRType;
 import crossj.cj.CJJSSink;
 import crossj.cj.CJMark;
 import crossj.cj.CJToken;
+import crossj.cj.run.CJRunMode;
+import crossj.cj.run.CJRunModeMain;
+import crossj.cj.run.CJRunModeNW;
+import crossj.cj.run.CJRunModeTest;
+import crossj.cj.run.CJRunModeVisitor;
+import crossj.cj.run.CJRunModeWWW;
 
 public final class CJJSTranslator2 {
     private static final String jsroot = FS.join("src", "main", "resources", "js2");

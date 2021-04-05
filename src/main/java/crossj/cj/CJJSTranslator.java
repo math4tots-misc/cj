@@ -7,6 +7,13 @@ import crossj.base.List;
 import crossj.base.Range;
 import crossj.base.Set;
 import crossj.base.Str;
+import crossj.cj.run.CJRunMode;
+import crossj.cj.run.CJRunModeMain;
+import crossj.cj.run.CJRunModeNW;
+import crossj.cj.run.CJRunModeTest;
+import crossj.cj.run.CJRunModeVisitor;
+import crossj.cj.run.CJRunModeWWW;
+import crossj.cj.run.CJRunModeWWWBase;
 
 public final class CJJSTranslator extends CJJSTranslatorBase {
     private static final String jsroot = FS.join("src", "main", "resources", "js");

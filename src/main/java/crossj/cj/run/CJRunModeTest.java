@@ -1,4 +1,4 @@
-package crossj.cj;
+package crossj.cj.run;
 
 public final class CJRunModeTest extends CJRunMode {
     private final boolean runSlowTests;
