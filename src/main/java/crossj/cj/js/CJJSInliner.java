@@ -1,11 +1,13 @@
 package crossj.cj.js;
 
+import crossj.base.IO;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.cj.ir.CJIRJSBlob;
 import crossj.cj.ir.CJIRLiteral;
 import crossj.cj.ir.CJIRMethodCall;
 import crossj.cj.ir.CJIRVariableAccess;
+import crossj.cj.ir.meta.CJIRClassType;
 
 final class CJJSInliner {
 
@@ -33,6 +35,9 @@ final class CJJSInliner {
             return Optional.empty();
         }
         if (args.size() != params.size()) {
+            return Optional.empty();
+        }
+        if (!(methodCall.getOwner() instanceof CJIRClassType)) {
             return Optional.empty();
         }
         if (params.size() == 0 && method.getBody().get() instanceof CJIRLiteral) {
