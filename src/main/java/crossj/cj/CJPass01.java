@@ -1,5 +1,8 @@
 package crossj.cj;
 
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRTypeParameter;
+
 /**
  * Pass 1
  *

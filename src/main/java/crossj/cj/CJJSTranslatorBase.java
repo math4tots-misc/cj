@@ -3,9 +3,17 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Str;
+import crossj.cj.ir.CJIRAssignmentTarget;
+import crossj.cj.ir.CJIRAssignmentTargetVisitor;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRNameAssignmentTarget;
+import crossj.cj.ir.CJIRTupleAssignmentTarget;
+import crossj.cj.ir.CJIRTypeParameter;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRSelfType;
 import crossj.cj.ir.meta.CJIRType;
+import crossj.cj.ir.meta.CJIRTypeVisitor;
+import crossj.cj.ir.meta.CJIRVariableType;
 
 public abstract class CJJSTranslatorBase {
     final CJJSContext ctx;

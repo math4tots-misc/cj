@@ -2,8 +2,8 @@ package crossj.cj.ast;
 
 import crossj.base.List;
 import crossj.base.Optional;
-import crossj.cj.CJIRModifier;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRModifier;
 
 public abstract class CJAstItemMemberDefinition extends CJAstNode {
     private final Optional<String> comment;

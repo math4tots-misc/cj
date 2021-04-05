@@ -7,9 +7,9 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
-import crossj.cj.CJIRMethodCall;
-import crossj.cj.CJIRReifiedMethodRef;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRMethodCall;
+import crossj.cj.ir.CJIRReifiedMethodRef;
 import crossj.cj.ir.meta.CJIRClassType;
 
 public final class CJJSOps {

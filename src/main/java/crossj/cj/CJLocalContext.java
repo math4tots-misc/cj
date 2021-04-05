@@ -6,10 +6,13 @@ import crossj.base.Optional;
 import crossj.base.Repr;
 import crossj.cj.ast.CJAstTraitExpression;
 import crossj.cj.ast.CJAstTypeExpression;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRMethod;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRSelfType;
 import crossj.cj.ir.meta.CJIRTrait;
 import crossj.cj.ir.meta.CJIRType;
+import crossj.cj.ir.meta.CJIRVariableType;
 
 public final class CJLocalContext extends CJContextBase {
     private final CJContext global;

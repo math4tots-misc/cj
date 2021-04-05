@@ -9,13 +9,14 @@ import crossj.base.Repr;
 import crossj.base.Set;
 import crossj.base.Str;
 import crossj.cj.ast.CJAstItemDefinition;
+import crossj.cj.ir.CJIRItem;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRTrait;
 import crossj.cj.ir.meta.CJIRType;
 
 public final class CJContext extends CJContextBase {
 
-    static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
+    public static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
             "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.BigInt", "cj.Repr", "cj.ToBool",
             "cj.ToChar", "cj.ToInt", "cj.ToDouble", "cj.ToString", "cj.ToList", "cj.List", "cj.Map", "cj.MapOf",
             "cj.Set", "cj.SetOf", "cj.Assert", "cj.IO", "cj.Iterable", "cj.Iterator", "cj.Promise", "cj.Eq", "cj.Ord",
@@ -28,7 +29,7 @@ public final class CJContext extends CJContextBase {
      * These names cannot be used as type names, unless their full name corresponds
      * to one of the exceptions explicitly listed
      */
-    static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Any", List.of("cj.Any")),
+    public static final Map<String, List<String>> specialTypeNameMap = Map.of(Pair.of("Any", List.of("cj.Any")),
             Pair.of("Unit", List.of("cj.Unit")), Pair.of("Nullable", List.of("cj.Nullable")),
             Pair.of("NonNull", List.of("cj.NonNull")), Pair.of("List", List.of("cj.List")),
             Pair.of("Map", List.of("cj.Map")), Pair.of("MapOf", List.of("cj.MapOf")), Pair.of("Set", List.of("cj.Set")),

@@ -1,9 +1,9 @@
 package crossj.cj.ir.meta;
 
 import crossj.base.List;
-import crossj.cj.CJIRBinding;
-import crossj.cj.CJIRItem;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRBinding;
+import crossj.cj.ir.CJIRItem;
 
 public final class CJIRTrait extends CJIRTraitOrClassType {
     public CJIRTrait(CJIRItem item, List<CJIRType> args) {

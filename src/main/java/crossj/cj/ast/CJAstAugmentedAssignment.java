@@ -1,7 +1,7 @@
 package crossj.cj.ast;
 
-import crossj.cj.CJIRAugAssignKind;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRAugAssignKind;
 
 public final class CJAstAugmentedAssignment extends CJAstExpression {
     private final String target;

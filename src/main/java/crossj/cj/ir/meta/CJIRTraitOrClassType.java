@@ -1,9 +1,9 @@
 package crossj.cj.ir.meta;
 
 import crossj.base.List;
-import crossj.cj.CJIRBinding;
-import crossj.cj.CJIRItem;
-import crossj.cj.CJIRMethodRef;
+import crossj.cj.ir.CJIRBinding;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRMethodRef;
 
 public abstract class CJIRTraitOrClassType {
     private CJIRBinding binding = null;

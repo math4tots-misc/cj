@@ -3,8 +3,8 @@ package crossj.cj.ast;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
-import crossj.cj.CJIRModifier;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRModifier;
 
 public final class CJAstFieldDefinition extends CJAstItemMemberDefinition {
     private final boolean mutable;

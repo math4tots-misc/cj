@@ -3,11 +3,10 @@ package crossj.cj.ir.meta;
 import crossj.base.List;
 import crossj.base.Repr;
 import crossj.cj.CJError;
-import crossj.cj.CJIRBinding;
-import crossj.cj.CJIRItem;
-import crossj.cj.CJIRMethodRef;
-import crossj.cj.CJIRTypeVisitor;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRBinding;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRMethodRef;
 
 public interface CJIRType {
 

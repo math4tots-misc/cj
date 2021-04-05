@@ -4,12 +4,12 @@ import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Str;
 import crossj.cj.CJError;
-import crossj.cj.CJIRReifiedMethodRef;
-import crossj.cj.CJIRTypeVisitor;
-import crossj.cj.CJIRVariableType;
+import crossj.cj.ir.CJIRReifiedMethodRef;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRSelfType;
 import crossj.cj.ir.meta.CJIRType;
+import crossj.cj.ir.meta.CJIRTypeVisitor;
+import crossj.cj.ir.meta.CJIRVariableType;
 
 final class CJJSTypeBinding {
     private final CJIRClassType selfType;

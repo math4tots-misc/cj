@@ -1,7 +1,7 @@
 package crossj.cj.ast;
 
-import crossj.cj.CJIRLiteralKind;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRLiteralKind;
 
 public final class CJAstLiteral extends CJAstExpression {
     private final CJIRLiteralKind kind;

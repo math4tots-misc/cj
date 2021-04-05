@@ -4,6 +4,9 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.cj.ast.CJAstTraitExpression;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRMethod;
+import crossj.cj.ir.CJIRTypeParameter;
 
 abstract class CJPassBase {
     protected final CJContext ctx;

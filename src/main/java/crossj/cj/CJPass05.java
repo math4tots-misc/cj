@@ -6,10 +6,16 @@ import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Str;
 import crossj.cj.ast.CJAstTypeParameter;
+import crossj.cj.ir.CJIRBinding;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRMethodRef;
+import crossj.cj.ir.CJIRTypeParameter;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRSelfType;
 import crossj.cj.ir.meta.CJIRTraitOrClassType;
 import crossj.cj.ir.meta.CJIRType;
+import crossj.cj.ir.meta.CJIRTypeVisitor;
+import crossj.cj.ir.meta.CJIRVariableType;
 
 /**
  * Pass 5

@@ -23,6 +23,19 @@ import crossj.cj.ast.CJAstTraitExpression;
 import crossj.cj.ast.CJAstTypeExpression;
 import crossj.cj.ast.CJAstVariableAccess;
 import crossj.cj.ast.CJAstWhen;
+import crossj.cj.ir.CJIRCase;
+import crossj.cj.ir.CJIRCaseMethodInfo;
+import crossj.cj.ir.CJIRExtraMethodInfo;
+import crossj.cj.ir.CJIRField;
+import crossj.cj.ir.CJIRFieldMethodInfo;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRItemKind;
+import crossj.cj.ir.CJIRLiteralKind;
+import crossj.cj.ir.CJIRMethod;
+import crossj.cj.ir.CJIRModifier;
+import crossj.cj.ir.CJIRParameter;
+import crossj.cj.ir.CJIRTypeCondition;
+import crossj.cj.ir.CJIRTypeParameter;
 
 /**
  * Pass 3

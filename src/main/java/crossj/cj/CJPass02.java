@@ -3,6 +3,10 @@ package crossj.cj;
 import crossj.base.List;
 import crossj.cj.ast.CJAstTraitDeclaration;
 import crossj.cj.ast.CJAstTraitExpression;
+import crossj.cj.ir.CJIRItem;
+import crossj.cj.ir.CJIRTraitDeclaration;
+import crossj.cj.ir.CJIRTypeCondition;
+import crossj.cj.ir.CJIRTypeParameter;
 
 /**
  * Pass 2

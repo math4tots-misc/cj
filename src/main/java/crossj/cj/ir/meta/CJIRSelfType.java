@@ -1,8 +1,7 @@
 package crossj.cj.ir.meta;
 
 import crossj.base.List;
-import crossj.cj.CJIRMethodRef;
-import crossj.cj.CJIRTypeVisitor;
+import crossj.cj.ir.CJIRMethodRef;
 
 public final class CJIRSelfType implements CJIRType {
     private final CJIRTrait selfTrait;

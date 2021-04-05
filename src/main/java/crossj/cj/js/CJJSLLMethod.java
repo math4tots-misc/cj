@@ -1,6 +1,6 @@
 package crossj.cj.js;
 
-import crossj.cj.CJIRMethod;
+import crossj.cj.ir.CJIRMethod;
 import crossj.cj.ir.meta.CJIRClassType;
 
 /**

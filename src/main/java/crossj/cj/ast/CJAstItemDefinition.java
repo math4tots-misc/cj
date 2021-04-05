@@ -2,9 +2,9 @@ package crossj.cj.ast;
 
 import crossj.base.List;
 import crossj.base.Optional;
-import crossj.cj.CJIRItemKind;
-import crossj.cj.CJIRModifier;
 import crossj.cj.CJMark;
+import crossj.cj.ir.CJIRItemKind;
+import crossj.cj.ir.CJIRModifier;
 
 public final class CJAstItemDefinition extends CJAstItemMemberDefinition {
     private final String packageName;

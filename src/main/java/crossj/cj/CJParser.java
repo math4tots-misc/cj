@@ -49,6 +49,10 @@ import crossj.cj.ast.CJAstVariableDeclaration;
 import crossj.cj.ast.CJAstWhen;
 import crossj.cj.ast.CJAstWhenElsePattern;
 import crossj.cj.ast.CJAstWhile;
+import crossj.cj.ir.CJIRAugAssignKind;
+import crossj.cj.ir.CJIRItemKind;
+import crossj.cj.ir.CJIRLiteralKind;
+import crossj.cj.ir.CJIRModifier;
 
 // TODO: Refactor to address the hack used for implementing nested items.
 public final class CJParser {
