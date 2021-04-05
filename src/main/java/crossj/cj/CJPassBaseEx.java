@@ -5,7 +5,7 @@ package crossj.cj;
  * has finished.
  */
 public abstract class CJPassBaseEx extends CJPassBase {
-    CJPassBaseEx(CJIRContext ctx) {
+    CJPassBaseEx(CJContext ctx) {
         super(ctx);
     }
 }

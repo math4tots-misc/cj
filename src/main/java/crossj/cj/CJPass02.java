@@ -12,7 +12,7 @@ import crossj.cj.ast.CJAstTraitExpression;
  * Trait constraints are checked in pass 3
  */
 final class CJPass02 extends CJPassBase {
-    CJPass02(CJIRContext ctx) {
+    CJPass02(CJContext ctx) {
         super(ctx);
     }
 

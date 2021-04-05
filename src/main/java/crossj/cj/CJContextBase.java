@@ -4,7 +4,7 @@ import crossj.base.Func1;
 import crossj.base.List;
 import crossj.base.Set;
 
-public abstract class CJIRContextBase {
+public abstract class CJContextBase {
 
     static void walkTraits(CJIRTraitOrClassType start, Func1<Void, CJIRTrait> f) {
         var stack = start.getTraits();
@@ -40,7 +40,7 @@ public abstract class CJIRContextBase {
         }
     }
 
-    abstract CJIRContext getGlobal();
+    abstract CJContext getGlobal();
 
     public void validateMainItem(CJIRItem item, CJMark... marks) {
         if (item.getTypeParameters().size() > 0) {

@@ -56,7 +56,7 @@ final class CJPass04 extends CJPassBaseEx {
     private final List<Map<String, CJIRLocalVariableDeclaration>> locals = List.of();
     private final List<Pair<Boolean, CJIRType>> lambdaStack = List.of();
 
-    CJPass04(CJIRContext ctx) {
+    CJPass04(CJContext ctx) {
         super(ctx);
     }
 

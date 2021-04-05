@@ -3,14 +3,14 @@ package crossj.cj.main;
 import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
-import crossj.cj.CJIRContext;
-import crossj.cj.CJIRRunMode;
-import crossj.cj.CJIRRunModeMain;
-import crossj.cj.CJIRRunModeNW;
-import crossj.cj.CJIRRunModeTest;
-import crossj.cj.CJIRRunModeVisitor;
-import crossj.cj.CJIRRunModeWWW;
-import crossj.cj.CJIRRunModeWWWBase;
+import crossj.cj.CJContext;
+import crossj.cj.CJRunMode;
+import crossj.cj.CJRunModeMain;
+import crossj.cj.CJRunModeNW;
+import crossj.cj.CJRunModeTest;
+import crossj.cj.CJRunModeVisitor;
+import crossj.cj.CJRunModeWWW;
+import crossj.cj.CJRunModeWWWBase;
 import crossj.cj.CJJSTranslator;
 // import crossj.cj.js.CJJSTranslator2;
 import crossj.json.JSON;
@@ -23,7 +23,7 @@ public final class JSMain {
                 FS.join("src", "main", "cj"));
         var outPath = "";
         String appId = "";
-        CJIRRunMode runMode = null;
+        CJRunMode runMode = null;
         for (var arg : args) {
             switch (mode) {
             case Default:
@@ -42,11 +42,11 @@ public final class JSMain {
                     break;
                 case "-t":
                 case "--test":
-                    runMode = new CJIRRunModeTest(false);
+                    runMode = new CJRunModeTest(false);
                     sourceRoots.add(FS.join("src", "test", "cj"));
                     break;
                 case "--all-tests":
-                    runMode = new CJIRRunModeTest(true);
+                    runMode = new CJRunModeTest(true);
                     sourceRoots.add(FS.join("src", "test", "cj"));
                     break;
                 case "-o":
@@ -62,7 +62,7 @@ public final class JSMain {
                 mode = Mode.Default;
                 break;
             case MainClass:
-                runMode = new CJIRRunModeMain(arg);
+                runMode = new CJRunModeMain(arg);
                 mode = Mode.Default;
                 break;
             case SourceRoot:
@@ -84,52 +84,52 @@ public final class JSMain {
         if (outPath.isEmpty()) {
             throw new RuntimeException("--out path cannot be empty");
         }
-        var ctx = new CJIRContext();
+        var ctx = new CJContext();
         ctx.getSourceRoots().addAll(sourceRoots);
         ctx.loadAutoImportItems();
         var mainClasses = List.<String>of();
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+        runMode.accept(new CJRunModeVisitor<Void, Void>() {
 
             @Override
-            public Void visitMain(CJIRRunModeMain m, Void a) {
+            public Void visitMain(CJRunModeMain m, Void a) {
                 mainClasses.add(m.getMainClass());
                 return null;
             }
 
             @Override
-            public Void visitTest(CJIRRunModeTest m, Void a) {
+            public Void visitTest(CJRunModeTest m, Void a) {
                 ctx.loadAllItemsInSourceRoots();
                 return null;
             }
 
             @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            public Void visitWWW(CJRunModeWWW m, Void a) {
                 mainClasses.add(m.getMainClass());
                 return null;
             }
 
             @Override
-            public Void visitNW(CJIRRunModeNW m, Void a) {
+            public Void visitNW(CJRunModeNW m, Void a) {
                 mainClasses.add(m.getMainClass());
                 return null;
             }
         }, null);
         ctx.loadItemsRec(mainClasses);
         ctx.runAllPasses();
-        if (runMode instanceof CJIRRunModeMain) {
-            var mainClass = ((CJIRRunModeMain) runMode).getMainClass();
+        if (runMode instanceof CJRunModeMain) {
+            var mainClass = ((CJRunModeMain) runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
-        } else if (runMode instanceof CJIRRunModeWWW) {
-            var mainClass = ((CJIRRunModeWWW) runMode).getMainClass();
+        } else if (runMode instanceof CJRunModeWWW) {
+            var mainClass = ((CJRunModeWWW) runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
         var jsSink = CJJSTranslator.translate(ctx, runMode);
 
         var finalOutPath = outPath;
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+        runMode.accept(new CJRunModeVisitor<Void, Void>() {
 
-            private void handleWWW(CJIRRunModeWWWBase m) {
+            private void handleWWW(CJRunModeWWWBase m) {
                 var config = m.getConfig();
                 var appdir = m.getAppdir();
                 IO.delete(finalOutPath);
@@ -163,25 +163,25 @@ public final class JSMain {
             }
 
             @Override
-            public Void visitMain(CJIRRunModeMain m, Void a) {
+            public Void visitMain(CJRunModeMain m, Void a) {
                 handleCLI();
                 return null;
             }
 
             @Override
-            public Void visitTest(CJIRRunModeTest m, Void a) {
+            public Void visitTest(CJRunModeTest m, Void a) {
                 handleCLI();
                 return null;
             }
 
             @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            public Void visitWWW(CJRunModeWWW m, Void a) {
                 handleWWW(m);
                 return null;
             }
 
             @Override
-            public Void visitNW(CJIRRunModeNW m, Void a) {
+            public Void visitNW(CJRunModeNW m, Void a) {
                 handleWWW(m);
                 var pkgjsonpath = IO.join(finalOutPath, "package.json");
                 IO.writeFile(pkgjsonpath,
@@ -195,7 +195,7 @@ public final class JSMain {
         Default, MainClass, SourceRoot, Out, App,
     }
 
-    private static CJIRRunMode loadAppConfig(List<String> sourceRoots, String appId) {
+    private static CJRunMode loadAppConfig(List<String> sourceRoots, String appId) {
         var colonIndex = appId.indexOf(':');
         if (colonIndex != -1) {
             for (var sourceRoot : sourceRoots) {
@@ -210,10 +210,10 @@ public final class JSMain {
                         var type = config.get("type").getString();
                         switch (type) {
                         case "www": {
-                            return new CJIRRunModeWWW(appId, appdir, config);
+                            return new CJRunModeWWW(appId, appdir, config);
                         }
                         case "nw": {
-                            return new CJIRRunModeNW(appId, appdir, config);
+                            return new CJRunModeNW(appId, appdir, config);
                         }
                         default:
                             throw new RuntimeException(appId + " has unsupported app type " + type);

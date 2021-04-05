@@ -25,7 +25,7 @@ final class CJPass05 extends CJPassBaseEx {
         return dummyVars.slice(0, len);
     }
 
-    CJPass05(CJIRContext ctx) {
+    CJPass05(CJContext ctx) {
         super(ctx);
     }
 
@@ -63,7 +63,7 @@ final class CJPass05 extends CJPassBaseEx {
         var type = (CJIRClassType) item.toTraitOrClassType();
         var methodMap = Map.<String, MethodEntry>of();
         addMethods(type, methodMap, type, mark);
-        CJIRContextBase.walkTraits(item.toTraitOrClassType(), trait -> {
+        CJContextBase.walkTraits(item.toTraitOrClassType(), trait -> {
             addMethods(type, methodMap, trait, mark);
             return null;
         });

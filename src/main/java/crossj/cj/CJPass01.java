@@ -6,7 +6,7 @@ package crossj.cj;
  * Create type parameter ir for each item
  */
 class CJPass01 extends CJPassBase {
-    CJPass01(CJIRContext ctx) {
+    CJPass01(CJContext ctx) {
         super(ctx);
     }
 
@@ -24,7 +24,7 @@ class CJPass01 extends CJPassBase {
     private void checkItemName(CJIRItem item) {
         var shortName = item.getShortName();
         var fullName = item.getFullName();
-        var exceptions = CJIRContext.specialTypeNameMap.getOrNull(shortName);
+        var exceptions = CJContext.specialTypeNameMap.getOrNull(shortName);
         if (exceptions != null && !exceptions.contains(fullName)) {
             throw CJError.of(shortName + " is a reserved name and cannot be used for this item", item.getMark());
         }

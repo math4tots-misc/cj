@@ -71,7 +71,7 @@ public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
         }
 
         shortNameMap = Map.of();
-        for (var autoImportName : CJIRContext.autoImportItemNames) {
+        for (var autoImportName : CJContext.autoImportItemNames) {
             var shortName = autoImportName.substring(autoImportName.lastIndexOf('.') + 1);
             shortNameMap.put(shortName, autoImportName);
         }

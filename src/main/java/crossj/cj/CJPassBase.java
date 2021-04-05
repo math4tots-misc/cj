@@ -6,17 +6,17 @@ import crossj.base.Optional;
 import crossj.cj.ast.CJAstTraitExpression;
 
 abstract class CJPassBase {
-    protected final CJIRContext ctx;
-    protected CJIRLocalContext lctx = null;
-    private CJIRLocalContext lctxPushed = null;
+    protected final CJContext ctx;
+    protected CJLocalContext lctx = null;
+    private CJLocalContext lctxPushed = null;
 
-    CJPassBase(CJIRContext ctx) {
+    CJPassBase(CJContext ctx) {
         this.ctx = ctx;
     }
 
     void run() {
         for (var item : ctx.getAllLoadedItems()) {
-            lctx = new CJIRLocalContext(ctx, item, Optional.empty());
+            lctx = new CJLocalContext(ctx, item, Optional.empty());
             handleItem(item);
         }
     }
@@ -27,7 +27,7 @@ abstract class CJPassBase {
     void enterMethod(CJIRMethod method) {
         Assert.equals(lctxPushed, null);
         lctxPushed = lctx;
-        lctx = new CJIRLocalContext(lctxPushed.getGlobal(), lctxPushed.getItem(), Optional.of(method));
+        lctx = new CJLocalContext(lctxPushed.getGlobal(), lctxPushed.getItem(), Optional.of(method));
     }
 
     void exitMethod() {

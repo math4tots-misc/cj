@@ -10,7 +10,7 @@ import crossj.base.Set;
 import crossj.base.Str;
 import crossj.cj.ast.CJAstItemDefinition;
 
-public final class CJIRContext extends CJIRContextBase {
+public final class CJContext extends CJContextBase {
 
     static final List<String> autoImportItemNames = List.of("cj.Any", "cj.Unit", "cj.NoReturn", "cj.Nullable",
             "cj.NonNull", "cj.Bool", "cj.Char", "cj.Int", "cj.Double", "cj.String", "cj.BigInt", "cj.Repr", "cj.ToBool",
@@ -66,7 +66,7 @@ public final class CJIRContext extends CJIRContextBase {
     private CJIRTrait toBoolTrait = null;
 
     @Override
-    CJIRContext getGlobal() {
+    CJContext getGlobal() {
         return this;
     }
 

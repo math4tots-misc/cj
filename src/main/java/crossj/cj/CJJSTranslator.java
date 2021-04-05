@@ -13,23 +13,23 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
 
     private final CJJSSink out;
 
-    public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
+    public static CJJSSink translate(CJContext irctx, CJRunMode runMode) {
         var out = new CJJSSink();
         var jsctx = new CJJSContext();
         out.append("(function(){\n");
         out.append("\"use strict\";\n");
         emitPrelude(out);
         translateItems(out, irctx, jsctx);
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+        runMode.accept(new CJRunModeVisitor<Void, Void>() {
             @Override
-            public Void visitMain(CJIRRunModeMain m, Void a) {
+            public Void visitMain(CJRunModeMain m, Void a) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
                 out.addMark(CJMark.of("<start>", 1, 1));
                 out.append(mainClass + "." + translateMethodName("main") + "();\n");
                 return null;
             }
 
-            private void handleWWW(CJIRRunModeWWWBase m) {
+            private void handleWWW(CJRunModeWWWBase m) {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
                 out.append("window.onload = () => {");
                 out.addMark(CJMark.of("<start>", 1, 1));
@@ -38,13 +38,13 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             }
 
             @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            public Void visitWWW(CJRunModeWWW m, Void a) {
                 handleWWW(m);
                 return null;
             }
 
             @Override
-            public Void visitTest(CJIRRunModeTest m, Void a) {
+            public Void visitTest(CJRunModeTest m, Void a) {
                 var items = irctx.getAllLoadedItems();
                 int testCount = 0;
                 int itemCount = 0;
@@ -70,7 +70,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             }
 
             @Override
-            public Void visitNW(CJIRRunModeNW m, Void a) {
+            public Void visitNW(CJRunModeNW m, Void a) {
                 handleWWW(m);
                 return null;
             }
@@ -84,7 +84,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         out.append(IO.readFile(path));
     }
 
-    private static void translateItems(CJJSSink out, CJIRContext irctx, CJJSContext jsctx) {
+    private static void translateItems(CJJSSink out, CJContext irctx, CJJSContext jsctx) {
         var items = irctx.getAllLoadedItems();
 
         // emit meta classes (i.e. class MC$* { .. })
@@ -122,7 +122,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
     private static void addTypeVariableMethods(CJJSSink out, CJJSContext jsctx, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
         var translator = new CJJSTranslator(out, jsctx, item);
-        CJIRContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
+        CJContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
             var params = trait.getItem().getTypeParameters();
             var args = trait.getArgs();
             for (int i = 0; i < args.size(); i++) {
@@ -138,7 +138,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
     private static void inheritMethods(CJJSSink out, CJIRItem item) {
         var itemMetaClassName = translateItemMetaClassName(item.getFullName());
         var seenMethods = Set.fromIterable(item.getMethods().map(m -> m.getName()));
-        CJIRContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
+        CJContextBase.walkTraits(item.toFullyImplementingTraitOrClassType(), trait -> {
             var traitMetaClassName = translateItemMetaClassName(trait.getItem().getFullName());
             for (var method : trait.getItem().getMethods()) {
                 if (!seenMethods.contains(method.getName())) {

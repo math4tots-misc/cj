@@ -1,10 +1,10 @@
 package crossj.cj;
 
-public final class CJIRRunModeTest extends CJIRRunMode {
+public final class CJRunModeTest extends CJRunMode {
     private final boolean runSlowTests;
 
     @Override
-    public <R, A> R accept(CJIRRunModeVisitor<R, A> visitor, A a) {
+    public <R, A> R accept(CJRunModeVisitor<R, A> visitor, A a) {
         return visitor.visitTest(this, a);
     }
 
@@ -12,7 +12,7 @@ public final class CJIRRunModeTest extends CJIRRunMode {
         return runSlowTests;
     }
 
-    public CJIRRunModeTest(boolean runSlowTests) {
+    public CJRunModeTest(boolean runSlowTests) {
         this.runSlowTests = runSlowTests;
     }
 }

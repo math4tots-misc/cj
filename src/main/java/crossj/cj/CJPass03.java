@@ -34,7 +34,7 @@ import crossj.cj.ast.CJAstWhen;
  * Derived methods are also synthesized here
  */
 final class CJPass03 extends CJPassBaseEx {
-    CJPass03(CJIRContext ctx) {
+    CJPass03(CJContext ctx) {
         super(ctx);
     }
 
@@ -47,7 +47,7 @@ final class CJPass03 extends CJPassBaseEx {
 
     private void processImplicitDeclarations(CJIRItem item) {
         processTraitItemForImplicitDeclarations(item, item);
-        CJIRContextBase.walkTraitItems(item, traitItem -> {
+        CJContextBase.walkTraitItems(item, traitItem -> {
             processTraitItemForImplicitDeclarations(item, traitItem);
             return null;
         });
@@ -58,7 +58,7 @@ final class CJPass03 extends CJPassBaseEx {
         var implicitsTypeMap = item.getImplicitsTypeItemMap();
         var seen = Map.<CJIRItem, CJIRItem>of();
         for (var pair : traitItem.getUnprocessedImplicits()) {
-            var refItemFullName = CJIRLocalContext.getFullItemNameWithMap(traitItem.getShortNameMap(), pair.get1(),
+            var refItemFullName = CJLocalContext.getFullItemNameWithMap(traitItem.getShortNameMap(), pair.get1(),
                     item.getMark());
             var refItem = ctx.loadItem(refItemFullName, item.getMark());
             if (seen.containsKey(refItem)) {

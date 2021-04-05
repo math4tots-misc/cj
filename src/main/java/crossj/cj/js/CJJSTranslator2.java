@@ -11,19 +11,19 @@ import crossj.base.Set;
 import crossj.cj.CJError;
 import crossj.cj.CJIRCaseMethodInfo;
 import crossj.cj.CJIRClassType;
-import crossj.cj.CJIRContext;
+import crossj.cj.CJContext;
 import crossj.cj.CJIRExpression;
 import crossj.cj.CJIRField;
 import crossj.cj.CJIRFieldMethodInfo;
 import crossj.cj.CJIRItem;
 import crossj.cj.CJIRLiteral;
 import crossj.cj.CJIRNullWrap;
-import crossj.cj.CJIRRunMode;
-import crossj.cj.CJIRRunModeMain;
-import crossj.cj.CJIRRunModeNW;
-import crossj.cj.CJIRRunModeTest;
-import crossj.cj.CJIRRunModeVisitor;
-import crossj.cj.CJIRRunModeWWW;
+import crossj.cj.CJRunMode;
+import crossj.cj.CJRunModeMain;
+import crossj.cj.CJRunModeNW;
+import crossj.cj.CJRunModeTest;
+import crossj.cj.CJRunModeVisitor;
+import crossj.cj.CJRunModeWWW;
 import crossj.cj.CJIRType;
 import crossj.cj.CJJSSink;
 import crossj.cj.CJMark;
@@ -36,18 +36,18 @@ public final class CJJSTranslator2 {
             Pair.of("cjx.binaryen.Binaryen", List.of(FS.join("..", "js", "lib", "binaryen", "index.js"))),
             Pair.of("cjx.binaryen.Binaryen.Module", List.of(FS.join("..", "js", "lib", "binaryen", "index.js"))));
 
-    public static CJJSSink translate(CJIRContext irctx, CJIRRunMode runMode) {
+    public static CJJSSink translate(CJContext irctx, CJRunMode runMode) {
         var tr = new CJJSTranslator2(irctx);
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+        runMode.accept(new CJRunModeVisitor<Void, Void>() {
 
             @Override
-            public Void visitMain(CJIRRunModeMain m, Void a) {
+            public Void visitMain(CJRunModeMain m, Void a) {
                 tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
 
             @Override
-            public Void visitTest(CJIRRunModeTest m, Void a) {
+            public Void visitTest(CJRunModeTest m, Void a) {
                 var items = irctx.getAllLoadedItems();
                 for (var item : items) {
                     var testMethods = item.getMethods().filter(meth -> meth.isTest());
@@ -71,13 +71,13 @@ public final class CJJSTranslator2 {
             }
 
             @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            public Void visitWWW(CJRunModeWWW m, Void a) {
                 tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
 
             @Override
-            public Void visitNW(CJIRRunModeNW m, Void a) {
+            public Void visitNW(CJRunModeNW m, Void a) {
                 tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
             }
@@ -85,16 +85,16 @@ public final class CJJSTranslator2 {
         tr.out.append("(function(){\n\"use strict\";\n");
         emitPrelude(tr.out);
         tr.emitQueued();
-        runMode.accept(new CJIRRunModeVisitor<Void, Void>() {
+        runMode.accept(new CJRunModeVisitor<Void, Void>() {
             @Override
-            public Void visitMain(CJIRRunModeMain m, Void a) {
+            public Void visitMain(CJRunModeMain m, Void a) {
                 var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
                 tr.out.append(mainMethodName + "();\n");
                 return null;
             }
 
             @Override
-            public Void visitTest(CJIRRunModeTest m, Void a) {
+            public Void visitTest(CJRunModeTest m, Void a) {
                 var out = tr.out;
                 var items = irctx.getAllLoadedItems();
                 int testCount = 0;
@@ -120,14 +120,14 @@ public final class CJJSTranslator2 {
             }
 
             @Override
-            public Void visitWWW(CJIRRunModeWWW m, Void a) {
+            public Void visitWWW(CJRunModeWWW m, Void a) {
                 var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
                 tr.out.append("window.onload=" + mainMethodName + ";\n");
                 return null;
             }
 
             @Override
-            public Void visitNW(CJIRRunModeNW m, Void a) {
+            public Void visitNW(CJRunModeNW m, Void a) {
                 var mainMethodName = tr.methodNameRegistry.getNonGenericName(m.getMainClass(), "main");
                 tr.out.append("window.onload=" + mainMethodName + ";\n");
                 return null;
@@ -142,7 +142,7 @@ public final class CJJSTranslator2 {
         out.append(IO.readFile(path));
     }
 
-    private final CJIRContext ctx;
+    private final CJContext ctx;
     private final CJJSSink out = new CJJSSink();
     private final CJJSMethodNameRegistry methodNameRegistry = new CJJSMethodNameRegistry();
     private final CJJSTempVarFactory varFactory = new CJJSTempVarFactory();
@@ -154,7 +154,7 @@ public final class CJJSTranslator2 {
     private final Set<String> queuedNatives = Set.of();
     private final CJJSTypeIdRegistry typeIdRegistry = new CJJSTypeIdRegistry();
 
-    public CJJSTranslator2(CJIRContext ctx) {
+    public CJJSTranslator2(CJContext ctx) {
         this.ctx = ctx;
     }
 

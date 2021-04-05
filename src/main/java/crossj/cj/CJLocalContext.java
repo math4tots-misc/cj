@@ -7,14 +7,14 @@ import crossj.base.Repr;
 import crossj.cj.ast.CJAstTraitExpression;
 import crossj.cj.ast.CJAstTypeExpression;
 
-public final class CJIRLocalContext extends CJIRContextBase {
-    private final CJIRContext global;
+public final class CJLocalContext extends CJContextBase {
+    private final CJContext global;
     private final CJIRItem item;
     private final Optional<CJIRMethod> method;
     private final Map<String, CJIRVariableType> typeVariableCache = Map.of();
     private final CJIRType selfType;
 
-    CJIRLocalContext(CJIRContext global, CJIRItem item, Optional<CJIRMethod> method) {
+    CJLocalContext(CJContext global, CJIRItem item, Optional<CJIRMethod> method) {
         this.global = global;
         this.item = item;
         this.method = method;
@@ -26,7 +26,7 @@ public final class CJIRLocalContext extends CJIRContextBase {
         }
     }
 
-    public CJIRContext getGlobal() {
+    public CJContext getGlobal() {
         return global;
     }
 
