@@ -1,4 +1,4 @@
-package crossj.cj.js;
+package crossj.cj.js2;
 
 import crossj.base.IO;
 import crossj.base.Map;

@@ -1,4 +1,4 @@
-package crossj.cj.js;
+package crossj.cj.js2;
 
 import crossj.cj.ir.CJIRMethod;
 import crossj.cj.ir.meta.CJIRClassType;

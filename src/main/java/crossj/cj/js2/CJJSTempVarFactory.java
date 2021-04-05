@@ -1,4 +1,4 @@
-package crossj.cj.js;
+package crossj.cj.js2;
 
 final class CJJSTempVarFactory {
     private int nextId = 0;

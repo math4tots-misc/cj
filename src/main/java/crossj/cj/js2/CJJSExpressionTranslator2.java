@@ -1,4 +1,4 @@
-package crossj.cj.js;
+package crossj.cj.js2;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
