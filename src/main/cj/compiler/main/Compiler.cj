@@ -17,11 +17,9 @@ class Compiler {
         }
         solver.solve()
 
-        val types = solver.program.typeMap.values().sortedBy(t -> t.name)
         val cgen = CJC()
+        cgen.emit(solver.program)
 
-        for type in types {
-            IO.println(type.name)
-        }
+        IO.println(cgen.out.getSource())
     }
 }
