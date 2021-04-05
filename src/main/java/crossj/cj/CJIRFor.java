@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRFor extends CJIRExpression {
     private final CJIRAssignmentTarget target;
     private final CJIRExpression iterator;

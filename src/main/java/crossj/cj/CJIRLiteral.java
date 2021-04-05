@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRLiteral extends CJIRExpression {
     private final CJIRLiteralKind kind;
     private final String rawText;

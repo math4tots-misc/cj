@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstAssignmentTarget;
+
 public abstract class CJIRAssignmentTarget extends CJIRNode<CJAstAssignmentTarget> {
     private final CJIRType targetType;
 

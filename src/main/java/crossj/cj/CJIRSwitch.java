@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Pair;
+import crossj.cj.ast.CJAstExpression;
 
 public final class CJIRSwitch extends CJIRExpression {
     private final CJIRExpression target;

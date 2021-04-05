@@ -4,6 +4,7 @@ import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
+import crossj.cj.ast.CJAstItemDefinition;
 
 public final class CJIRItem extends CJIRNode<CJAstItemDefinition> {
     private final boolean deriveEq;

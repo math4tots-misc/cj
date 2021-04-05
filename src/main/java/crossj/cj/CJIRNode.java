@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstNode;
+
 public abstract class CJIRNode<N extends CJAstNode> {
     protected final N ast;
 

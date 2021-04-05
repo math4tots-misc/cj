@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRVariableDeclaration extends CJIRExpression {
     private final boolean mutable;
     private final CJIRAssignmentTarget target;

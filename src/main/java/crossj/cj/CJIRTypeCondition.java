@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstTypeCondition;
 
 public final class CJIRTypeCondition extends CJIRNode<CJAstTypeCondition> {
     private final CJIRTypeParameter typeParameter;

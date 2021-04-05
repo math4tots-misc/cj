@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstAssignmentTarget;
 
 public final class CJIRTupleAssignmentTarget extends CJIRAssignmentTarget {
     private final List<CJIRAssignmentTarget> subtargets;

@@ -2,6 +2,7 @@ package crossj.cj;
 
 import crossj.base.Assert;
 import crossj.base.List;
+import crossj.cj.ast.CJAstExpression;
 
 public final class CJIRJSBlob extends CJIRExpression {
     private final List<Object> parts;

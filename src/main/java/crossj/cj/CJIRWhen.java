@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 import crossj.base.Optional;
 import crossj.base.Tuple5;
+import crossj.cj.ast.CJAstExpression;
 
 public final class CJIRWhen extends CJIRExpression {
     private final CJIRExpression target;

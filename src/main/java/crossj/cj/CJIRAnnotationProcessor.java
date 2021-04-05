@@ -3,6 +3,13 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Pair;
+import crossj.cj.ast.CJAstAnnotationExpression;
+import crossj.cj.ast.CJAstFieldDefinition;
+import crossj.cj.ast.CJAstItemDefinition;
+import crossj.cj.ast.CJAstItemMemberDefinition;
+import crossj.cj.ast.CJAstMethodDefinition;
+import crossj.cj.ast.CJAstNode;
+import crossj.cj.ast.CJAstTypeParameter;
 
 public final class CJIRAnnotationProcessor {
 

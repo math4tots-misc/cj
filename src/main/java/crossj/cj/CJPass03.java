@@ -8,6 +8,21 @@ import crossj.base.Pair;
 import crossj.base.Range;
 import crossj.base.Tuple3;
 import crossj.base.Tuple4;
+import crossj.cj.ast.CJAstAnnotationExpression;
+import crossj.cj.ast.CJAstCaseDefinition;
+import crossj.cj.ast.CJAstExpression;
+import crossj.cj.ast.CJAstFieldDefinition;
+import crossj.cj.ast.CJAstItemDefinition;
+import crossj.cj.ast.CJAstListDisplay;
+import crossj.cj.ast.CJAstLiteral;
+import crossj.cj.ast.CJAstLogicalBinop;
+import crossj.cj.ast.CJAstMethodCall;
+import crossj.cj.ast.CJAstMethodDefinition;
+import crossj.cj.ast.CJAstParameter;
+import crossj.cj.ast.CJAstTraitExpression;
+import crossj.cj.ast.CJAstTypeExpression;
+import crossj.cj.ast.CJAstVariableAccess;
+import crossj.cj.ast.CJAstWhen;
 
 /**
  * Pass 3

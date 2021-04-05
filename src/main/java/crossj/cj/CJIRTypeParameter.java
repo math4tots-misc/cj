@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstTypeParameter;
 
 public final class CJIRTypeParameter extends CJIRNode<CJAstTypeParameter> {
     private final CJIRAnnotationProcessor annotation;

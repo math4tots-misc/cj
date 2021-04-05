@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstExpression;
 
 public final class CJIRTupleDisplay extends CJIRExpression {
     private final List<CJIRExpression> expressions;

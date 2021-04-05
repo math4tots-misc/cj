@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstAssignmentTarget;
+
 public final class CJIRNameAssignmentTarget extends CJIRAssignmentTarget implements CJIRLocalVariableDeclaration {
     private final boolean mutable;
     private final String name;

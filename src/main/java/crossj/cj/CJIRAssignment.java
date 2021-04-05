@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRAssignment extends CJIRExpression {
     private final String variableName;
     private final CJIRExpression expression;

@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.Assert;
 import crossj.base.List;
 import crossj.base.Optional;
+import crossj.cj.ast.CJAstTraitExpression;
 
 abstract class CJPassBase {
     protected final CJIRContext ctx;

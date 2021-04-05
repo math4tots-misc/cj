@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRAugmentedAssignment extends CJIRExpression {
     private final CJIRLocalVariableDeclaration target;
     private final CJIRAugAssignKind kind;

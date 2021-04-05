@@ -1,6 +1,8 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstTraitDeclaration;
+import crossj.cj.ast.CJAstTraitExpression;
 
 /**
  * Pass 2

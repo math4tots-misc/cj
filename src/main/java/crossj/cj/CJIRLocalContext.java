@@ -4,6 +4,8 @@ import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Optional;
 import crossj.base.Repr;
+import crossj.cj.ast.CJAstTraitExpression;
+import crossj.cj.ast.CJAstTypeExpression;
 
 public final class CJIRLocalContext extends CJIRContextBase {
     private final CJIRContext global;

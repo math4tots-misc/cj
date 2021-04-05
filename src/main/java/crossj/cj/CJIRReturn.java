@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRReturn extends CJIRExpression {
     private final CJIRExpression expression;
 

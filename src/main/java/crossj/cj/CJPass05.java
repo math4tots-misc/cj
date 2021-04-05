@@ -5,6 +5,7 @@ import crossj.base.Map;
 import crossj.base.Range;
 import crossj.base.Repr;
 import crossj.base.Str;
+import crossj.cj.ast.CJAstTypeParameter;
 
 /**
  * Pass 5

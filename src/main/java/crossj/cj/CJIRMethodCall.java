@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstExpression;
 
 public final class CJIRMethodCall extends CJIRExpression {
     private final CJIRType owner;

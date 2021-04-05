@@ -8,6 +8,7 @@ import crossj.base.Pair;
 import crossj.base.Repr;
 import crossj.base.Set;
 import crossj.base.Str;
+import crossj.cj.ast.CJAstItemDefinition;
 
 public final class CJIRContext extends CJIRContextBase {
 

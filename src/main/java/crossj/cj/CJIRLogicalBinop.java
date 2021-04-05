@@ -1,5 +1,7 @@
 package crossj.cj;
 
+import crossj.cj.ast.CJAstExpression;
+
 public final class CJIRLogicalBinop extends CJIRExpression {
     private final boolean andType;
     private final CJIRExpression left;

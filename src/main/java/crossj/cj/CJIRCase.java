@@ -1,6 +1,7 @@
 package crossj.cj;
 
 import crossj.base.List;
+import crossj.cj.ast.CJAstCaseDefinition;
 
 public final class CJIRCase extends CJIRItemMember<CJAstCaseDefinition> {
     private final int tag;

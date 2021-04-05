@@ -3,6 +3,7 @@ package crossj.cj;
 import crossj.base.List;
 import crossj.base.Map;
 import crossj.base.Pair;
+import crossj.cj.ast.CJAstTypeParameter;
 
 public final class CJIRBinding {
     private final CJIRType selfType;
