@@ -307,13 +307,7 @@ class C2Parser : ParserMixin[C2Token] {
             while not consume('}') {
                 val mark = mark()
                 val name = next().stringValue
-                val value = if consume('=') {
-                    val expr = unary()
-                    when expr.kind {
-                        case int = expr.intValue
-                        else = throw errorKind("constant expression")
-                    }
-                } else { nextValue }
+                val value = if consume('=') { intConstExpr() } else { nextValue }
                 nextValue = value + 1
                 val ec = EnumConstant(mark, name, value)
                 scope.addEnumConstant(ec)
@@ -463,7 +457,7 @@ class C2Parser : ParserMixin[C2Token] {
             if consume(']') {
                 typeSuffix(type).arrayOf(-1)
             } else {
-                val len = expect(C2Token.tINT).intValue
+                val len = intConstExpr()
                 expect(']')
                 typeSuffix(type).arrayOf(len)
             }
@@ -667,13 +661,45 @@ class C2Parser : ParserMixin[C2Token] {
     def expr(self): Expr = exprpr(0)
     def assign(self): Expr = exprpr(assingPrec)
     def unary(self): Expr = exprpr(unaryPrec)
-    def cond(self): Expr = exprpr(condPrec)
+    def cond(self): Expr = exprpr(condPrec - 1)
 
-    def intConstExpr(self): Int {
-        val expr = assign()
+    def constExpr(self): BigInt = eval(cond())
+    def intConstExpr(self): Int = Int(constExpr())
+
+    private def eval(self, expr: Expr): BigInt {
         when expr.kind {
-            case int = expr.intValue
-            else = throw MError("Expected int constant expression", [expr.mark])
+            case int; case short; case char = expr.intValue
+            case long = expr.bigIntValue
+            case intAdd; case longAdd = eval(expr.lhs) + eval(expr.rhs)
+            case intSub; case longSub = eval(expr.lhs) - eval(expr.rhs)
+            case intMul; case longMul = eval(expr.lhs) * eval(expr.rhs)
+            case intDiv; case longDiv = eval(expr.lhs) // eval(expr.rhs)
+            case intRem; case longRem = eval(expr.lhs) % eval(expr.rhs)
+            case intNeg; case longNeg = -eval(expr.arg)
+            case intBitwiseAnd = eval(expr.lhs) & eval(expr.rhs)
+            case intBitwiseOr = eval(expr.lhs) | eval(expr.rhs)
+            case intBitwiseXor = eval(expr.lhs) ^ eval(expr.rhs)
+            case intBitwiseNot = ~eval(expr.arg)
+            case intShl = eval(expr.lhs).ilshift(Int(eval(expr.rhs)))
+            case intShr = eval(expr.lhs).irshift(Int(eval(expr.rhs)))
+            case intEq = BigInt(eval(expr.lhs) == eval(expr.rhs))
+            case intNe = BigInt(eval(expr.lhs) != eval(expr.rhs))
+            case intLt = BigInt(eval(expr.lhs) < eval(expr.rhs))
+            case intLe = BigInt(eval(expr.lhs) <= eval(expr.rhs))
+            case cond = BigInt(if eval(expr.arg) { eval(expr.lhs) } else { eval(expr.rhs) })
+            case comma = eval(expr.rhs)
+            case logicalNot = BigInt(not eval(expr.arg))
+            case logicalAnd = BigInt(eval(expr.lhs) and eval(expr.rhs))
+            case logicalOr = BigInt(eval(expr.lhs) or eval(expr.rhs))
+            case cast = switch expr.type.size() {
+                case 1 = 0xFFn & eval(expr.arg)
+                case 2 = 0xFFFFn & eval(expr.arg)
+                case 4 = 0xFFFFFFFFn & eval(expr.arg)
+                case 8 = 0xFFFFFFFFFFFFFFFFn & eval(expr.arg)
+                else = throw MError("Cast to " + expr.type + " not supported", [expr.mark])
+            }
+            else = throw MError(
+                "Expected int constant expression but got " + expr.kind, [expr.mark])
         }
     }
 

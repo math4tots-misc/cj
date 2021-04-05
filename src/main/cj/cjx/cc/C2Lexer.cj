@@ -104,9 +104,11 @@ class C2Lexer {
     private def itok(m: Regex.MatchResult): List[C2Token] = {
         val text = m.matchText
         if text.len() >= 10 and BigInt(text) > BigInt(Int.max) {
-            throw MError(
-                "Int literal will overflow: " + text,
-                [Mark(m.filename, m.line, m.column)])
+            # TOOD: Figure out whether or not I want to allow this
+            [C2Token(C2Token.tINT, Int(text), m.line, m.column, m.filename)]
+            # throw MError(
+            #     "Int literal will overflow: " + text,
+            #     [Mark(m.filename, m.line, m.column)])
         } else {
             [C2Token(C2Token.tINT, Int(text), m.line, m.column, m.filename)]
         }

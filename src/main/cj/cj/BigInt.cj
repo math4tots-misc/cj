@@ -7,11 +7,13 @@ import cj.math.EuclideanDomain
 native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, EuclideanDomain {
 
     @implicit(BigInt, __new)
+    @implicit(Bool, fromBool)
     @implicit(Int, fromInt)
     @implicit(Double, fromDouble)
     @implicit(String, fromString)
     class Convertible {
         val x: BigInt
+        def fromBool(b: Bool): Self = __malloc(if b { 1n } else { 0n })
         def fromInt(i: Int): Self = __malloc(i)
         def fromDouble(f: Double): Self = __malloc(BigInt.fromDouble(f))
         def fromString(s: String): Self = __malloc(BigInt.fromString(s))
@@ -40,6 +42,7 @@ native class BigInt: Repr, Hash, Ord, ToBool, ToInt, ToDouble, Default, Euclidea
     def __lt(self, other: Self): Bool = js!(Bool, self, "<", other)
     def __or(self, other: Self): Self = js!(Self, self, "|", other)
     def __and(self, other: Self): Self = js!(Self, self, "&", other)
+    def __xor(self, other: Self): Self = js!(Self, self, "^", other)
     def ilshift(self, n: Int): Self = js!(Self, self, "<<BigInt(", n, ")")
     def irshift(self, n: Int): Self = js!(Self, self, ">>BigInt(", n, ")")
     def toBool(self): Bool = js!(Bool, "!!", self)
