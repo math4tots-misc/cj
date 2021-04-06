@@ -16,17 +16,31 @@ import crossj.cj.run.CJRunModeWWWBase;
 import crossj.json.JSON;
 
 public final class JSMain {
-    public static void main(String[] args) {
-        var mode = Mode.Default;
-        var sourceRoots = List.<String>of();
-        var outPath = "";
+
+    private static class Options {
+        List<String> sourceRoots = List.<String>of();
+        String outPath = "";
         String appId = "";
         CJRunMode runMode = null;
         boolean useTranslator2 = false;
-        String cjHome = System.getenv("CJ_HOME");
-        if (cjHome == null) {
-            cjHome = ".";
+        String cjHome;
+
+        Options() {
+            cjHome = System.getenv("CJ_HOME");
+            if (cjHome == null) {
+                cjHome = ".";
+            }
         }
+    }
+
+    public static void main(String[] args) {
+        var opts = parseOptions(args);
+        mainWithOpts(opts);
+    }
+
+    private static Options parseOptions(String[] args) {
+        var mode = Mode.Default;
+        var opts = new Options();
         for (var arg : args) {
             switch (mode) {
             case Default:
@@ -45,18 +59,18 @@ public final class JSMain {
                     break;
                 case "-tr2":
                 case "--use-translator2":
-                    useTranslator2 = true;
+                    opts.useTranslator2 = true;
                     break;
                 case "-t":
                 case "--test":
-                    runMode = new CJRunModeTest(false);
-                    sourceRoots.add(FS.join(cjHome, "src", "test", "cj"));
-                    sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "test", "cj"));
+                    opts.runMode = new CJRunModeTest(false);
+                    opts.sourceRoots.add(FS.join(opts.cjHome, "src", "test", "cj"));
+                    opts.sourceRoots.add(FS.join(opts.cjHome, "..", "cjx", "src", "test", "cj"));
                     break;
                 case "--all-tests":
-                    runMode = new CJRunModeTest(true);
-                    sourceRoots.add(FS.join(cjHome, "src", "test", "cj"));
-                    sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "test", "cj"));
+                    opts.runMode = new CJRunModeTest(true);
+                    opts.sourceRoots.add(FS.join(opts.cjHome, "src", "test", "cj"));
+                    opts.sourceRoots.add(FS.join(opts.cjHome, "..", "cjx", "src", "test", "cj"));
                     break;
                 case "-o":
                 case "--out":
@@ -67,42 +81,46 @@ public final class JSMain {
                 }
                 break;
             case App:
-                appId = arg;
+                opts.appId = arg;
                 mode = Mode.Default;
                 break;
             case MainClass:
-                runMode = new CJRunModeMain(arg);
+                opts.runMode = new CJRunModeMain(arg);
                 mode = Mode.Default;
                 break;
             case SourceRoot:
-                sourceRoots.add(arg);
+                opts.sourceRoots.add(arg);
                 mode = Mode.Default;
                 break;
             case Out:
-                outPath = arg;
+                opts.outPath = arg;
                 mode = Mode.Default;
                 break;
             }
         }
-        sourceRoots.add(FS.join(cjHome, "src", "main", "cj"));
+        return opts;
+    }
+
+    private static void mainWithOpts(Options opts) {
+        opts.sourceRoots.add(FS.join(opts.cjHome, "src", "main", "cj"));
 
         // cjx is the private repository containing non-open source CJ code.
-        sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "main", "cj"));
+        opts.sourceRoots.add(FS.join(opts.cjHome, "..", "cjx", "src", "main", "cj"));
 
-        if (!appId.isEmpty()) {
-            runMode = loadAppConfig(sourceRoots, appId);
+        if (!opts.appId.isEmpty()) {
+            opts.runMode = loadAppConfig(opts.sourceRoots, opts.appId);
         }
-        if (runMode == null) {
+        if (opts.runMode == null) {
             throw new RuntimeException("--main-class, --app or --test must be specified");
         }
-        if (outPath.isEmpty()) {
+        if (opts.outPath.isEmpty()) {
             throw new RuntimeException("--out path cannot be empty");
         }
         var ctx = new CJContext();
-        ctx.getSourceRoots().addAll(sourceRoots);
+        ctx.getSourceRoots().addAll(opts.sourceRoots);
         ctx.loadAutoImportItems();
         var mainClasses = List.<String>of();
-        runMode.accept(new CJRunModeVisitor<Void, Void>() {
+        opts.runMode.accept(new CJRunModeVisitor<Void, Void>() {
 
             @Override
             public Void visitMain(CJRunModeMain m, Void a) {
@@ -130,20 +148,20 @@ public final class JSMain {
         }, null);
         ctx.loadItemsRec(mainClasses);
         ctx.runAllPasses();
-        if (runMode instanceof CJRunModeMain) {
-            var mainClass = ((CJRunModeMain) runMode).getMainClass();
+        if (opts.runMode instanceof CJRunModeMain) {
+            var mainClass = ((CJRunModeMain) opts.runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
-        } else if (runMode instanceof CJRunModeWWW) {
-            var mainClass = ((CJRunModeWWW) runMode).getMainClass();
+        } else if (opts.runMode instanceof CJRunModeWWW) {
+            var mainClass = ((CJRunModeWWW) opts.runMode).getMainClass();
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = useTranslator2 ?
-            CJJSTranslator2.translate(ctx, runMode) :
-            CJJSTranslator.translate(ctx, runMode);
+        var jsSink = opts.useTranslator2 ?
+            CJJSTranslator2.translate(ctx, opts.runMode) :
+            CJJSTranslator.translate(ctx, opts.runMode);
 
-        var finalOutPath = outPath;
-        runMode.accept(new CJRunModeVisitor<Void, Void>() {
+        var finalOutPath = opts.outPath;
+        opts.runMode.accept(new CJRunModeVisitor<Void, Void>() {
 
             private void handleWWW(CJRunModeWWWBase m) {
                 var config = m.getConfig();
@@ -152,7 +170,7 @@ public final class JSMain {
                 if (config.has("www")) {
                     var keys = config.get("www").keys();
                     for (var key : keys) {
-                        var src = findResourcePath(sourceRoots, appdir, key);
+                        var src = findResourcePath(opts.sourceRoots, appdir, key);
                         var reldest = config.get("www").get(key).getString();
                         var dest = FS.join(finalOutPath, reldest);
                         IO.copy(src, dest);
