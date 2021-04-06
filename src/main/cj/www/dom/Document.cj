@@ -13,7 +13,7 @@ class Document : JSWrapper, GlobalEventHandlers {
     def get(): Self = js!(Self, "document")
 
     def __get_title(self: Self): String = js0!(self, ".title")
-    def __set_title(self: Self, title: String) = self.setField("title", title)
+    def __set_title(self: Self, title: String) =  js0!(self, ".title=", title)
 
     def __get_body(self): HTMLBodyElement = js0!(self, ".body")
 

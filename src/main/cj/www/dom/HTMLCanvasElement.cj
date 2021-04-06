@@ -13,9 +13,9 @@ class HTMLCanvasElement : HTMLElement {
     def cls() : JSObject = js!(JSObject, "HTMLCanvasElement")
 
     def __get_width(self: Self): Int = js0!(self, ".width")
-    def __set_width(self: Self, value: Int) = self.setField("width", value)
+    def __set_width(self: Self, value: Int) =  js0!(self, ".width=", value)
     def __get_height(self: Self): Int = js0!(self, ".height")
-    def __set_height(self: Self, value: Int) = self.setField("height", value)
+    def __set_height(self: Self, value: Int) =  js0!(self, ".height=", value)
 
     def getContext[C: CanvasRenderingContext](self): C = C._getFromCanvas(self)
 

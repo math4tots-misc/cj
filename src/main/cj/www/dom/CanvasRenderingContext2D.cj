@@ -14,10 +14,10 @@ class CanvasRenderingContext2D : CanvasRenderingContext {
     def __get_canvas(self): HTMLCanvasElement? = js0!(self, ".canvas")
 
     def __get_lineWidth(self: Self): Double = js0!(self, ".lineWidth")
-    def __set_lineWidth(self: Self, value: Double) = self.setField("lineWidth", value)
+    def __set_lineWidth(self: Self, value: Double) =  js0!(self, ".lineWidth=", value)
 
     def __get_fillStyle(self: Self): String = js0!(self, ".fillStyle")
-    def __set_fillStyle(self: Self, style: String) = self.setField("fillStyle", style)
+    def __set_fillStyle(self: Self, style: String) =  js0!(self, ".fillStyle=", style)
 
     def fillRect(self: Self, x: Double, y: Double, width: Double, height: Double) = (
         self.call("fillRect", x, y, width, height))

@@ -9,5 +9,5 @@ class HTMLOptionElement: HTMLElement {
     def cls() : JSObject = js!(JSObject, "HTMLOptionElement")
 
     def __get_value(self): String = js0!(self, ".value")
-    def __set_value(self, value: String) = setField("value", value)
+    def __set_value(self, value: String) = js0!(self, ".value=", value)
 }
