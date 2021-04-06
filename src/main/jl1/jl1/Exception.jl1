@@ -1,6 +1,0 @@
-package jl1
-
-import java.lang.RuntimeException
-
-class Exception: RuntimeException {
-}

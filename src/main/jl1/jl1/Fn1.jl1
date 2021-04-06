@@ -1,5 +1,0 @@
-package jl1
-
-abstract class Fn1[A, R] {
-    def call(this, a: A): R
-}

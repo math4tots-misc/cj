@@ -1,7 +1,6 @@
 package cjx.jvm
 
 import cj.Endian
-import cjx.jl1.JLError
 import cj.Error
 import cj.BufferReader
 import cjx.jvm.JVMConstValue
@@ -190,7 +189,7 @@ class JVMCodeBuilder {
             }
 
             if i >= descriptor.size() {
-                throw JLError("Bad descriptor " + descriptor, [])
+                throw Error("Bad descriptor " + descriptor)
             }
 
             i += descriptor.charAt(i).size()
