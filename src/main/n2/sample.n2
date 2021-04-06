@@ -7,7 +7,7 @@ struct Foo {
 
 def Foo.sum(self: Foo): int = a + b
 
-template[T] struct Bar {
+struct Bar[T] {
     T t
 }
 

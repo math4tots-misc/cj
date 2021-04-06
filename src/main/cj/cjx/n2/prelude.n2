@@ -1,11 +1,11 @@
 
-template[T] def print(t: T) = js!(void, "console.log(''+", t.str(), ")")
+def print[T](t: T) = js!(void, "console.log(''+", t.str(), ")")
 
 def panic(s: str): unreachable = js!(unreachable, "panic(", s, ")")
 
 def __is(a: var, b: var): bool = js!(bool, a, "===", b)
 
-template[T] def print2(t: T) {
+def print2[T](t: T) {
     js!(void, "console.log(''+", t, ")")
 }
 
@@ -41,11 +41,11 @@ def str.get(s: str, i: int): int = js!(int, s, ".charCodeAt(", i, ")")
 // ============================================================
 //     list
 // ============================================================
-template[T] def list.len(self: T[]): int = js!(int, self, ".length")
-template[T] def list.add(self: T[], t: T) = js!(void, self, ".push(", t, ")")
-template[T] def list.get(self: T[], i: int): T = js!(T, self, "[", __checkIndex(self, i), "]")
-template[T] def list.str(self: T[]): str = self.repr()
-template[T] def list.repr(self: T[]): str {
+def list.len[T](self: T[]): int = js!(int, self, ".length")
+def list.add[T](self: T[], t: T) = js!(void, self, ".push(", t, ")")
+def list.get[T](self: T[], i: int): T = js!(T, self, "[", __checkIndex(self, i), "]")
+def list.str[T](self: T[]): str = self.repr()
+def list.repr[T](self: T[]): str {
     auto sb = StringBuilder.new()
     sb.add("[")
     for (int i = 0; i < self.len(); i++) {
@@ -61,18 +61,18 @@ template[T] def list.repr(self: T[]): str {
 // ============================================================
 struct StringBuilder native {}
 def StringBuilder.new(): StringBuilder = js!(StringBuilder, "[]")
-template[T] def StringBuilder.add(self: StringBuilder, t: T) = js!(
+def StringBuilder.add[T](self: StringBuilder, t: T) = js!(
     void, self, ".push(", t.str(), ")")
 def StringBuilder.str(self: StringBuilder): str = js!(str, self, ".join('')")
 
 // ============================================================
 //     Tuple
 // ============================================================
-template[T0, T1] struct Tuple2 {
+struct Tuple2[T0, T1] {
     T0 f0
     T1 f1
 }
-template[T0, T1, T2] struct Tuple3 {
+struct Tuple3[T0, T1, T2] {
     T0 f0
     T1 f1
     T2 f2
@@ -81,17 +81,16 @@ template[T0, T1, T2] struct Tuple3 {
 // ============================================================
 //     Map
 // ============================================================
-template[K, V] struct Map {
+struct Map[K, V] {
     null[Tuple2[K, V]][] _entries
     int _size
 }
-template[K, V] def Map.empty(): Map[K, V] = Map[K, V]([], 0)
-template[K, V] def Map.str(self: Map[K, V]): str = repr()
-template[K, V] def Map.repr(self: Map[K, V]): str = "Map()"
-template[K, V] def Map.size(self: Map[K, V]): int = _size
+def Map.empty[K, V](): Map[K, V] = Map[K, V]([], 0)
+def Map.str[K, V](self: Map[K, V]): str = repr()
+def Map.repr[K, V](self: Map[K, V]): str = "Map()"
+def Map.size[K, V](self: Map[K, V]): int = _size
 def Map._getIndex(hash: int, size: int): int = (hash % size + size) % size
-template[K, V]
-def Map._insertNoRehash(self: Map[K, V], triple: Tuple3[int, K, V]) {
+def Map._insertNoRehash[K, V](self: Map[K, V], triple: Tuple3[int, K, V]) {
     auto hash = triple.f0
     auto key = triple.f1
     auto list = _entries

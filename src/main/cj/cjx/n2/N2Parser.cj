@@ -108,36 +108,34 @@ class N2Parser: ParserMixin[N2Token] {
             } else if at(N2Token.kwSTRUCT) {
                 next()
                 val name = id()
-                struct_(mark, name, name, null)
-            } else if consume(N2Token.kwTEMPLATE) {
-                val params = parseJoin('[', ']', ',', () -> id())
-                skipDelims()
-                if pass < 1 {
-                    val ti = i
-                    if consume(N2Token.kwSTRUCT) {
-                        val name = id()
-                        val st = StructTemplate(mark, name, params, ti)
+                if at('[') {
+                    if pass < 1 {
+                        val params = parseJoin('[', ']', ',', () -> id())
+                        val sti = i
+                        val st = StructTemplate(mark, name, params, sti)
                         program.addStructTemplate(st)
-                    } else {
-                        expect(N2Token.kwDEF)
-                        val name = qid()
-                        val tpats = parseJoin(
-                            '(', ')', ',', () -> { id(); expect(':'); tpat() })
-                        val ft = FuncTemplate(mark, name, params, tpats, ti)
-                        program.addFuncTemplate(ft)
                     }
-                } else if pass < 2 and consume(N2Token.kwSTRUCT) {
-                    val name = id()
-                    val st = program.getStructTemplateOrNull(name).get()
-                    if at('(') { st.traits.addAll(traitdecls()) }
-                    st.traits.add(program.getTraitOrNull("any").get())
+                    skipToDelimiter()
+                } else {
+                    struct_(mark, name, name, null)
                 }
-                skipToDelimiter()
-            } else if pass < 1 {
-                skipToDelimiter()
             } else if consume(N2Token.kwDEF) {
                 val name = qid()
-                func(mark, name, false)
+                if at('[') {
+                    if pass < 1 {
+                        val params = parseJoin('[', ']', ',', () -> id())
+                        val fti = i
+                        val tpats = parseJoin(
+                            '(', ')', ',', () -> { id(); expect(':'); tpat() })
+                        val ft = FuncTemplate(mark, name, params, tpats, fti)
+                        program.addFuncTemplate(ft)
+                    }
+                    skipToDelimiter()
+                } else if pass < 1 {
+                    skipToDelimiter()
+                } else {
+                    func(mark, name, false)
+                }
             } else {
                 throw errorKind("struct, function or template")
             }
@@ -251,9 +249,7 @@ class N2Parser: ParserMixin[N2Token] {
         eb = N2ExprBuilder(program, null(N2Locals()))
 
         val tmark = mark()
-        expect(N2Token.kwSTRUCT)
-        val rootName = id()
-        Assert.that(name.startsWith(rootName + "["))
+        val rootName = st.name
         struct_(tmark, name, rootName, null(typeArgs))
 
         i = savedI
@@ -287,8 +283,6 @@ class N2Parser: ParserMixin[N2Token] {
         eb = N2ExprBuilder(program, null(N2Locals()))
 
         val tmark = mark()
-        expect(N2Token.kwDEF)
-        Assert.that(name.startsWith(qid() + "[")) # skip root function name
         func(tmark, name, true)
 
         i = savedI
