@@ -1,0 +1,9 @@
+#!/bin/sh
+
+## Runs all cj tests
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+export CJ_HOME="${DIR}/.."
+TARGET="${CJ_HOME}/target"
+
+time java -cp $TARGET/classes crossj.cj.main.JSMain --all-tests -o $TARGET/out.js && time node --enable-source-maps $TARGET/out.js

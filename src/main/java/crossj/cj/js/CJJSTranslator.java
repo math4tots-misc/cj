@@ -25,7 +25,15 @@ import crossj.cj.run.CJRunModeWWW;
 import crossj.cj.run.CJRunModeWWWBase;
 
 public final class CJJSTranslator extends CJJSTranslatorBase {
-    private static final String jsroot = FS.join("src", "main", "resources", "js");
+    private static final String jsroot;
+
+    static {
+        String cjHome = System.getenv("CJ_HOME");
+        if (cjHome == null) {
+            cjHome = ".";
+        }
+        jsroot = FS.join(cjHome, "src", "main", "resources", "js");
+    }
 
     private final CJJSSink out;
 

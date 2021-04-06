@@ -1,0 +1,10 @@
+#!/bin/sh
+
+## Runs a cj class
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+export CJ_HOME="${DIR}/.."
+TARGET="${CJ_HOME}/target"
+
+# Run a CJ class
+java -cp $TARGET/classes crossj.cj.main.JSMain -m "$1" -o $TARGET/out.js && node --enable-source-maps $TARGET/out.js "${@:2}"

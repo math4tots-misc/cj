@@ -18,12 +18,14 @@ import crossj.json.JSON;
 public final class JSMain {
     public static void main(String[] args) {
         var mode = Mode.Default;
-        var sourceRoots = List.of(
-                // FS.join("src", "main", "cj2"), // for CJJSTranslator2
-                FS.join("src", "main", "cj"));
+        var sourceRoots = List.<String>of();
         var outPath = "";
         String appId = "";
         CJRunMode runMode = null;
+        String cjHome = System.getenv("CJ_HOME");
+        if (cjHome == null) {
+            cjHome = ".";
+        }
         for (var arg : args) {
             switch (mode) {
             case Default:
@@ -43,11 +45,13 @@ public final class JSMain {
                 case "-t":
                 case "--test":
                     runMode = new CJRunModeTest(false);
-                    sourceRoots.add(FS.join("src", "test", "cj"));
+                    sourceRoots.add(FS.join(cjHome, "src", "test", "cj"));
+                    sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "test", "cj"));
                     break;
                 case "--all-tests":
                     runMode = new CJRunModeTest(true);
-                    sourceRoots.add(FS.join("src", "test", "cj"));
+                    sourceRoots.add(FS.join(cjHome, "src", "test", "cj"));
+                    sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "test", "cj"));
                     break;
                 case "-o":
                 case "--out":
@@ -75,6 +79,11 @@ public final class JSMain {
                 break;
             }
         }
+        sourceRoots.add(FS.join(cjHome, "src", "main", "cj"));
+
+        // cjx is the private repository containing non-open source CJ code.
+        sourceRoots.add(FS.join(cjHome, "..", "cjx", "src", "main", "cj"));
+
         if (!appId.isEmpty()) {
             runMode = loadAppConfig(sourceRoots, appId);
         }

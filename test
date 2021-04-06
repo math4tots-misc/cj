@@ -1,2 +1,0 @@
-#!/bin/sh
-time java -cp target/classes crossj.cj.main.JSMain -t -o target/out.js && time node --enable-source-maps target/out.js

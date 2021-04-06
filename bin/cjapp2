@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# run a CJ app
+# Like 'cjapp', but will start a Python http server
+# so that local resources may be accessed
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+export CJ_HOME="${DIR}/.."
+TARGET="${CJ_HOME}/target"
+
+java -cp $TARGET/classes crossj.cj.main.JSMain -a "$@" -o $TARGET/out && \
+    ( (sleep 1 && open "http://localhost:8000") &) && \
+    ( cd $TARGET/out && python3 -m http.server )
