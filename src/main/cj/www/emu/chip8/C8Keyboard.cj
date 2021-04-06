@@ -44,7 +44,7 @@ class C8Keyboard {
     }
 
     def onKeyDown(self, event: KeyboardEvent) {
-        val which: Int = event.field("which").unsafeCast()
+        val which = js!(Int, event, ".which")
         if val key = keymap.getOrNull(which) {
             if not keysPressed[key] {
                 IO.println("keydown = " + key)
@@ -58,7 +58,7 @@ class C8Keyboard {
     }
 
     def onKeyUp(self, event: KeyboardEvent) {
-        val which: Int = event.field("which").unsafeCast()
+        val which = js!(Int, event, ".which")
         if val key = keymap.getOrNull(which) {
             IO.println("keyup = " + key)
             keysPressed[key] = 0

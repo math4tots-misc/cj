@@ -15,59 +15,59 @@ trait WebGLRenderingContext : CanvasRenderingContext {
     # properties starting with 'c'
 
     # c*_BUFFER_BIT
-    def __get_cDEPTH_BUFFER_BIT(self: Self): Int = self.field("DEPTH_BUFFER_BIT").unsafeCast()
-    def __get_cSTENCIL_BUFFER_BIT(self: Self): Int = self.field("STENCIL_BUFFER_BIT").unsafeCast()
-    def __get_cCOLOR_BUFFER_BIT(self: Self): Int = self.field("COLOR_BUFFER_BIT").unsafeCast()
+    def __get_cDEPTH_BUFFER_BIT(self: Self): Int = js0!(self, ".DEPTH_BUFFER_BIT")
+    def __get_cSTENCIL_BUFFER_BIT(self: Self): Int = js0!(self, ".STENCIL_BUFFER_BIT")
+    def __get_cCOLOR_BUFFER_BIT(self: Self): Int = js0!(self, ".COLOR_BUFFER_BIT")
 
     # c*_BUFFER
-    def __get_cARRAY_BUFFER(self: Self): Int = self.field("ARRAY_BUFFER").unsafeCast()
+    def __get_cARRAY_BUFFER(self: Self): Int = js0!(self, ".ARRAY_BUFFER")
     def __get_cELEMENT_ARRAY_BUFFER(self: Self): Int = (
-        self.field("ELEMENT_ARRAY_BUFFER").unsafeCast())
+        js0!(self, ".ELEMENT_ARRAY_BUFFER"))
 
     # c*_DRAW (buffer usage constants)
     # for specifying buffer usage patterns
-    def __get_cSTATIC_DRAW(self: Self): Int = self.field("STATIC_DRAW").unsafeCast()
-    def __get_cDYNAMIC_DRAW(self: Self): Int = self.field("DYNAMIC_DRAW").unsafeCast()
-    def __get_cSTREAM_DRAW(self: Self): Int = self.field("STREAM_DRAW").unsafeCast()
+    def __get_cSTATIC_DRAW(self: Self): Int = js0!(self, ".STATIC_DRAW")
+    def __get_cDYNAMIC_DRAW(self: Self): Int = js0!(self, ".DYNAMIC_DRAW")
+    def __get_cSTREAM_DRAW(self: Self): Int = js0!(self, ".STREAM_DRAW")
 
     # c*_SHADER (type of shader)
-    def __get_cVERTEX_SHADER(self: Self): Int = self.field("VERTEX_SHADER").unsafeCast()
-    def __get_cFRAGMENT_SHADER(self: Self): Int = self.field("FRAGMENT_SHADER").unsafeCast()
+    def __get_cVERTEX_SHADER(self: Self): Int = js0!(self, ".VERTEX_SHADER")
+    def __get_cFRAGMENT_SHADER(self: Self): Int = js0!(self, ".FRAGMENT_SHADER")
 
     # Various getShaderParameter/getProgramParameter constants
-    def __get_cDELETE_STATUS(self: Self): Int = self.field("DELETE_STATUS").unsafeCast()
-    def __get_cCOMPILE_STATUS(self: Self): Int = self.field("COMPILE_STATUS").unsafeCast()
-    def __get_cLINK_STATUS(self: Self): Int = self.field("LINK_STATUS").unsafeCast()
-    def __get_cVALIDATE_STATUS(self: Self): Int = self.field("VALIDATE_STATUS").unsafeCast()
-    def __get_cSHADER_TYPE(self: Self): Int = self.field("SHADER_TYPE").unsafeCast()
-    def __get_cACTIVE_UNIFORMS(self: Self): Int = self.field("ACTIVE_UNIFORMS").unsafeCast()
+    def __get_cDELETE_STATUS(self: Self): Int = js0!(self, ".DELETE_STATUS")
+    def __get_cCOMPILE_STATUS(self: Self): Int = js0!(self, ".COMPILE_STATUS")
+    def __get_cLINK_STATUS(self: Self): Int = js0!(self, ".LINK_STATUS")
+    def __get_cVALIDATE_STATUS(self: Self): Int = js0!(self, ".VALIDATE_STATUS")
+    def __get_cSHADER_TYPE(self: Self): Int = js0!(self, ".SHADER_TYPE")
+    def __get_cACTIVE_UNIFORMS(self: Self): Int = js0!(self, ".ACTIVE_UNIFORMS")
 
     # getBufferParameter constants
-    def __get_cBUFFER_SIZE(self: Self): Int = self.field("BUFFER_SIZE").unsafeCast()
-    def __get_cBUFFER_USAGE(self: Self): Int = self.field("BUFFER_USAGE").unsafeCast()
+    def __get_cBUFFER_SIZE(self: Self): Int = js0!(self, ".BUFFER_SIZE")
+    def __get_cBUFFER_USAGE(self: Self): Int = js0!(self, ".BUFFER_USAGE")
 
     # Data type constants
-    def __get_cBYTE(self: Self): Int = self.field("BYTE").unsafeCast()
-    def __get_cSHORT(self: Self): Int = self.field("SHORT").unsafeCast()
-    def __get_cUNSIGNED_BYTE(self: Self): Int = self.field("UNSIGNED_BYTE").unsafeCast()
-    def __get_cUNSIGNED_SHORT(self: Self): Int = self.field("UNSIGNED_SHORT").unsafeCast()
-    def __get_cFLOAT(self: Self): Int = self.field("FLOAT").unsafeCast()
+    def __get_cBYTE(self: Self): Int = js0!(self, ".BYTE")
+    def __get_cSHORT(self: Self): Int = js0!(self, ".SHORT")
+    def __get_cUNSIGNED_BYTE(self: Self): Int = js0!(self, ".UNSIGNED_BYTE")
+    def __get_cUNSIGNED_SHORT(self: Self): Int = js0!(self, ".UNSIGNED_SHORT")
+    def __get_cFLOAT(self: Self): Int = js0!(self, ".FLOAT")
 
     # Draw primitives
-    def __get_cPOINTS(self: Self): Int = self.field("POINTS").unsafeCast()
-    def __get_cLINE_STRIP(self: Self): Int = self.field("LINE_STRIP").unsafeCast()
-    def __get_cLINE_LOOP(self: Self): Int = self.field("LINE_LOOP").unsafeCast()
-    def __get_cLINES(self: Self): Int = self.field("LINES").unsafeCast()
-    def __get_cTRIANGLE_STRIP(self: Self): Int = self.field("TRIANGLE_STRIP").unsafeCast()
-    def __get_cTRIANGLE_FAN(self: Self): Int = self.field("TRIANGLE_FAN").unsafeCast()
-    def __get_cTRIANGLES(self: Self): Int = self.field("TRIANGLES").unsafeCast()
+    def __get_cPOINTS(self: Self): Int = js0!(self, ".POINTS")
+    def __get_cLINE_STRIP(self: Self): Int = js0!(self, ".LINE_STRIP")
+    def __get_cLINE_LOOP(self: Self): Int = js0!(self, ".LINE_LOOP")
+    def __get_cLINES(self: Self): Int = js0!(self, ".LINES")
+    def __get_cTRIANGLE_STRIP(self: Self): Int = js0!(self, ".TRIANGLE_STRIP")
+    def __get_cTRIANGLE_FAN(self: Self): Int = js0!(self, ".TRIANGLE_FAN")
+    def __get_cTRIANGLES(self: Self): Int = js0!(self, ".TRIANGLES")
 
     # --- constants for getParameter ---
-    def __get_cCOLOR_CLEAR_VALUE(self: Self): Int = self.field("COLOR_CLEAR_VALUE").unsafeCast()
+    def __get_cCOLOR_CLEAR_VALUE(self: Self): Int = js0!(self, ".COLOR_CLEAR_VALUE")
     def __get_cARRAY_BUFFER_BINDING(self: Self): Int = (
-        self.field("ARRAY_BUFFER_BINDING").unsafeCast())
+        js0!(self, ".ARRAY_BUFFER_BINDING"))
     def __get_cELEMENT_ARRAY_BUFFER_BINDING(self: Self): Int = (
-        self.field("ELEMENT_ARRAY_BUFFER_BINDING").unsafeCast())
+        js0!(self, ".ELEMENT_ARRAY_BUFFER_BINDING"))
 
     # === params ===
     # properties starting with 'p'

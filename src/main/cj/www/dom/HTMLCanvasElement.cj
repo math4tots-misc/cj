@@ -12,9 +12,9 @@ class HTMLCanvasElement : HTMLElement {
     val _obj :  JSObject
     def cls() : JSObject = js!(JSObject, "HTMLCanvasElement")
 
-    def __get_width(self: Self): Int = self.field("width").unsafeCast()
+    def __get_width(self: Self): Int = js0!(self, ".width")
     def __set_width(self: Self, value: Int) = self.setField("width", value)
-    def __get_height(self: Self): Int = self.field("height").unsafeCast()
+    def __get_height(self: Self): Int = js0!(self, ".height")
     def __set_height(self: Self, value: Int) = self.setField("height", value)
 
     def getContext[C: CanvasRenderingContext](self): C = C._getFromCanvas(self)

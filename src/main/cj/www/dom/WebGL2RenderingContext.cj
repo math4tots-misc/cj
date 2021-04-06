@@ -16,23 +16,23 @@ class WebGL2RenderingContext : WebGLRenderingContext {
     # properties starting with 'c'
 
     # c*_BUFFER (See also WebGLRenderingContext.c*_BUFFER fields)
-    def __get_cCOPY_READ_BUFFER(self: Self): Int = self.field("COPY_READ_BUFFER").unsafeCast()
-    def __get_cCOPY_WRITE_BUFFER(self: Self): Int = self.field("COPY_WRITE_BUFFER").unsafeCast()
+    def __get_cCOPY_READ_BUFFER(self: Self): Int = js0!(self, ".COPY_READ_BUFFER")
+    def __get_cCOPY_WRITE_BUFFER(self: Self): Int = js0!(self, ".COPY_WRITE_BUFFER")
     def __get_cTRANSFORM_FEEDBACK_BUFFER(self: Self): Int = (
-        self.field("TRANSFORM_FEEDBACK_BUFFER").unsafeCast())
-    def __get_cUNIFORM_BUFFER(self: Self): Int = self.field("UNIFORM_BUFFER").unsafeCast()
-    def __get_cPIXEL_PACK_BUFFER(self: Self): Int = self.field("PIXEL_PACK_BUFFER").unsafeCast()
+        js0!(self, ".TRANSFORM_FEEDBACK_BUFFER"))
+    def __get_cUNIFORM_BUFFER(self: Self): Int = js0!(self, ".UNIFORM_BUFFER")
+    def __get_cPIXEL_PACK_BUFFER(self: Self): Int = js0!(self, ".PIXEL_PACK_BUFFER")
     def __get_cPIXEL_UNPACK_BUFFER(self: Self): Int = (
-        self.field("PIXEL_UNPACK_BUFFER").unsafeCast())
+        js0!(self, ".PIXEL_UNPACK_BUFFER"))
 
     # c*_READ and C*_COPY (See also WebGLRenderingContext.c*_DRAW fields)
     # for specifying buffer usage patterns
-    def __get_cSTATIC_READ(self: Self): Int = self.field("STATIC_READ").unsafeCast()
-    def __get_cDYNAMIC_READ(self: Self): Int = self.field("DYNAMIC_READ").unsafeCast()
-    def __get_cSTREAM_READ(self: Self): Int = self.field("STREAM_READ").unsafeCast()
-    def __get_cSTATIC_COPY(self: Self): Int = self.field("STATIC_COPY").unsafeCast()
-    def __get_cDYNAMIC_COPY(self: Self): Int = self.field("DYNAMIC_COPY").unsafeCast()
-    def __get_cSTREAM_COPY(self: Self): Int = self.field("STREAM_COPY").unsafeCast()
+    def __get_cSTATIC_READ(self: Self): Int = js0!(self, ".STATIC_READ")
+    def __get_cDYNAMIC_READ(self: Self): Int = js0!(self, ".DYNAMIC_READ")
+    def __get_cSTREAM_READ(self: Self): Int = js0!(self, ".STREAM_READ")
+    def __get_cSTATIC_COPY(self: Self): Int = js0!(self, ".STATIC_COPY")
+    def __get_cDYNAMIC_COPY(self: Self): Int = js0!(self, ".DYNAMIC_COPY")
+    def __get_cSTREAM_COPY(self: Self): Int = js0!(self, ".STREAM_COPY")
 
     # *VertexArray methods
     def createVertexArray(self: Self): WebGLVertexArrayObject = (

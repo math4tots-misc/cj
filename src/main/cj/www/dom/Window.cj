@@ -14,6 +14,6 @@ class Window : JSWrapper, GlobalEventHandlers {
     def requestAnimationFrame(self: Self, f: Fn[Double, Unit]) = (
         self.call("requestAnimationFrame", f))
 
-    def __get_innerWidth(self: Self): Int = self.field("innerWidth").unsafeCast()
-    def __get_innerHeight(self: Self): Int = self.field("innerHeight").unsafeCast()
+    def __get_innerWidth(self: Self): Int = js0!(self, ".innerWidth")
+    def __get_innerHeight(self: Self): Int = js0!(self, ".innerHeight")
 }

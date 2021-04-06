@@ -8,7 +8,7 @@ class HTMLScriptElement : HTMLElement {
     val _obj :  JSObject
     def cls() : JSObject = js!(JSObject, "HTMLScriptElement")
 
-    def __get_type(self: Self): String = self.field("type").unsafeCast()
+    def __get_type(self: Self): String = js0!(self, ".type")
 
-    def __get_text(self: Self): String = self.field("text").unsafeCast()
+    def __get_text(self: Self): String = js0!(self, ".text")
 }

@@ -8,5 +8,5 @@ class HTMLSelectElement: HTMLElement {
     val _obj :  JSObject
     def cls() : JSObject = js!(JSObject, "HTMLSelectElement")
 
-    def __get_value(self): String = field("value").unsafeCast()
+    def __get_value(self): String = js0!(self, ".value")
 }
