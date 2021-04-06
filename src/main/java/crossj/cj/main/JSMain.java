@@ -4,8 +4,8 @@ import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.cj.CJContext;
-// import crossj.cj.js.CJJSTranslator;
-import crossj.cj.js2.CJJSTranslator2;
+import crossj.cj.js.CJJSTranslator;
+// import crossj.cj.js2.CJJSTranslator2;
 import crossj.cj.run.CJRunMode;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;
@@ -124,7 +124,7 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = CJJSTranslator2.translate(ctx, runMode);
+        var jsSink = CJJSTranslator.translate(ctx, runMode);
 
         var finalOutPath = outPath;
         runMode.accept(new CJRunModeVisitor<Void, Void>() {
