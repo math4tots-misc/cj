@@ -216,6 +216,10 @@ class C2IR {
             case array(a) = a.base
             else = IO.panic("Type.base " + self)
         }
+        def __get_len(self): Int = when self {
+            case array(a) = a.len
+            else = IO.panic("Type.len " + self)
+        }
     }
     class Var: Repr { # local variable
         val mark: Mark

@@ -173,7 +173,7 @@ class C2Parser : ParserMixin[C2Token] {
     # types
     # ========================================================================
 
-    def atTypename(self): Bool {
+    private def atTypename(self): Bool {
         switch peek().type {
             case C2Token.kwVOID
             case C2Token.kwBOOL
@@ -193,7 +193,7 @@ class C2Parser : ParserMixin[C2Token] {
     }
 
     ## declaration = declspec (declarator ("=" expr)? ("," declarator ("=" expr)?)*)? ";"
-    def declaration(self): List[Stmt] {
+    private def declaration(self): List[Stmt] {
         val mark = mark()
         val (baseType, attrs) = declspecEx()
 
@@ -215,15 +215,14 @@ class C2Parser : ParserMixin[C2Token] {
             }
             val var_ = locals.addLVar(mark, type, name)
             if consume('=') {
-                val init = assign()
-                initstmts.add(eb.exprStmt(
-                    mark, eb.binop(mark, '=', eb.getvar(mark, var_), init)))
+                val initExpr = lvarInitializer(var_)
+                initstmts.add(eb.exprStmt(mark, initExpr))
             }
         }
         initstmts
     }
 
-    def declspec(self): Type {
+    private def declspec(self): Type {
         val mark = mark()
         val (type, attr) = declspecEx()
         if attr {
@@ -232,7 +231,7 @@ class C2Parser : ParserMixin[C2Token] {
         type
     }
 
-    def declspecEx(self): Tuple[Type, VarAttr] {
+    private def declspecEx(self): Tuple[Type, VarAttr] {
         # NOTE: some invalid combinations of types may be allowed,
         # but at least the valid ones should be handled properly.
         #
@@ -299,7 +298,7 @@ class C2Parser : ParserMixin[C2Token] {
         (type, attr)
     }
 
-    def declspecEnum(self) {
+    private def declspecEnum(self) {
         expect(C2Token.kwENUM)
         val optTag = if at(C2Token.tIDENT) { null(next().stringValue) } else { null }
         if consume('{') {
@@ -316,7 +315,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def declspecDerived(self): Type {
+    private def declspecDerived(self): Type {
         val mark = mark()
         val isUnion = if consume(C2Token.kwUNION) { true } else {
             expect(C2Token.kwSTRUCT); false }
@@ -354,7 +353,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def derivedDecl(self, derived: Type.Derived, isUnion: Bool) {
+    private def derivedDecl(self, derived: Type.Derived, isUnion: Bool) {
         if derived.isComplete() {
             throw MError("Duplicate derived definition", [mark(), derived.mark])
         }
@@ -386,7 +385,7 @@ class C2Parser : ParserMixin[C2Token] {
         derived._size = currentSize.roundUp(currentAlignment)
     }
 
-    def declarator(self, var type: Type): Tuple[Mark, String, Type] {
+    private def declarator(self, var type: Type): Tuple[Mark, String, Type] {
         while consume('*') {
             type = type.ptrOf()
         }
@@ -416,7 +415,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def abstractDeclarator(self, var type: Type): Type {
+    private def abstractDeclarator(self, var type: Type): Type {
         while consume('*') {
             type = type.ptrOf()
         }
@@ -443,7 +442,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def typeSuffix(self, var type: Type): Type {
+    private def typeSuffix(self, var type: Type): Type {
         if consume('(') {
             val params: List[Var] = []
             while not consume(')') {
@@ -466,7 +465,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def typename(self): Type {
+    private def typename(self): Type {
         abstractDeclarator(declspec())
     }
 
@@ -474,7 +473,7 @@ class C2Parser : ParserMixin[C2Token] {
     # statements
     # ========================================================================
 
-    def stmt(self): Stmt {
+    private def stmt(self): Stmt {
         val labels: List[String] = []
         while at(C2Token.tIDENT) and atOffset(':', 1) {
             labels.add(next().stringValue)
@@ -485,7 +484,7 @@ class C2Parser : ParserMixin[C2Token] {
         stmt
     }
 
-    def stmtWithoutLabels(self): Stmt {
+    private def stmtWithoutLabels(self): Stmt {
         val mark = mark()
         switch peek().type {
             case '{' = block()
@@ -633,11 +632,11 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def declOrStmt(self): List[Stmt] {
+    private def declOrStmt(self): List[Stmt] {
         if atTypename() and not atOffset(':', 1) { declaration() } else { [stmt()] }
     }
 
-    def blockInside(self): Tuple[List[Var], List[Stmt]] {
+    private def blockInside(self): Tuple[List[Var], List[Stmt]] {
         val stmts: List[Stmt] = []
         expect('{')
         val vars = locals.scoped(() -> {
@@ -648,23 +647,117 @@ class C2Parser : ParserMixin[C2Token] {
         (vars, stmts)
     }
 
-    def block(self): Stmt {
+    private def block(self): Stmt {
         val mark = mark()
         val (vars, stmts) = blockInside()
         eb.block(mark, vars, stmts)
+    }
+
+    private class Initializer {
+        val mark: Mark
+        val type: Type
+        var expr: Expr = ?
+        var children: List[Initializer] = ?
+
+        def(mark: Mark, type: Type): Self {
+            val self = __malloc(mark, type)
+            if type.isArray() {
+                Assert(type.len > 0)
+                children = []
+                for i = 0; i < type.len; i++ {
+                    children.add(Self(mark, type.base))
+                }
+            }
+            self
+        }
+    }
+
+    private union InitDesg {
+        case lvar(Var)
+        case subscr(InitDesg, Int)
+    }
+
+    private def initializer2(self, init: Initializer) {
+        if init.type.isArray() {
+            expect('{')
+            for i = 0; i < init.type.len; i++ {
+                if i > 0 { expect(',') }
+                initializer2(init.children[i])
+            }
+            expect('}')
+        } else {
+            init.expr = assign()
+        }
+    }
+
+    private def initializer(self, type: Type): Initializer {
+        val init = Initializer(mark(), type)
+        initializer2(init)
+        init
+    }
+
+    private def initDesgExpr(self, mark: Mark, desg: InitDesg): Expr {
+        when desg {
+            case lvar(var_) = eb.getvar(var_.mark, var_)
+            case subscr(nextDesg, idx) {
+                val lhs = initDesgExpr(mark, nextDesg)
+                val rhs = eb.int(mark, idx)
+                eb.preop(mark, '*', eb.binop(mark, '+', lhs, rhs))
+            }
+        }
+    }
+
+    private def createLvarInit(
+            self, mark: Mark, init: Initializer, type: Type, desg: InitDesg): Expr {
+        when type {
+            case array(at) {
+                var expr = eb.int(mark, 0)
+                for i = 0; i < at.len; i++ {
+                    val desg2 = InitDesg.subscr(desg, i)
+                    val rhs = createLvarInit(mark, init.children[i], at.base, desg2)
+                    expr = eb.comma(mark, expr, rhs)
+                }
+                expr
+            }
+            else {
+                val lhs = initDesgExpr(mark, desg)
+                val rhs = init.expr
+                eb.binop(mark, '=', lhs, rhs)
+            }
+        }
+    }
+
+    # comments from chibicc:
+    # ```
+    # A variable definition with an initializer is a shorthand notation
+    # for a variable definition followed by assignments. This function
+    # generates assignment expressions for an initializer. For example,
+    # `int x[2][2] = {{6, 7}, {8, 9}}` is converted to the following
+    # expressions:
+    #
+    #   x[0][0] = 6;
+    #   x[0][1] = 7;
+    #   x[1][0] = 8;
+    #   x[1][1] = 9;
+    # ```
+    private def lvarInitializer(self, var_: Var): Expr {
+        val mark = mark()
+        val init = initializer(var_.type)
+        val desg = InitDesg.lvar(var_)
+        createLvarInit(mark, init, var_.type, desg)
     }
 
     # ========================================================================
     # expressions
     # ========================================================================
 
-    def expr(self): Expr = exprpr(0)
-    def assign(self): Expr = exprpr(assingPrec)
-    def unary(self): Expr = exprpr(unaryPrec)
-    def cond(self): Expr = exprpr(condPrec - 1)
+    private def expr(self): Expr = exprpr(0)
+    private def assign(self): Expr = exprpr(assingPrec)
+    private def unary(self): Expr = exprpr(unaryPrec)
+    private def cond(self): Expr = exprpr(condPrec - 1)
 
-    def constExpr(self): BigInt = eval(cond())
-    def intConstExpr(self): Int = Int(constExpr())
+    private def constExpr(self): BigInt = eval(cond())
+    private def intConstExpr(self): Int = Int(constExpr())
 
     private def eval(self, expr: Expr): BigInt {
         when expr.kind {
@@ -703,7 +796,7 @@ class C2Parser : ParserMixin[C2Token] {
         }
     }
 
-    def exprpr(self, precedence: Int): Expr {
+    private def exprpr(self, precedence: Int): Expr {
         var expr = atom()
         var tokprec = precof(peek().type)
         while precedence < tokprec {
@@ -814,7 +907,7 @@ class C2Parser : ParserMixin[C2Token] {
         expr
     }
 
-    def toAugassign(self, mark: Mark, op: Int, lhs: Expr, rhs: Expr): Expr {
+    private def toAugassign(self, mark: Mark, op: Int, lhs: Expr, rhs: Expr): Expr {
         val t = eb.getvar(mark, locals.addLVar(mark, lhs.type.ptrOf(), newTmpvarname()))
         eb.comma(
             mark,
@@ -828,7 +921,7 @@ class C2Parser : ParserMixin[C2Token] {
                 eb.binop(mark, op, eb.preop(mark, '*', t), rhs)))
     }
 
-    def args(self): List[Expr] {
+    private def args(self): List[Expr] {
         val args: List[Expr] = []
         expect('(')
         while not consume(')') {
@@ -838,7 +931,7 @@ class C2Parser : ParserMixin[C2Token] {
         args
     }
 
-    def atom(self): Expr {
+    private def atom(self): Expr {
         val mark = mark()
         switch peek().type {
             case C2Token.tINT = eb.int(mark, next().intValue)

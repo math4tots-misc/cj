@@ -170,6 +170,17 @@ void test08_constexpr() {
     // aeq(3, ({ char x[(int*)16-(int*)4]; sizeof(x); }));
 }
 
+void test08_local_var_inits() {
+    aeq(1, ({ int x[3]={1,2,3}; x[0]; }));
+    aeq(2, ({ int x[3]={1,2,3}; x[1]; }));
+    aeq(3, ({ int x[3]={1,2,3}; x[2]; }));
+    aeq(3, ({ int x[3]={1,2,3}; x[2]; }));
+
+    aeq(2, ({ int x[2][3]={{1,2,3},{4,5,6}}; x[0][1]; }));
+    aeq(4, ({ int x[2][3]={{1,2,3},{4,5,6}}; x[1][0]; }));
+    aeq(6, ({ int x[2][3]={{1,2,3},{4,5,6}}; x[1][2]; }));
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
@@ -179,4 +190,5 @@ int main() {
     test06_switch();
     test06_shift();
     test07_cond();
+    test08_local_var_inits();
 }
