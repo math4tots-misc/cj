@@ -1,15 +1,15 @@
 
-template[T] void print(T t) = js!(void, "console.log(''+", t.str(), ")")
+template[T] void print(t: T) = js!(void, "console.log(''+", t.str(), ")")
 
-unreachable panic(str s) = js!(unreachable, "panic(", s, ")")
+unreachable panic(s: str) = js!(unreachable, "panic(", s, ")")
 
-bool __is(var a, var b) = js!(bool, a, "===", b)
+bool __is(a: var, b: var) = js!(bool, a, "===", b)
 
-template[T] void print2(T t) {
+template[T] void print2(t: T) {
     js!(void, "console.log(''+", t, ")")
 }
 
-int __checkIndex(var xs, int i) {
+int __checkIndex(xs: var, i: int) {
     int len = js!(int, xs, ".length")
     if (i < 0) i = i + len
     if (i < 0 || i >= len) panic("Index out of bounds (i = " + i.repr() + ", len = " + len.repr() + ")")
@@ -20,32 +20,32 @@ int __checkIndex(var xs, int i) {
 //     any
 // ============================================================
 trait any
-str any.json(var self) = js!(str, "JSON.stringify(", self, ")")
-str any.str(var self) = repr()
-str any.repr(var self) = json()
+str any.json(self: var) = js!(str, "JSON.stringify(", self, ")")
+str any.str(self: var) = repr()
+str any.repr(self: var) = json()
 
 // ============================================================
 //     int
 // ============================================================
-str int.str(int self) = self.repr()
-str int.repr(int self) = js!(str, "''+", self)
+str int.str(self: int) = self.repr()
+str int.repr(self: int) = js!(str, "''+", self)
 
 // ============================================================
 //     str
 // ============================================================
-int str.len(str s) = js!(int, s, ".length")
-str str.str(str s) = s
-str str.repr(str s) = js!(str, "JSON.stringify(", s, ")")
-int str.get(str s, int i) = js!(int, s, ".charCodeAt(", i, ")")
+int str.len(s: str) = js!(int, s, ".length")
+str str.str(s: str) = s
+str str.repr(s: str) = js!(str, "JSON.stringify(", s, ")")
+int str.get(s: str, i: int) = js!(int, s, ".charCodeAt(", i, ")")
 
 // ============================================================
 //     list
 // ============================================================
-template[T] int list.len(T[] self) = js!(int, self, ".length")
-template[T] void list.add(T[] self, T t) = js!(void, self, ".push(", t, ")")
-template[T] T list.get(T[] self, int i) = js!(T, self, "[", __checkIndex(self, i), "]")
-template[T] str list.str(T[] self) = self.repr()
-template[T] str list.repr(T[] self) {
+template[T] int list.len(self: T[]) = js!(int, self, ".length")
+template[T] void list.add(self: T[], t: T) = js!(void, self, ".push(", t, ")")
+template[T] T list.get(self: T[], i: int) = js!(T, self, "[", __checkIndex(self, i), "]")
+template[T] str list.str(self: T[]) = self.repr()
+template[T] str list.repr(self: T[]) {
     auto sb = StringBuilder.new()
     sb.add("[")
     for (int i = 0; i < self.len(); i++) {
@@ -61,9 +61,9 @@ template[T] str list.repr(T[] self) {
 // ============================================================
 struct StringBuilder native {}
 StringBuilder StringBuilder.new() = js!(StringBuilder, "[]")
-template[T] void StringBuilder.add(StringBuilder self, T t) = js!(
+template[T] void StringBuilder.add(self: StringBuilder, t: T) = js!(
     void, self, ".push(", t.str(), ")")
-str StringBuilder.str(StringBuilder self) = js!(str, self, ".join('')")
+str StringBuilder.str(self: StringBuilder) = js!(str, self, ".join('')")
 
 // ============================================================
 //     Tuple
@@ -86,12 +86,12 @@ template[K, V] struct Map {
     int _size
 }
 template[K, V] Map[K, V] Map.empty() = Map[K, V]([], 0)
-template[K, V] str Map.str(Map[K, V] self) = repr()
-template[K, V] str Map.repr(Map[K, V] self) = "Map()"
-template[K, V] int Map.size(Map[K, V] self) = _size
-int Map._getIndex(int hash, int size) = (hash % size + size) % size
+template[K, V] str Map.str(self: Map[K, V]) = repr()
+template[K, V] str Map.repr(self: Map[K, V]) = "Map()"
+template[K, V] int Map.size(self: Map[K, V]) = _size
+int Map._getIndex(hash: int, size: int) = (hash % size + size) % size
 template[K, V]
-void Map._insertNoRehash(Map[K, V] self, Tuple3[int, K, V] triple) {
+void Map._insertNoRehash(self: Map[K, V], triple: Tuple3[int, K, V]) {
     auto hash = triple.f0
     auto key = triple.f1
     auto list = _entries

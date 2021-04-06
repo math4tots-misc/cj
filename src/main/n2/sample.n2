@@ -5,7 +5,7 @@ struct Foo {
     int b
 }
 
-int Foo.sum(Foo self) = a + b
+int Foo.sum(self: Foo) = a + b
 
 template[T] struct Bar {
     T t

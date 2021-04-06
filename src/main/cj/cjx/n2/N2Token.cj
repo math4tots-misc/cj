@@ -20,6 +20,7 @@ class N2Token: Repr {
         tINCR
         tDECR
 
+        kwDEF
         kwTYPEDEF
         kwTEMPLATE
         kwAUTO

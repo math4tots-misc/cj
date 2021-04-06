@@ -122,7 +122,7 @@ class N2Parser: ParserMixin[N2Token] {
                         tpat() # return type
                         val name = qid()
                         val tpats = parseJoin(
-                            '(', ')', ',', () -> { val pat = tpat(); id(); pat })
+                            '(', ')', ',', () -> { id(); expect(':'); tpat() })
                         val ft = FuncTemplate(mark, name, params, tpats, ti)
                         program.addFuncTemplate(ft)
                     }
@@ -147,8 +147,9 @@ class N2Parser: ParserMixin[N2Token] {
 
     def param(self): Var {
         val mark = mark()
-        val type = type()
         val name = id()
+        expect(':')
+        val type = type()
         val init = if consume('=') { null(expr()) } else { null }
         locals.add(mark, type, name, init)
     }
