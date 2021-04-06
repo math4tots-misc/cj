@@ -119,7 +119,7 @@ class N2Parser: ParserMixin[N2Token] {
                         val st = StructTemplate(mark, name, params, ti)
                         program.addStructTemplate(st)
                     } else {
-                        tpat() # return type
+                        expect(N2Token.kwDEF)
                         val name = qid()
                         val tpats = parseJoin(
                             '(', ')', ',', () -> { id(); expect(':'); tpat() })
@@ -135,10 +135,11 @@ class N2Parser: ParserMixin[N2Token] {
                 skipToDelimiter()
             } else if pass < 1 {
                 skipToDelimiter()
-            } else {
-                val type = type()
+            } else if consume(N2Token.kwDEF) {
                 val name = qid()
-                func(mark, type, name, false)
+                func(mark, name, false)
+            } else {
+                throw errorKind("struct, function or template")
             }
             skipDelims()
         }
@@ -286,9 +287,9 @@ class N2Parser: ParserMixin[N2Token] {
         eb = N2ExprBuilder(program, null(N2Locals()))
 
         val tmark = mark()
-        val returnType = type()
+        expect(N2Token.kwDEF)
         Assert.that(name.startsWith(qid() + "[")) # skip root function name
-        func(tmark, returnType, name, true)
+        func(tmark, name, true)
 
         i = savedI
         templateArgs = savedArgs
@@ -297,11 +298,12 @@ class N2Parser: ParserMixin[N2Token] {
         program.getFuncOrNull(name).get()
     }
 
-    def func(self, mark: Mark, returnType: Type, name: String, instantiatingTemplate: Bool) {
+    def func(self, mark: Mark, name: String, instantiatingTemplate: Bool) {
         val savedEB = eb
         eb = N2ExprBuilder(program, null(N2Locals()))
 
         val nparams = params().size()
+        val returnType = if consume(':') { type() } else { Type.void }
         val func = Func(mark, returnType, name, nparams, locals.list)
         if pass < 2 {
             program.addFunc(func)
@@ -347,7 +349,7 @@ class N2Parser: ParserMixin[N2Token] {
         eb.evalType(expr)
     }
 
-    def type(self): Type = asTypeLiteral(expr())
+    def type(self): Type = asTypeLiteral(exprpr(unaryPrec))
 
     def atDelim(self): Bool = switch peek().type {
         case ';'; case '\n'; case N2Token.tEOF; case '}' = true

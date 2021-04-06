@@ -5,13 +5,13 @@ struct Foo {
     int b
 }
 
-int Foo.sum(self: Foo) = a + b
+def Foo.sum(self: Foo): int = a + b
 
 template[T] struct Bar {
     T t
 }
 
-int main() {
+def main() {
     auto foo = Foo(a = 3, b = 5)
     print("Hello world!")
     print(2 + 3)
@@ -40,5 +40,4 @@ int main() {
         auto list = ["hello", "world"]
         print("list.len() = " + list.str())
     }
-    return 0
 }
