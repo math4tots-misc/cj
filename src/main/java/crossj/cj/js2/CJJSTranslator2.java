@@ -30,7 +30,14 @@ import crossj.cj.run.CJRunModeVisitor;
 import crossj.cj.run.CJRunModeWWW;
 
 public final class CJJSTranslator2 {
-    private static final String jsroot = FS.join("src", "main", "resources", "js2");
+    private static final String jsroot;
+    static {
+        String cjHome = System.getenv("CJ_HOME");
+        if (cjHome == null) {
+            cjHome = ".";
+        }
+        jsroot = FS.join(cjHome, "src", "main", "resources", "js2");
+    }
 
     private static final Map<String, List<String>> nativeIncludeMap = Map.of(
             Pair.of("cjx.binaryen.Binaryen", List.of(FS.join("..", "js", "lib", "binaryen", "index.js"))),

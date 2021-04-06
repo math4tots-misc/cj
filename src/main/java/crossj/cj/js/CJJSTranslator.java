@@ -26,7 +26,6 @@ import crossj.cj.run.CJRunModeWWWBase;
 
 public final class CJJSTranslator extends CJJSTranslatorBase {
     private static final String jsroot;
-
     static {
         String cjHome = System.getenv("CJ_HOME");
         if (cjHome == null) {

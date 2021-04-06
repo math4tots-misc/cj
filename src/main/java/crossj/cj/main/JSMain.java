@@ -5,7 +5,7 @@ import crossj.base.IO;
 import crossj.base.List;
 import crossj.cj.CJContext;
 import crossj.cj.js.CJJSTranslator;
-// import crossj.cj.js2.CJJSTranslator2;
+import crossj.cj.js2.CJJSTranslator2;
 import crossj.cj.run.CJRunMode;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;
@@ -22,6 +22,7 @@ public final class JSMain {
         var outPath = "";
         String appId = "";
         CJRunMode runMode = null;
+        boolean useTranslator2 = false;
         String cjHome = System.getenv("CJ_HOME");
         if (cjHome == null) {
             cjHome = ".";
@@ -41,6 +42,10 @@ public final class JSMain {
                 case "-r":
                 case "--source-root":
                     mode = Mode.SourceRoot;
+                    break;
+                case "-tr2":
+                case "--use-translator2":
+                    useTranslator2 = true;
                     break;
                 case "-t":
                 case "--test":
@@ -133,7 +138,9 @@ public final class JSMain {
             ctx.validateMainItem(ctx.loadItem(mainClass));
         }
 
-        var jsSink = CJJSTranslator.translate(ctx, runMode);
+        var jsSink = useTranslator2 ?
+            CJJSTranslator2.translate(ctx, runMode) :
+            CJJSTranslator.translate(ctx, runMode);
 
         var finalOutPath = outPath;
         runMode.accept(new CJRunModeVisitor<Void, Void>() {
