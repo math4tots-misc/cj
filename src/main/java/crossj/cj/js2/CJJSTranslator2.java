@@ -240,7 +240,7 @@ public final class CJJSTranslator2 {
 
     private void emitMallocMethod(CJJSLLMethod reifiedMethod) {
         var method = reifiedMethod.getMethod();
-        var owner = reifiedMethod.getOwner();
+        var owner = reifiedMethod.getFinalOwnerType();
         var isWrapper = isWrapperType(owner);
         var methodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
         var fields = owner.getItem().getFields().filter(f -> !f.isStatic());
@@ -290,13 +290,13 @@ public final class CJJSTranslator2 {
     }
 
     private void emitMethod(CJJSLLMethod reifiedMethod) {
-        IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getIdStr());
+        // IO.println("EMITTING " + reifiedMethod.getMethod().getName() + " " + reifiedMethod.getBinding().getIdStr());
 
         {
             // a bit of a hack to allow pulling in some JS if any method on an explicitly
             // specified
             // list of files is used.
-            var ownerFullName = reifiedMethod.getOwner().getItem().getFullName();
+            var ownerFullName = reifiedMethod.getFinalOwnerType().getItem().getFullName();
             var nativeIncludePaths = nativeIncludeMap.getOrNull(ownerFullName);
             if (nativeIncludePaths != null) {
                 for (var nativeIncludePath : nativeIncludePaths) {
@@ -315,19 +315,19 @@ public final class CJJSTranslator2 {
                     var fmi = (CJIRFieldMethodInfo) extra;
                     var field = fmi.getField();
                     if (field.isStatic()) {
-                        queueStaticField(reifiedMethod.getOwner(), field);
+                        queueStaticField(reifiedMethod.getFinalOwnerType(), field);
                     }
                 } else if (extra instanceof CJIRCaseMethodInfo) {
                     // it's ok to omit here -- should be always implemented
                     // directly in CJJSOps
-                } else if (reifiedMethod.getOwner().isNative()) {
-                    var key = reifiedMethod.getOwner().getItem().getFullName() + "."
+                } else if (reifiedMethod.getFinalOwnerType().isNative()) {
+                    var key = reifiedMethod.getFinalOwnerType().getItem().getFullName() + "."
                             + reifiedMethod.getMethod().getName();
                     var path = FS.join(jsroot, key + ".js");
                     if (FS.exists(path)) {
                         emitNative(key + ".js", method.getMark());
-                        var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
-                        IO.println("  (NATIVE " + name + ")");
+                        // var name = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
+                        // IO.println("  (NATIVE " + name + ")");
                     } else {
                         if (CJJSOps.OPS.containsKey(key)) {
                             // probably ok
@@ -338,7 +338,7 @@ public final class CJJSTranslator2 {
                         }
                     }
                 } else {
-                    var key = reifiedMethod.getOwner().getItem().getFullName() + "." + method.getName();
+                    var key = reifiedMethod.getFinalOwnerType().getItem().getFullName() + "." + method.getName();
                     if (CJJSOps.OPS.containsKey(key)) {
                         // probably ok
                     } else {
@@ -352,7 +352,7 @@ public final class CJJSTranslator2 {
         }
         var binding = reifiedMethod.getBinding();
         var methodName = methodNameRegistry.nameForReifiedMethod(reifiedMethod);
-        IO.println("  (NAME = " + methodName + " from " + method.getMark().filename + ")");
+        // IO.println("  (NAME = " + methodName + " from " + method.getMark().filename + ")");
         if (method.isAsync()) {
             out.append("async ");
         }

@@ -2,6 +2,7 @@ package crossj.cj.js2;
 
 import crossj.cj.ir.CJIRMethod;
 import crossj.cj.ir.meta.CJIRClassType;
+import crossj.cj.ir.meta.CJIRTraitOrClassType;
 
 /**
  * A CJIRMethod together with a type-binding and its reified owner.
@@ -9,18 +10,22 @@ import crossj.cj.ir.meta.CJIRClassType;
  * 'low-level' CJIRReifiedMethodRef
  */
 public final class CJJSLLMethod {
-    private final CJIRClassType owner;
+    private final CJIRTraitOrClassType declaringTraitOrClass;
     private final CJIRMethod method;
     private final CJJSTypeBinding binding;
 
-    public CJJSLLMethod(CJIRClassType owner, CJIRMethod method, CJJSTypeBinding binding) {
-        this.owner = owner;
+    public CJJSLLMethod(CJIRTraitOrClassType declaringTraitOrClass, CJIRMethod method, CJJSTypeBinding binding) {
+        this.declaringTraitOrClass = declaringTraitOrClass;
         this.method = method;
         this.binding = binding;
     }
 
-    public CJIRClassType getOwner() {
-        return owner;
+    public CJIRTraitOrClassType getDeclaringTraitOrClass() {
+        return declaringTraitOrClass;
+    }
+
+    public CJIRClassType getFinalOwnerType() {
+        return binding.getSelfType();
     }
 
     public CJIRMethod getMethod() {
@@ -32,6 +37,7 @@ public final class CJJSLLMethod {
     }
 
     public String getId() {
-        return owner.repr() + "." + method.getName() + (binding.isEmpty() ? "" : "<" + binding.getIdStr());
+        return getFinalOwnerType().repr() + "." + method.getName()
+                + (binding.isEmpty() ? "" : "<" + binding.getIdStr());
     }
 }

@@ -1,6 +1,5 @@
 package crossj.cj.js2;
 
-import crossj.base.IO;
 import crossj.base.Map;
 
 public final class CJJSMethodNameRegistry {
@@ -15,14 +14,14 @@ public final class CJJSMethodNameRegistry {
     }
 
     public String nameForReifiedMethod(CJJSLLMethod reifiedMethod) {
-        return getName(reifiedMethod.getOwner().getItem().getFullName(), reifiedMethod.getMethod().getName(),
+        return getName(reifiedMethod.getFinalOwnerType().getItem().getFullName(), reifiedMethod.getMethod().getName(),
                 reifiedMethod.getBinding());
     }
 
     private int getBindingId(CJJSTypeBinding binding) {
         return bindingToId.getOrInsert(binding.getIdStr(), () -> {
             var id = bindingToId.size();
-            IO.println(id + " -> " + binding.getIdStr());
+            // IO.println(id + " -> " + binding.getIdStr());
             return id;
         });
     }

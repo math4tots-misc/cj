@@ -43,7 +43,15 @@ final class CJJSTypeBinding {
     }
 
     CJJSLLMethod translate(CJIRClassType owner, CJIRReifiedMethodRef reifiedMethodRef) {
+        // var recv = owner.repr();
+        // var before = owner.repr() + ".(" + reifiedMethodRef.getOwner().repr() + ")." + reifiedMethodRef.getName();
         reifiedMethodRef = adjust(owner, reifiedMethodRef);
+        // var ownerAfter = reifiedMethodRef.getOwner().repr();
+        // var after = owner.repr() + ".(" + reifiedMethodRef.getOwner().repr() + ")." + reifiedMethodRef.getName();
+        // if (!recv.equals(ownerAfter) || !ownerBefore.equals(ownerAfter) || !before.equals(after)) {
+        // if (!recv.equals(ownerAfter)) {
+        //     IO.println("BEFORE  = " + before + "\n AFTER  = " + after);
+        // }
         var methodRef = reifiedMethodRef.getMethodRef();
         var methodOwner = methodRef.getOwner();
         Map<String, CJIRClassType> itemLevelMap = Map.of();

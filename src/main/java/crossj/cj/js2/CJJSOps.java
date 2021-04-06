@@ -130,7 +130,7 @@ public final class CJJSOps {
             mkpair("cj.String.replace", ctx -> translateParts(ctx.args, "", ".split(", ").join(", ")")),
             mkpair("cj.String.lower", ctx -> translateParts(ctx.args, "", ".toLowerCase()")),
             mkpair("cj.String.upper", ctx -> translateParts(ctx.args, "", ".toUpperCase()")),
-            mkpair("cj.String.parseInt", ctx -> nanToNull(ctx, translateParts(ctx.args, "parseInt(", ",10)"))),
+            mkpair("cj.String.parseInt", ctx -> nanToNull(ctx, translateParts(ctx.args, "parseInt(", ")"))),
             mkpair("cj.String.parseDouble", ctx -> nanToNull(ctx, translateParts(ctx.args, "parseFloat(", ")"))),
 
             mkpair("cj.StringBuilder.__new", ctx -> CJJSBlob2.simplestr("[]", false)),
@@ -470,7 +470,6 @@ public final class CJJSOps {
     }
 
     static CJJSBlob2 nanToNull(Context ctx, CJJSBlob2 inner) {
-        ctx.requestJS("nan-to-null.js");
         return new CJJSBlob2(inner.getPrep(), out -> {
             out.append("nanToNull(");
             inner.emitBody(out);

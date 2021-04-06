@@ -114,6 +114,13 @@ final class CJJSExpressionTranslator2 {
 
             @Override
             public CJJSBlob2 visitMethodCall(CJIRMethodCall e, Void a) {
+
+                var inliner = new CJJSInliner2(CJJSExpressionTranslator2.this);
+                var optInlinedBlob = inliner.tryInline(e);
+                if (optInlinedBlob.isPresent()) {
+                    return optInlinedBlob.get();
+                }
+
                 var args = e.getArgs().map(arg -> translate(arg));
                 var owner = binding.apply(e.getOwner());
                 var reifiedMethodRef = e.getReifiedMethodRef();
