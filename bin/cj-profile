@@ -7,7 +7,7 @@ export CJ_HOME="${DIR}/.."
 TARGET="${CJ_HOME}/target"
 
 # Run a CJ class
-java -cp $TARGET/classes crossj.cj.main.JSMain -m "$1" -o $TARGET/out.js && node --prof --enable-source-maps $TARGET/out.js "${@:2}"
+java -cp $TARGET/classes crossj.cj.main.CJMain -m "$1" -o $TARGET/out.js && node --prof --enable-source-maps $TARGET/out.js "${@:2}"
 
 # The above should produce a file matching a pattern solate-*-v8.log
 # The raw ticks in that log file can be turned into something more readable by running something like:

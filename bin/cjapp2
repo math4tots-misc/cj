@@ -8,6 +8,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 export CJ_HOME="${DIR}/.."
 TARGET="${CJ_HOME}/target"
 
-java -cp $TARGET/classes crossj.cj.main.JSMain -a "$@" -o $TARGET/out && \
+java -cp $TARGET/classes crossj.cj.main.CJMain -a "$@" -o $TARGET/out && \
     ( (sleep 1 && open "http://localhost:8000") &) && \
     ( cd $TARGET/out && python3 -m http.server )

@@ -15,7 +15,7 @@ import crossj.cj.run.CJRunModeWWW;
 import crossj.cj.run.CJRunModeWWWBase;
 import crossj.json.JSON;
 
-public final class JSMain {
+public final class CJMain {
 
     private static class Options {
         List<String> sourceRoots = List.<String>of();

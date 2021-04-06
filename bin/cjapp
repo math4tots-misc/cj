@@ -7,7 +7,7 @@ export CJ_HOME="${DIR}/.."
 TARGET="${CJ_HOME}/target"
 
 # run a CJ app (see list in src/main/app)
-java -cp $TARGET/classes crossj.cj.main.JSMain -a "$@" -o $TARGET/out && (cd $TARGET/out && if test -f package.json; then
+java -cp $TARGET/classes crossj.cj.main.CJMain -a "$@" -o $TARGET/out && (cd $TARGET/out && if test -f package.json; then
     nwjs .
 else
     open index.html
