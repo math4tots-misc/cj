@@ -356,6 +356,8 @@ class C2IR {
             case ptrSub      # subtract an int from a pointer
             case ptrDiff     # subtract two pointers
 
+            case initzero    # initialize a variable with all zeros
+
             case stmt        # GNU extension, statement expressions
 
             def repr(self): String = tag_name!(self)

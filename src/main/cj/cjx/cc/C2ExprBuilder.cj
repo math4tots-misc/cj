@@ -395,6 +395,13 @@ class C2ExprBuilder {
         ret
     }
 
+    def initzero(self, mark: Mark, var_: Var): Expr {
+        val ret = Expr(mark, Expr.Kind.initzero)
+        ret.type = Type.int
+        ret.var_ = var_
+        ret
+    }
+
     def comma(self, mark: Mark, lhs: Expr, rhs: Expr): Expr {
         addType(lhs)
         addType(rhs)

@@ -680,7 +680,7 @@ class C2Parser : ParserMixin[C2Token] {
     private def initializer2(self, init: Initializer) {
         if init.type.isArray() {
             expect('{')
-            for i = 0; i < init.type.len; i++ {
+            for i = 0; i < init.type.len and not at('}'); i++ {
                 if i > 0 { expect(',') }
                 initializer2(init.children[i])
             }
@@ -712,7 +712,7 @@ class C2Parser : ParserMixin[C2Token] {
         when type {
             case array(at) {
                 var expr = eb.int(mark, 0)
-                for i = 0; i < at.len; i++ {
+                for i = 0; i < init.children.size(); i++ {
                     val desg2 = InitDesg.subscr(desg, i)
                     val rhs = createLvarInit(mark, init.children[i], at.base, desg2)
                     expr = eb.comma(mark, expr, rhs)
@@ -720,9 +720,16 @@ class C2Parser : ParserMixin[C2Token] {
                 expr
             }
             else {
-                val lhs = initDesgExpr(mark, desg)
-                val rhs = init.expr
-                eb.binop(mark, '=', lhs, rhs)
+                if is_set!(init, expr) {
+                    val lhs = initDesgExpr(mark, desg)
+                    val rhs = init.expr
+                    eb.binop(mark, '=', lhs, rhs)
+                } else {
+                    # a partial initializer was given
+                    # TODO: clean this up so that these no-op nodes don't show up at all
+                    # TODO: Maybe have a eb.nopExpr() method?
+                    eb.int(mark, 0)
+                }
             }
         }
     }
@@ -744,7 +751,9 @@ class C2Parser : ParserMixin[C2Token] {
         val mark = mark()
         val init = initializer(var_.type)
         val desg = InitDesg.lvar(var_)
-        createLvarInit(mark, init, var_.type, desg)
+        eb.comma(mark,
+            eb.initzero(mark, var_),
+            createLvarInit(mark, init, var_.type, desg))
     }
 
     # ========================================================================

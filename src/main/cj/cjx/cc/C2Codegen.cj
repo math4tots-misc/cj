@@ -448,6 +448,12 @@ class C2Codegen {
         _dropsetderef(mark, var_.type, offset, stackPtr, expr(expr))
     }
 
+    ## zero out a variable
+    def zerovar(self, mark: Mark, var_: C2IR.Var): Binaryen.Expression {
+        val offset = getLocalOffset(var_)
+        _memset(mark, offset, stackPtr, 0, var_.type.size())
+    }
+
     def dropsetgvar(self, mark: Mark, gvar: C2IR.GVar, expr: C2IR.Expr): Binaryen.Expression {
         val offset = getGlobalOffset(gvar)
         _dropsetderef(mark, gvar.type, offset, m.i32.const(0), expr(expr))
@@ -549,6 +555,29 @@ class C2Codegen {
                 }
                 m.block(null, exprs, none)
             }))
+    }
+
+    ## Effectively a compile time memset
+    def _memset(
+            self,
+            mark: Mark,
+            destOffset: Int,
+            destAddrExpr: Binaryen.Expression,
+            value: Int,
+            size: Int): Binaryen.Expression {
+        val voidp = C2IR.Type.void.ptrOf()
+        _withLocalSet(voidp, destAddrExpr, (destLocal, destAssignExpr) -> {
+            val exprs = [destAssignExpr]
+            var i = 0
+            for ; i < size; i++ {
+                exprs.add(m.i32.store8(
+                    # write to (destOffset + i + dest)
+                    destOffset + i, 0, m.local.get(destLocal, i32),
+                    # read from (i + src)
+                    m.i32.const(value)))
+            }
+            m.block(null, exprs, none)
+        })
     }
 
     def _teederef(
@@ -782,6 +811,12 @@ class C2Codegen {
             }
             case str = m.i32.const(strlit(expr.mark, expr.bytesValue))
             case comma = m.block(null, [dropexpr(expr.lhs), expr(expr.rhs)], auto)
+            case initzero = m.block(null, [
+                zerovar(expr.mark, expr.var_),
+                # Since this is an expression, it must return some value.
+                # The return type of initzero was arbitrarily chosen to be int.
+                m.i32.const(0),
+            ], auto)
             case cond = m.if_(expr(expr.arg), expr(expr.lhs), expr(expr.rhs))
             case logicalNot = m.i32.eqz(expr(expr.arg))
             case logicalAnd = m.if_(expr(expr.lhs), expr(expr.rhs), m.i32.const(0))
