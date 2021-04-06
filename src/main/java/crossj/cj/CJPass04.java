@@ -1352,6 +1352,27 @@ final class CJPass04 extends CJPassBaseEx {
                     }
                     return new CJIRJSBlob(e, type, parts);
                 }
+                case "js0!": {
+                    // Like js!, but the return type is inferred
+                    if (e.getArgs().size() < 1) {
+                        throw CJError.of("js0! requires at least 1 argument (strlit|Expr...)", e.getMark());
+                    }
+                    if (a.isEmpty()) {
+                        throw CJError.of("Could not determine return type of js0!", e.getMark());
+                    }
+                    var type = a.get();
+                    var parts = List.<Object>of();
+                    for (int i = 0; i < e.getArgs().size(); i++) {
+                        var expr = e.getArgs().get(i);
+                        var optstrlit = solveExprForStringLiteralOrEmpty(expr);
+                        if (optstrlit.isPresent()) {
+                            parts.add(optstrlit.get());
+                        } else {
+                            parts.add(evalExpression(expr));
+                        }
+                    }
+                    return new CJIRJSBlob(e, type, parts);
+                }
                 case "json!": {
                     var jsonobjtype = ctx.getTypeWithArgs("cj.JSON", List.of(), e.getMark());
                     var parts = List.<Object>of();
