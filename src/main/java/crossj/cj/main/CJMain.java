@@ -4,6 +4,7 @@ import crossj.base.FS;
 import crossj.base.IO;
 import crossj.base.List;
 import crossj.cj.CJContext;
+import crossj.cj.CJError;
 import crossj.cj.js.CJJSTranslator;
 import crossj.cj.js2.CJJSTranslator2;
 import crossj.cj.run.CJRunMode;
@@ -24,6 +25,7 @@ public final class CJMain {
         CJRunMode runMode = null;
         boolean useTranslator2 = false;
         String cjHome;
+        boolean debug = false;
 
         Options() {
             cjHome = System.getenv("CJ_HOME");
@@ -35,7 +37,16 @@ public final class CJMain {
 
     public static void main(String[] args) {
         var opts = parseOptions(args);
-        mainWithOpts(opts);
+        if (opts.debug) {
+            mainWithOpts(opts);
+        } else {
+            try {
+                mainWithOpts(opts);
+            } catch (CJError error) {
+                IO.eprintln(error.toString());
+                System.exit(1);
+            }
+        }
     }
 
     private static Options parseOptions(String[] args) {
@@ -60,6 +71,10 @@ public final class CJMain {
                 case "-tr2":
                 case "--use-translator2":
                     opts.useTranslator2 = true;
+                    break;
+                case "--debug":
+                case "-d":
+                    opts.debug = true;
                     break;
                 case "-t":
                 case "--test":
