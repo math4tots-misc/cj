@@ -123,31 +123,31 @@ class Ch02s05 : Base {
 
     def updateInfo(self) {
         {
-            val e : HTMLElement = document.getElementBydId("t-vbo-name")
+            val e : HTMLElement = document.getElementById("t-vbo-name")
             e.innerText = vboName
         }
         {
-            val e : HTMLElement = document.getElementBydId("t-ibo-name")
+            val e : HTMLElement = document.getElementById("t-ibo-name")
             e.innerText = iboName
         }
         {
-            val e : HTMLElement = document.getElementBydId("t-vbo-size")
+            val e : HTMLElement = document.getElementById("t-vbo-size")
             e.innerText = "" + vboSize
         }
         {
-            val e : HTMLElement = document.getElementBydId("t-vbo-usage")
+            val e : HTMLElement = document.getElementById("t-vbo-usage")
             e.innerText = "" + vboUsage
         }
         {
-            val e : HTMLElement = document.getElementBydId("t-ibo-size")
+            val e : HTMLElement = document.getElementById("t-ibo-size")
             e.innerText = "" + iboSize
         }
         {
-            val e : HTMLElement = document.getElementBydId("t-ibo-usage")
+            val e : HTMLElement = document.getElementById("t-ibo-usage")
             e.innerText = "" + iboUsage
         }
         {
-            val e : HTMLElement = document.getElementBydId("s-is-cone-vertex-buffer-vbo")
+            val e : HTMLElement = document.getElementById("s-is-cone-vertex-buffer-vbo")
             e.innerText = if isConeVertexBufferVbo { "Yes" } else { "No" }
         }
     }

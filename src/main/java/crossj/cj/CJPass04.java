@@ -64,6 +64,7 @@ import crossj.cj.ir.CJIRIs;
 import crossj.cj.ir.CJIRIsSet;
 import crossj.cj.ir.CJIRItem;
 import crossj.cj.ir.CJIRJSBlob;
+import crossj.cj.ir.CJIRJSStmt;
 import crossj.cj.ir.CJIRLambda;
 import crossj.cj.ir.CJIRListDisplay;
 import crossj.cj.ir.CJIRLiteral;
@@ -1291,10 +1292,7 @@ final class CJPass04 extends CJPassBaseEx {
                         throw CJError.of("include_str! requires exactly 1 argument (strlit)", e.getMark());
                     }
                     var relpath = solveExprForStringLiteral(e.getArgs().get(0));
-                    var path = IO.join(IO.dirname(e.getMark().filename), relpath);
-                    if (!FS.isFile(path)) {
-                        throw CJError.of("File " + path + " not found", e.getMark());
-                    }
+                    var path = getPathGivenRelpath(e.getMark(), relpath);
                     var contents = IO.readFile(path);
                     return evalExpression(new CJAstLiteral(e.getMark(), CJIRLiteralKind.String, Repr.of(contents)));
                 }
@@ -1303,10 +1301,7 @@ final class CJPass04 extends CJPassBaseEx {
                         throw CJError.of("include_bytes! requires exactly 1 argument (strlit)", e.getMark());
                     }
                     var relpath = solveExprForStringLiteral(e.getArgs().get(0));
-                    var path = IO.join(IO.dirname(e.getMark().filename), relpath);
-                    if (!FS.isFile(path)) {
-                        throw CJError.of("File " + path + " not found", e.getMark());
-                    }
+                    var path = getPathGivenRelpath(e.getMark(), relpath);
                     var contents = IO.readFileBytes(path);
                     var sb = new StringBuilder();
                     sb.append("stringToArrayBuffer(\"");
@@ -1372,6 +1367,13 @@ final class CJPass04 extends CJPassBaseEx {
                         }
                     }
                     return new CJIRJSBlob(e, type, parts);
+                }
+                case "js_stmt!": {
+                    if (e.getArgs().size() != 1) {
+                        throw CJError.of("js_stmt! requires exactly 1 argument (strlit)", e.getMark());
+                    }
+                    var content = solveExprForStringLiteral(e.getArgs().get(0));
+                    return new CJIRJSStmt(e, ctx.getUnitType(), content);
                 }
                 case "json!": {
                     var jsonobjtype = ctx.getTypeWithArgs("cj.JSON", List.of(), e.getMark());
@@ -1562,6 +1564,22 @@ final class CJPass04 extends CJPassBaseEx {
             switch (literal.getKind()) {
             case String:
                 return Optional.of(Repr.parse(literal.getRawText()));
+            default:
+                break;
+            }
+        }
+        if (expr instanceof CJAstMacroCall) {
+            var mcall = (CJAstMacroCall) expr;
+            switch (mcall.getName()) {
+            case "include_str!": {
+                if (mcall.getArgs().size() != 1) {
+                    throw CJError.of("include_str! requires exactly 1 argument (strlit)", mcall.getMark());
+                }
+                var relpath = solveExprForStringLiteral(mcall.getArgs().get(0));
+                var path = getPathGivenRelpath(mcall.getMark(), relpath);
+                var contents = IO.readFile(path);
+                return Optional.of(contents);
+            }
             default:
                 break;
             }
@@ -1809,5 +1827,13 @@ final class CJPass04 extends CJPassBaseEx {
             }
             return new CJIRClassType(type.getItem(), argtypes);
         }
+    }
+
+    private static String getPathGivenRelpath(CJMark mark, String relpath) {
+        var path = IO.join(IO.dirname(mark.filename), relpath);
+        if (!FS.isFile(path)) {
+            throw CJError.of("File " + path + " not found", mark);
+        }
+        return path;
     }
 }

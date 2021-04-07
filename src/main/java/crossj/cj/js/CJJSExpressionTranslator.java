@@ -23,6 +23,7 @@ import crossj.cj.ir.CJIRIs;
 import crossj.cj.ir.CJIRIsSet;
 import crossj.cj.ir.CJIRItem;
 import crossj.cj.ir.CJIRJSBlob;
+import crossj.cj.ir.CJIRJSStmt;
 import crossj.cj.ir.CJIRLambda;
 import crossj.cj.ir.CJIRListDisplay;
 import crossj.cj.ir.CJIRLiteral;
@@ -952,6 +953,21 @@ public final class CJJSExpressionTranslator extends CJJSTranslatorBase {
             @Override
             public CJJSBlob visitJSBlob(CJIRJSBlob e, Void a) {
                 return translateBlob(e);
+            }
+
+            @Override
+            public CJJSBlob visitJSStmt(CJIRJSStmt e, Void a) {
+                return CJJSBlob.withPrep(
+                    out -> {
+                        out.append(e.getJsStmt());
+                        out.append(";");
+                        return null;
+                    },
+                    out -> {
+                        out.append("undefined");
+                        return null;
+                    },
+                    true);
             }
 
             @Override

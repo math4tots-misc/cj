@@ -8,7 +8,7 @@ class Sample2 {
         val document = Document.get()
         document.title = "Canvas demo"
 
-        val canvas : HTMLCanvasElement = document.getElementBydId("canvas")
+        val canvas : HTMLCanvasElement = document.getElementById("canvas")
         val ctx = canvas.getContext2D()
         ctx.fillStyle = "green"
         ctx.fillRect(20, 10, 150, 100)

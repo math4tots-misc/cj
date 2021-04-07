@@ -24,7 +24,7 @@ class WebGLHelper {
     }
 
     def getShader(self: Self, id: String) : WebGLShader = {
-        val script : HTMLScriptElement = document.getElementBydId(id)
+        val script : HTMLScriptElement = document.getElementById(id)
         val shaderString = script.text.trim()
 
         val type = if script.type == "x-shader/x-vertex" {

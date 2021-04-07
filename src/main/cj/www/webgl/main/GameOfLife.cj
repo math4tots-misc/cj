@@ -17,7 +17,7 @@ class GameOfLife {
     static val offColor = 0.2
     static val nrows = 45
     static val ncols = 60
-    static val canvas: HTMLCanvasElement = document.getElementBydId("canvas")
+    static val canvas: HTMLCanvasElement = document.getElementById("canvas")
     static val renderer: WebGLGridRenderer = WebGLGridRenderer(canvas, nrows, ncols)
     static var running = true
     static var lastUpdate = 0.0

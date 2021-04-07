@@ -20,7 +20,7 @@ trait Base {
         def default() : Self = {
             val window = Window.get()
             val document = Document.get()
-            val canvas : HTMLCanvasElement = document.getElementBydId("canvas")
+            val canvas : HTMLCanvasElement = document.getElementById("canvas")
             val gl = canvas.getContextWebGL()
             gl.clearColor(0, 0, 0, 1)
             Self.__malloc(window, document, canvas, gl)
@@ -38,7 +38,7 @@ trait Base {
         val document = self.document
         val gl = self.gl
 
-        val script : HTMLScriptElement = document.getElementBydId(id)
+        val script : HTMLScriptElement = document.getElementById(id)
         val shaderString = script.text.trim()
 
         val shader = if script.type == "x-shader/x-vertex" {

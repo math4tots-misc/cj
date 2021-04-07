@@ -24,7 +24,7 @@ class Demo05 {
     static val ncols = 60
     static val window: Window = Window.get()
     static val document: Document = Document.get()
-    static val canvas: HTMLCanvasElement = document.getElementBydId("canvas")
+    static val canvas: HTMLCanvasElement = document.getElementById("canvas")
     static val renderer: WebGLColorGridRenderer = WebGLColorGridRenderer(canvas, nrows, ncols)
 
     def main() {

@@ -12,7 +12,7 @@ class Ch01s03 {
         val window = Window.get()
         val document = Document.get()
         document.title = "WebGL2 demo"
-        val canvas : HTMLCanvasElement = document.getElementBydId("canvas")
+        val canvas : HTMLCanvasElement = document.getElementById("canvas")
         val gl = canvas.getContextWebGL()
         window.onkeydown(event -> Self.checkKey(gl, event))
     }

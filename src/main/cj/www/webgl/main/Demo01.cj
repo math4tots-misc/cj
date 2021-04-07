@@ -11,7 +11,7 @@ import www.webgl.WebGLHelper
 
 class Demo01 {
     static val document: Document = Document.get()
-    static val canvas: HTMLCanvasElement = document.getElementBydId("canvas")
+    static val canvas: HTMLCanvasElement = document.getElementById("canvas")
     static val glh: WebGLHelper = WebGLHelper(canvas)
     static val gl: WebGL2RenderingContext = glh.gl
     static val vertexData: Float32Array = Float32Array([
