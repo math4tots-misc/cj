@@ -38,4 +38,36 @@ trait ParserMixin[Token] {
     def parseJoinOpt[T](self, open: Int, close: Int, sep: Int, el: Fn[T]): List[T] {
         if at(open) { parseJoin(open, close, sep, el) } else { [] }
     }
+
+    ## Skip either a single token, or a single '{..}', '(..)', '[..]' blob.
+    def skipOneBlob(self) {
+        val startToken = peek()
+        val type = typeOfToken(startToken)
+        switch type {
+            case '{'; case '('; case '[' {
+                val close = switch type {
+                    case '{' = '}'
+                    case '(' = ')'
+                    case '[' = ']'
+                }
+                next()
+                var depth = 1
+                while depth > 0 and i < tokens.size() {
+                    switch typeOfToken(peek()) {
+                        case '{'; case '('; case '[' { depth++ }
+                        case '}'; case ')'; case ']' { depth-- }
+                        else = ()
+                    }
+                    next()
+                }
+                if i >= tokens.size() {
+                    errorAt("Mismatched grouping symbol", startToken)
+                }
+            }
+            case '}'; case')'; case ']' {
+                error("Unexpected close grouping token")
+            }
+            else = next()
+        }
+    }
 }

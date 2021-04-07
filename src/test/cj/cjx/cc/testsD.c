@@ -195,6 +195,21 @@ void test08_local_var_inits() {
     aeq(0, ({ char x[2][4]={"abc","def"}; x[0][3]; }));
     aeq('d', ({ char x[2][4]={"abc","def"}; x[1][0]; }));
     aeq('f', ({ char x[2][4]={"abc","def"}; x[1][2]; }));
+
+    aeq(0, ({ int x[]={}; sizeof(x); })); // NOTE: zero-length array is not standard
+    aeq(4, ({ int x[]={1}; sizeof(x); }));
+    aeq(8, ({ int x[]={1,2}; sizeof(x); }));
+    aeq(12, ({ int x[]={1,2,3}; sizeof(x); }));
+
+    aeq(4, ({ int x[]={1,2,3,4}; x[3]; }));
+    aeq(16, ({ int x[]={1,2,3,4}; sizeof(x); }));
+    aeq(4, ({ char x[]="foo"; sizeof(x); }));
+
+    aeq(4, ({ typedef char T[]; T x="foo"; T y="x"; sizeof(x); }));
+    aeq(2, ({ typedef char T[]; T x="foo"; T y="x"; sizeof(y); }));
+    aeq(2, ({ typedef char T[]; T x="x"; T y="foo"; sizeof(x); }));
+    aeq(4, ({ typedef char T[]; T x="x"; T y="foo"; sizeof(y); }));
+    aeq('f', ({ typedef char T[]; T x="x"; T y="foo"; y[0]; }));
 }
 
 int main() {

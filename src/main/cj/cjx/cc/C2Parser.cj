@@ -209,10 +209,19 @@ class C2Parser : ParserMixin[C2Token] {
                 expect(',')
             }
             first = false
-            val (mark, name, type) = declarator(baseType)
+            val (mark, name, decltype) = declarator(baseType)
             if not name {
                 throw MError("Expected name", [mark])
             }
+
+            val type = if decltype.isArray() and decltype.len < 0 and at('=') {
+                val savedI = i
+                expect('=')
+                val len = countArrayInitElements()
+                i = savedI
+                decltype.base.arrayOf(len)
+            } else { decltype }
+
             val var_ = locals.addLVar(mark, type, name)
             if consume('=') {
                 val initExpr = lvarInitializer(var_)
@@ -220,6 +229,27 @@ class C2Parser : ParserMixin[C2Token] {
             }
         }
         initstmts
+    }
+
+    private def countArrayInitElements(self): Int {
+        if at(C2Token.tSTR) {
+            peek().bytesValue.size() + 1
+        } else {
+            # Infer the length of the array based on
+            # the number of commas
+            val savedI = i
+            expect('{')
+            var count = 0
+            while not at('}') {
+                count++
+                while not at(',') and not at('}') {
+                    skipOneBlob()
+                }
+                if not consume(',') { assert('}') }
+            }
+            i = savedI
+            count
+        }
     }
 
     private def declspec(self): Type {
@@ -662,7 +692,10 @@ class C2Parser : ParserMixin[C2Token] {
         def(mark: Mark, type: Type): Self {
             val self = __malloc(mark, type)
             if type.isArray() {
-                Assert(type.len > 0)
+                # TODO: Considering throwing on zero-length arrays
+                # if type.len == 0 {
+                #     throw MError("Zero-length arrays are not allowed", [mark])
+                # }
                 children = []
                 for i = 0; i < type.len; i++ {
                     children.add(Self(mark, type.base))
@@ -683,6 +716,9 @@ class C2Parser : ParserMixin[C2Token] {
         val len = Math.min(init.type.len, bytes.size())
         for i = 0; i < len; i++ {
             init.children[i].expr = eb.int(mark, bytes[i])
+        }
+        if len == bytes.size() and len < init.type.len {
+            init.children[len].expr = eb.int(mark, 0)
         }
     }
 
