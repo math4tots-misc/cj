@@ -826,7 +826,8 @@ final class CJPass04 extends CJPassBaseEx {
                 var container = evalExpression(e.getContainer());
                 var iterable = container.getType().getImplementingTraitByItemOrNull(ctx.getIterableItem());
                 if (iterable == null) {
-                    throw CJError.of("For loop requires an iterable, but got " + container.getType().repr(), e.getMark());
+                    throw CJError.of("For loop requires an iterable, but got " + container.getType().repr(),
+                            e.getMark());
                 }
                 var methodRef = container.getType().findMethod("iter", e.getMark());
                 var iterator = synthesizeMethodCall(e, container.getType(), methodRef, List.of(), List.of(container));
@@ -1366,6 +1367,41 @@ final class CJPass04 extends CJPassBaseEx {
                             parts.add(evalExpression(expr));
                         }
                     }
+                    return new CJIRJSBlob(e, type, parts);
+                }
+                case "jsm!": {
+                    if (e.getArgs().size() < 3) {
+                        throw CJError.of("jsm! requires at least 3 arguments (Type, recv, strlit, Expr...)",
+                                e.getMark());
+                    }
+                    var type = solveExprForType(e.getArgs().get(0));
+                    var parts = List.<Object>of();
+                    parts.add(evalExpression(e.getArgs().get(1))); // receiver
+                    parts.add("." + solveExprForStringLiteral(e.getArgs().get(2)) + "("); // method name
+                    for (int i = 3; i < e.getArgs().size(); i++) {
+                        var expr = e.getArgs().get(i);
+                        parts.add(evalExpression(expr));
+                    }
+                    parts.add(")");
+                    return new CJIRJSBlob(e, type, parts);
+                }
+                case "jsm0!": {
+                    if (e.getArgs().size() < 2) {
+                        throw CJError.of("jsm0! requires at least 2 arguments (recv, strlit, Expr...)",
+                                e.getMark());
+                    }
+                    if (a.isEmpty()) {
+                        throw CJError.of("Could not determine return type of jsm0!", e.getMark());
+                    }
+                    var type = a.get();
+                    var parts = List.<Object>of();
+                    parts.add(evalExpression(e.getArgs().get(0))); // receiver
+                    parts.add("." + solveExprForStringLiteral(e.getArgs().get(1)) + "("); // method name
+                    for (int i = 2; i < e.getArgs().size(); i++) {
+                        var expr = e.getArgs().get(i);
+                        parts.add(evalExpression(expr));
+                    }
+                    parts.add(")");
                     return new CJIRJSBlob(e, type, parts);
                 }
                 case "js_stmt!": {
