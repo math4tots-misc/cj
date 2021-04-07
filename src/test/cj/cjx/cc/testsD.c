@@ -212,6 +212,24 @@ void test08_local_var_inits() {
     aeq('f', ({ typedef char T[]; T x="x"; T y="foo"; y[0]; }));
 }
 
+int goto_count(int n) {
+    int i = 0;
+    int total = 0;
+    {
+start:
+        i++;
+        if (i < n) {
+            total += i;
+            goto start;
+        }
+    }
+    return total;
+}
+
+void test09_backward_goto() {
+    aeq(45, goto_count(10));
+}
+
 int main() {
     test01_incomplete_array_type();
     test02_incomplete_struct();
@@ -222,4 +240,5 @@ int main() {
     test06_shift();
     test07_cond();
     test08_local_var_inits();
+    test09_backward_goto();
 }

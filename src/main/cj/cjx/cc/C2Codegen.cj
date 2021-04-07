@@ -273,13 +273,25 @@ class C2Codegen {
     ## A goto target.
     ## Currently, only 'forward' gotos are supported.
     class GotoTarget {
-        ## If you are "behind" the target, branching to this label
+        ## If you are "behind" the target, branch on this label to land here
         val forwardLabel: String
+
+        ## If you are "ahead of" the target, branch on this label to land here
+        ## NOTE: In the current implementation, a backward label is only available
+        ## for the first label within each block.
+        val backwardLabel: String?
 
         ## Indicates whether this goto label has been 'passed'.
         ## This is used to determine whether a simple branching to the
         ## forward label will suffice.
         var passed: Bool = false
+
+        ## Indicates wheter this goto label has been 'expired'.
+        ## This implies that we have left the block in which this label
+        ## was defined. While in standard C, these gotos are permitted,
+        ## to keep our implementation simple, we forbid jumping to
+        ## any expired labels.
+        var expired: Bool = false
     }
 
     def block(self, block: C2IR.Stmt): Binaryen.Expression {
@@ -316,10 +328,16 @@ class C2Codegen {
     }
 
     def stmtsWithLabels(self, stmts: List[C2IR.Stmt]): List[Binaryen.Expression] {
+        var backwardLabel = null[String]
+        var startOfBlock = true
         for s in stmts {
             if s.labels {
                 val wasmForwardLabel = newLabel()
-                val target = GotoTarget(wasmForwardLabel)
+                val wasmBackwardLabel = if startOfBlock {
+                    backwardLabel = null(newLabel())
+                    backwardLabel
+                } else { null }
+                val target = GotoTarget(wasmForwardLabel, wasmBackwardLabel)
                 for label in s.labels {
                     if label in funcGotoTable {
                         throw MError("Duplicate label name", [s.mark])
@@ -327,6 +345,7 @@ class C2Codegen {
                     funcGotoTable[label] = target
                 }
             }
+            startOfBlock = false
         }
         var out: List[Binaryen.Expression] = []
         for s in stmts {
@@ -336,6 +355,15 @@ class C2Codegen {
                 out = [m.block(null(gotoTarget.forwardLabel), out, auto)]
             }
             out.add(stmtInBlock(s))
+        }
+        if val blabel = backwardLabel {
+            out = [m.loop(null(blabel), m.block(null, out, auto))]
+        }
+        for s in stmts {
+            if s.labels {
+                val gotoTarget = funcGotoTable[s.labels[0]]
+                gotoTarget.expired = true
+            }
         }
         out
     }
@@ -433,9 +461,21 @@ class C2Codegen {
             }
             case goto = if val target = funcGotoTable.getOrNull(stmt.targetLabel) {
                 if target.passed {
-                    throw MError("backward gotos are not yet supported", [stmt.mark])
+                    if val backwardLabel = target.backwardLabel {
+                        if target.expired {
+                            throw MError("Jumping into a block is not supported", [stmt.mark])
+                        } else {
+                            m.br(backwardLabel)
+                        }
+                    } else {
+                        throw MError(
+                            "Backward gotos are only supported to the beginning " +
+                                "of a block",
+                            [stmt.mark])
+                    }
+                } else {
+                    m.br(target.forwardLabel)
                 }
-                m.br(target.forwardLabel)
             } else { throw MError("label " + stmt.targetLabel + " not found", [stmt.mark]) }
             else = throw MError("TODO codegen stmt " + stmt.kind, [stmt.mark])
         }

@@ -104,13 +104,35 @@ class C2ExprBuilder {
     def break_(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.break_)
     def continue_(self, mark: Mark): Stmt = Stmt(mark, Stmt.Kind.continue_)
 
-    ## Only forward goto jumps are supported, as these are the easiest to implement
+    ## Forward goto jumps are supported, as these are the easiest to implement
     ## for a webassembly backend.
     ##
-    ## However, by and large, the most useful use cases for gotos I can think of
-    ## right now fall into this category. In particular,
+    ## A limited form of jumping backwards is also supported -- in particular,
+    ## jumping to the start of a block.
+    ##
+    ## Further, jumping into a block is not supported (but jumping out of a block
+    ## is supported).
+    ##
+    ## Couple useful cases for forward goto jumps:
     ##   * breaking out of nested loops, and
     ##   * jumping to the end of the function for 'return with cleanup'
+    ##
+    ## Use cases for backward or bidirection jumps (not currently supported):
+    ##   * retry logic -- jumping to a label close to top of the function
+    ##       with updated local variables as an alternative to tail
+    ##       call recursion.
+    ##   * implementing state machines
+    ##       each label being a state, and using gotos to jump to different
+    ##       states.
+    ##
+    ## Both the above scenarios can be done with switch statements, but
+    ## existing code would need to be modified.
+    ##
+    ## The retry logic case is kinda supported with backward jumps to the
+    ## labels to the start of each block. This isn't perfect, since often
+    ## you want to jump to near the start just a bit after some initializing
+    ## logic. The workaround for this is to wrap that part of the
+    ## code in its own block, which is a bit annoying but not too bad.
     ##
     def goto(self, mark: Mark, label: String): Stmt {
         val ret = Stmt(mark, Stmt.Kind.goto)
