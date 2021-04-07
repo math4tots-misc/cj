@@ -19,6 +19,6 @@ class Document : JSWrapper, GlobalEventHandlers {
 
     def createElement[R: Element](self): R = call("createElement", R.tagName)
 
-    def getElementBydId[R: Element](self: Self, id: String): R = (
-        self.call("getElementById", id))
+    def getElementBydId[R: Element](self: Self, id: String): R = js0!(
+        self, ".getElementBydId(", id, ")")
 }

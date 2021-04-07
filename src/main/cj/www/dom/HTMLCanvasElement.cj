@@ -12,18 +12,16 @@ class HTMLCanvasElement : HTMLElement {
     val _obj :  JSObject
     def cls() : JSObject = js!(JSObject, "HTMLCanvasElement")
 
-    def __get_width(self: Self): Int = js0!(self, ".width")
-    def __set_width(self: Self, value: Int) =  js0!(self, ".width=", value)
-    def __get_height(self: Self): Int = js0!(self, ".height")
-    def __set_height(self: Self, value: Int) =  js0!(self, ".height=", value)
+    def __get_width(self): Int = js0!(self, ".width")
+    def __set_width(self, value: Int) =  js0!(self, ".width=", value)
+    def __get_height(self): Int = js0!(self, ".height")
+    def __set_height(self, value: Int) =  js0!(self, ".height=", value)
 
     def getContext[C: CanvasRenderingContext](self): C = C._getFromCanvas(self)
 
-    def getContext2D(self: Self): CanvasRenderingContext2D = (
-        self.call("getContext", "2d").unsafeCast())
+    def getContext2D(self): CanvasRenderingContext2D = js0!(self, ".getContext(\"2d\")")
 
-    def getContextWebGL(self: Self): WebGL2RenderingContext = (
-        self.call("getContext", "webgl2").unsafeCast())
+    def getContextWebGL(self): WebGL2RenderingContext = js0!(self, ".getContext(\"webgl2\")")
 
     ## Given a mouse event, get the adjusted (x, y) coordinates into its content
     def getCoordinatesFromMouseEvent(self, event: MouseEvent): Tuple[Double, Double] {
