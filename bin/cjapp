@@ -3,7 +3,7 @@
 # Runs a cj app
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-export CJ_HOME="${DIR}/.."
+export CJ_HOME=$(dirname ${DIR})
 TARGET="${CJ_HOME}/target"
 
 # run a CJ app (see list in src/main/app)

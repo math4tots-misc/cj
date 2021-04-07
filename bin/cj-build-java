@@ -3,7 +3,7 @@
 # builds the transpiler and saves it to target/classes
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-export CJ_HOME="${DIR}/.."
+export CJ_HOME=$(dirname ${DIR})
 TARGET="${CJ_HOME}/target"
 
 mkdir -p $TARGET/classes && javac -d $TARGET/classes $(find src/main/java/ -name "*.java")
