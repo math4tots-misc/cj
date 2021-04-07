@@ -376,6 +376,15 @@ public final class CJJSTranslator2 {
         out.append("){");
         varFactory.reset();
         var expressionTranslator = newExpressionTranslator(binding);
+        for (var parameter : method.getParameters()) {
+            if (parameter.hasDefault()) {
+                var varName = "L$" + parameter.getName();
+                var defaultExpr = expressionTranslator.translate(parameter.getDefaultExpression().get());
+                out.append("if(" + varName + "===NOARG){");
+                defaultExpr.emitSet(out, varName + "=");
+                out.append("}");
+            }
+        }
         var blob = expressionTranslator.translate(method.getBody().get());
         blob.emitSet(out, "return ");
         out.append("}\n");

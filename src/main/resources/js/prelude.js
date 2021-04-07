@@ -3,6 +3,11 @@ Error.stackTraceLimit = 100
 const inBrowser = typeof window !== 'undefined';
 
 /**
+ * The value passed in to a function when no argument is provided.
+ */
+const NOARG = undefined;
+
+/**
  * Combines the hash in a way that is consistent with
  * `java.util.List.hashCode` in the Java language.
  *

@@ -77,6 +77,7 @@ import crossj.cj.ir.CJIRMethodCall;
 import crossj.cj.ir.CJIRMethodRef;
 import crossj.cj.ir.CJIRNameAssignmentTarget;
 import crossj.cj.ir.CJIRNullWrap;
+import crossj.cj.ir.CJIRParameter;
 import crossj.cj.ir.CJIRReturn;
 import crossj.cj.ir.CJIRSwitch;
 import crossj.cj.ir.CJIRTag;
@@ -202,6 +203,11 @@ final class CJPass04 extends CJPassBaseEx {
         enterScope();
         for (var parameter : method.getParameters()) {
             declareLocal(parameter);
+            if (parameter.hasDefault()) {
+                var defaultAst = parameter.getAst().getDefaultExpression().get();
+                var defaultExpr = evalExpressionWithType(defaultAst, parameter.getVariableType());
+                parameter.setDefaultExpression(Optional.of(defaultExpr));
+            }
         }
         var body = evalExpressionWithType(bodyAst, method.getInnerReturnType());
         exitScope();
@@ -466,8 +472,9 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 var reifiedMethodRef = ctx.checkMethodTypeArgs(owner, methodRef, typeArgs, e.getMark());
                 var parameterTypes = reifiedMethodRef.getParameterTypes();
-                checkArgc(e.getName(), parameterTypes, argAsts, e.getMark());
-                while (args.size() < parameterTypes.size()) {
+                checkArgcEx(e.getName(), parameterTypes, reifiedMethodRef.getMethodRef().getMethod().getParameters(),
+                        argAsts, e.getMark());
+                while (args.size() < argAsts.size()) {
                     var parameterType = parameterTypes.get(args.size());
                     var argAst = argAsts.get(args.size());
                     args.add(evalExpressionWithType(argAst, parameterType));
@@ -1390,8 +1397,7 @@ final class CJPass04 extends CJPassBaseEx {
                 }
                 case "jsm0!": {
                     if (e.getArgs().size() < 2) {
-                        throw CJError.of("jsm0! requires at least 2 arguments (recv, strlit, Expr...)",
-                                e.getMark());
+                        throw CJError.of("jsm0! requires at least 2 arguments (recv, strlit, Expr...)", e.getMark());
                     }
                     if (a.isEmpty()) {
                         throw CJError.of("Could not determine return type of jsm0!", e.getMark());
@@ -1678,6 +1684,28 @@ final class CJPass04 extends CJPassBaseEx {
         var actual = exprs.size();
         if (expected != actual) {
             throw CJError.of("Expected " + expected + " args but got " + actual + " for " + name, mark);
+        }
+    }
+
+    private void checkArgcEx(String name, List<CJIRType> parameterTypes, List<CJIRParameter> parameters, List<?> exprs,
+            CJMark mark) {
+        var expectedMax = parameterTypes.size();
+        int expectedMin = parameters.size();
+        while (expectedMin > 0 && parameters.get(expectedMin - 1).hasDefault()) {
+            expectedMin--;
+        }
+        var actual = exprs.size();
+        if (expectedMin == expectedMax) {
+            var expected = expectedMin;
+            if (expected != actual) {
+                throw CJError.of("Expected " + expected + " args but got " + actual + " for " + name, mark);
+            }
+        } else {
+            if (actual < expectedMin || actual > expectedMax) {
+                throw CJError.of(
+                        "Expected " + expectedMin + " to " + expectedMax + " args but got " + actual + " for " + name,
+                        mark);
+            }
         }
     }
 

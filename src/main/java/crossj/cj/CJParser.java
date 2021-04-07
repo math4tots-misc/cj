@@ -597,7 +597,11 @@ public final class CJParser {
             expect(':');
             type = parseTypeExpression();
         }
-        return new CJAstParameter(mark, mutable, name, type);
+        var defaultExpr = Optional.<CJAstExpression>empty();
+        if (consume('=')) {
+            defaultExpr = Optional.of(parseExpression());
+        }
+        return new CJAstParameter(mark, mutable, name, type, defaultExpr);
     }
 
     private CJAstExpression parseBlockElementExpression() {

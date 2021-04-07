@@ -387,6 +387,15 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         }
         out.append("(" + Str.join(",", allArgNames) + "){");
         // inAsyncContext = method.isAsync();
+        for (var parameter : method.getParameters()) {
+            if (parameter.hasDefault()) {
+                var varName = translateLocalVariableName(parameter.getName());
+                var defaultExpr = translateExpression(parameter.getDefaultExpression().get());
+                out.append("if(" + varName + "===NOARG){");
+                defaultExpr.emitSet(out, varName + "=");
+                out.append("}");
+            }
+        }
         var body = translateExpression(method.getBody().get());
         body.emitPrep(out);
         if (method.getReturnType().isUnitType() || method.getReturnType().isNoReturnType()) {
