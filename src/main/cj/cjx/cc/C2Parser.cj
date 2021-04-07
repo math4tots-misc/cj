@@ -697,7 +697,6 @@ class C2Parser : ParserMixin[C2Token] {
 
     private def initializer2(self, init: Initializer) {
         if init.type.isArray() {
-            arrayInitializer(init)
             if at(C2Token.tSTR) {
                 stringInitializer(init)
             } else {
