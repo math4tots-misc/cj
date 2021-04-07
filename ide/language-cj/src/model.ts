@@ -53,7 +53,7 @@ export class OpenDocument {
 
 /**
  * Parses a file system path and returns the triple:
- *  - source root path (i.e. path ending in '/src/main/cj/' or '/src/main/cj-js/')
+ *  - source root path (i.e. path ending in '/src/main/cj/' or '/src/test/cj/')
  *  - package name (e.g. 'cjx.foobar')
  *  - class name (e.g. Nullable)
  *
@@ -69,9 +69,7 @@ export function parseUnixPath(unixpath: string): [string, string, string] | null
 
     for (const component of [
             '/src/main/cj/',
-            '/src/main/cj-js/',
-            '/src/test/cj/',
-            '/src/test/cj-js/']) {
+            '/src/test/cj/']) {
         const i = unixpath.lastIndexOf(component);
         if (i === -1) {
             continue;
@@ -96,7 +94,7 @@ function normalizePath(path: string): string {
 
 /**
  * Parses a file system path and returns the triple:
- *  - source root path (i.e. path ending in '/src/main/cj/' or '/src/main/cj-js/')
+ *  - source root path (i.e. path ending in '/src/main/cj/' or '/src/test/cj/')
  *  - package name (e.g. 'cjx.foobar')
  *  - class name (e.g. Nullable)
  *
