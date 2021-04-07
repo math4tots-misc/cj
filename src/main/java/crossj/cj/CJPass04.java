@@ -1379,6 +1379,9 @@ final class CJPass04 extends CJPassBaseEx {
                     parts.add(evalExpression(e.getArgs().get(1))); // receiver
                     parts.add("." + solveExprForStringLiteral(e.getArgs().get(2)) + "("); // method name
                     for (int i = 3; i < e.getArgs().size(); i++) {
+                        if (i > 3) {
+                            parts.add(",");
+                        }
                         var expr = e.getArgs().get(i);
                         parts.add(evalExpression(expr));
                     }
@@ -1398,6 +1401,9 @@ final class CJPass04 extends CJPassBaseEx {
                     parts.add(evalExpression(e.getArgs().get(0))); // receiver
                     parts.add("." + solveExprForStringLiteral(e.getArgs().get(1)) + "("); // method name
                     for (int i = 2; i < e.getArgs().size(); i++) {
+                        if (i > 2) {
+                            parts.add(",");
+                        }
                         var expr = e.getArgs().get(i);
                         parts.add(evalExpression(expr));
                     }
