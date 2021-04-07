@@ -677,14 +677,32 @@ class C2Parser : ParserMixin[C2Token] {
         case subscr(InitDesg, Int)
     }
 
+    private def stringInitializer(self, init: Initializer) {
+        val mark = mark()
+        val bytes = expect(C2Token.tSTR).bytesValue
+        val len = Math.min(init.type.len, bytes.size())
+        for i = 0; i < len; i++ {
+            init.children[i].expr = eb.int(mark, bytes[i])
+        }
+    }
+
+    private def arrayInitializer(self, init: Initializer) {
+        expect('{')
+        for i = 0; i < init.type.len and not at('}'); i++ {
+            if i > 0 { expect(',') }
+            initializer2(init.children[i])
+        }
+        expect('}')
+    }
+
     private def initializer2(self, init: Initializer) {
         if init.type.isArray() {
-            expect('{')
-            for i = 0; i < init.type.len and not at('}'); i++ {
-                if i > 0 { expect(',') }
-                initializer2(init.children[i])
+            arrayInitializer(init)
+            if at(C2Token.tSTR) {
+                stringInitializer(init)
+            } else {
+                arrayInitializer(init)
             }
-            expect('}')
         } else {
             init.expr = assign()
         }
