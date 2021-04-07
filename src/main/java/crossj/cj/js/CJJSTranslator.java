@@ -9,6 +9,7 @@ import crossj.base.Set;
 import crossj.base.Str;
 import crossj.cj.CJContext;
 import crossj.cj.CJContextBase;
+import crossj.cj.CJError;
 import crossj.cj.CJMark;
 import crossj.cj.ir.CJIRExpression;
 import crossj.cj.ir.CJIRItem;
@@ -199,6 +200,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 out.append("class " + metaClassName + "{\n");
                 emitMetaClassConstructor(item);
                 emitMethods(item, true);
+                emitStaticFields(item, true);
                 out.append("}\n");
             } else {
                 var contents = IO.readFile(path);
@@ -212,6 +214,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 }
                 out.append(contents);
                 emitMethods(item, false); // we still want to use the methods that have a body
+                emitStaticFields(item, false);
             }
         } else {
             emitMetaClass();
@@ -235,28 +238,7 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
         emitMetaClassConstructor(item);
 
         // emit static fields
-        for (var field : item.getFields().filter(f -> f.isStatic())) {
-            var getterMethodName = translateMethodName(field.getGetterName());
-            var fieldName = translateFieldName(field.getName());
-            out.append(getterMethodName + "(){");
-            out.append("if(!('" + fieldName + "' in this)){");
-            if (field.isLateinit()) {
-                out.append("throw new Error('lateinit field used before init')");
-            } else {
-                var blob = translateExpression(field.getExpression().get());
-                blob.emitPrep(out);
-                out.append("this." + fieldName + "=");
-                blob.emitMain(out);
-                out.append(";");
-            }
-            out.append("}");
-            out.append("return this." + fieldName + ";");
-            out.append("}\n");
-            if (field.isMutable()) {
-                var setterMethodName = translateMethodName(field.getSetterName());
-                out.append(setterMethodName + "(x){this." + fieldName + "=x;}\n");
-            }
-        }
+        emitStaticFields(item, true);
 
         // for (non-union) classes: emit non-static fields and malloc
         if (item.getKind() == CJIRItemKind.Class && !item.isNative()) {
@@ -354,6 +336,36 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
             var optionalBody = method.getBody();
             if (optionalBody.isPresent()) {
                 emitMethod(item, method, inline);
+            }
+        }
+    }
+
+    private void emitStaticFields(CJIRItem item, boolean inline) {
+        var fields = item.getFields().filter(f -> f.isStatic());
+        if (!inline && !fields.isEmpty()) {
+            throw CJError.of("Out of line static fields are not yet supported", item.getMark());
+        }
+        // emit static fields
+        for (var field : fields) {
+            var getterMethodName = translateMethodName(field.getGetterName());
+            var fieldName = translateFieldName(field.getName());
+            out.append(getterMethodName + "(){");
+            out.append("if(!('" + fieldName + "' in this)){");
+            if (field.isLateinit()) {
+                out.append("throw new Error('lateinit field used before init')");
+            } else {
+                var blob = translateExpression(field.getExpression().get());
+                blob.emitPrep(out);
+                out.append("this." + fieldName + "=");
+                blob.emitMain(out);
+                out.append(";");
+            }
+            out.append("}");
+            out.append("return this." + fieldName + ";");
+            out.append("}\n");
+            if (field.isMutable()) {
+                var setterMethodName = translateMethodName(field.getSetterName());
+                out.append(setterMethodName + "(x){this." + fieldName + "=x;}\n");
             }
         }
     }

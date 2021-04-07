@@ -27,6 +27,7 @@ import crossj.cj.ir.CJIRIfNull;
 import crossj.cj.ir.CJIRIs;
 import crossj.cj.ir.CJIRIsSet;
 import crossj.cj.ir.CJIRJSBlob;
+import crossj.cj.ir.CJIRJSStmt;
 import crossj.cj.ir.CJIRLambda;
 import crossj.cj.ir.CJIRListDisplay;
 import crossj.cj.ir.CJIRLiteral;
@@ -640,6 +641,17 @@ final class CJJSExpressionTranslator2 {
                     }
                     out.append(")");
                 }, false);
+            }
+
+            @Override
+            public CJJSBlob2 visitJSStmt(CJIRJSStmt e, Void a) {
+                return CJJSBlob2.withPrep(
+                    out -> {
+                        out.append(e.getJsStmt());
+                        out.append(";");
+                    },
+                    out -> out.append("undefined"),
+                    true);
             }
 
             @Override
