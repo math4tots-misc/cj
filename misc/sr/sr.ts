@@ -560,6 +560,23 @@ function castStr(ctx: Context, x: Value): string {
     throw ctx.error("Expected string");
 }
 
+function convStr(ctx: Context, x: Value): string {
+    switch (typeof x) {
+        case 'string': return x;
+        case 'object': {
+            if (x !== null && typeof x === 'object' && '__str' in x) {
+                return '' + callm(ctx, x, '__str', []);
+            } else if (Array.isArray(x)) {
+                return '[' + x.map(a => convStr(ctx, a)).join(', ') + ']';
+            } else {
+                return JSON.stringify(x);
+            }
+        }
+    }
+    return '' + x;
+}
+
+
 function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
     switch (typeof owner) {
         case 'number': {
@@ -573,7 +590,7 @@ function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
         }
         case 'string': {
             switch (methodName) {
-                case '__add': return owner + castStr(ctx, args[0]);
+                case '__add': return owner + convStr(ctx, args[0]);
                 case 'str': return owner;
                 case 'repr': return JSON.stringify(owner);
             }
@@ -776,6 +793,7 @@ function parse(ctx: Context, path: string, contents: string): Module {
                         }
                     }
                     expr = mcall(m, expr, methodName, [parseExprPr(tokprec)]);
+                    break;
                 }
                 default: {
                     ctx.stack.push(m);
@@ -847,8 +865,8 @@ function parse(ctx: Context, path: string, contents: string): Module {
     const module = ctx.parse('<test>', `
     val x = 10
     val y = x.__add(14)
-    print("x = ".__add(x.repr()))
-    print("y = ".__add(y.repr()))
+    print("x = " + x)
+    print("y = " + y)
     print("hello world")
 
     def twice(s) {
