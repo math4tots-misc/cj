@@ -8,6 +8,7 @@ import crossj.cj.CJError;
 import crossj.cj.js.CJJSTranslator;
 import crossj.cj.js2.CJJSTranslator2;
 import crossj.cj.run.CJRunMode;
+import crossj.cj.run.CJRunModeBlob;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;
 import crossj.cj.run.CJRunModeTest;
@@ -144,6 +145,12 @@ public final class CJMain {
             }
 
             @Override
+            public Void visitBlob(CJRunModeBlob m, Void a) {
+                mainClasses.addAll(m.getRootClasses());
+                return null;
+            }
+
+            @Override
             public Void visitTest(CJRunModeTest m, Void a) {
                 ctx.loadAllItemsInSourceRoots();
                 return null;
@@ -218,6 +225,12 @@ public final class CJMain {
             }
 
             @Override
+            public Void visitBlob(CJRunModeBlob m, Void a) {
+                handleCLI();
+                return null;
+            }
+
+            @Override
             public Void visitTest(CJRunModeTest m, Void a) {
                 handleCLI();
                 return null;
@@ -263,6 +276,10 @@ public final class CJMain {
                         }
                         case "nw": {
                             return new CJRunModeNW(appId, appdir, config);
+                        }
+                        case "blob": {
+                            var rootClasses = config.get("classes").getArray().map(x -> x.getString());
+                            return new CJRunModeBlob(rootClasses);
                         }
                         default:
                             throw new RuntimeException(appId + " has unsupported app type " + type);

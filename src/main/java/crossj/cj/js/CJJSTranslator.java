@@ -18,6 +18,7 @@ import crossj.cj.ir.CJIRMethod;
 import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRVariableType;
 import crossj.cj.run.CJRunMode;
+import crossj.cj.run.CJRunModeBlob;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;
 import crossj.cj.run.CJRunModeTest;
@@ -50,6 +51,18 @@ public final class CJJSTranslator extends CJJSTranslatorBase {
                 var mainClass = translateItemMetaObjectName(m.getMainClass());
                 out.addMark(CJMark.of("<start>", 1, 1));
                 out.append(mainClass + "." + translateMethodName("main") + "();\n");
+                return null;
+            }
+
+            @Override
+            public Void visitBlob(CJRunModeBlob m, Void a) {
+                out.addMark(CJMark.of("<export>", 1, 1));
+                out.append("window.CJ={");
+                for (var className : m.getRootClasses()) {
+                    var metaObjectName = translateItemMetaObjectName(className);
+                    out.append("\"" + className + "\":" + metaObjectName + ",");
+                }
+                out.append("}\n");
                 return null;
             }
 

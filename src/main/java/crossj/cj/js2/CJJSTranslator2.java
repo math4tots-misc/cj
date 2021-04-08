@@ -23,6 +23,7 @@ import crossj.cj.ir.meta.CJIRClassType;
 import crossj.cj.ir.meta.CJIRType;
 import crossj.cj.js.CJJSSink;
 import crossj.cj.run.CJRunMode;
+import crossj.cj.run.CJRunModeBlob;
 import crossj.cj.run.CJRunModeMain;
 import crossj.cj.run.CJRunModeNW;
 import crossj.cj.run.CJRunModeTest;
@@ -51,6 +52,11 @@ public final class CJJSTranslator2 {
             public Void visitMain(CJRunModeMain m, Void a) {
                 tr.queueMethodByName(m.getMainClass(), "main");
                 return null;
+            }
+
+            @Override
+            public Void visitBlob(CJRunModeBlob m, Void a) {
+                throw CJError.of("CJJSTranslator2 does not support blob mode");
             }
 
             @Override
@@ -99,6 +105,10 @@ public final class CJJSTranslator2 {
                 tr.out.append(mainMethodName + "();\n");
                 return null;
             }
+
+            public Void visitBlob(CJRunModeBlob m, Void a) {
+                throw CJError.of("CJJSTranslator2 does not support blob mode");
+            };
 
             @Override
             public Void visitTest(CJRunModeTest m, Void a) {
