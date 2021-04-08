@@ -17,7 +17,7 @@ class Document : JSWrapper, GlobalEventHandlers {
 
     def __get_body(self): HTMLBodyElement = js0!(self, ".body")
 
-    def createElement[R: Element](self): R = call("createElement", R.tagName)
+    def createElement[R: Element](self): R = jsm0!(self, "createElement", R.tagName)
 
     def getElementById[R: Element](self: Self, id: String): R = js0!(
         self, ".getElementById(", id, ")")
