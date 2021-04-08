@@ -1,6 +1,3 @@
-import * as fs from "fs";
-import * as pat from "path";
-import { SourceNode } from "source-map";
 
 class Source {
     readonly path: string
@@ -67,6 +64,7 @@ const KEYWORDS = new Set([
     'const',
     'val',
     'var',
+    'and', 'or',
 ]);
 const SYMBOLS = [
     '...',
@@ -75,6 +73,12 @@ const SYMBOLS = [
     '=',
     '+',
 ].sort().reverse();
+
+function unrepr(s: string): string {
+    // TODO: Avoid the use of eval
+    return s.substring(1, s.length - 1)
+        .replace(/\\((x|u)[0-9a-zA-Z]+|.)/g, match => eval('"' + match + '"'));
+}
 
 function lex(path: string, contents: string): Token[] {
     const source = new Source(path, contents);
@@ -142,15 +146,15 @@ function lex(path: string, contents: string): Token[] {
             parenStack.pop();
             continue;
         }
-        if (ch === '"') {
-            while (i < s.length && s[i] !== '"') {
+        if (ch === '"' || ch == "'") {
+            while (i < s.length && s[i] !== ch) {
                 if (s[i] === '\\') {
                     incr();
                 }
                 incr();
             }
             incr();
-            const value: string = JSON.parse(s.substring(start, i));
+            const value: string = unrepr(s.substring(start, i));
             addTok(TTSTR, value);
             continue;
         }
@@ -216,6 +220,9 @@ class Context {
         if (args.length !== argc) {
             throw this.error("Expected " + argc + " args but got " + args.length);
         }
+    }
+    parse(path: string, contents: string): Module {
+        return parse(this, path, contents);
     }
 }
 
@@ -342,8 +349,7 @@ class SetVar extends Expr {
             ctx.stack.push(this.mark);
             throw ctx.error("Variable '" + this.name + "' not found");
         }
-        entry.value = this.valexpr.eval(ctx);
-        return null;
+        return entry.value = this.valexpr.eval(ctx);
     }
 }
 
@@ -445,6 +451,75 @@ class GetField extends Expr {
     }
 }
 
+function truthy(ctx: Context, value: Value): boolean {
+    if (Array.isArray(value)) {
+        return !!value.length;
+    }
+    if (value !== null && typeof value === 'object' && '__bool' in value) {
+        return !!callm(ctx, value, '__bool', []);
+    }
+    return !!value;
+}
+
+class LogicalAnd extends Expr {
+    readonly lhs: Expr
+    readonly rhs: Expr
+    constructor(mark: Mark, lhs: Expr, rhs: Expr) {
+        super(mark);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+    eval(ctx: Context) {
+        const lhs = this.lhs.eval(ctx);
+        return truthy(ctx, lhs) ? this.rhs.eval(ctx) : lhs;
+    }
+}
+
+class LogicalOr extends Expr {
+    readonly lhs: Expr
+    readonly rhs: Expr
+    constructor(mark: Mark, lhs: Expr, rhs: Expr) {
+        super(mark);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+    eval(ctx: Context) {
+        const lhs = this.lhs.eval(ctx);
+        return truthy(ctx, lhs) ? lhs : this.rhs.eval(ctx);
+    }
+}
+
+class If extends Expr {
+    readonly cond: Expr
+    readonly lhs: Expr
+    readonly rhs: Expr
+    constructor(mark: Mark, cond: Expr, lhs: Expr, rhs: Expr) {
+        super(mark);
+        this.cond = cond;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+    eval(ctx: Context) {
+        return truthy(ctx, this.cond.eval(ctx)) ? this.lhs.eval(ctx) : this.rhs.eval(ctx);
+    }
+}
+
+class While extends Expr {
+    readonly cond: Expr
+    readonly body: Expr
+    constructor(mark: Mark, cond: Expr, body: Expr) {
+        super(mark);
+        this.cond = cond;
+        this.body = body;
+    }
+    eval(ctx: Context) {
+        while (truthy(ctx, this.cond.eval(ctx))) {
+            this.body.eval(ctx);
+        }
+        return null;
+    }
+}
+
 class Call extends Expr {
     readonly owner: Expr
     readonly methodName: string | null
@@ -533,13 +608,26 @@ function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
 
 function precof(type: string): number {
     switch (type) {
-        case '.': case '(': return 150;
-        default: return -1;
+        case '.':case '(':case '[':case '=>':case'++':case'--': return 150
+        case '*':case '/':case '%': return 130
+        case '+':case '-': return 120
+        case '<<':case '>>': return 110
+        case '<':case '>':case '<=':case '>=': return 100
+        case '==':case '!=': return 90
+        case '&': return 80
+        case '^': return 70
+        case '|': return 60
+        case '&&':case 'and': return 50
+        case '||':case 'or': return 40
+        case '?': return 30
+        case '=': case '+=': case '-=': case '*=':
+        case '/=': case '%=': case '&=': case '|=': case '^=':
+        case '<<=': case '>>=': return 20;
+        default: return -10;
     }
 }
 
 function parse(ctx: Context, path: string, contents: string): Module {
-    path = pat.normalize(path);
     const tokens = lex(path, contents);
     let i = 0;
 
@@ -614,6 +702,10 @@ function parse(ctx: Context, path: string, contents: string): Module {
     }
 
     function mcall(mark: Mark, owner: Expr, methodName: string, args: Expr[]): Expr {
+        switch (methodName) {
+            case 'and': return new LogicalAnd(mark, owner, args[0]);
+            case 'or': return new LogicalOr(mark, owner, args[0]);
+        }
         return new Call(mark, owner, methodName, args);
     }
 
@@ -666,6 +758,24 @@ function parse(ctx: Context, path: string, contents: string): Module {
                     const args = parseArgs();
                     expr = fcall(m, expr, args);
                     break;
+                }
+                case '+': case '-': case '*': case '/': case 'and': case 'or': {
+                    // all left associative binops
+                    const op = next().type;
+                    let methodName = '';
+                    switch (op) {
+                        case '+': methodName = '__add'; break;
+                        case '-': methodName = '__sub'; break;
+                        case '*': methodName = '__mul'; break;
+                        case '/': methodName = '__div'; break;
+                        case 'and': methodName = 'and'; break;
+                        case 'or': methodName = 'or'; break;
+                        default: {
+                            ctx.stack.push(m);
+                            throw ctx.error("TODO binop " + op);
+                        }
+                    }
+                    expr = mcall(m, expr, methodName, [parseExprPr(tokprec)]);
                 }
                 default: {
                     ctx.stack.push(m);
@@ -734,7 +844,7 @@ function parse(ctx: Context, path: string, contents: string): Module {
 
 {
     const ctx = new Context();
-    const module = parse(ctx, '<test>', `
+    const module = ctx.parse('<test>', `
     val x = 10
     val y = x.__add(14)
     print("x = ".__add(x.repr()))
@@ -747,6 +857,9 @@ function parse(ctx: Context, path: string, contents: string): Module {
     }
 
     twice("some text")
+    twice('some text2')
+    twice('asdf \\x26 asdf')
+    twice('asdf \\u2677 asdf')
     `);
     module.eval(ctx);
 }
