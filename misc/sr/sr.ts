@@ -40,6 +40,7 @@ class MError extends Error {
 // token types
 const TTEOF = 'EOF';
 const TTID = 'ID';
+const TTMACROID = 'MACROID';
 const TTINT = 'INT';
 const TTDOUBLE = 'DOUBLE';
 const TTSTR = 'STR';
@@ -64,7 +65,7 @@ const KEYWORDS = new Set([
     'const',
     'val',
     'var',
-    'and', 'or',
+    'and', 'or', 'not',
 ]);
 const SYMBOLS = [
     '...',
@@ -162,11 +163,16 @@ function lex(path: string, contents: string): Token[] {
             while (i < s.length && s[i].match(/[a-zA-Z0-9_]/)) {
                 incr();
             }
-            const value = s.substring(start, i);
-            if (KEYWORDS.has(value)) {
-                addTok(value);
+            const name = s.substring(start, i);
+            if (i < s.length && s[i] === '!') {
+                incr();
+                addTok(TTMACROID, name);
             } else {
-                addTok(TTID, value);
+                if (KEYWORDS.has(name)) {
+                    addTok(name);
+                } else {
+                    addTok(TTID, name);
+                }
             }
             continue;
         }
@@ -283,9 +289,8 @@ class Module extends Expr {
         const oldScope = ctx.scope;
         const scope: Scope = newScope(oldScope);
         ctx.scope = scope;
-        let last: Value = null;
         for (const expr of this.exprs) {
-            last = expr.eval(ctx);
+            expr.eval(ctx);
         }
         ctx.scope = oldScope;
         return scope;
