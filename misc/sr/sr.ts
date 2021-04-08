@@ -65,8 +65,11 @@ const KEYWORDS = new Set([
     'def',
     'let',
     'const',
+    'val',
+    'var',
 ]);
 const SYMBOLS = [
+    '...',
     '.',
     '++',
     '=',
@@ -198,7 +201,18 @@ class Context {
     error(message: string) {
         return new MError(message, this.stack);
     }
-    checkArgc(args: Value[], argc: number) {
+    checkMinArgc(args: Value[], argc: number, mark: Mark | null = null) {
+        if (mark) {
+            this.stack.push(mark);
+        }
+        if (args.length < argc) {
+            throw this.error("Expected at least " + argc + " args but got " + args.length);
+        }
+    }
+    checkArgc(args: Value[], argc: number, mark: Mark | null = null) {
+        if (mark) {
+            this.stack.push(mark);
+        }
         if (args.length !== argc) {
             throw this.error("Expected " + argc + " args but got " + args.length);
         }
@@ -221,7 +235,10 @@ type ValueObject = Scope;
 type ValueFn = (ctx: Context, self: Value, args: Value[]) => Value;
 type Value = null | boolean | number | string | ValueArray | ValueObject | ValueFn;
 
-const ROOT: Scope = Object.create(null);
+function newScope(parent: Scope | null): Scope {
+    return Object.create(parent);
+}
+const ROOT: Scope = newScope(null);
 ROOT['print'] = new Entry(false, (ctx, self, args) => {
     ctx.checkArgc(args, 1);
     console.log(args[0]);
@@ -257,14 +274,14 @@ class Module extends Expr {
     }
     eval(ctx: Context) {
         const oldScope = ctx.scope;
-        const newScope: Scope = Object.create(oldScope);
-        ctx.scope = newScope;
+        const scope: Scope = newScope(oldScope);
+        ctx.scope = scope;
         let last: Value = null;
         for (const expr of this.exprs) {
             last = expr.eval(ctx);
         }
         ctx.scope = oldScope;
-        return newScope;
+        return scope;
     }
 }
 
@@ -276,7 +293,7 @@ class Block extends Expr {
     }
     eval(ctx: Context) {
         const oldScope = ctx.scope;
-        ctx.scope = Object.create(oldScope);
+        ctx.scope = newScope(oldScope);
         let last: Value = null;
         for (const expr of this.exprs) {
             last = expr.eval(ctx);
@@ -333,21 +350,79 @@ class SetVar extends Expr {
 class DeclVar extends Expr {
     readonly mutable: boolean
     readonly name: string
-    readonly valexpr: Expr
-    constructor(mark: Mark, mutable: boolean, name: string, valexpr: Expr) {
+    readonly initexpr: Expr
+    constructor(mark: Mark, mutable: boolean, name: string, initexpr: Expr) {
         super(mark);
         this.mutable = mutable;
         this.name = name;
-        this.valexpr = valexpr;
+        this.initexpr = initexpr;
     }
     eval(ctx: Context) {
         if (Object.prototype.hasOwnProperty.call(ctx.scope, this.name)) {
             ctx.stack.push(this.mark);
             throw ctx.error("Variable '" + this.name + "' is already declared in this scope");
         }
-        const entry = new Entry(this.mutable, this.valexpr.eval(ctx));
+        const entry = new Entry(this.mutable, this.initexpr.eval(ctx));
         ctx.scope[this.name] = entry;
         return null;
+    }
+}
+
+class Param {
+    readonly mark: Mark
+    readonly variadic: boolean
+    readonly mutable: boolean
+    readonly name: string
+    constructor(mark: Mark, variadic: boolean, mutable: boolean, name: string) {
+        this.mark = mark;
+        this.variadic = variadic;
+        this.mutable = mutable;
+        this.name = name;
+    }
+}
+
+class FuncDef extends Expr {
+    readonly name: string | null
+    readonly params: Param[]
+    readonly body: Expr
+    constructor(mark: Mark, name: string | null, params: Param[], body: Expr) {
+        super(mark);
+        this.name = name;
+        this.params = params;
+        this.body = body;
+    }
+    eval(octx: Context): ValueFn {
+        const mark = this.mark;
+        const body = this.body;
+        const params = this.params;
+        const fscope = octx.scope;
+        return (ictx, self, args) => {
+            const oldScope = ictx.scope;
+            ictx.scope = newScope(fscope);
+            let i = 0, j = 0;
+            while (i < params.length && j < args.length) {
+                const param = params[i++];
+                if (param.variadic) {
+                    const arg = args.slice(j);
+                    j = args.length;
+                    ictx.scope[param.name] = new Entry(param.mutable, arg);
+                } else {
+                    ictx.scope[param.name] = new Entry(param.mutable, args[j++]);
+                }
+            }
+            if (i < params.length) {
+                ictx.stack.push(params[i].mark);
+                throw ictx.error("Expected more arguments");
+            }
+            if (j < args.length) {
+                ictx.stack.push(mark);
+                throw ictx.error("Too many arguments");
+            }
+            ictx.scope["this"] = new Entry(false, self);
+            const ret = body.eval(ictx);
+            ictx.scope = oldScope;
+            return ret;
+        }
     }
 }
 
@@ -562,6 +637,18 @@ function parse(ctx: Context, path: string, contents: string): Module {
         return parseJoin('(', ')', ',', parseExpr);
     }
 
+    function parseParam() {
+        const m = mark();
+        const variadic = consume('...');
+        const mutable = consume('var');
+        const name = expect(TTID).value as string;
+        return new Param(m, variadic, mutable, name);
+    }
+
+    function parseParams() {
+        return parseJoin('(', ')', ',', parseParam);
+    }
+
     function parseExprPr(precedence: number): Expr {
         let expr = parseAtom();
         let tokprec = precof(peek().type);
@@ -570,8 +657,8 @@ function parse(ctx: Context, path: string, contents: string): Module {
             switch (peek().type) {
                 case '.': {
                     next();
-                    const args = parseArgs();
                     const name = expect(TTID).value as string;
+                    const args = parseArgs();
                     expr = mcall(m, expr, name, args);
                     break;
                 }
@@ -604,6 +691,24 @@ function parse(ctx: Context, path: string, contents: string): Module {
             case 'null': next(); return new Literal(m, null);
             case 'true': next(); return new Literal(m, true);
             case 'false': next(); return new Literal(m, false);
+            case 'val': case 'var': {
+                const mutable = next().type === 'var';
+                const name = expect(TTID).value as string;
+                const initexpr = consume('=') ? parseExpr() : new Literal(m, null);
+                return new DeclVar(m, mutable, name, initexpr);
+            }
+            case 'def': {
+                next();
+                const name = at(TTID) ? next().value as string : null;
+                const params = parseParams();
+                const body = consume('=') ? parseExpr() : parseBlock();
+                const funcdef = new FuncDef(m, name, params, body);
+                if (name == null) {
+                    return funcdef;
+                } else {
+                    return new DeclVar(m, false, name, funcdef);
+                }
+            }
             case '(': {
                 next();
                 const expr = parseExpr();
@@ -630,9 +735,18 @@ function parse(ctx: Context, path: string, contents: string): Module {
 {
     const ctx = new Context();
     const module = parse(ctx, '<test>', `
-    # val x = 10
-    # print("x = " + x.repr())
+    val x = 10
+    val y = x.__add(14)
+    print("x = ".__add(x.repr()))
+    print("y = ".__add(y.repr()))
     print("hello world")
+
+    def twice(s) {
+        print(s)
+        print(s)
+    }
+
+    twice("some text")
     `);
     module.eval(ctx);
 }
