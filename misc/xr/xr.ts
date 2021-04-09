@@ -61,7 +61,7 @@ class Token {
 }
 
 const KEYWORDS = new Set([
-    'def',
+    'class', 'interface', 'def',
     'let',
     'const',
     'val',
@@ -205,68 +205,71 @@ function lex(path: string, contents: string): Token[] {
 
 class Context {
     readonly stack: Mark[] = []
-    readonly rootScope: Scope
-    scope: Scope
-    constructor(rootScope: Scope | null = null) {
-        this.rootScope = rootScope || new Scope(null, '*');
-        this.scope = this.rootScope;
+    constructor() {
     }
     error(message: string) {
         return new MError(message, this.stack);
     }
 }
 
-class Scope {
-    readonly id: string
-    readonly parent: Scope | null
-    readonly map: Map<string, Value>
-    constructor(parent: Scope | null, name: string) {
-        this.id = parent === null ? name : parent.id + '.' + name;
-        this.parent = parent;
-        this.map = new Map();
-    }
-    spawn(name: string): Scope {
-        return new Scope(this, name);
-    }
+abstract class Ast {
+    mark: Mark
+    constructor(mark: Mark) { this.mark = mark }
 }
 
-abstract class Value {
-}
+abstract class ExprAst extends Ast {}
 
-class Type extends Value {
-    readonly mark: Mark
-    readonly id: string
-    constructor(mark: Mark, id: string) {
-        super();
-        this.mark = mark;
-        this.id = id;
+class TypeExprAst extends ExprAst {
+    name: string
+    args: TypeExprAst[]
+    constructor(mark: Mark, name: string, args: TypeExprAst[]) {
+        super(mark);
+        this.name = name;
+        this.args = args;
     }
 }
 
-const TVOID = new Type(Mark.builtin, 'void');
-const TINT = new Type(Mark.builtin, 'int');
-const TDOUBLE = new Type(Mark.builtin, 'double');
-const TSTRING = new Type(Mark.builtin, 'string');
+class ProgramAst extends Ast {
+    items: ItemAst[]
+    constructor(mark: Mark, items: ItemAst[]) {
+        super(mark);
+        this.items = items;
+    }
+}
 
-abstract class Expr extends Value {
-    readonly mark: Mark
-    type: Type
-    constructor(mark: Mark, type: Type) {
-        super();
-        this.mark = mark;
+abstract class ItemAst extends Ast {
+    name: string
+    constructor(mark: Mark, name: string) {
+        super(mark);
+        this.name = name;
+    }
+}
+
+class VarAst extends Ast {
+    name: string
+    type: TypeExprAst
+    constructor(mark: Mark, name: string, type: TypeExprAst) {
+        super(mark);
+        this.name = name;
         this.type = type;
     }
 }
 
-class Block extends Expr {
-    exprs: Expr[]
-    constructor(mark: Mark, type: Type, exprs: Expr[]) {
-        super(mark, type);
-        this.exprs = exprs;
+class FuncAst extends ItemAst {
+    params: VarAst[]
+    returnType: TypeExprAst
+    body: ExprAst
+    constructor(mark: Mark, name: string, params: VarAst[], returnType: TypeExprAst, body: ExprAst) {
+        super(mark, name);
+        this.params = params;
+        this.returnType = returnType;
+        this.body = body;
     }
 }
 
-class Nop extends Expr {
+class CallAst extends ExprAst {
+    functionName: string
+    args: ExprAst[]
 }
 
 function precof(type: string): number {
