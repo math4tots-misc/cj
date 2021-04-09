@@ -69,11 +69,19 @@ const KEYWORDS = new Set([
 ]);
 const SYMBOLS = [
     '...',
+    ',',
     '.',
     '++',
     '=',
     '+',
 ].sort().reverse();
+const SYMBOLS_BY_FIRST_CHAR: Map<string, string[]> = new Map();
+for (const symbol of SYMBOLS) {
+    if (!SYMBOLS_BY_FIRST_CHAR.has(symbol[0])) {
+        SYMBOLS_BY_FIRST_CHAR.set(symbol[0], []);
+    }
+    SYMBOLS_BY_FIRST_CHAR.get(symbol[0])!.push(symbol);
+}
 
 function unrepr(s: string): string {
     // TODO: Avoid the use of eval
@@ -189,11 +197,14 @@ function lex(path: string, contents: string): Token[] {
             }
             continue;
         }
-        for (const sym of SYMBOLS) {
-            if (s.startsWith(sym, start)) {
-                while (i < start + sym.length) incr();
-                addTok(sym);
-                continue tokenLoop;
+        const symbols = SYMBOLS_BY_FIRST_CHAR.get(ch);
+        if (symbols !== undefined) {
+            for (const sym of symbols) {
+                if (s.startsWith(sym, start)) {
+                    while (i < start + sym.length) incr();
+                    addTok(sym);
+                    continue tokenLoop;
+                }
             }
         }
         throw new MError("Unrecognized token " + JSON.stringify(ch), [newMark()]);
@@ -254,8 +265,12 @@ function newScope(parent: Scope | null): Scope {
 const ROOT: Scope = newScope(null);
 ROOT['print'] = new Entry(false, (ctx, self, args) => {
     ctx.checkArgc(args, 1);
-    console.log(args[0]);
+    console.log(convStr(ctx, args[0]));
     return null;
+});
+ROOT['str'] = new Entry(false, (ctx, self, args) => {
+    ctx.checkArgc(args, 1);
+    return convStr(ctx, args[0]);
 });
 
 function typestr(value: Value): string {
@@ -322,6 +337,15 @@ class Literal extends Expr {
         this.value = value;
     }
     eval(ctx: Context) { return this.value }
+}
+
+class ListDisplay extends Expr {
+    readonly exprs: Expr[]
+    constructor(mark: Mark, exprs: Expr[]) {
+        super(mark);
+        this.exprs = exprs;
+    }
+    eval(ctx: Context) { return this.exprs.map(e => e.eval(ctx)); }
 }
 
 class GetVar extends Expr {
@@ -581,6 +605,13 @@ function convStr(ctx: Context, x: Value): string {
     return '' + x;
 }
 
+function callf(ctx: Context, f: Value, args: Value[]) {
+    if (typeof f !== 'function') {
+        throw ctx.error('Expected function but got ' + typestr(f));
+    }
+    return f(ctx, null, args);
+}
+
 
 function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
     switch (typeof owner) {
@@ -591,6 +622,7 @@ function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
                 case '__mul': return owner * castNum(ctx, args[0]);
                 case 'str':case 'repr': return '' + owner;
             }
+            throw ctx.error("Method '" + methodName + "' not found on number");
             break;
         }
         case 'string': {
@@ -599,6 +631,7 @@ function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
                 case 'str': return owner;
                 case 'repr': return JSON.stringify(owner);
             }
+            throw ctx.error("Method '" + methodName + "' not found on string");
             break;
         }
         case 'object': {
@@ -609,10 +642,14 @@ function callm(ctx: Context, owner: Value, methodName: string, args: Value[]) {
                         return null;
                     }
                     case 'pop': {
-                        if (owner.length === 0) { throw ctx.error("Pop from empty array") }
+                        if (owner.length === 0) { throw ctx.error("Pop from empty list") }
                         return owner.pop();
                     }
+                    case 'map': {
+                        return owner.map(x => callf(ctx, args[0], x));
+                    }
                 }
+                throw ctx.error("Method '" + methodName + "' not found on list");
             }
             break;
         }
@@ -842,6 +879,10 @@ function parse(ctx: Context, path: string, contents: string): Module {
                     return new DeclVar(m, false, name, funcdef);
                 }
             }
+            case '[': {
+                const exprs = parseJoin('[', ']', ',', parseExpr);
+                return new ListDisplay(m, exprs);
+            }
             case '(': {
                 next();
                 const expr = parseExpr();
@@ -883,6 +924,7 @@ function parse(ctx: Context, path: string, contents: string): Module {
     twice('some text2')
     twice('asdf \\x26 asdf')
     twice('asdf \\u2677 asdf')
+    print([1, 2, 3])
     `);
     module.eval(ctx);
 }
